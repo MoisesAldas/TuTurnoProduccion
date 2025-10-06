@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎉 ¡Bienvenido a TuTurno!</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+      /* Animation keyframes for email clients that support it */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+
+      .fade-in { animation: fadeIn 0.8s ease-out; }
+      .pulse-hover:hover { animation: pulse 0.6s ease-in-out; }
+    </style>
+  </head>
+  <body style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #f0f9ff 100%); margin:0; padding:20px; min-height:100vh;">
+
+    <!-- Background decorative elements -->
+    <div style="position: absolute; top: 10%; left: 5%; width: 100px; height: 100px; background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%); border-radius: 50%; z-index: 1;"></div>
+    <div style="position: absolute; top: 30%; right: 8%; width: 80px; height: 80px; background: radial-gradient(circle, rgba(20, 184, 166, 0.08) 0%, transparent 70%); border-radius: 50%; z-index: 1;"></div>
+
+    <!-- Main email container -->
+    <table align="center" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px; margin:0 auto; background:#ffffff; border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,0.1), 0 8px 25px rgba(0,0,0,0.08); overflow: hidden; position: relative; z-index: 10; border: 1px solid rgba(229, 231, 235, 0.3);">
+
+      <!-- Premium Header with Gradient -->
+      <tr>
+        <td style="padding:0; text-align:center; background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%); position: relative;">
+          <div style="padding: 40px 30px; position: relative;">
+
+            <!-- Decorative background elements -->
+            <div style="position: absolute; top: -20px; right: -20px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -30px; left: -30px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%); border-radius: 50%;"></div>
+
+            <!-- Google Success Badge -->
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 16px; padding: 8px 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2);">
+              <span style="font-size: 16px;">🎯</span>
+              <span style="font-size: 14px; color: #ffffff; font-weight: 600; letter-spacing: 0.5px;">REGISTRO EXITOSO</span>
+            </div>
+
+            <!-- Main Logo -->
+            <h1 style="color:#ffffff; margin:0; font-size:42px; font-weight:900; letter-spacing:-1px; text-shadow: 0 4px 12px rgba(0,0,0,0.2); position: relative;">
+              TuTurno
+            </h1>
+
+            <!-- Subtitle -->
+            <p style="color: rgba(255,255,255,0.9); margin: 12px 0 0 0; font-size: 16px; font-weight: 500;">
+              Tu plataforma de reservas profesional
+            </p>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Main Content -->
+      <tr>
+        <td style="padding:50px 40px; color:#1f2937; font-size:17px; line-height:1.7; position: relative;">
+
+          <!-- Welcome Message -->
+          <div style="text-align: center; margin-bottom: 40px;">
+            <div style="display: inline-block; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 50%; width: 80px; height: 80px; margin-bottom: 24px; position: relative;">
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 36px;">🚀</div>
+            </div>
+            <h2 style="color:#111827; font-size:28px; margin:0 0 16px 0; font-weight:700; letter-spacing:-0.5px;">
+              ¡Bienvenido {{ .UserName }}!
+            </h2>
+            <p style="color:#6b7280; font-size:16px; margin:0; font-weight:500;">
+              Tu cuenta está lista y puedes comenzar a usar TuTurno
+            </p>
+          </div>
+
+          <!-- Content Body -->
+          <div style="background: rgba(249, 250, 251, 0.5); border-radius: 16px; padding: 32px; margin-bottom: 40px; border: 1px solid rgba(229, 231, 235, 0.5);">
+            <p style="margin:0 0 24px 0; color:#374151; font-size:17px; font-weight:500;">
+              ¡Hola {{ .UserName }}! 👋 Gracias por unirte a <strong style="color:#059669;">TuTurno</strong> usando tu cuenta de Google.
+            </p>
+            <p style="margin:0; color:#4b5563; font-size:16px; line-height:1.6;">
+              Tu cuenta ya está completamente configurada y lista para usar. Puedes comenzar a explorar y reservar en los mejores salones, spas y centros de belleza.
+            </p>
+          </div>
+
+          <!-- CTA Button - Different for Google users -->
+          <div style="text-align:center; margin:40px 0;">
+            <a href="{{ .DashboardURL }}"
+               style="
+                 background: linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%);
+                 color: #ffffff;
+                 text-decoration: none;
+                 padding: 18px 36px;
+                 border-radius: 16px;
+                 font-weight: 700;
+                 font-size: 17px;
+                 display: inline-block;
+                 box-shadow: 0 12px 32px rgba(5, 150, 105, 0.3), 0 4px 12px rgba(5, 150, 105, 0.2);
+                 letter-spacing: 0.5px;
+                 transition: all 0.3s ease;
+                 border: 1px solid rgba(255,255,255,0.1);
+                 min-width: 200px;
+               "
+               onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 16px 40px rgba(5, 150, 105, 0.4), 0 6px 16px rgba(5, 150, 105, 0.3)';"
+               onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 12px 32px rgba(5, 150, 105, 0.3), 0 4px 12px rgba(5, 150, 105, 0.2)';">
+              🎯 Ir a mi dashboard
+            </a>
+          </div>
+
+          <!-- Quick Start Guide -->
+          <div style="background: linear-gradient(135deg, rgba(5, 150, 105, 0.05) 0%, rgba(13, 148, 136, 0.03) 100%); border-radius: 16px; padding: 28px; margin: 40px 0; border: 1px solid rgba(5, 150, 105, 0.1);">
+            <h3 style="color:#059669; font-size:18px; margin:0 0 20px 0; font-weight:700; text-align:center;">
+              🚀 Comienza tu experiencia en 3 pasos:
+            </h3>
+            <div style="display: grid; gap: 20px;">
+              <div style="display: flex; align-items: flex-start; gap: 16px; padding: 16px; background: rgba(255,255,255,0.7); border-radius: 12px;">
+                <div style="background: #059669; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">1</div>
+                <div>
+                  <h4 style="margin: 0 0 8px 0; color: #059669; font-weight: 600; font-size: 16px;">Explora servicios cerca de ti</h4>
+                  <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.5;">Descubre salones, spas y centros de belleza en tu área</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: flex-start; gap: 16px; padding: 16px; background: rgba(255,255,255,0.7); border-radius: 12px;">
+                <div style="background: #0d9488; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">2</div>
+                <div>
+                  <h4 style="margin: 0 0 8px 0; color: #0d9488; font-weight: 600; font-size: 16px;">Selecciona tu servicio ideal</h4>
+                  <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.5;">Elige entre una amplia variedad de tratamientos profesionales</p>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: flex-start; gap: 16px; padding: 16px; background: rgba(255,255,255,0.7); border-radius: 12px;">
+                <div style="background: #0891b2; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">3</div>
+                <div>
+                  <h4 style="margin: 0 0 8px 0; color: #0891b2; font-weight: 600; font-size: 16px;">Reserva instantáneamente</h4>
+                  <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.5;">Confirma tu cita al instante y recibe notificaciones</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Preview -->
+          <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.05) 0%, rgba(245, 158, 11, 0.03) 100%); border-radius: 16px; padding: 28px; margin: 40px 0; border: 1px solid rgba(234, 179, 8, 0.1);">
+            <h3 style="color:#d97706; font-size:18px; margin:0 0 20px 0; font-weight:700; text-align:center;">
+              ⭐ Ventajas exclusivas de TuTurno:
+            </h3>
+            <div style="display: grid; gap: 16px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="color:#d97706; font-size:20px;">⚡</span>
+                <span style="color:#374151; font-weight:500;">Reservas instantáneas sin esperas</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="color:#ea580c; font-size:20px;">🎯</span>
+                <span style="color:#374151; font-weight:500;">Profesionales verificados y calificados</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="color:#dc2626; font-size:20px;">🔔</span>
+                <span style="color:#374151; font-weight:500;">Recordatorios automáticos de tus citas</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="color:#7c3aed; font-size:20px;">🏆</span>
+                <span style="color:#374151; font-weight:500;">Acceso a promociones exclusivas</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Security Note -->
+          <div style="background: rgba(219, 234, 254, 0.4); border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px; margin-top: 32px;">
+            <p style="margin:0; color:#1e40af; font-size:14px; font-weight:500;">
+              🔐 <strong>Seguridad Google:</strong> Tu cuenta está protegida por la autenticación segura de Google. Nunca compartiremos tu información personal.
+            </p>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Premium Footer -->
+      <tr>
+        <td style="padding:32px 40px; text-align:center; background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%); border-top: 1px solid rgba(229, 231, 235, 0.5);">
+          <div style="margin-bottom: 24px;">
+            <h4 style="color:#374151; font-size:16px; margin:0 0 16px 0; font-weight:600;">
+              🌟 ¿Necesitas ayuda para empezar?
+            </h4>
+            <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+              <a href="{{ .MarketplaceURL }}" style="background: rgba(5, 150, 105, 0.1); color:#059669; text-decoration:none; font-weight:600; font-size:14px; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(5, 150, 105, 0.2);">
+                🏪 Explorar servicios
+              </a>
+              <a href="{{ .SupportURL }}" style="background: rgba(59, 130, 246, 0.1); color:#3b82f6; text-decoration:none; font-weight:600; font-size:14px; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                💬 Centro de ayuda
+              </a>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <span style="color:#6b7280; font-size:14px; font-weight:600; letter-spacing:0.5px;">
+              © 2025 TuTurno - Todos los derechos reservados
+            </span>
+          </div>
+
+          <div style="color:#9ca3af; font-size:12px; line-height:1.5;">
+            Este correo fue enviado porque te registraste en TuTurno usando Google.<br/>
+            Si tienes preguntas, contáctanos en <a href="mailto:soporte@tuturno.com" style="color:#059669; text-decoration:none;">soporte@tuturno.com</a>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Footer decorative elements -->
+    <div style="text-align: center; margin-top: 30px; color: #9ca3af; font-size: 12px;">
+      <div style="display: inline-block; background: rgba(255,255,255,0.8); border-radius: 12px; padding: 8px 16px; backdrop-filter: blur(4px);">
+        Hecho con ❤️ para nuestros usuarios
+      </div>
+    </div>
+  </body>
+</html>

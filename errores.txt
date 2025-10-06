@@ -1,0 +1,87 @@
+C:\Users\Moises\Downloads\TuTurnov2-05ad10d5625b8c11897fb43b4a254036cbb7fd7a\TuTurnov2-05ad10d5625b8c11897fb43b4a254036cbb7fd7a>npm run build
+
+> my-v0-project@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.32
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+
+warn - The class `delay-[1500ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `delay-&lsqb;1500ms&rsqb;` to silence this warning.
+
+warn - The class `delay-[2000ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `delay-&lsqb;2000ms&rsqb;` to silence this warning.
+ ✓ Compiled successfully
+   Linting and checking validity of types  .. ⨯ ESLint: Invalid Options: - Unknown options: useEslintrc, extensions - 'extensions' has been removed.
+ ✓ Linting and checking validity of types
+   Collecting page data  ..(node:12764) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:10036) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:13752) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Collecting page data
+ ✓ Generating static pages (45/45)
+ ✓ Collecting build traces
+ ✓ Finalizing page optimization
+
+Route (app)                                Size     First Load JS
+┌ ○ /                                      10.6 kB         155 kB
+├ ○ /_not-found                            880 B          88.4 kB
+├ ƒ /api/complete-profile                  0 B                0 B
+├ ƒ /api/create-user                       0 B                0 B
+├ ƒ /api/send-appointment-email            0 B                0 B
+├ ƒ /auth/business                         4.17 kB         110 kB
+├ ƒ /auth/business/forgot-password         4.61 kB         178 kB
+├ ƒ /auth/business/login                   3.86 kB         181 kB
+├ ƒ /auth/business/register                4.55 kB         182 kB
+├ ƒ /auth/business/reset-password          3.6 kB          181 kB
+├ ƒ /auth/business/setup                   6.55 kB         180 kB
+├ ƒ /auth/business/verify-email            4.01 kB         154 kB
+├ ƒ /auth/callback                         0 B                0 B
+├ ƒ /auth/client                           4.27 kB         110 kB
+├ ƒ /auth/client/forgot-password           4.61 kB         178 kB
+├ ƒ /auth/client/login                     3.75 kB         181 kB
+├ ƒ /auth/client/register                  4.63 kB         182 kB
+├ ƒ /auth/client/reset-password            3.6 kB          181 kB
+├ ƒ /auth/client/setup                     6.49 kB         180 kB
+├ ƒ /auth/client/verify-email              4 kB            154 kB
+├ ƒ /auth/login                            4.59 kB         146 kB
+├ ƒ /auth/login/business                   3.4 kB          157 kB
+├ ƒ /auth/login/client                     5.96 kB         156 kB
+├ ƒ /auth/setup                            6.12 kB         171 kB
+├ ƒ /business/[id]                         11.6 kB         164 kB
+├ ƒ /business/[id]/book                    9.15 kB         176 kB
+├ ○ /business/setup                        460 kB          652 kB
+├ ƒ /dashboard/business                    5.38 kB         248 kB
+├ ƒ /dashboard/business/analytics          250 kB          546 kB
+├ ƒ /dashboard/business/appointments       20.2 kB         203 kB
+├ ƒ /dashboard/business/employees          5.94 kB         156 kB
+├ ƒ /dashboard/business/employees/[id]     10.2 kB         222 kB
+├ ƒ /dashboard/business/employees/metrics  3.64 kB         157 kB
+├ ƒ /dashboard/business/employees/new      6.33 kB         193 kB
+├ ƒ /dashboard/business/hours              5.48 kB         158 kB
+├ ƒ /dashboard/business/services           5.86 kB         156 kB
+├ ƒ /dashboard/business/services/[id]      5.82 kB         182 kB
+├ ƒ /dashboard/business/services/new       6.54 kB         208 kB
+├ ƒ /dashboard/business/settings           4.96 kB         192 kB
+├ ƒ /dashboard/business/settings/advanced  14.9 kB         234 kB
+├ ƒ /dashboard/client                      8.75 kB         162 kB
+├ ƒ /dashboard/client/ajustes              9.23 kB         174 kB
+├ ƒ /dashboard/client/appointments         6.37 kB         188 kB
+├ ƒ /dashboard/client/appointments/[id]    7.87 kB         195 kB
+├ ƒ /dashboard/client/profile              6.78 kB         160 kB
+├ ƒ /dashboard/client/settings             9.67 kB         184 kB
+└ ○ /marketplace                           8 kB            161 kB
++ First Load JS shared by all              87.5 kB
+  ├ chunks/2117-556c27deb6585678.js        31.7 kB
+  ├ chunks/fd9d1056-05e438e19abb6770.js    53.6 kB
+  └ other shared chunks (total)            2.17 kB
+
+
+ƒ Middleware                               63.3 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
