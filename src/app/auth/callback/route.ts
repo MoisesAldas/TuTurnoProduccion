@@ -4,7 +4,12 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const type = searchParams.get('type') // 'client' o 'business_owner'
+  // Try to resolve user type from query param first, then from cookie fallback
+  let type = searchParams.get('type') as 'client' | 'business_owner' | null // 'client' o 'business_owner'
+  const cookieType = request.cookies.get('auth_user_type')?.value as 'client' | 'business_owner' | undefined
+  if (!type && cookieType && (cookieType === 'client' || cookieType === 'business_owner')) {
+    type = cookieType
+  }
   const action = searchParams.get('action') // 'reset-password' o undefined
 
   console.log('🔐 Auth callback received:', { hasCode: !!code, userType: type, action })
@@ -13,12 +18,17 @@ export async function GET(request: NextRequest) {
     console.error('No authorization code received')
     // Si no hay tipo, ir al login general, si no, al específico
     const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
-    return NextResponse.redirect(`${origin}${loginPath}?error=no_code`)
+    const res = NextResponse.redirect(`${origin}${loginPath}?error=no_code`)
+    // Clean fallback cookie
+    res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+    return res
   }
 
   if (!type || !['client', 'business_owner'].includes(type)) {
     console.error('Invalid or missing user type')
-    return NextResponse.redirect(`${origin}/auth/client/login?error=invalid_type`)
+    const res = NextResponse.redirect(`${origin}/auth/client/login?error=invalid_type`)
+    res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+    return res
   }
 
   try {
@@ -30,13 +40,17 @@ export async function GET(request: NextRequest) {
     if (sessionError) {
       console.error('Error exchanging code for session:', sessionError)
       const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
-      return NextResponse.redirect(`${origin}${loginPath}?error=session_error`)
+      const res = NextResponse.redirect(`${origin}${loginPath}?error=session_error`)
+      res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+      return res
     }
 
     if (!session?.user) {
       console.error('No user in session after exchange')
       const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
-      return NextResponse.redirect(`${origin}${loginPath}?error=no_user`)
+      const res = NextResponse.redirect(`${origin}${loginPath}?error=no_user`)
+      res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+      return res
     }
 
     console.log('✅ Session created for user:', session.user.id, session.user.email)
@@ -45,7 +59,9 @@ export async function GET(request: NextRequest) {
     if (action === 'reset-password') {
       console.log('🔄 Password reset action detected, redirecting to reset page')
       const resetPath = type === 'business_owner' ? '/auth/business/reset-password' : '/auth/client/reset-password'
-      return NextResponse.redirect(`${origin}${resetPath}`)
+      const res = NextResponse.redirect(`${origin}${resetPath}`)
+      res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+      return res
     }
 
     // Verificar si el usuario ya existe en nuestra base de datos
@@ -59,7 +75,9 @@ export async function GET(request: NextRequest) {
       // Error diferente a "no encontrado"
       console.error('Error checking existing user:', userCheckError)
       const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
-      return NextResponse.redirect(`${origin}${loginPath}?error=database_error`)
+      const res = NextResponse.redirect(`${origin}${loginPath}?error=database_error`)
+      res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+      return res
     }
 
     if (existingUser) {
@@ -74,7 +92,9 @@ export async function GET(request: NextRequest) {
         await supabase.auth.signOut()
         // Redirigir al login opuesto para sugerir el tipo correcto
         const suggestionPath = type === 'business_owner' ? '/auth/client/login' : '/auth/business/login'
-        return NextResponse.redirect(`${origin}${suggestionPath}?error=email_different_type`)
+        const res = NextResponse.redirect(`${origin}${suggestionPath}?error=email_different_type`)
+        res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+        return res
       }
 
       // Usuario existe y es compatible, determinar redirección correcta
@@ -94,7 +114,9 @@ export async function GET(request: NextRequest) {
       }
 
       console.log('✅ Existing user, redirecting to:', redirectPath)
-      return NextResponse.redirect(`${origin}${redirectPath}`)
+      const res = NextResponse.redirect(`${origin}${redirectPath}`)
+      res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+      return res
     }
 
     // Verificar si el email ya está usado por otro usuario (diferente ID)
@@ -109,17 +131,23 @@ export async function GET(request: NextRequest) {
       console.log('Email already used by different user')
       await supabase.auth.signOut()
       const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
-      return NextResponse.redirect(`${origin}${loginPath}?error=email_exists`)
+      const res = NextResponse.redirect(`${origin}${loginPath}?error=email_exists`)
+      res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+      return res
     }
 
     // Usuario nuevo, redirigir a setup de perfil
     console.log('👤 New user detected, redirecting to profile setup with type:', type)
     const setupPath = type === 'business_owner' ? '/auth/business/setup' : '/auth/client/setup'
-    return NextResponse.redirect(`${origin}${setupPath}`)
+    const res = NextResponse.redirect(`${origin}${setupPath}`)
+    res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+    return res
 
   } catch (error) {
     console.error('Unexpected error in auth callback:', error)
     const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
-    return NextResponse.redirect(`${origin}${loginPath}?error=unexpected_error`)
+    const res = NextResponse.redirect(`${origin}${loginPath}?error=unexpected_error`)
+    res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+    return res
   }
 }

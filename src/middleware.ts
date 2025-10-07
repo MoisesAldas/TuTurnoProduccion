@@ -6,6 +6,19 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
+  // OAuth/Supabase sometimes returns to the site root with ?code=... instead of our callback route.
+  // If we detect a code (and we're not already under /auth), redirect to /auth/callback preserving the query.
+  const isAuthPath = req.nextUrl.pathname.startsWith('/auth')
+  const hasOAuthCode = req.nextUrl.searchParams.has('code')
+  if (!isAuthPath && hasOAuthCode) {
+    const redirectUrl = new URL('/auth/callback', req.url)
+    // Preserve all original query params
+    req.nextUrl.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value)
+    })
+    return NextResponse.redirect(redirectUrl)
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -113,12 +126,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/auth/login', req.url))
     }
   }
-
   return res
 }
 
 export const config = {
   matcher: [
+    '/',
     '/dashboard/:path*',
     '/profile/:path*',
     '/business/:path*',

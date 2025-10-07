@@ -196,6 +196,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('Starting Google sign in for:', userType)
       
+      // Persist the intended user type in a short-lived cookie as a fallback
+      // for cases where the provider/Supabase loses our "type" query param and returns to root.
+      // 10 minutes should be enough to complete the flow.
+      const maxAge = 60 * 10
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      document.cookie = `auth_user_type=${userType}; Max-Age=${maxAge}; Path=/; SameSite=Lax${isHttps ? '; Secure' : ''}`
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -425,6 +432,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signUpWithEmail = async (email: string, password: string, metadata: { first_name: string; last_name: string }, userType: 'client' | 'business_owner') => {
     try {
       console.log('Starting email sign up for:', userType)
+
+      // Persist user type for email flows as well, so the callback can recover it
+      const maxAge = 60 * 10
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'
+      document.cookie = `auth_user_type=${userType}; Max-Age=${maxAge}; Path=/; SameSite=Lax${isHttps ? '; Secure' : ''}`
 
       const { data, error } = await supabase.auth.signUp({
         email,
