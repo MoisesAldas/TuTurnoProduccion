@@ -122,10 +122,15 @@ export default function ClientDashboard() {
       const appointmentData = data || []
       setAppointments(appointmentData)
 
-      // Calculate stats
+      // Calculate stats in LOCAL timezone to avoid UTC date shifting
       const now = new Date()
-      const today = now.toISOString().split('T')[0]
-      const currentTime = now.toTimeString().slice(0, 5)
+      const y = now.getFullYear()
+      const m = String(now.getMonth() + 1).padStart(2, '0')
+      const d = String(now.getDate()).padStart(2, '0')
+      const today = `${y}-${m}-${d}`
+      const hh = String(now.getHours()).padStart(2, '0')
+      const mm = String(now.getMinutes()).padStart(2, '0')
+      const currentTime = `${hh}:${mm}`
 
       const upcoming = appointmentData.filter(apt => {
         const aptDate = apt.appointment_date
@@ -170,7 +175,10 @@ export default function ClientDashboard() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-EC', {
+    // Interpret 'YYYY-MM-DD' as LOCAL date to avoid UTC shift
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, (month || 1) - 1, day || 1)
+    return date.toLocaleDateString('es-EC', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
