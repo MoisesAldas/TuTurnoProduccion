@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,6 +18,16 @@ type Client = {
   last_name: string
   phone?: string
   avatar_url?: string
+}
+
+// Business-managed client (from public.business_clients)
+type BusinessClient = {
+  id: string
+  first_name: string
+  last_name: string | null
+  phone: string | null
+  email: string | null
+  is_active: boolean
 }
 
 interface CreateAppointmentModalProps {
@@ -42,14 +52,16 @@ export default function CreateAppointmentModal({
   const [employees, setEmployees] = useState<Employee[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [businessClients, setBusinessClients] = useState<BusinessClient[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
   // Form state
   const [currentStep, setCurrentStep] = useState(1)
-  const [clientType, setClientType] = useState<'registered' | 'walk_in'>('walk_in')
+  const [clientType, setClientType] = useState<'registered' | 'business_client' | 'walk_in'>('walk_in')
   const [selectedClientId, setSelectedClientId] = useState('')
+  const [selectedBusinessClientId, setSelectedBusinessClientId] = useState('')
   const [walkInName, setWalkInName] = useState('')
   const [walkInPhone, setWalkInPhone] = useState('')
   const [selectedEmployeeIdState, setSelectedEmployeeIdState] = useState(selectedEmployeeId || '')
@@ -74,6 +86,9 @@ export default function CreateAppointmentModal({
       if (appointment.client_id) {
         setClientType('registered')
         setSelectedClientId(appointment.client_id)
+      } else if ((appointment as any).business_client_id) {
+        setClientType('business_client')
+        setSelectedBusinessClientId((appointment as any).business_client_id)
       } else {
         setClientType('walk_in')
         setWalkInName(appointment.walk_in_client_name || '')
@@ -161,6 +176,19 @@ export default function CreateAppointmentModal({
         setClients(uniqueClients)
       }
 
+      // Load a first page of business clients (active)
+      const { data: bcData, error: bcError } = await supabase.rpc('list_business_clients', {
+        p_business_id: businessId,
+        p_search: null,
+        p_only_active: true,
+        p_limit: 50,
+        p_offset: 0,
+        p_sort_by: 'first_name',
+        p_sort_dir: 'asc',
+      })
+      if (bcError) throw bcError
+      setBusinessClients((bcData as any) || [])
+
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -194,7 +222,11 @@ export default function CreateAppointmentModal({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
 
-    const hasValidClient = clientType === 'registered' ? selectedClientId : walkInName.trim()
+    const hasValidClient = clientType === 'registered'
+      ? selectedClientId
+      : clientType === 'business_client'
+      ? selectedBusinessClientId
+      : walkInName.trim()
 
     if (!hasValidClient || !selectedEmployeeIdState || selectedServiceIds.length === 0) {
       toast({
@@ -231,8 +263,15 @@ export default function CreateAppointmentModal({
         appointmentData.client_id = selectedClientId
         appointmentData.walk_in_client_name = null
         appointmentData.walk_in_client_phone = null
+        appointmentData.business_client_id = null
+      } else if (clientType === 'business_client') {
+        appointmentData.client_id = null
+        appointmentData.business_client_id = selectedBusinessClientId
+        appointmentData.walk_in_client_name = null
+        appointmentData.walk_in_client_phone = null
       } else {
         appointmentData.client_id = null
+        appointmentData.business_client_id = null
         appointmentData.walk_in_client_name = walkInName.trim()
         appointmentData.walk_in_client_phone = walkInPhone.trim() || null
       }
@@ -323,7 +362,11 @@ export default function CreateAppointmentModal({
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return clientType === 'registered' ? !!selectedClientId : !!walkInName.trim()
+        return clientType === 'registered'
+          ? !!selectedClientId
+          : clientType === 'business_client'
+          ? !!selectedBusinessClientId
+          : !!walkInName.trim()
       case 2:
         return selectedServiceIds.length > 0 && !!selectedEmployeeIdState
       case 3:
@@ -424,7 +467,7 @@ export default function CreateAppointmentModal({
                   <UserIcon className="w-5 h-5 text-orange-600" />
                   Tipo de cliente *
                 </Label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <label
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       clientType === 'walk_in'
@@ -437,7 +480,7 @@ export default function CreateAppointmentModal({
                       name="clientType"
                       value="walk_in"
                       checked={clientType === 'walk_in'}
-                      onChange={(e) => setClientType(e.target.value as 'walk_in')}
+                      onChange={(e) => setClientType(e.target.value as any)}
                       className="sr-only"
                     />
                     <div className="text-center">
@@ -458,13 +501,34 @@ export default function CreateAppointmentModal({
                       name="clientType"
                       value="registered"
                       checked={clientType === 'registered'}
-                      onChange={(e) => setClientType(e.target.value as 'registered')}
+                      onChange={(e) => setClientType(e.target.value as any)}
                       className="sr-only"
                     />
                     <div className="text-center">
                       <div className="text-2xl mb-2">✓</div>
                       <p className="font-medium text-gray-900">Registrado</p>
                       <p className="text-xs text-gray-500 mt-1">Con cuenta</p>
+                    </div>
+                  </label>
+                  <label
+                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                      clientType === 'business_client'
+                        ? 'border-orange-600 bg-orange-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="clientType"
+                      value="business_client"
+                      checked={clientType === 'business_client'}
+                      onChange={(e) => setClientType(e.target.value as any)}
+                      className="sr-only"
+                    />
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">🏷️</div>
+                      <p className="font-medium text-gray-900">Cliente del negocio</p>
+                      <p className="text-xs text-gray-500 mt-1">Guardado por el negocio</p>
                     </div>
                   </label>
                 </div>
@@ -526,6 +590,52 @@ export default function CreateAppointmentModal({
                       ) : (
                         <div className="px-2 py-6 text-center text-sm text-gray-500">
                           No hay clientes registrados aún
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {clientType === 'business_client' && (
+                <div className="space-y-3">
+                  <Label htmlFor="bc-client">Cliente del negocio *</Label>
+                  <Input
+                    id="bc-client-search"
+                    type="text"
+                    placeholder="Buscar por nombre, teléfono o email..."
+                    value={searchTerm}
+                    onChange={async (e) => {
+                      setSearchTerm(e.target.value)
+                      const term = e.target.value.trim()
+                      const { data } = await supabase.rpc('list_business_clients', {
+                        p_business_id: businessId,
+                        p_search: term || null,
+                        p_only_active: true,
+                        p_limit: 50,
+                        p_offset: 0,
+                        p_sort_by: 'first_name',
+                        p_sort_dir: 'asc',
+                      })
+                      setBusinessClients((data as any) || [])
+                    }}
+                    className="mb-2"
+                  />
+                  <Select value={selectedBusinessClientId} onValueChange={setSelectedBusinessClientId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un cliente del negocio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {businessClients.length > 0 ? (
+                        businessClients.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.first_name} {c.last_name || ''}
+                            {c.phone ? ` - ${c.phone}` : ''}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-6 text-center text-sm text-gray-500">
+                          No hay clientes del negocio
                         </div>
                       )}
                     </SelectContent>

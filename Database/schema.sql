@@ -61,10 +61,12 @@ BEGIN
     ALTER TABLE public.appointments
       ADD CONSTRAINT appointments_client_source_xor
       CHECK (
-        (CASE WHEN client_id IS NOT NULL THEN 1 ELSE 0 END) +
-        (CASE WHEN business_client_id IS NOT NULL THEN 1 ELSE 0 END) +
-        (CASE WHEN (walk_in_client_name IS NOT NULL OR walk_in_client_phone IS NOT NULL) THEN 1 ELSE 0 END)
-      ) = 1;
+        (
+          (CASE WHEN client_id IS NOT NULL THEN 1 ELSE 0 END) +
+          (CASE WHEN business_client_id IS NOT NULL THEN 1 ELSE 0 END) +
+          (CASE WHEN (walk_in_client_name IS NOT NULL OR walk_in_client_phone IS NOT NULL) THEN 1 ELSE 0 END)
+        ) = 1
+      );
   END IF;
 END
 $$;

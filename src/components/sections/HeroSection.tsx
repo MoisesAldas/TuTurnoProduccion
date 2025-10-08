@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+
 export default function HeroSection() {
   const router = useRouter()
   const [statsAnimated, setStatsAnimated] = useState(false)
@@ -80,23 +81,25 @@ export default function HeroSection() {
         <div className="inline-flex items-center gap-3 mb-8 px-6 py-3 bg-white/90 backdrop-blur-md rounded-full border border-emerald-100 shadow-lg shadow-emerald-500/10 hover:shadow-xl hover:shadow-emerald-500/15 transition-all duration-300 group">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
           <Sparkles className="w-5 h-5 text-emerald-600 group-hover:rotate-12 transition-transform duration-300" />
-          <span className="text-gray-700 font-semibold">Plataforma #1 en gestión de citas</span>
+          <span className="text-gray-700 font-semibold">Plataforma para la gestión de citas</span>
           <Badge className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 ml-2 animate-pulse">
             Nuevo
           </Badge>
         </div>
 
         {/* Main Headline */}
+        {/* Main Headline */}
         <div className="mb-8 space-y-6">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-balance leading-tight mb-4">
             <span className="text-gray-900 block mb-4">
               Transforma tu negocio con
             </span>
-            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent block">
+            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent block pb-6 md:pb-4">
               citas inteligentes
             </span>
           </h1>
         </div>
+
 
         {/* Description */}
         <p className="text-xl md:text-2xl text-gray-600 text-balance mb-12 leading-relaxed max-w-4xl mx-auto">
@@ -112,18 +115,19 @@ export default function HeroSection() {
             onClick={() => router.push('/auth/client/login')}
             className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:via-teal-700 hover:to-cyan-700 text-white px-10 py-6 text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 group"
           >
-            <Sparkles className="mr-3 w-6 h-6 group-hover:rotate-12 transition-transform" />
-            Comenzar Gratis Ahora
+            <Sparkles className="mr-3 w-6 h-6 group-hover:rotate-12 transition-transform " />
+            Reserva Ahora
             <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
           </Button>
 
           <Button
             size="lg"
             variant="outline"
+            onClick={() => router.push('/auth/business/login')}
             className="border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 px-10 py-6 text-lg group hover:shadow-lg transition-all duration-300"
           >
             <Play className="mr-3 w-6 h-6 group-hover:scale-110 transition-transform" />
-            Ver Demo Interactiva
+            Publica tu negocio
           </Button>
         </div>
 

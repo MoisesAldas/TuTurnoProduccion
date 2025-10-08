@@ -714,3 +714,270 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.get_employee_stats IS 'Retorna estadísticas de trabajo de un empleado en período específico';
+
+-- Lista de citas con filtros, paginación y conteo total
+-- Uso: owner del negocio (panel de negocio). SECURITY DEFINER + guard de tenant.
+CREATE OR REPLACE FUNCTION public.get_appointments_list(
+  p_business_id uuid,
+  p_employee_ids uuid[] DEFAULT NULL,
+  p_service_ids uuid[] DEFAULT NULL,
+  p_statuses public.appointment_status[] DEFAULT NULL,
+  p_date_from date DEFAULT NULL,
+  p_date_to date DEFAULT NULL,
+  p_search text DEFAULT NULL,                 -- busca por nombre/teléfono (cliente o walk-in)
+  p_walkin_filter text DEFAULT 'any',         -- 'any' | 'only' | 'exclude'
+  p_sort_by text DEFAULT 'appointment_date,start_time', -- whitelist interno
+  p_sort_dir text DEFAULT 'asc',              -- 'asc' | 'desc'
+  p_limit int DEFAULT 25,
+  p_offset int DEFAULT 0
+)
+RETURNS TABLE (
+  id uuid,
+  appointment_date date,
+  start_time time,
+  end_time time,
+  status public.appointment_status,
+  total_price numeric,
+  employee_id uuid,
+  employee_name text,
+  client_id uuid,
+  client_name text,
+  client_phone text,
+  is_walk_in boolean,
+  service_names text[],
+  total_count bigint
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_sort_by text;
+  v_sort_dir text;
+BEGIN
+  -- Guard multitenant: el usuario autenticado debe ser owner del negocio
+  IF NOT EXISTS (
+    SELECT 1 FROM public.businesses b
+    WHERE b.id = p_business_id
+      AND b.owner_id = auth.uid()
+  ) THEN
+    RAISE EXCEPTION 'not_allowed';
+  END IF;
+
+  -- Normalizar sort_by a una de las columnas permitidas
+  -- Admite combinaciones como 'appointment_date,start_time'
+  v_sort_by := lower(p_sort_by);
+  IF v_sort_by NOT IN ('appointment_date', 'start_time', 'status', 'total_price', 'employee_name', 'client_name', 'appointment_date,start_time') THEN
+    v_sort_by := 'appointment_date,start_time';
+  END IF;
+
+  -- Normalizar sort_dir
+  v_sort_dir := lower(p_sort_dir);
+  IF v_sort_dir NOT IN ('asc','desc') THEN
+    v_sort_dir := 'asc';
+  END IF;
+
+  RETURN QUERY
+  WITH base AS (
+    SELECT
+      a.id,
+      a.appointment_date,
+      a.start_time,
+      a.end_time,
+      a.status,
+      a.total_price,
+      a.employee_id,
+      e.first_name || ' ' || e.last_name AS employee_name,
+      a.client_id,
+      -- preferir usuario; si es walk-in, usar campos walk_in
+      COALESCE(u.first_name || ' ' || u.last_name, a.walk_in_client_name, 'Cliente') AS client_name,
+      COALESCE(u.phone, a.walk_in_client_phone) AS client_phone,
+      (a.client_id IS NULL) AS is_walk_in,
+      -- nombres de servicios agregados
+      ARRAY(
+        SELECT s.name
+        FROM public.appointment_services aps
+        JOIN public.services s ON s.id = aps.service_id
+        WHERE aps.appointment_id = a.id
+      ) AS service_names
+    FROM public.appointments a
+    LEFT JOIN public.users u ON u.id = a.client_id
+    LEFT JOIN public.employees e ON e.id = a.employee_id
+    WHERE a.business_id = p_business_id
+      -- filtros opcionales
+      AND (p_employee_ids IS NULL OR a.employee_id = ANY(p_employee_ids))
+      AND (
+        p_service_ids IS NULL
+        OR EXISTS (
+          SELECT 1
+          FROM public.appointment_services aps
+          WHERE aps.appointment_id = a.id
+            AND aps.service_id = ANY(p_service_ids)
+        )
+      )
+      AND (p_statuses IS NULL OR a.status = ANY(p_statuses))
+      AND (p_date_from IS NULL OR a.appointment_date >= p_date_from)
+      AND (p_date_to   IS NULL OR a.appointment_date <= p_date_to)
+      AND (
+        p_walkin_filter = 'any' OR
+        (p_walkin_filter = 'only' AND a.client_id IS NULL) OR
+        (p_walkin_filter = 'exclude' AND a.client_id IS NOT NULL)
+      )
+      AND (
+        p_search IS NULL OR p_search = '' OR
+        -- búsqueda en nombre y teléfono, tanto de user como de walk-in
+        (COALESCE(u.first_name || ' ' || u.last_name, a.walk_in_client_name, '') ILIKE '%' || p_search || '%')
+        OR (COALESCE(u.phone, a.walk_in_client_phone, '') ILIKE '%' || p_search || '%')
+      )
+  ),
+  -- Conteo total después de filtros
+  counted AS (
+    SELECT
+      b.*,
+      count(*) OVER() AS total_count
+    FROM base b
+  ),
+  -- Ordenamiento seguro por whitelist
+  ordered AS (
+    SELECT * FROM counted
+    ORDER BY
+      CASE WHEN v_sort_by = 'appointment_date,start_time' AND v_sort_dir = 'asc'  THEN appointment_date END ASC,
+      CASE WHEN v_sort_by = 'appointment_date,start_time' AND v_sort_dir = 'asc'  THEN start_time END ASC,
+      CASE WHEN v_sort_by = 'appointment_date,start_time' AND v_sort_dir = 'desc' THEN appointment_date END DESC,
+      CASE WHEN v_sort_by = 'appointment_date,start_time' AND v_sort_dir = 'desc' THEN start_time END DESC,
+
+      CASE WHEN v_sort_by = 'appointment_date' AND v_sort_dir = 'asc'  THEN appointment_date END ASC,
+      CASE WHEN v_sort_by = 'appointment_date' AND v_sort_dir = 'desc' THEN appointment_date END DESC,
+
+      CASE WHEN v_sort_by = 'start_time' AND v_sort_dir = 'asc'  THEN start_time END ASC,
+      CASE WHEN v_sort_by = 'start_time' AND v_sort_dir = 'desc' THEN start_time END DESC,
+
+      CASE WHEN v_sort_by = 'status' AND v_sort_dir = 'asc'  THEN status::text END ASC,
+      CASE WHEN v_sort_by = 'status' AND v_sort_dir = 'desc' THEN status::text END DESC,
+
+      CASE WHEN v_sort_by = 'total_price' AND v_sort_dir = 'asc'  THEN total_price END ASC,
+      CASE WHEN v_sort_by = 'total_price' AND v_sort_dir = 'desc' THEN total_price END DESC,
+
+      CASE WHEN v_sort_by = 'employee_name' AND v_sort_dir = 'asc'  THEN employee_name END ASC,
+      CASE WHEN v_sort_by = 'employee_name' AND v_sort_dir = 'desc' THEN employee_name END DESC,
+
+      CASE WHEN v_sort_by = 'client_name' AND v_sort_dir = 'asc'  THEN client_name END ASC,
+      CASE WHEN v_sort_by = 'client_name' AND v_sort_dir = 'desc' THEN client_name END DESC
+  )
+  SELECT
+    id, appointment_date, start_time, end_time, status, total_price,
+    employee_id, employee_name, client_id, client_name, client_phone,
+    is_walk_in, service_names, total_count
+  FROM ordered
+  LIMIT GREATEST(p_limit, 1)
+  OFFSET GREATEST(p_offset, 0);
+
+END;
+$$;
+
+COMMENT ON FUNCTION public.get_appointments_list IS
+'Lista de citas con filtros (empleados, servicios, estados, fechas, búsqueda), ordenamiento y paginación; restringida al owner del negocio.';
+-- Genera los slots disponibles para un empleado en una fecha
+-- Respeta citas existentes, ausencias y horario del negocio
+CREATE OR REPLACE FUNCTION public.get_available_time_slots(
+  p_business_id UUID,
+  p_employee_id UUID,
+  p_date DATE,
+  p_business_start TIME,      -- ej: '08:00'
+  p_business_end TIME,        -- ej: '20:00'
+  p_service_duration_minutes INT,  -- duración del servicio
+  p_slot_step_minutes INT         -- tamaño del paso entre slots (ej: 15)
+)
+RETURNS TABLE(slot_time TIME) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_start_ts TIMESTAMP;
+  v_end_ts   TIMESTAMP;
+BEGIN
+  -- Definir rango del día de trabajo
+  v_start_ts := (p_date::timestamp + p_business_start);
+  v_end_ts   := (p_date::timestamp + p_business_end);
+
+  RETURN QUERY
+  WITH
+  -- Candidatos: series de slots por step dentro del horario del negocio
+  candidates AS (
+    SELECT generate_series(v_start_ts, v_end_ts, make_interval(mins => p_slot_step_minutes)) AS slot_start_ts
+  ),
+
+  -- Fin de cada slot (duración del servicio)
+  candidate_slots AS (
+    SELECT 
+      slot_start_ts,
+      slot_start_ts + make_interval(mins => p_service_duration_minutes) AS slot_end_ts
+    FROM candidates
+    WHERE slot_start_ts < v_end_ts -- por seguridad
+  ),
+
+  -- Citas ocupadas del empleado ese día (incluye walk-ins)
+  occupied AS (
+    SELECT 
+      (p_date::timestamp + a.start_time) AS appt_start_ts,
+      (p_date::timestamp + a.end_time)   AS appt_end_ts
+    FROM public.appointments a
+    WHERE a.business_id = p_business_id
+      AND a.employee_id = p_employee_id
+      AND a.appointment_date = p_date
+      AND a.status NOT IN ('cancelled','no_show')
+  ),
+
+  -- Ausencias del empleado ese día
+  absences AS (
+    SELECT
+      CASE 
+        WHEN ea.is_full_day THEN p_date::timestamp + time '00:00'
+        ELSE p_date::timestamp + COALESCE(ea.start_time, time '00:00')
+      END AS abs_start_ts,
+      CASE 
+        WHEN ea.is_full_day THEN p_date::timestamp + time '23:59:59'
+        ELSE p_date::timestamp + COALESCE(ea.end_time, time '23:59:59')
+      END AS abs_end_ts
+    FROM public.employee_absences ea
+    WHERE ea.employee_id = p_employee_id
+      AND ea.absence_date = p_date
+  )
+
+  SELECT (slot_start_ts)::time AS slot_time
+  FROM candidate_slots cs
+  -- Debe terminar antes o igual al fin de jornada
+  WHERE cs.slot_end_ts <= v_end_ts
+
+  -- No debe solaparse con ninguna cita ocupada
+  AND NOT EXISTS (
+    SELECT 1
+    FROM occupied o
+    WHERE cs.slot_start_ts < o.appt_end_ts
+      AND cs.slot_end_ts   > o.appt_start_ts
+  )
+
+  -- No debe caer dentro de una ausencia
+  AND NOT EXISTS (
+    SELECT 1
+    FROM absences ab
+    WHERE cs.slot_start_ts < ab.abs_end_ts
+      AND cs.slot_end_ts   > ab.abs_start_ts
+  )
+
+  -- Opcional: validar reglas adicionales centralizadas
+  -- AND (
+  --   SELECT COALESCE(
+  --     (SELECT public.is_employee_available(
+  --        p_employee_id,
+  --        p_date,
+  --        (cs.slot_start_ts)::time,
+  --        (cs.slot_end_ts)::time
+  --      )), true)
+  -- );
+
+  ORDER BY slot_time;
+END;
+$$;
+
+COMMENT ON FUNCTION public.get_available_time_slots IS
+'Devuelve los horarios disponibles para un empleado considerando citas, ausencias y horario del negocio.';

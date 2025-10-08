@@ -42,6 +42,7 @@ type NavItem = {
 const navigation: NavItem[] = [
   { name: 'Inicio', href: '/dashboard/business', icon: Home },
   { name: 'Citas', href: '/dashboard/business/appointments', icon: Calendar },
+  { name: 'Clientes', href: '/dashboard/business/clients', icon: Users },
   { name: 'Servicios', href: '/dashboard/business/services', icon: Briefcase },
   { name: 'Empleados', href: '/dashboard/business/employees', icon: Users },
   { name: 'Horarios', href: '/dashboard/business/hours', icon: Clock },
