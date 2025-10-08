@@ -24,18 +24,13 @@ import {
   Menu,
   X,
   Clock,
-  Sliders
+  Sliders,
+  List
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Toaster } from '@/components/ui/toaster'
 import { createClient } from '@/lib/supabaseClient'
-
-interface NavItem {
-  name: string
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-}
 
 const navigation: NavItem[] = [
   { name: 'Inicio', href: '/dashboard/business', icon: Home },
@@ -44,6 +39,7 @@ const navigation: NavItem[] = [
   { name: 'Empleados', href: '/dashboard/business/employees', icon: Users },
   { name: 'Horarios', href: '/dashboard/business/hours', icon: Clock },
   { name: 'Análisis', href: '/dashboard/business/analytics', icon: BarChart3 },
+  { name: 'Listar', href: '/dashboard/business/listar', icon: List },
   { name: 'Ajustes Avanzados', href: '/dashboard/business/settings/advanced', icon: Sliders },
   { name: 'Configuración', href: '/dashboard/business/settings', icon: Settings },
 ]

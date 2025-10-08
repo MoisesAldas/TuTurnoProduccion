@@ -164,19 +164,25 @@ export default function BookingPage() {
     const selectedDateStr = formatDateForDB(selectedDate)
 
     try {
-      // Fetch existing appointments for the employee on the selected date
-      const { data: employeeAppointments, error: employeeError } = await supabase
-        .from('appointments')
-        .select('start_time, end_time, status')
-        .eq('employee_id', selectedEmployee.id)
-        .eq('appointment_date', selectedDateStr)
-        .in('status', ['confirmed', 'pending'])
+      // 1) Ask Postgres to compute availability with RPC
+      const businessStart = `${String(startHour).padStart(2,'0')}:00:00`
+      const businessEnd = `${String(endHour).padStart(2,'0')}:00:00`
 
-      if (employeeError) {
-        console.error('Error fetching employee appointments:', employeeError)
+      const { data: rpcSlots, error: rpcError } = await supabase.rpc('get_available_time_slots', {
+        p_business_id: businessId,
+        p_employee_id: selectedEmployee.id,
+        p_date: selectedDateStr,
+        p_business_start: businessStart,
+        p_business_end: businessEnd,
+        p_service_duration_minutes: selectedService.duration_minutes,
+        p_slot_step_minutes: slotDuration
+      })
+
+      if (rpcError) {
+        console.error('Error fetching available slots (RPC):', rpcError)
       }
 
-      // Fetch existing appointments for the client on the selected date (if user is logged in)
+      // 2) Optionally exclude overlaps with the client's own appointments for that date
       let clientAppointments: any[] = []
       if (authState.user) {
         const { data: clientAppts, error: clientError } = await supabase
@@ -184,7 +190,7 @@ export default function BookingPage() {
           .select('start_time, end_time, status')
           .eq('client_id', authState.user.id)
           .eq('appointment_date', selectedDateStr)
-          .in('status', ['confirmed', 'pending'])
+          .in('status', ['confirmed', 'pending', 'in_progress'])
 
         if (clientError) {
           console.error('Error fetching client appointments:', clientError)
@@ -193,65 +199,27 @@ export default function BookingPage() {
         }
       }
 
-      // Combine all conflicting appointments
-      const allConflictingAppointments = [
-        ...(employeeAppointments || []),
-        ...clientAppointments
-      ]
+      const filtered = (rpcSlots || []).filter((row: any) => {
+        const timeStr: string = row.slot_time ?? row.slot_time?.slot_time // support plain or nested
+        if (!timeStr) return false
 
-      console.log('=== DEBUGGING APPOINTMENTS ===')
-      console.log('Selected employee ID:', selectedEmployee.id)
-      console.log('Selected date string:', selectedDateStr)
-      console.log('Current user ID:', authState.user?.id)
-      console.log('Employee appointments:', employeeAppointments)
-      console.log('Client appointments:', clientAppointments)
-      console.log('Total conflicting appointments:', allConflictingAppointments)
-      console.log('=== END DEBUGGING ===')
+        const slotStart = new Date(`${selectedDateStr}T${timeStr}`)
+        const slotEnd = new Date(slotStart.getTime() + selectedService.duration_minutes * 60000)
 
-      // Generate all possible time slots
-      for (let hour = startHour; hour < endHour; hour++) {
-        for (let minute = 0; minute < 60; minute += slotDuration) {
-          const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+        const conflicts = clientAppointments.some(ap => {
+          const apStart = new Date(`${selectedDateStr}T${ap.start_time}`)
+          const apEnd = new Date(`${selectedDateStr}T${ap.end_time}`)
+          return slotStart < apEnd && slotEnd > apStart
+        })
+        return !conflicts
+      })
 
-          // Calculate slot start and end times
-          const slotStart = new Date(`${selectedDateStr}T${timeString}:00`)
-          const slotEnd = new Date(slotStart.getTime() + selectedService.duration_minutes * 60000)
+      const newSlots: TimeSlot[] = filtered.map((row: any) => {
+        const t: string = (row.slot_time as string).substring(0,5)
+        return { time: t, available: true }
+      })
 
-          // Check if this slot conflicts with existing appointments (employee or client)
-          const hasConflict = allConflictingAppointments.some(appointment => {
-            const appointmentStart = new Date(`${selectedDateStr}T${appointment.start_time}`)
-            const appointmentEnd = new Date(`${selectedDateStr}T${appointment.end_time}`)
-
-            // Check for overlap
-            const overlap = (slotStart < appointmentEnd && slotEnd > appointmentStart)
-
-            // Debug specific conflict
-            if (overlap) {
-              console.log(`CONFLICT DETECTED:`)
-              console.log(`  Slot: ${timeString} (${slotStart.toISOString()} - ${slotEnd.toISOString()})`)
-              console.log(`  Appointment: ${appointment.start_time} - ${appointment.end_time} (${appointmentStart.toISOString()} - ${appointmentEnd.toISOString()})`)
-            }
-
-            return overlap
-          })
-
-          // Check if the slot would extend beyond business hours
-          const slotEndHour = slotEnd.getHours()
-          const slotEndMinute = slotEnd.getMinutes()
-          const wouldExtendBeyondHours = slotEndHour > endHour || (slotEndHour === endHour && slotEndMinute > 0)
-
-          // Only add slots that are available (no conflicts and within business hours)
-          if (!hasConflict && !wouldExtendBeyondHours) {
-            slots.push({
-              time: timeString,
-              available: true
-            })
-          }
-        }
-      }
-
-      console.log('Generated available slots:', slots.length)
-      setAvailableSlots(slots)
+      setAvailableSlots(newSlots)
 
     } catch (error) {
       console.error('Error generating time slots:', error)
@@ -770,6 +738,12 @@ export default function BookingPage() {
                         </Button>
                       ))}
                     </div>
+                    {availableSlots.length === 0 && (
+                      <div className="mt-4 p-4 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-900">
+                        <div className="font-medium">El profesional no tiene disponibilidad en esta fecha.</div>
+                        <div className="text-sm mt-1">Por favor, intenta con otra fecha u otro profesional.</div>
+                      </div>
+                    )}
                     {selectedTime && (
                       <div className="mt-6 text-center">
                         <Button onClick={handleDateTimeConfirm} size="lg">
