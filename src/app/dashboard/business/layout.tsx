@@ -27,10 +27,17 @@ import {
   Sliders,
   List
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Toaster } from '@/components/ui/toaster'
 import { createClient } from '@/lib/supabaseClient'
+
+type NavItem = {
+  name: string
+  href: string
+  icon: LucideIcon
+}
 
 const navigation: NavItem[] = [
   { name: 'Inicio', href: '/dashboard/business', icon: Home },
@@ -44,11 +51,7 @@ const navigation: NavItem[] = [
   { name: 'Configuración', href: '/dashboard/business/settings', icon: Settings },
 ]
 
-export default function BusinessLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
   const router = useRouter()
   const { authState, signOut } = useAuth()
@@ -329,3 +332,5 @@ export default function BusinessLayout({
     </div>
   )
 }
+
+export default DashboardLayout
