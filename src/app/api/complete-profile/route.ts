@@ -21,9 +21,7 @@ export async function POST(request: NextRequest) {
     if (sessionError || !session?.user) {
       console.error('No session found:', sessionError)
       return NextResponse.json({ error: 'No hay sesión activa' }, { status: 401 })
-    }
-
-    console.log('🔐 Session found for user:', session.user.id, 'email:', session.user.email)
+    }
 
     // Verificar si el usuario ya existía en la tabla users (para saber si es nuevo)
     const { data: existingUserInDb } = await supabase
@@ -57,9 +55,7 @@ export async function POST(request: NextRequest) {
       avatar_url: session.user.user_metadata?.avatar_url || null,
       is_business_owner: user_type === 'business_owner',
       is_client: user_type === 'client',
-    }
-
-    console.log('📝 Creating/updating user with data:', userData)
+    }
 
     const { data: user, error } = await supabase
       .from('users')
@@ -72,17 +68,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         error: 'Error al crear el perfil: ' + error.message
       }, { status: 500 })
-    }
-
-    console.log('✅ User created/updated successfully:', user.id)
+    }
 
     // 🔥 ENVIAR EMAIL DE BIENVENIDA si es usuario de Google
     const isGoogleUser = session.user.app_metadata?.provider === 'google'
     const isNewUser = !existingUserInDb // Es nuevo si no existía antes en la tabla users
 
     if (isGoogleUser && isNewUser) {
-      try {
-        console.log('📧 Sending welcome email to:', user.email)
+      try {
 
         const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-email`, {
           method: 'POST',
@@ -101,8 +94,7 @@ export async function POST(request: NextRequest) {
           })
         })
 
-        if (emailResponse.ok) {
-          console.log('✅ Welcome email sent successfully')
+        if (emailResponse.ok) {
         } else {
           const errorText = await emailResponse.text()
           console.error('⚠️ Failed to send welcome email:', errorText)
@@ -127,9 +119,7 @@ export async function POST(request: NextRequest) {
       redirectUrl = business ? '/dashboard/business' : '/business/setup'
     } else {
       redirectUrl = '/dashboard/client'
-    }
-
-    console.log('🚀 Redirect URL determined:', redirectUrl)
+    }
 
     return NextResponse.json({
       user,

@@ -117,7 +117,7 @@ export default function SetupPage() {
         ? `${ecuadorConfig.code}${data.phone_number}`
         : ''
 
-      console.log('🚀 Submitting profile setup:', { ...data, user_type: userType, fullPhone })
+      ('🚀 Submitting profile setup:', { ...data, user_type: userType, fullPhone })
 
       const response = await fetch('/api/complete-profile', {
         method: 'POST',
@@ -145,14 +145,14 @@ export default function SetupPage() {
       }
 
       const result = await response.json()
-      console.log('✅ Profile completed successfully:', result)
+      ('✅ Profile completed successfully:', result)
 
       const redirectPath = result.redirectUrl
-      console.log('🚀 Redirecting to:', redirectPath)
+      ('🚀 Redirecting to:', redirectPath)
 
       // Forzar actualización del estado de autenticación
       await forceRefreshUser()
-      console.log('✅ User state updated, redirecting...')
+      ('✅ User state updated, redirecting...')
 
       setTimeout(() => {
         router.replace(redirectPath)

@@ -205,8 +205,8 @@ export default function EditEmployeePage() {
       setUploadingAvatar(true)
       setShowCropper(false)
 
-      console.log(`📁 Archivo original: ${originalFile?.name} (${formatFileSize(originalFile?.size || 0)})`)
-      console.log(`✂️ Archivo recortado: ${croppedFile.name} (${formatFileSize(croppedFile.size)})`)
+      (`📁 Archivo original: ${originalFile?.name} (${formatFileSize(originalFile?.size || 0)})`)
+      (`✂️ Archivo recortado: ${croppedFile.name} (${formatFileSize(croppedFile.size)})`)
 
       // Comprimir imagen después del crop (ULTRA calidad para tesis)
       const compressedFile = await compressImage(croppedFile, {
@@ -216,9 +216,9 @@ export default function EditEmployeePage() {
         maxSizeKB: 300
       })
 
-      console.log(`🗜️ Archivo final: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
+      (`🗜️ Archivo final: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
       if (originalFile) {
-        console.log(`📊 Reducción total: ${Math.round((1 - compressedFile.size / originalFile.size) * 100)}%`)
+        (`📊 Reducción total: ${Math.round((1 - compressedFile.size / originalFile.size) * 100)}%`)
       }
 
       setAvatarFile(compressedFile)

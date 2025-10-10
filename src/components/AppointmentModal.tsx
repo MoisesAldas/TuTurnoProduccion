@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabaseClient'
+import { formatSpanishDate } from '@/lib/dateUtils'
 import CheckoutModal from './CheckoutModal'
 import {
   DropdownMenu,
@@ -147,6 +148,20 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
 
       if (error) throw error
 
+      // Send no-show email if status is 'no_show'
+      if (newStatus === 'no_show') {
+        try {
+          await fetch('/api/send-no-show-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appointmentId: appointment.id })
+          })
+        } catch (emailError) {
+          console.warn('⚠️ Failed to send no-show email:', emailError)
+          // Don't block the operation if email fails
+        }
+      }
+
       toast({
         title: 'Estado actualizado',
         description: 'El estado de la cita ha sido actualizado correctamente.',
@@ -174,6 +189,21 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
         .eq('id', appointment.id)
 
       if (error) throw error
+
+      // Send cancellation email
+      try {
+        await fetch('/api/send-cancellation-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: appointment.id,
+            cancellationReason: 'Cancelada por el negocio'
+          })
+        })
+      } catch (emailError) {
+        console.warn('⚠️ Failed to send cancellation email:', emailError)
+        // Don't block the operation if email fails
+      }
 
       toast({
         title: 'Cita cancelada',
@@ -241,7 +271,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
   }
 
   const formatDate = (date: string) => {
-    return new Date(date + 'T00:00:00').toLocaleDateString('es-ES', {
+    return formatSpanishDate(date, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -332,9 +362,13 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
               </div>
               <div className="flex items-center gap-4">
                 <Avatar className="w-16 h-16 border-2 border-orange-500">
-                  {appointment.users?.avatar_url ? (
-                    <AvatarImage src={appointment.users.avatar_url} />
-                  ) : null}
+                  {appointment.users?.avatar_url && (
+                    <AvatarImage
+                      src={appointment.users.avatar_url}
+                      alt={`${appointment.users.first_name} ${appointment.users.last_name}`}
+                      className="object-cover"
+                    />
+                  )}
                   <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-lg">
                     {appointment.users
                       ? getInitials(appointment.users.first_name, appointment.users.last_name)

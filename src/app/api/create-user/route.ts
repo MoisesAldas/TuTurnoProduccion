@@ -47,9 +47,7 @@ export async function POST(request: NextRequest) {
       avatar_url: session.user.user_metadata?.avatar_url || null,
       is_business_owner: user_type === 'business_owner',
       is_client: user_type === 'client',
-    }
-
-    console.log('Creating user with data:', userData)
+    }
 
     const { data: user, error } = await supabase
       .from('users')
@@ -62,9 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         error: 'Error al crear el perfil: ' + error.message 
       }, { status: 500 })
-    }
-
-    console.log('User created successfully:', user)
+    }
     
     return NextResponse.json(user, { status: 201 })
 

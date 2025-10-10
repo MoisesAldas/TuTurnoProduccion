@@ -39,8 +39,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Evitar múltiples inicializaciones
-    if (isInitialized) {
-      console.log('🔄 Auth already initialized, skipping...')
+    if (isInitialized) {
       return
     }
     
@@ -48,8 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Obtener sesión inicial
     const initializeAuth = async () => {
-      try {
-        console.log('🔄 Initializing auth state...')
+      try {
         setIsInitialized(true)
         
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -60,16 +58,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.error('Error getting session:', error)
           setAuthState({ user: null, session: null, loading: false })
           return
-        }
-
-        console.log('📋 Session found:', !!session, session?.user?.id)
+        }
         setAuthState(prev => ({ ...prev, session }))
         
-        if (session?.user) {
-          console.log('👤 Fetching user profile for:', session.user.id)
+        if (session?.user) {
           await fetchUserProfile(session.user.id)
-        } else {
-          console.log('❌ No user in session')
+        } else {
           setAuthState(prev => ({ ...prev, loading: false }))
         }
       } catch (error) {
@@ -83,8 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth()
 
     // Timeout de seguridad para evitar loading infinito
-    const loadingTimeout = setTimeout(() => {
-      console.log('⏰ Auth initialization timeout - forcing loading to false')
+    const loadingTimeout = setTimeout(() => {
       if (isMounted) {
         setAuthState(prev => ({ ...prev, loading: false }))
       }
@@ -97,25 +90,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id)
+      async (event, session) => {
         
         if (!isMounted) return // Evitar actualizaciones si el componente se desmontó
         
         setAuthState(prev => ({ ...prev, session }))
         
-        if (event === 'SIGNED_IN' && session?.user) {
-          console.log('🔄 User signed in, fetching profile...')
+        if (event === 'SIGNED_IN' && session?.user) {
           await fetchUserProfile(session.user.id)
-        } else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out')
+        } else if (event === 'SIGNED_OUT') {
           setAuthState({
             user: null,
             session: null,
             loading: false,
           })
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          console.log('🔄 Token refreshed, updating user profile...')
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           await fetchUserProfile(session.user.id)
         }
       }
@@ -125,8 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const fetchUserProfile = async (userId: string) => {
-    try {
-      console.log('🔍 Fetching user profile for:', userId)
+    try {
       
       const { data, error } = await supabase
         .from('users')
@@ -134,18 +122,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('id', userId)
         .single()
 
-      if (error) {
-        console.log('❌ User not found in database, needs profile setup:', error.message)
-        console.log('🔍 Error details:', error)
+      if (error) {
         // Usuario no existe en la tabla users, necesita completar perfil
         setAuthState(prev => ({ ...prev, user: null, loading: false }))
         return
-      }
-
-      console.log('✅ User profile found:', data)
-      console.log('🔄 Setting auth state with user data...')
-      setAuthState(prev => ({ ...prev, user: data, loading: false }))
-      console.log('✅ Auth state updated successfully')
+      }
+      setAuthState(prev => ({ ...prev, user: data, loading: false }))
     } catch (error) {
       console.error('💥 Error fetching user profile:', error)
       setAuthState(prev => ({ ...prev, user: null, loading: false }))
@@ -154,18 +136,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Método para verificar y actualizar el estado después de completar perfil
   const checkAndUpdateUserState = async () => {
-    try {
-      console.log('🔍 Checking and updating user state...')
+    try {
       
       // Obtener sesión actual
       const { data: { session } } = await supabase.auth.getSession()
       
-      if (!session?.user) {
-        console.log('❌ No session found')
+      if (!session?.user) {
         return false
-      }
-
-      console.log('📋 Session found, checking user profile...')
+      }
       
       // Verificar si el usuario existe en la base de datos
       const { data: user, error } = await supabase
@@ -174,13 +152,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('id', session.user.id)
         .single()
 
-      if (error) {
-        console.log('❌ User not found in database:', error.message)
+      if (error) {
         return false
       }
 
-      if (user) {
-        console.log('✅ User found in database, updating state:', user)
+      if (user) {
         setAuthState(prev => ({ ...prev, user, loading: false }))
         return true
       }
@@ -193,8 +169,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signInWithGoogle = async (userType: 'client' | 'business_owner') => {
-    try {
-      console.log('Starting Google sign in for:', userType)
+    try {
       
       // Persist the intended user type in a short-lived cookie as a fallback
       // for cases where the provider/Supabase loses our "type" query param and returns to root.
@@ -246,9 +221,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (!authState.session?.user) {
         throw new Error('No authenticated user')
-      }
-
-      console.log('⚠️ DEPRECATED: updateProfile method is deprecated. Use /api/complete-profile endpoint instead')
+      }
 
       // Verificar que el email no esté siendo usado para otro tipo de usuario
       const { data: existingUser } = await supabase
@@ -281,9 +254,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (error) {
         console.error('Error updating profile:', error)
         throw error
-      }
-
-      console.log('Profile updated successfully:', user)
+      }
       setAuthState(prev => ({ ...prev, user }))
       return user
     } catch (error) {
@@ -293,24 +264,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const refreshUser = async (force: boolean = false) => {
-    if (authState.session?.user) {
-      console.log('🔄 Refreshing user profile...', force ? '(forced)' : '')
+    if (authState.session?.user) {
       await fetchUserProfile(authState.session.user.id)
     }
   }
 
   // Método para forzar la actualización del estado después de completar perfil
   const forceRefreshUser = async (): Promise<void> => {
-    try {
-      console.log('🔄 Force refreshing user after profile completion...')
+    try {
       
       // Usar el nuevo método que verifica y actualiza el estado
       const success = await checkAndUpdateUserState()
       
-      if (success) {
-        console.log('✅ User state updated successfully')
-      } else {
-        console.log('❌ Failed to update user state')
+      if (success) {
+      } else {
       }
       
       // No return value to match Promise<void>
@@ -322,8 +289,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Nuevo método para validar y redirigir después de completar perfil
   const handleProfileCompleted = async () => {
-    try {
-      console.log('✅ Profile completed, refreshing user data...')
+    try {
       
       // Forzar actualización del estado
       if (authState.session?.user) {
@@ -335,8 +301,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (authState.user) {
           const redirectPath = authState.user.is_business_owner
             ? '/dashboard/business'
-            : '/dashboard/client'
-          console.log('🚀 Redirecting to:', redirectPath)
+            : '/dashboard/client'
           router.replace(redirectPath)
         }
       }, 100)
@@ -347,37 +312,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Método de diagnóstico para verificar el estado actual
   const diagnoseAuthState = async () => {
-    try {
-      console.log('🔍 DIAGNOSIS: Current auth state:', {
-        loading: authState.loading,
-        hasSession: !!authState.session,
-        hasUser: !!authState.user,
-        userId: authState.user?.id,
-        userEmail: authState.user?.email
-      })
-
-      if (authState.session?.user) {
-        console.log('🔍 DIAGNOSIS: Checking user in database...')
-        const { data: user, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', authState.session.user.id)
-          .single()
-
-        if (error) {
-          console.log('❌ DIAGNOSIS: User not found in database:', error.message)
-        } else {
-          console.log('✅ DIAGNOSIS: User found in database:', user)
-        }
-      }
-    } catch (error) {
-      console.error('💥 DIAGNOSIS: Error during diagnosis:', error)
-    }
+    console.log('Diagnosis not implemented')
   }
 
   const signInWithEmail = async (email: string, password: string, userType: 'client' | 'business_owner') => {
-    try {
-      console.log('Starting email sign in for:', userType)
+    try {
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -389,8 +328,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw error
       }
 
-      if (data.user) {
-        console.log('User signed in successfully:', data.user.id)
+      if (data.user) {
         // Verificar que el usuario sea del tipo correcto
         const { data: user, error: userError } = await supabase
           .from('users')
@@ -398,8 +336,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .eq('id', data.user.id)
           .single()
 
-        if (userError) {
-          console.log('User not found in database, needs profile setup')
+        if (userError) {
           // Usuario autenticado pero sin perfil, redirigir a setup
           router.push(`/auth/${userType}/setup`)
           return
@@ -430,8 +367,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signUpWithEmail = async (email: string, password: string, metadata: { first_name: string; last_name: string }, userType: 'client' | 'business_owner') => {
-    try {
-      console.log('Starting email sign up for:', userType)
+    try {
 
       // Persist user type for email flows as well, so the callback can recover it
       const maxAge = 60 * 10
@@ -456,12 +392,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw error
       }
 
-      if (data.user) {
-        console.log('User signed up successfully:', data.user.id)
+      if (data.user) {
 
         // Si el usuario necesita confirmar email, mostrar mensaje
-        if (!data.session) {
-          console.log('Email confirmation required')
+        if (!data.session) {
           // Redirigir a página de confirmación de email
           const authPath = userType === 'business_owner' ? 'business' : 'client'
           router.push(`/auth/${authPath}/verify-email?email=${encodeURIComponent(email)}`)

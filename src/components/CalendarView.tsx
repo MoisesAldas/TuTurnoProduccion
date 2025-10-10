@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
+import { parseDateString, toDateString } from '@/lib/dateUtils'
 import AppointmentModal from './AppointmentModal'
 
 import type { Employee, Appointment, AppointmentStatus } from '@/types/database'
@@ -110,8 +111,8 @@ export default function CalendarView({
       if (viewType === 'week') {
         // Fetch absences for the entire week
         const dates = getWeekDates()
-        const startDate = dates[0].toISOString().split('T')[0]
-        const endDate = dates[6].toISOString().split('T')[0]
+        const startDate = toDateString(dates[0])
+        const endDate = toDateString(dates[6])
 
         const { data, error } = await supabase
           .from('employee_absences')
@@ -124,7 +125,7 @@ export default function CalendarView({
         setAbsences(data || [])
       } else {
         // Fetch absences for single day
-        const dateStr = selectedDate.toISOString().split('T')[0]
+        const dateStr = toDateString(selectedDate)
 
         const { data, error } = await supabase
           .from('employee_absences')
@@ -274,6 +275,12 @@ export default function CalendarView({
 
     if (!draggingAppointment) return
 
+    // Capture OLD values for email notification
+    const oldDate = draggingAppointment.appointment_date
+    const oldTime = draggingAppointment.start_time
+    const oldEndTime = draggingAppointment.end_time
+    const oldEmployeeId = draggingAppointment.employee_id
+
     // Calculate new time
     const rect = e.currentTarget.getBoundingClientRect()
     const relativeY = e.clientY - rect.top
@@ -289,7 +296,7 @@ export default function CalendarView({
     const newEndTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}:00`
 
     // Determine target date
-    const newDate = targetDate || selectedDate.toISOString().split('T')[0]
+    const newDate = targetDate || toDateString(selectedDate)
 
     try {
       // Update appointment
@@ -304,6 +311,26 @@ export default function CalendarView({
         .eq('id', draggingAppointment.id)
 
       if (error) throw error
+
+      // Send rescheduled email
+      try {
+        await fetch('/api/send-rescheduled-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: draggingAppointment.id,
+            changes: {
+              oldDate,
+              oldTime,
+              oldEndTime,
+              oldEmployeeId
+            }
+          })
+        })
+      } catch (emailError) {
+        console.warn('⚠️ Failed to send rescheduled email:', emailError)
+        // Don't block the operation if email fails
+      }
 
       toast({
         title: 'Cita reagendada',
@@ -451,7 +478,7 @@ export default function CalendarView({
             {weekDates.map((date) => {
               const isToday = date.toDateString() === new Date().toDateString()
               const dayAppointments = appointments.filter(
-                apt => apt.appointment_date === date.toISOString().split('T')[0]
+                apt => apt.appointment_date === toDateString(date)
               )
 
               return (
@@ -503,7 +530,7 @@ export default function CalendarView({
 
               {/* Columnas de días con citas */}
               {weekDates.map((date) => {
-                const dateStr = date.toISOString().split('T')[0]
+                const dateStr = toDateString(date)
                 const dayAppointments = appointments.filter(
                   apt => apt.appointment_date === dateStr
                 )

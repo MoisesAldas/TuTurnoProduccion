@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments'
+import { parseDateString, toDateString } from '@/lib/dateUtils'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Calendar, ChevronLeft, ChevronRight, Plus, Settings, RefreshCw } from 'lucide-react'
@@ -33,6 +35,26 @@ export default function AppointmentsPage() {
   })
   const { authState } = useAuth()
   const supabase = createClient()
+
+  // ========================================
+  // FIX: useRef para evitar stale closures
+  // ========================================
+  const selectedDateRef = useRef(selectedDate)
+  const viewTypeRef = useRef(viewType)
+  const selectedEmployeesRef = useRef(selectedEmployees)
+
+  // Actualizar refs cuando cambien los estados
+  useEffect(() => {
+    selectedDateRef.current = selectedDate
+  }, [selectedDate])
+
+  useEffect(() => {
+    viewTypeRef.current = viewType
+  }, [viewType])
+
+  useEffect(() => {
+    selectedEmployeesRef.current = selectedEmployees
+  }, [selectedEmployees])
 
   useEffect(() => {
     if (authState.user) {
@@ -107,8 +129,8 @@ export default function AppointmentsPage() {
         const sunday = new Date(monday)
         sunday.setDate(monday.getDate() + 6)
 
-        const startDate = monday.toISOString().split('T')[0]
-        const endDate = sunday.toISOString().split('T')[0]
+        const startDate = toDateString(monday)
+        const endDate = toDateString(sunday)
 
         const { data, error } = await supabase
           .from('appointments')
@@ -133,7 +155,7 @@ export default function AppointmentsPage() {
         setAppointments((data as any) || [])
       } else {
         // Single day view
-        const dateStr = selectedDate.toISOString().split('T')[0]
+        const dateStr = toDateString(selectedDate)
 
         const { data, error } = await supabase
           .from('appointments')
@@ -161,6 +183,120 @@ export default function AppointmentsPage() {
       setRefreshing(false)
     }
   }
+
+  // ========================================
+  // REALTIME: Fetch individual appointment
+  // ========================================
+  const fetchSingleAppointment = async (appointmentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          users(first_name, last_name, phone, avatar_url, email),
+          employees(first_name, last_name),
+          appointment_services(
+            service_id,
+            price,
+            services(name, duration_minutes)
+          )
+        `)
+        .eq('id', appointmentId)
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        setAppointments(prev => {
+          const index = prev.findIndex(apt => apt.id === data.id)
+          if (index >= 0) {
+            // Actualizar existente
+            const newArr = [...prev]
+            newArr[index] = data as any
+            return newArr
+          } else {
+            // Agregar nueva
+            return [...prev, data as any].sort((a, b) => {
+              // Ordenar por fecha y hora
+              const dateCompare = a.appointment_date.localeCompare(b.appointment_date)
+              if (dateCompare !== 0) return dateCompare
+              return a.start_time.localeCompare(b.start_time)
+            })
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching single appointment:', error)
+    }
+  }
+
+  // ========================================
+  // REALTIME: Helper para verificar si está en rango de semana
+  // ========================================
+  const isWithinWeekRange = (dateStr: string) => {
+    const current = new Date(selectedDateRef.current)
+    const day = current.getDay()
+    const diff = current.getDate() - day + (day === 0 ? -6 : 1)
+    const monday = new Date(current.setDate(diff))
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+
+    const date = new Date(dateStr + 'T00:00:00')
+    return date >= monday && date <= sunday
+  }
+
+  // ========================================
+  // REALTIME: Suscripción a cambios en appointments
+  // ========================================
+  useRealtimeAppointments({
+    businessId: business?.id || '',
+    debug: true, // ← Mantener para ver logs de suscripción
+    onInsert: (newAppointment) => {
+      console.log('🆕 Nueva cita recibida via Realtime:', newAppointment)
+
+      // Verificar si la cita es de la fecha actual (usando refs para evitar stale closures)
+      const matchesDate = viewTypeRef.current === 'day'
+        ? newAppointment.appointment_date === toDateString(selectedDateRef.current)
+        : isWithinWeekRange(newAppointment.appointment_date)
+
+      // Verificar si es del empleado seleccionado
+      const matchesEmployee = selectedEmployeesRef.current.includes(newAppointment.employee_id)
+
+      console.log('✅ Filtros:', { matchesDate, matchesEmployee })
+
+      if (matchesDate && matchesEmployee) {
+        console.log('✅ PASÓ FILTROS - Fetching appointment:', newAppointment.id)
+        // Fetch completo para traer relaciones (users, services, etc.)
+        fetchSingleAppointment(newAppointment.id)
+      } else {
+        console.log('❌ NO PASÓ FILTROS - Cita ignorada')
+      }
+    },
+    onUpdate: (updatedAppointment) => {
+      console.log('✏️ Cita actualizada via Realtime:', updatedAppointment)
+
+      // Verificar si la cita sigue en el rango visible (usando refs para evitar stale closures)
+      const matchesDate = viewTypeRef.current === 'day'
+        ? updatedAppointment.appointment_date === toDateString(selectedDateRef.current)
+        : isWithinWeekRange(updatedAppointment.appointment_date)
+
+      const matchesEmployee = selectedEmployeesRef.current.includes(updatedAppointment.employee_id)
+
+      if (matchesDate && matchesEmployee) {
+        // Fetch completo para asegurar datos frescos con relaciones
+        fetchSingleAppointment(updatedAppointment.id)
+      } else {
+        // Si ya no coincide con filtros, removerla
+        setAppointments(prev => prev.filter(apt => apt.id !== updatedAppointment.id))
+      }
+    },
+    onDelete: (appointmentId) => {
+      console.log('🗑️ Cita eliminada via Realtime:', appointmentId)
+
+      // Remover del estado local
+      setAppointments(prev => prev.filter(apt => apt.id !== appointmentId))
+    }
+  })
 
   const handlePreviousDay = () => {
     const newDate = new Date(selectedDate)
@@ -421,7 +557,7 @@ export default function AppointmentsPage() {
       {editingAppointment && business && (
         <CreateAppointmentModal
           businessId={business.id}
-          selectedDate={new Date(editingAppointment.appointment_date + 'T00:00:00')}
+          selectedDate={parseDateString(editingAppointment.appointment_date)}
           appointment={editingAppointment}
           onClose={() => setEditingAppointment(null)}
           onSuccess={handleCreateSuccess}

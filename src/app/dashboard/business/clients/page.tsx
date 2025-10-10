@@ -200,7 +200,10 @@ export default function ClientsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+          <p className="text-gray-600 mt-1">Gestiona tu base de datos de clientes</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={exportCSV}>
             <Download className="w-4 h-4 mr-2" /> Exportar CSV

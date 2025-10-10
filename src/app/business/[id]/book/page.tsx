@@ -122,7 +122,6 @@ export default function BookingPage() {
         .order('name')
 
       if (!servicesError) {
-        console.log('Services data:', servicesData)
         setServices(servicesData || [])
       }
 

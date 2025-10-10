@@ -61,7 +61,7 @@ export default function AjustesPage() {
   const loadSettings = async () => {
     // Aquí cargarías las configuraciones desde la base de datos
     // Por ahora usamos valores por defecto
-    console.log('Loading notification settings...')
+    ('Loading notification settings...')
   }
 
   const handleSaveSettings = async () => {

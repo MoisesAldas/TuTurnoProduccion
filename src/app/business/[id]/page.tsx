@@ -120,7 +120,7 @@ export default function BusinessProfilePage() {
 
       if (!servicesError) {
         // Debug: Log service duration values
-        console.log('Services data:', servicesData?.map(s => ({
+        ('Services data:', servicesData?.map(s => ({
           name: s.name,
           duration_minutes: s.duration_minutes,
           type: typeof s.duration_minutes

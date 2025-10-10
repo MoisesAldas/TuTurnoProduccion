@@ -186,7 +186,7 @@ export default function ManageAppointmentPage() {
         }
       }
 
-      console.log('Using service duration:', serviceDuration, 'minutes')
+      ('Using service duration:', serviceDuration, 'minutes')
 
       // Fetch employee schedule for the selected day
       const dayOfWeek = selectedDate.getDay()
@@ -204,7 +204,7 @@ export default function ManageAppointmentPage() {
 
       // If employee doesn't work on this day, return empty slots
       if (!scheduleData) {
-        console.log('Employee does not work on this day')
+        ('Employee does not work on this day')
         setAvailableSlots([])
         return
       }
@@ -215,7 +215,7 @@ export default function ManageAppointmentPage() {
       const employeeEndHour = parseInt(scheduleData.end_time.split(':')[0])
       const employeeEndMinute = parseInt(scheduleData.end_time.split(':')[1])
 
-      console.log(`Employee working hours: ${scheduleData.start_time} - ${scheduleData.end_time}`)
+      (`Employee working hours: ${scheduleData.start_time} - ${scheduleData.end_time}`)
 
       // Fetch employee absences for the selected date
       const { data: absenceData, error: absenceError } = await supabase
@@ -231,7 +231,7 @@ export default function ManageAppointmentPage() {
       // If employee has a full day absence, return empty slots
       const hasFullDayAbsence = absenceData?.some(absence => absence.is_full_day)
       if (hasFullDayAbsence) {
-        console.log('Employee has full day absence')
+        ('Employee has full day absence')
         setAvailableSlots([])
         return
       }
@@ -273,19 +273,19 @@ export default function ManageAppointmentPage() {
         ...clientAppointments
       ]
 
-      console.log('=== DEBUGGING APPOINTMENT MANAGEMENT ===')
-      console.log('Selected employee ID:', selectedEmployee)
-      console.log('Selected date string:', selectedDateStr)
-      console.log('Day of week:', dayOfWeek)
-      console.log('Employee schedule:', scheduleData)
-      console.log('Employee absences:', absenceData)
-      console.log('Current user ID:', authState.user?.id)
-      console.log('Current appointment ID (excluded):', appointment.id)
-      console.log('Employee appointments:', employeeAppointments)
-      console.log('Client appointments:', clientAppointments)
-      console.log('Total conflicting appointments:', allConflictingAppointments)
-      console.log('Service duration:', serviceDuration, 'minutes')
-      console.log('=== END DEBUGGING ===')
+      ('=== DEBUGGING APPOINTMENT MANAGEMENT ===')
+      ('Selected employee ID:', selectedEmployee)
+      ('Selected date string:', selectedDateStr)
+      ('Day of week:', dayOfWeek)
+      ('Employee schedule:', scheduleData)
+      ('Employee absences:', absenceData)
+      ('Current user ID:', authState.user?.id)
+      ('Current appointment ID (excluded):', appointment.id)
+      ('Employee appointments:', employeeAppointments)
+      ('Client appointments:', clientAppointments)
+      ('Total conflicting appointments:', allConflictingAppointments)
+      ('Service duration:', serviceDuration, 'minutes')
+      ('=== END DEBUGGING ===')
 
       // Generate time slots within employee's working hours
       const totalEmployeeStartMinutes = employeeStartHour * 60 + employeeStartMinute
@@ -330,9 +330,9 @@ export default function ManageAppointmentPage() {
 
           // Debug specific conflict
           if (overlap) {
-            console.log(`CONFLICT DETECTED:`)
-            console.log(`  Slot: ${timeString} (${slotStart.toISOString()} - ${slotEnd.toISOString()})`)
-            console.log(`  Appointment: ${appt.start_time} - ${appt.end_time} (${appointmentStart.toISOString()} - ${appointmentEnd.toISOString()})`)
+            (`CONFLICT DETECTED:`)
+            (`  Slot: ${timeString} (${slotStart.toISOString()} - ${slotEnd.toISOString()})`)
+            (`  Appointment: ${appt.start_time} - ${appt.end_time} (${appointmentStart.toISOString()} - ${appointmentEnd.toISOString()})`)
           }
 
           return overlap
@@ -347,7 +347,7 @@ export default function ManageAppointmentPage() {
         }
       }
 
-      console.log('Generated available slots:', slots.length)
+      ('Generated available slots:', slots.length)
       setAvailableSlots(slots)
 
     } catch (error) {

@@ -62,7 +62,7 @@ export default function BusinessResetPasswordPage() {
           return
         }
 
-        console.log('✅ Valid session found for password reset')
+        ('✅ Valid session found for password reset')
         setSessionValid(true)
       } catch (err) {
         console.error('Error checking session:', err)
@@ -126,7 +126,7 @@ export default function BusinessResetPasswordPage() {
         return
       }
 
-      console.log('✅ Password updated successfully')
+      ('✅ Password updated successfully')
       setSuccess(true)
 
       // Redirigir al login después de 3 segundos

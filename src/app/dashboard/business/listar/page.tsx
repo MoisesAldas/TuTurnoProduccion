@@ -594,29 +594,29 @@ export default function ListarPage() {
             <>
               {/* Desktop Table */}
               <div className="hidden lg:block overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-100 text-gray-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Servicios</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                      <th className="px-4 py-2 text-left">Fecha</th>
+                      <th className="px-4 py-2 text-left">Hora</th>
+                      <th className="px-4 py-2 text-left">Cliente</th>
+                      <th className="px-4 py-2 text-left">Empleado</th>
+                      <th className="px-4 py-2 text-left">Servicios</th>
+                      <th className="px-4 py-2 text-left">Estado</th>
+                      <th className="px-4 py-2 text-right">Precio</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody>
                     {rows.map((row) => (
-                      <tr key={row.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {formatDate(row.appointment_date)}
+                      <tr key={row.id} className="border-b">
+                        <td className="px-4 py-2">
+                          <div className="font-medium text-gray-900">{formatDate(row.appointment_date)}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-2 text-gray-600">
                           {row.start_time?.substring(0,5)} - {row.end_time?.substring(0,5)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{row.client_name}</div>
+                        <td className="px-4 py-2">
+                          <div className="font-medium text-gray-900">{row.client_name}</div>
                           <div className="text-xs text-gray-500 flex items-center gap-2">
                             {row.client_phone}
                             {row.is_walk_in && (
@@ -624,18 +624,16 @@ export default function ListarPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {row.employee_name}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs">
+                        <td className="px-4 py-2 text-gray-600">{row.employee_name}</td>
+                        <td className="px-4 py-2 text-gray-600 max-w-xs">
                           <div className="truncate" title={(row.service_names || []).join(', ')}>
                             {(row.service_names || []).join(', ')}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-2">
                           {getStatusBadge(row.status)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                        <td className="px-4 py-2 text-right font-medium text-gray-900">
                           {formatPrice(Number(row.total_price || 0))}
                         </td>
                       </tr>

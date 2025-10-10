@@ -52,7 +52,6 @@ export async function middleware(req: NextRequest) {
 
   // Si es una ruta protegida y no hay sesión, redirigir al login
   if (isProtectedRoute && !session) {
-    console.log('🔒 Protected route without session, redirecting to login')
     return NextResponse.redirect(new URL('/auth/login', req.url))
   }
 
@@ -75,10 +74,8 @@ export async function middleware(req: NextRequest) {
           .single()
 
         const redirectPath = business ? '/dashboard/business' : '/business/setup'
-        console.log('🔄 User has complete profile, redirecting to:', redirectPath)
         return NextResponse.redirect(new URL(redirectPath, req.url))
       } else {
-        console.log('🔄 Client with complete profile, redirecting to client dashboard')
         return NextResponse.redirect(new URL('/dashboard/client', req.url))
       }
     }
@@ -87,7 +84,6 @@ export async function middleware(req: NextRequest) {
     if (user && isProtectedRoute) {
       // Business owner intentando acceder a dashboard de cliente
       if (user.is_business_owner && isClientDashboard) {
-        console.log('⚠️ Business owner trying to access client dashboard, redirecting')
         // Verificar si tiene negocio configurado
         const { data: business } = await supabase
           .from('businesses')
@@ -101,7 +97,6 @@ export async function middleware(req: NextRequest) {
 
       // Cliente intentando acceder a dashboard de negocio o setup
       if (user.is_client && (isBusinessDashboard || isBusinessSetup)) {
-        console.log('⚠️ Client trying to access business routes, redirecting')
         return NextResponse.redirect(new URL('/dashboard/client', req.url))
       }
 
@@ -114,7 +109,6 @@ export async function middleware(req: NextRequest) {
           .single()
 
         if (!business) {
-          console.log('⚠️ Business owner without business trying to access dashboard, redirecting to setup')
           return NextResponse.redirect(new URL('/business/setup', req.url))
         }
       }
@@ -122,7 +116,6 @@ export async function middleware(req: NextRequest) {
 
     // Si no tiene perfil completo y está intentando acceder a rutas protegidas (pero NO a rutas públicas)
     if (!user && isProtectedRoute && !isPublicRoute) {
-      console.log('⚠️ User without complete profile trying to access protected route')
       return NextResponse.redirect(new URL('/auth/login', req.url))
     }
   }

@@ -129,7 +129,19 @@ export default function CheckoutModal({
         throw paymentError
       }
 
-      // 3. Success!
+      // 3. Send invoice email
+      try {
+        await fetch('/api/send-invoice-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appointmentId })
+        })
+      } catch (emailError) {
+        console.warn('⚠️ Failed to send invoice email:', emailError)
+        // Don't block the operation if email fails
+      }
+
+      // 4. Success!
       toast({
         title: '¡Pago registrado exitosamente!',
         description: `El pago de ${formatPrice(totalAmount)} ha sido registrado correctamente.`,

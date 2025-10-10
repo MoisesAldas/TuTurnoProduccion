@@ -170,7 +170,7 @@ export default function ClientAppointmentsPage() {
 
     try {
       // In a real implementation, this would go to a reviews table
-      console.log('Review submitted:', {
+      ('Review submitted:', {
         appointmentId: selectedAppointment.id,
         businessId: selectedAppointment.business.id,
         rating: reviewRating,
