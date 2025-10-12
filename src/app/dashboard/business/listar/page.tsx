@@ -9,13 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, ChevronRight, Download, FileText, FileSpreadsheet, FileBarChart, Loader2, Calendar, Users, Search as SearchIcon, RotateCcw, List as ListIcon, User, Clock, DollarSign, Briefcase } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, FileText, FileSpreadsheet, FileBarChart, Loader2, Calendar, Users, Search as SearchIcon, RotateCcw, List as ListIcon, User, Clock, DollarSign, Briefcase, MoreVertical, Eye, Edit, Check, XCircle, AlertCircle, CreditCard } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import AppointmentModal from '@/components/AppointmentModal'
+import CreateAppointmentModal from '@/components/CreateAppointmentModal'
+import { parseDateString } from '@/lib/dateUtils'
 
-import type { Employee, Service } from '@/types/database'
+import type { Employee, Service, Appointment } from '@/types/database'
 
 type AppointmentRow = {
   id: string
@@ -66,6 +69,10 @@ export default function ListarPage() {
 
   const [loading, setLoading] = useState<boolean>(true)
   const [fetching, setFetching] = useState<boolean>(false)
+
+  // Appointment management
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 
   useEffect(() => {
     if (authState.user) {
@@ -172,6 +179,60 @@ export default function ListarPage() {
     }
   }
 
+  const fetchFullAppointment = async (appointmentId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          users(first_name, last_name, phone, avatar_url, email),
+          employees(first_name, last_name),
+          appointment_services(
+            service_id,
+            price,
+            services(name, duration_minutes)
+          )
+        `)
+        .eq('id', appointmentId)
+        .single()
+
+      if (error) throw error
+      return data as Appointment
+    } catch (e) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo cargar la información de la cita',
+        variant: 'destructive'
+      })
+      return null
+    }
+  }
+
+  const handleRowClick = async (appointmentId: string) => {
+    const fullAppointment = await fetchFullAppointment(appointmentId)
+    if (fullAppointment) {
+      setSelectedAppointment(fullAppointment)
+    }
+  }
+
+  const handleCloseModal = () => {
+    setSelectedAppointment(null)
+    setEditingAppointment(null)
+  }
+
+  const handleUpdateSuccess = () => {
+    fetchData()
+    setSelectedAppointment(null)
+    setEditingAppointment(null)
+  }
+
+  const handleEditAppointment = () => {
+    if (selectedAppointment) {
+      setEditingAppointment(selectedAppointment)
+      setSelectedAppointment(null)
+    }
+  }
+
   const handleExportCSV = () => {
     const header = ['Fecha','Hora Inicio','Hora Fin','Estado','Precio','Empleado','Cliente','Teléfono','Walk-in','Servicios']
     const lines = rows.map(r => [
@@ -200,31 +261,170 @@ export default function ListarPage() {
     })
   }
 
-  const handleExportExcel = () => {
-    const data = [
-      ['Fecha','Hora Inicio','Hora Fin','Estado','Precio','Empleado','Cliente','Teléfono','Walk-in','Servicios'],
-      ...rows.map(r => [
-        r.appointment_date,
-        r.start_time?.substring(0,5),
-        r.end_time?.substring(0,5),
-        r.status,
-        Number(r.total_price || 0),
-        r.employee_name ?? '',
-        r.client_name ?? '',
-        r.client_phone ?? '',
-        r.is_walk_in ? 'Sí' : 'No',
-        (r.service_names || []).join(' | ')
-      ])
+  const handleExportExcel = async () => {
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Citas')
+
+    const today = new Date()
+    const dateStr = today.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+
+    // Calcular totales - solo citas completadas generan ingresos
+    const totalRevenue = rows
+      .filter(r => r.status === 'completed')
+      .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
+    const totalAppointments = totalCount
+
+    // Período de fechas (si aplica)
+    const period = (dateFrom && dateTo)
+      ? `${new Date(dateFrom + 'T00:00:00').toLocaleDateString('es-ES')} - ${new Date(dateTo + 'T00:00:00').toLocaleDateString('es-ES')}`
+      : 'Todas las fechas'
+
+    // ========================================
+    // TÍTULO PRINCIPAL (Fila 1)
+    // ========================================
+    worksheet.mergeCells('A1:J1')
+    const titleCell = worksheet.getCell('A1')
+    titleCell.value = 'LISTADO DE CITAS'
+    titleCell.font = { bold: true, size: 18, color: { argb: 'FFFFFFFF' } }
+    titleCell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEA580C' } // orange-600
+    }
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+    worksheet.getRow(1).height = 30
+
+    // ========================================
+    // METADATA (Filas 2-5)
+    // ========================================
+    const metadataRows = [
+      `Generado el: ${dateStr}`,
+      `Período: ${period}`,
+      `Total de citas: ${totalAppointments}`,
+      `Ingresos totales (solo completadas): $${totalRevenue.toFixed(2)}`
     ]
-    const ws = XLSX.utils.aoa_to_sheet(data)
-    ws['!cols'] = [
-      { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 },
-      { wch: 20 }, { wch: 20 }, { wch: 14 }, { wch: 8 }, { wch: 40 }
+
+    metadataRows.forEach((text, index) => {
+      const rowNum = index + 2
+      worksheet.mergeCells(`A${rowNum}:J${rowNum}`)
+      const cell = worksheet.getCell(`A${rowNum}`)
+      cell.value = text
+      cell.font = { bold: true, size: 11, color: { argb: 'FF78350F' } } // amber-900
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFBBF24' } // amber-400
+      }
+      cell.alignment = { horizontal: 'left', vertical: 'middle' }
+      worksheet.getRow(rowNum).height = 20
+    })
+
+    // Línea vacía (Fila 6)
+    worksheet.getRow(6).height = 5
+
+    // ========================================
+    // HEADERS DE COLUMNAS (Fila 7)
+    // ========================================
+    const headers = ['Fecha', 'Hora Inicio', 'Hora Fin', 'Estado', 'Precio', 'Empleado', 'Cliente', 'Teléfono', 'Walk-in', 'Servicios']
+    const headerRow = worksheet.getRow(7)
+    headerRow.values = headers
+    headerRow.height = 25
+
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } }
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFEA580C' } // orange-600
+      }
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFD97706' } },
+        bottom: { style: 'thin', color: { argb: 'FFD97706' } },
+        left: { style: 'thin', color: { argb: 'FFD97706' } },
+        right: { style: 'thin', color: { argb: 'FFD97706' } }
+      }
+    })
+
+    // ========================================
+    // DATOS (Desde fila 8)
+    // ========================================
+    rows.forEach((row, index) => {
+      const rowNum = index + 8
+      const dataRow = worksheet.getRow(rowNum)
+
+      dataRow.values = [
+        new Date(row.appointment_date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        row.start_time?.substring(0,5) || '-',
+        row.end_time?.substring(0,5) || '-',
+        row.status.replace('_', ' '),
+        Number(row.total_price || 0),
+        row.employee_name || '-',
+        row.client_name || '-',
+        row.client_phone || '-',
+        row.is_walk_in ? 'Sí' : 'No',
+        (row.service_names || []).join(' | ') || '-'
+      ]
+
+      // Estilo alternado para filas
+      const isEven = index % 2 === 0
+      const fillColor = isEven ? 'FFFFFBEB' : 'FFFFFFFF' // amber-50 : white
+
+      dataRow.eachCell((cell, colNum) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: fillColor }
+        }
+        cell.alignment = { vertical: 'middle' }
+
+        // Formato especial para precio (columna 5)
+        if (colNum === 5) {
+          cell.numFmt = '"$"#,##0.00'
+          cell.alignment = { horizontal: 'right', vertical: 'middle' }
+        }
+
+        // Centrar Walk-in (columna 9)
+        if (colNum === 9) {
+          cell.alignment = { horizontal: 'center', vertical: 'middle' }
+        }
+      })
+    })
+
+    // ========================================
+    // CONFIGURAR ANCHOS DE COLUMNAS
+    // ========================================
+    worksheet.columns = [
+      { width: 12 },  // Fecha
+      { width: 10 },  // Hora Inicio
+      { width: 10 },  // Hora Fin
+      { width: 14 },  // Estado
+      { width: 12 },  // Precio
+      { width: 22 },  // Empleado
+      { width: 22 },  // Cliente
+      { width: 15 },  // Teléfono
+      { width: 10 },  // Walk-in
+      { width: 45 }   // Servicios
     ]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Citas')
-    const ts = new Date().toISOString().split('T')[0]
-    XLSX.writeFile(wb, `citas-${ts}.xlsx`)
+
+    // ========================================
+    // EXPORTAR ARCHIVO
+    // ========================================
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const ts = today.toISOString().split('T')[0]
+    a.download = `citas-${ts}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
+
     toast({
       title: 'Exportación exitosa',
       description: 'El archivo Excel se ha descargado correctamente'
@@ -233,35 +433,186 @@ export default function ListarPage() {
 
   const handleExportPDF = () => {
     const doc = new jsPDF('landscape', 'mm', 'a4')
-    doc.setFontSize(14)
-    doc.text('Listado de Citas', 14, 12)
-    const period = (dateFrom && dateTo) ? `Período: ${dateFrom} a ${dateTo}` : ''
-    if (period) { doc.setFontSize(10); doc.text(period, 14, 18) }
+    const pageWidth = doc.internal.pageSize.width
+    const pageHeight = doc.internal.pageSize.height
 
+    // ========================================
+    // PROFESSIONAL HEADER - Orange Gradient
+    // ========================================
+    doc.setFillColor(234, 88, 12) // orange-600
+    doc.rect(0, 0, pageWidth, 35, 'F')
+
+    // Title in white
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(22)
+    doc.setFont('helvetica', 'bold')
+    doc.text('LISTADO DE CITAS', 15, 15)
+
+    // Subtitle
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    const today = new Date()
+    const dateStr = today.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+    doc.text(`Generado el ${dateStr}`, 15, 25)
+
+    // ========================================
+    // AMBER INFO BAR - Metadata
+    // ========================================
+    doc.setFillColor(251, 191, 36) // amber-400
+    doc.rect(0, 35, pageWidth, 12, 'F')
+
+    doc.setTextColor(120, 53, 15) // amber-900
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+
+    // Calculate totals - solo citas completadas generan ingresos
+    const totalRevenue = rows
+      .filter(r => r.status === 'completed')
+      .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
+    const totalAppointments = totalCount
+
+    // Period
+    const period = (dateFrom && dateTo)
+      ? `${new Date(dateFrom + 'T00:00:00').toLocaleDateString('es-ES')} - ${new Date(dateTo + 'T00:00:00').toLocaleDateString('es-ES')}`
+      : 'Todas las fechas'
+
+    // Active filters summary
+    const filtersSummary = []
+    if (statuses.length > 0 && statuses.length < 6) {
+      filtersSummary.push(`Estados: ${statuses.map(s => s.replace('_', ' ')).join(', ')}`)
+    }
+    if (walkinFilter !== 'any') {
+      filtersSummary.push(walkinFilter === 'only' ? 'Solo Walk-in' : 'Sin Walk-in')
+    }
+
+    const infoText = `Período: ${period}  |  Total de citas: ${totalAppointments}  |  Ingresos totales: $${totalRevenue.toFixed(2)}`
+    doc.text(infoText, 15, 42)
+
+    // ========================================
+    // PROFESSIONAL TABLE
+    // ========================================
     autoTable(doc, {
-      startY: 22,
-      head: [[ 'Fecha','Inicio','Fin','Estado','Precio','Empleado','Cliente','Teléfono','Walk-in','Servicios' ]],
+      startY: 52,
+      head: [[
+        'Fecha',
+        'Inicio',
+        'Fin',
+        'Estado',
+        'Precio',
+        'Empleado',
+        'Cliente',
+        'Teléfono',
+        'Walk-in',
+        'Servicios'
+      ]],
       body: rows.map(r => [
-        r.appointment_date,
-        r.start_time?.substring(0,5),
-        r.end_time?.substring(0,5),
+        new Date(r.appointment_date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        r.start_time?.substring(0,5) || '-',
+        r.end_time?.substring(0,5) || '-',
         r.status.replace('_',' '),
         new Intl.NumberFormat('es-EC',{ style:'currency', currency:'USD' }).format(Number(r.total_price||0)),
-        r.employee_name ?? '',
-        r.client_name ?? '',
-        r.client_phone ?? '',
+        r.employee_name || '-',
+        r.client_name || '-',
+        r.client_phone || '-',
         r.is_walk_in ? 'Sí' : 'No',
-        (r.service_names || []).join(' • ')
+        (r.service_names || []).join(' • ') || '-'
       ]),
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [234,88,12], textColor: 255 },
-      columnStyles: { 9: { cellWidth: 70 } },
-      theme: 'striped',
-      margin: { left: 10, right: 10 }
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
+        overflow: 'linebreak',
+        halign: 'left'
+      },
+      headStyles: {
+        fillColor: [234, 88, 12], // orange-600
+        textColor: [255, 255, 255],
+        fontSize: 8,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      alternateRowStyles: {
+        fillColor: [255, 251, 235] // amber-50
+      },
+      columnStyles: {
+        0: { cellWidth: 24 },  // Fecha
+        1: { cellWidth: 15 },  // Inicio
+        2: { cellWidth: 15 },  // Fin
+        3: { cellWidth: 22 },  // Estado
+        4: { cellWidth: 20, halign: 'right' },  // Precio
+        5: { cellWidth: 30 },  // Empleado
+        6: { cellWidth: 30 },  // Cliente
+        7: { cellWidth: 24 },  // Teléfono
+        8: { cellWidth: 16, halign: 'center' },  // Walk-in
+        9: { cellWidth: 50 }   // Servicios
+      },
+      margin: { left: 10, right: 10 },
+
+      // Color-code appointment states
+      didDrawCell: (data) => {
+        if (data.column.index === 3 && data.cell.section === 'body') {
+          const status = data.cell.raw as string
+
+          // Map status to colors
+          const statusColors: Record<string, [number, number, number]> = {
+            'pending': [234, 179, 8],      // yellow-600
+            'confirmed': [22, 163, 74],    // green-600
+            'in progress': [37, 99, 235],  // blue-600
+            'completed': [107, 114, 128],  // gray-500
+            'cancelled': [220, 38, 38],    // red-600
+            'no show': [234, 88, 12]       // orange-600
+          }
+
+          const color = statusColors[status.toLowerCase()] || [107, 114, 128]
+          doc.setTextColor(color[0], color[1], color[2])
+          doc.setFontSize(8)
+          doc.setFont('helvetica', 'bold')
+        }
+      }
     })
+
+    // ========================================
+    // FOOTER - Page numbers and decorative line
+    // ========================================
+    const totalPages = (doc as any).internal.pages.length - 1
+
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i)
+
+      // Orange decorative line
+      doc.setDrawColor(234, 88, 12) // orange-600
+      doc.setLineWidth(0.5)
+      doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15)
+
+      // Page numbers
+      doc.setTextColor(107, 114, 128) // gray-500
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text(
+        `Página ${i} de ${totalPages}`,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' }
+      )
+
+      // Generated by TuTurno
+      doc.setFontSize(8)
+      doc.setTextColor(156, 163, 175) // gray-400
+      doc.text(
+        'Generado por TuTurno',
+        pageWidth - 15,
+        pageHeight - 10,
+        { align: 'right' }
+      )
+    }
 
     const ts = new Date().toISOString().split('T')[0]
     doc.save(`citas-${ts}.pdf`)
+
     toast({
       title: 'Exportación exitosa',
       description: 'El archivo PDF se ha descargado correctamente'
@@ -307,51 +658,76 @@ export default function ListarPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Listado de Citas</h1>
-          <p className="text-sm text-gray-600 mt-1">Consulta, filtra y exporta tus citas</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/20 to-amber-50/30">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+              Listado de Citas
+            </h1>
+            <p className="text-sm text-gray-600 mt-1.5">Consulta, filtra y exporta tus citas</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-2 duration-200">
+              <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                Formato de Exportación
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              {/* CSV Option */}
+              <DropdownMenuItem onClick={handleExportCSV} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                <FileText className="w-4 h-4 mr-3 text-blue-600" />
+                <div className="flex-1">
+                  <p className="font-medium">CSV</p>
+                  <p className="text-xs text-gray-500">Valores separados por comas</p>
+                </div>
+              </DropdownMenuItem>
+
+              {/* Excel Option */}
+              <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
+                <div className="flex-1">
+                  <p className="font-medium">Excel</p>
+                  <p className="text-xs text-gray-500">Hoja de cálculo con múltiples pestañas</p>
+                </div>
+              </DropdownMenuItem>
+
+              {/* PDF Option */}
+              <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
+                <div className="flex-1">
+                  <p className="font-medium">PDF</p>
+                  <p className="text-xs text-gray-500">Reporte profesional con tablas</p>
+                </div>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <div className="px-2 py-1.5 text-xs text-gray-400 text-center">
+                Los datos se descargarán automáticamente
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
-              Formato de Exportación
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleExportCSV} className="cursor-pointer">
-              <FileText className="w-4 h-4 mr-3 text-blue-600" />
-              <span>Exportar como CSV</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer">
-              <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
-              <span>Exportar como Excel</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
-              <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
-              <span>Exportar como PDF</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       {/* Filtros */}
-      <Card className="overflow-hidden border-gray-200 hover:shadow-lg transition-shadow">
-        <CardHeader className="border-b bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
+      <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+        <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <SearchIcon className="w-5 h-5 text-orange-600" />
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center shadow-md">
+              <SearchIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-lg sm:text-xl font-semibold">Filtros Avanzados</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Personaliza tu búsqueda de citas</CardDescription>
+              <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Filtros Avanzados</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-gray-600">Personaliza tu búsqueda de citas</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -555,16 +931,16 @@ export default function ListarPage() {
       </Card>
 
       {/* Resultados */}
-      <Card className="overflow-hidden border-gray-200 hover:shadow-lg transition-shadow">
-        <CardHeader className="border-b bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
+      <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+        <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-orange-600" />
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center shadow-md">
+                <Calendar className="w-5 h-5 text-white" />
               </div>
               <div>
-                <CardTitle className="text-lg sm:text-xl font-semibold">Resultados</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
+                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Resultados</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-gray-600">
                   {totalCount} {totalCount === 1 ? 'cita encontrada' : 'citas encontradas'}
                 </CardDescription>
               </div>
@@ -593,98 +969,498 @@ export default function ListarPage() {
           ) : (
             <>
               {/* Desktop Table */}
-              <div className="hidden lg:block overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-gray-100 text-gray-700">
-                    <tr>
-                      <th className="px-4 py-2 text-left">Fecha</th>
-                      <th className="px-4 py-2 text-left">Hora</th>
-                      <th className="px-4 py-2 text-left">Cliente</th>
-                      <th className="px-4 py-2 text-left">Empleado</th>
-                      <th className="px-4 py-2 text-left">Servicios</th>
-                      <th className="px-4 py-2 text-left">Estado</th>
-                      <th className="px-4 py-2 text-right">Precio</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.id} className="border-b">
-                        <td className="px-4 py-2">
-                          <div className="font-medium text-gray-900">{formatDate(row.appointment_date)}</div>
-                        </td>
-                        <td className="px-4 py-2 text-gray-600">
-                          {row.start_time?.substring(0,5)} - {row.end_time?.substring(0,5)}
-                        </td>
-                        <td className="px-4 py-2">
-                          <div className="font-medium text-gray-900">{row.client_name}</div>
-                          <div className="text-xs text-gray-500 flex items-center gap-2">
-                            {row.client_phone}
-                            {row.is_walk_in && (
-                              <Badge className="bg-orange-100 text-orange-700 border-orange-200 border text-xs">Walk-in</Badge>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 text-gray-600">{row.employee_name}</td>
-                        <td className="px-4 py-2 text-gray-600 max-w-xs">
-                          <div className="truncate" title={(row.service_names || []).join(', ')}>
-                            {(row.service_names || []).join(', ')}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2">
-                          {getStatusBadge(row.status)}
-                        </td>
-                        <td className="px-4 py-2 text-right font-medium text-gray-900">
-                          {formatPrice(Number(row.total_price || 0))}
-                        </td>
+              <div className="hidden lg:block overflow-hidden rounded-lg border border-gray-200">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Servicios</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {rows.map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className="hover:bg-gray-50 transition-colors group"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{formatDate(row.appointment_date)}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{row.start_time?.substring(0,5)}</div>
+                            <div className="text-xs text-gray-500">{row.end_time?.substring(0,5)}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{row.client_name}</div>
+                                <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                                  {row.client_phone}
+                                  {row.is_walk_in && (
+                                    <Badge className="bg-orange-50 text-orange-700 border-orange-200 border text-[10px] px-1.5 py-0">Walk-in</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{row.employee_name}</div>
+                          </td>
+                          <td className="px-6 py-4 max-w-xs">
+                            <div className="text-sm text-gray-900 truncate" title={(row.service_names || []).join(', ')}>
+                              {(row.service_names || []).join(', ')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(row.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {formatPrice(Number(row.total_price || 0))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                                  Acciones
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+
+                                {/* Ver detalles */}
+                                <DropdownMenuItem
+                                  onClick={() => handleRowClick(row.id)}
+                                  className="cursor-pointer"
+                                >
+                                  <Eye className="w-4 h-4 mr-2 text-blue-600" />
+                                  <span>Ver detalles</span>
+                                </DropdownMenuItem>
+
+                                {/* Editar */}
+                                {row.status !== 'completed' && row.status !== 'cancelled' && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      const apt = await fetchFullAppointment(row.id)
+                                      if (apt) setEditingAppointment(apt)
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Edit className="w-4 h-4 mr-2 text-orange-600" />
+                                    <span>Editar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                <DropdownMenuSeparator />
+
+                                {/* Finalizar y Cobrar */}
+                                {['confirmed', 'in_progress'].includes(row.status) && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      const apt = await fetchFullAppointment(row.id)
+                                      if (apt) {
+                                        setSelectedAppointment(apt)
+                                        // Trigger checkout immediately
+                                        setTimeout(() => {
+                                          const checkoutBtn = document.querySelector('[data-checkout-trigger]') as HTMLButtonElement
+                                          checkoutBtn?.click()
+                                        }, 100)
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <CreditCard className="w-4 h-4 mr-2 text-green-600" />
+                                    <span>Finalizar y Cobrar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* Confirmar */}
+                                {row.status === 'pending' && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        await supabase
+                                          .from('appointments')
+                                          .update({ status: 'confirmed' })
+                                          .eq('id', row.id)
+
+                                        toast({ title: 'Cita confirmada', description: 'El estado se actualizó correctamente' })
+                                        fetchData()
+                                      } catch (error) {
+                                        toast({ title: 'Error', description: 'No se pudo confirmar la cita', variant: 'destructive' })
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Check className="w-4 h-4 mr-2 text-green-600" />
+                                    <span>Confirmar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* En Progreso */}
+                                {row.status === 'confirmed' && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        await supabase
+                                          .from('appointments')
+                                          .update({ status: 'in_progress' })
+                                          .eq('id', row.id)
+                                        toast({ title: 'Estado actualizado', description: 'La cita está en progreso' })
+                                        fetchData()
+                                      } catch (error) {
+                                        toast({ title: 'Error', description: 'No se pudo actualizar el estado', variant: 'destructive' })
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                                    <span>En Progreso</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* No Asistió */}
+                                {['confirmed', 'pending'].includes(row.status) && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={async () => {
+                                        try {
+                                          await supabase
+                                            .from('appointments')
+                                            .update({ status: 'no_show' })
+                                            .eq('id', row.id)
+
+                                          // Send no-show email
+                                          try {
+                                            await fetch('/api/send-no-show-notification', {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ appointmentId: row.id })
+                                            })
+                                          } catch (e) {
+                                            console.warn('Failed to send no-show email')
+                                          }
+
+                                          toast({ title: 'Marcado como no asistió', description: 'El cliente no se presentó' })
+                                          fetchData()
+                                        } catch (error) {
+                                          toast({ title: 'Error', description: 'No se pudo actualizar el estado', variant: 'destructive' })
+                                        }
+                                      }}
+                                      className="cursor-pointer"
+                                    >
+                                      <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
+                                      <span>No Asistió</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+
+                                {/* Cancelar */}
+                                {row.status !== 'cancelled' && row.status !== 'completed' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={async () => {
+                                        try {
+                                          await supabase
+                                            .from('appointments')
+                                            .update({ status: 'cancelled' })
+                                            .eq('id', row.id)
+
+                                          // Send cancellation email
+                                          try {
+                                            await fetch('/api/send-cancellation-notification', {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({
+                                                appointmentId: row.id,
+                                                cancellationReason: 'Cancelada por el negocio'
+                                              })
+                                            })
+                                          } catch (e) {
+                                            console.warn('Failed to send cancellation email')
+                                          }
+
+                                          toast({ title: 'Cita cancelada', description: 'La cita fue cancelada correctamente' })
+                                          fetchData()
+                                        } catch (error) {
+                                          toast({ title: 'Error', description: 'No se pudo cancelar la cita', variant: 'destructive' })
+                                        }
+                                      }}
+                                      className="cursor-pointer text-red-600"
+                                    >
+                                      <XCircle className="w-4 h-4 mr-2" />
+                                      <span>Cancelar cita</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Mobile Cards */}
-              <div className="lg:hidden divide-y divide-gray-200">
+              <div className="lg:hidden space-y-3 p-3">
                 {rows.map((row) => (
-                  <div key={row.id} className="p-4 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="font-medium text-gray-900">{row.client_name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{row.client_phone}</div>
+                  <div
+                    key={row.id}
+                    className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                  >
+                    {/* Card Header */}
+                    <div className="p-4 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent border-b border-gray-100">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <User className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                            <h3 className="font-semibold text-gray-900 truncate">{row.client_name}</h3>
+                          </div>
+                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <span className="font-mono">{row.client_phone}</span>
+                            {row.is_walk_in && (
+                              <Badge className="bg-orange-100 text-orange-700 border-orange-200 border text-[10px] px-1.5 py-0">
+                                Walk-in
+                              </Badge>
+                            )}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {getStatusBadge(row.status)}
+
+                          {/* Mobile Actions Menu */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 rounded-lg"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                                Acciones
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+
+                              {/* Ver detalles */}
+                              <DropdownMenuItem
+                                onClick={() => handleRowClick(row.id)}
+                                className="cursor-pointer"
+                              >
+                                <Eye className="w-4 h-4 mr-2 text-blue-600" />
+                                <span>Ver detalles</span>
+                              </DropdownMenuItem>
+
+                              {/* Editar */}
+                              {row.status !== 'completed' && row.status !== 'cancelled' && (
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    const apt = await fetchFullAppointment(row.id)
+                                    if (apt) setEditingAppointment(apt)
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Edit className="w-4 h-4 mr-2 text-orange-600" />
+                                  <span>Editar</span>
+                                </DropdownMenuItem>
+                              )}
+
+                              <DropdownMenuSeparator />
+
+                              {/* Finalizar y Cobrar */}
+                              {['confirmed', 'in_progress'].includes(row.status) && (
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    const apt = await fetchFullAppointment(row.id)
+                                    if (apt) {
+                                      setSelectedAppointment(apt)
+                                      setTimeout(() => {
+                                        const checkoutBtn = document.querySelector('[data-checkout-trigger]') as HTMLButtonElement
+                                        checkoutBtn?.click()
+                                      }, 100)
+                                    }
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <CreditCard className="w-4 h-4 mr-2 text-green-600" />
+                                  <span>Finalizar y Cobrar</span>
+                                </DropdownMenuItem>
+                              )}
+
+                              {/* Confirmar */}
+                              {row.status === 'pending' && (
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', row.id)
+
+                                      toast({ title: 'Cita confirmada' })
+                                      fetchData()
+                                    } catch (error) {
+                                      toast({ title: 'Error', variant: 'destructive' })
+                                    }
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Check className="w-4 h-4 mr-2 text-green-600" />
+                                  <span>Confirmar</span>
+                                </DropdownMenuItem>
+                              )}
+
+                              {/* En Progreso */}
+                              {row.status === 'confirmed' && (
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.from('appointments').update({ status: 'in_progress' }).eq('id', row.id)
+                                      toast({ title: 'En progreso' })
+                                      fetchData()
+                                    } catch (error) {
+                                      toast({ title: 'Error', variant: 'destructive' })
+                                    }
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                                  <span>En Progreso</span>
+                                </DropdownMenuItem>
+                              )}
+
+                              {/* No Asistió */}
+                              {['confirmed', 'pending'].includes(row.status) && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        await supabase.from('appointments').update({ status: 'no_show' }).eq('id', row.id)
+                                        try {
+                                          await fetch('/api/send-no-show-notification', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ appointmentId: row.id })
+                                          })
+                                        } catch (e) {}
+                                        toast({ title: 'No asistió' })
+                                        fetchData()
+                                      } catch (error) {
+                                        toast({ title: 'Error', variant: 'destructive' })
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
+                                    <span>No Asistió</span>
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+
+                              {/* Cancelar */}
+                              {row.status !== 'cancelled' && row.status !== 'completed' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', row.id)
+
+                                        // Send cancellation email
+                                        try {
+                                          await fetch('/api/send-cancellation-notification', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                              appointmentId: row.id,
+                                              cancellationReason: 'Cancelada por el negocio'
+                                            })
+                                          })
+                                        } catch (e) {
+                                          console.warn('Failed to send cancellation email')
+                                        }
+
+                                        toast({ title: 'Cita cancelada' })
+                                        fetchData()
+                                      } catch (error) {
+                                        toast({ title: 'Error', variant: 'destructive' })
+                                      }
+                                    }}
+                                    className="cursor-pointer text-red-600"
+                                  >
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    <span>Cancelar cita</span>
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                      {getStatusBadge(row.status)}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="w-4 h-4 text-orange-600" />
-                        <span>{formatDate(row.appointment_date)}</span>
+                    {/* Card Body */}
+                    <div className="p-4 space-y-3">
+                      {/* Date & Time Row */}
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 rounded-lg flex-1">
+                          <Calendar className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900">{formatDate(row.appointment_date)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
+                          <Clock className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900">{row.start_time?.substring(0,5)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Clock className="w-4 h-4 text-orange-600" />
-                        <span>{row.start_time?.substring(0,5)}</span>
+
+                      {/* Employee & Price Row */}
+                      <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Users className="w-4 h-4 text-orange-600" />
+                          </div>
+                          <span className="text-sm text-gray-600 truncate">{row.employee_name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 rounded-lg">
+                          <DollarSign className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-bold text-green-700">{formatPrice(Number(row.total_price || 0))}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Users className="w-4 h-4 text-orange-600" />
-                        <span className="truncate">{row.employee_name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <DollarSign className="w-4 h-4 text-orange-600" />
-                        <span className="font-medium text-gray-900">{formatPrice(Number(row.total_price || 0))}</span>
+
+                      {/* Services */}
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="flex items-start gap-2">
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Briefcase className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Servicios</p>
+                            <p className="text-sm text-gray-900 line-clamp-2">{(row.service_names || []).join(', ')}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex items-start gap-2 text-sm text-gray-600">
-                        <Briefcase className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">{(row.service_names || []).join(', ')}</span>
-                      </div>
-                    </div>
-
-                    {row.is_walk_in && (
-                      <div className="mt-2">
-                        <Badge className="bg-orange-100 text-orange-700 border-orange-200 border text-xs">Walk-in</Badge>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -695,11 +1471,11 @@ export default function ListarPage() {
 
       {/* Paginación */}
       {totalCount > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
           <div className="text-sm text-gray-600">
-            Mostrando <span className="font-medium text-gray-900">{(page-1)*limit+1}</span> a{' '}
-            <span className="font-medium text-gray-900">{Math.min(page*limit, totalCount)}</span> de{' '}
-            <span className="font-medium text-gray-900">{totalCount}</span> resultados
+            Mostrando <span className="font-semibold text-gray-900">{(page-1)*limit+1}</span> a{' '}
+            <span className="font-semibold text-gray-900">{Math.min(page*limit, totalCount)}</span> de{' '}
+            <span className="font-semibold text-gray-900">{totalCount}</span> resultados
           </div>
 
           <div className="flex items-center gap-3">
@@ -745,6 +1521,28 @@ export default function ListarPage() {
           </div>
         </div>
       )}
+
+      {/* AppointmentModal - solo si no está editando */}
+      {selectedAppointment && !editingAppointment && (
+        <AppointmentModal
+          appointment={selectedAppointment}
+          onClose={handleCloseModal}
+          onUpdate={handleUpdateSuccess}
+          onEdit={handleEditAppointment}
+        />
+      )}
+
+      {/* CreateAppointmentModal for editing - solo si está editando */}
+      {editingAppointment && businessId && (
+        <CreateAppointmentModal
+          businessId={businessId}
+          selectedDate={parseDateString(editingAppointment.appointment_date)}
+          appointment={editingAppointment}
+          onClose={handleCloseModal}
+          onSuccess={handleUpdateSuccess}
+        />
+      )}
     </div>
+  </div>
   )
 }

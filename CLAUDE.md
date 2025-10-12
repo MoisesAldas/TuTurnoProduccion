@@ -349,48 +349,34 @@ Ver guía completa en [REALTIME_TESTING.md](./REALTIME_TESTING.md)
 
 ### Security
 
-🔒 **Seguridad Multi-Capa (RLS Deshabilitado en appointments/appointment_services):**
+🔒 **Seguridad Multi-Capa con RLS Habilitado:**
 
-**¿Por qué RLS está deshabilitado?**
-- Problema técnico: RLS bloquea eventos de Realtime
-- Políticas no se evalúan correctamente en contexto de WebSocket
-- Eventos de INSERT/UPDATE no llegan a usuarios autorizados
+✅ **RLS Enabled** (desde 2025-10-10)
+- Row Level Security activo en `appointments` y `appointment_services`
+- 6 políticas para appointments: INSERT/UPDATE/SELECT por cliente y business owner
+- 2 políticas para appointment_services: SELECT/ALL con verificación de ownership
+- Realtime funciona correctamente con RLS (bug anterior era React closures, no RLS)
 
-**Protección Alternativa (Multi-Layer Security):**
+**Protección Multi-Capa:**
 
-1. **Filtros Server-Side en Realtime:**
+1. **RLS Policies:**
+   - Clientes solo ven sus propias citas
+   - Business owners solo ven citas de su negocio
+   - Enforcement automático en todas las queries
+
+2. **Filtros Server-Side en Realtime:**
    - `filter: business_id=eq.${businessId}`
    - Solo eventos del negocio específico llegan al cliente
-   - Filtrado a nivel de PostgreSQL, no modificable desde cliente
 
-2. **Autenticación Requerida:**
-   - Solo usuarios autenticados pueden suscribirse
-   - `businessId` se obtiene del usuario autenticado
-   - Imposible falsificar desde cliente
+3. **Autenticación Requerida:**
+   - Solo usuarios autenticados pueden acceder
+   - `businessId` verificado contra usuario autenticado
 
-3. **Queries de Aplicación:**
-   - Todas las queries filtran por `business_id`
-   - No hay endpoints públicos sin filtros
-   - Service Role Key NUNCA se expone al cliente
-
-4. **Middleware de Autenticación:**
+4. **Middleware & API Protection:**
    - API Routes protegidas
    - Verificación de ownership antes de modificaciones
 
-**Otras Tablas con RLS Habilitado:**
-- ✅ `users`, `businesses`, `employees`, `services`
-- ✅ `payments`, `invoices`, `notifications`
-- ✅ Todas las demás tablas mantienen protección RLS
-
-**Riesgo Evaluado y Mitigado:**
-- ⚠️ Sin RLS, queries directas sin filtro verían todos los datos
-- ✅ La aplicación SIEMPRE filtra por `business_id`
-- ✅ No hay endpoints que permitan queries sin filtros
-- ✅ Middleware verifica ownership
-
-**Conclusión:** Seguro para esta aplicación específica.
-
-Ver: `Database/disable_rls_for_realtime.sql` para explicación técnica completa.
+Ver: `Database/restore_rls_security.sql` para políticas completas.
 
 ### Migration
 
@@ -404,19 +390,19 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.appointment_services;
 
 O via Dashboard: Database → Replication → Enable toggles
 
-**Paso 2: Deshabilitar RLS (Requerido para Realtime)**
-
-```sql
--- Ejecutar: Database/disable_rls_for_realtime.sql
-ALTER TABLE public.appointments DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.appointment_services DISABLE ROW LEVEL SECURITY;
-```
-
-**Paso 3: Configurar REPLICA IDENTITY**
+**Paso 2: Configurar REPLICA IDENTITY**
 
 ```sql
 ALTER TABLE public.appointments REPLICA IDENTITY FULL;
 ALTER TABLE public.appointment_services REPLICA IDENTITY FULL;
+```
+
+**Paso 3: Habilitar RLS y Políticas**
+
+```sql
+-- Ejecutar: Database/restore_rls_security.sql
+-- Crea 6 políticas para appointments + 2 para appointment_services
+-- Habilita RLS sin romper Realtime
 ```
 
 ---
@@ -677,6 +663,32 @@ time.substring(0, 5)                                      // "14:30"
 ---
 
 ## 🚀 Recent Milestones
+
+### 2025-10-10: Bug Fixes & Security Hardening ✅
+
+**Critical Fixes & RLS Security Restoration**
+
+- ✅ **Auth Callback Fixed** - Resolved `ReferenceError` blocking client login
+- ✅ **No-Show Email Fixed** - Corrected column name `cancellation_policy_hours`
+- ✅ **Timezone Date Bug Fixed** - Created `src/lib/dateUtils.ts` with timezone-safe functions
+  - `parseDateString()`, `toDateString()`, `formatSpanishDate()`
+  - Replaced all `.toISOString().split('T')[0]` causing date off-by-one errors
+  - Calendar now displays correct dates matching appointment modal
+- ✅ **Avatar Display Fixed** - Client avatars now render correctly in AppointmentModal
+- ✅ **RLS Security Restored** - Re-enabled Row Level Security on appointments tables
+  - Script: `Database/restore_rls_security.sql`
+  - 6 policies for `appointments`, 2 policies for `appointment_services`
+  - Realtime continues working (bug was React closures, not RLS)
+  - Full security without breaking live updates
+
+**Key Files:**
+- `src/lib/dateUtils.ts` (NEW - timezone utilities)
+- `Database/restore_rls_security.sql` (NEW - security restoration)
+- `src/components/AppointmentModal.tsx` (avatar fix + debug logging)
+- `src/components/CalendarView.tsx` (6 date conversions fixed)
+- `src/app/dashboard/business/appointments/page.tsx` (5 date conversions fixed)
+
+---
 
 ### 2025-10-08 (PM): Supabase Realtime System ✅
 
@@ -1069,5 +1081,5 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ---
 
-**Last Updated:** 2025-10-08 - Supabase Realtime System Complete
+**Last Updated:** 2025-10-10 - Bug Fixes & Security Hardening Complete
 **Project:** TuTurno v3 - B2B Appointment Management SaaS

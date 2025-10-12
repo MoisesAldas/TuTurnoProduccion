@@ -13,6 +13,7 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
+import StarRating from '@/components/StarRating'
 
 interface Business {
   id: string
@@ -55,8 +56,12 @@ interface Review {
   id: string
   rating: number
   comment?: string
-  client_name: string
   created_at: string
+  client: {
+    first_name: string
+    last_name: string
+    email: string
+  }
 }
 
 export default function BusinessProfilePage() {
@@ -140,24 +145,28 @@ export default function BusinessProfilePage() {
         setEmployees(employeesData || [])
       }
 
-      // TODO: Fetch reviews when reviews table is implemented
-      // For now, using mock data
-      setReviews([
-        {
-          id: '1',
-          rating: 5,
-          comment: 'Excelente servicio, muy profesionales y el lugar está muy limpio.',
-          client_name: 'María García',
-          created_at: '2024-01-15'
-        },
-        {
-          id: '2',
-          rating: 4,
-          comment: 'Muy buen corte, recomendado. El personal es muy amable.',
-          client_name: 'Carlos Rodríguez',
-          created_at: '2024-01-10'
-        }
-      ])
+      // Fetch reviews from database
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select(`
+          id,
+          rating,
+          comment,
+          created_at,
+          client:users!client_id(
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: false })
+
+      if (!reviewsError && reviewsData) {
+        setReviews(reviewsData as any[])
+      } else {
+        setReviews([])
+      }
 
     } catch (error) {
       console.error('Error fetching business data:', error)
@@ -623,46 +632,107 @@ export default function BusinessProfilePage() {
 
           {/* Reviews Tab */}
           <TabsContent value="reviews" className="mt-6">
-            <div className="space-y-6">
+            {/* Reviews Summary */}
+            {reviews.length > 0 && (
+              <Card className="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                        Calificación General
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        <div className="text-4xl font-bold text-amber-600">
+                          {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                        </div>
+                        <div>
+                          <StarRating
+                            rating={reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length}
+                            readonly
+                            size="lg"
+                          />
+                          <p className="text-sm text-gray-600 mt-1">
+                            Basado en {reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Rating Distribution */}
+                    <div className="hidden md:block">
+                      <div className="space-y-2">
+                        {[5, 4, 3, 2, 1].map((stars) => {
+                          const count = reviews.filter(r => r.rating === stars).length
+                          const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
+                          return (
+                            <div key={stars} className="flex items-center gap-2 text-sm">
+                              <span className="w-12 text-gray-700">{stars} ⭐</span>
+                              <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-amber-400"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <span className="w-12 text-gray-600">{count}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Individual Reviews */}
+            <div className="space-y-4">
               {reviews.length === 0 ? (
                 <div className="text-center py-12">
-                  <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Star className="w-8 h-8 text-amber-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     No hay reseñas aún
                   </h3>
-                  <p className="text-gray-500">
-                    Sé el primero en dejar una reseña de este negocio.
+                  <p className="text-gray-600 mb-4">
+                    Sé el primero en compartir tu experiencia con este negocio.
                   </p>
+                  <Button onClick={() => handleBookAppointment()}>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Reservar Cita
+                  </Button>
                 </div>
               ) : (
                 reviews.map((review) => (
-                  <Card key={review.id}>
+                  <Card key={review.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-medium text-gray-900">
-                            {review.client_name}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {formatDate(review.created_at)}
-                          </p>
+                      <div className="flex items-start gap-4">
+                        {/* Client Avatar */}
+                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                          {review.client.first_name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < review.rating
-                                  ? 'text-yellow-400 fill-current'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
+
+                        {/* Review Content */}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {review.client.first_name} {review.client.last_name}
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                {formatDate(review.created_at)}
+                              </p>
+                            </div>
+                            <StarRating rating={review.rating} readonly size="sm" />
+                          </div>
+
+                          {review.comment && (
+                            <p className="text-gray-700 leading-relaxed">
+                              {review.comment}
+                            </p>
+                          )}
                         </div>
                       </div>
-                      {review.comment && (
-                        <p className="text-gray-600">{review.comment}</p>
-                      )}
                     </CardContent>
                   </Card>
                 ))

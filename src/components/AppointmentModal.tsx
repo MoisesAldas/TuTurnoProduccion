@@ -292,6 +292,16 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
 
   const statusConfig = getStatusConfig(appointment.status)
 
+  // Debug: Log avatar URL
+  useEffect(() => {
+    console.log('🖼️ Avatar Debug:', {
+      hasUsers: !!appointment.users,
+      avatar_url: appointment.users?.avatar_url,
+      firstName: appointment.users?.first_name,
+      lastName: appointment.users?.last_name,
+    })
+  }, [appointment])
+
   // If checkout is open, render it instead
   if (showCheckout) {
     return (
@@ -567,6 +577,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                 <Button
                   onClick={handleOpenCheckout}
                   disabled={updating}
+                  data-checkout-trigger
                   className="w-full sm:flex-1 bg-gray-900 hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   <DollarSign className="w-4 h-4 mr-2" />

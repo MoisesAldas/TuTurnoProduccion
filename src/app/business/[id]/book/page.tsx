@@ -9,12 +9,14 @@ import { Calendar } from '@/components/ui/calendar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   ArrowLeft, Clock, Calendar as CalendarIcon, User,
-  CheckCircle, Loader2, AlertCircle
+  CheckCircle, Loader2, AlertCircle, Info
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 
 interface Business {
@@ -22,6 +24,9 @@ interface Business {
   name: string
   address?: string
   phone?: string
+  min_booking_hours: number
+  max_booking_days: number
+  cancellation_policy_text?: string
 }
 
 interface Service {
@@ -45,6 +50,15 @@ interface TimeSlot {
   available: boolean
 }
 
+interface SpecialHour {
+  special_date: string
+  is_closed: boolean
+  open_time: string | null
+  close_time: string | null
+  reason: string
+  description: string | null
+}
+
 type BookingStep = 'service' | 'employee' | 'datetime' | 'details' | 'confirmation'
 
 export default function BookingPage() {
@@ -63,10 +77,19 @@ export default function BookingPage() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([])
   const [clientNotes, setClientNotes] = useState('')
 
+  // Booking restrictions (from business settings)
+  const [minDate, setMinDate] = useState<Date>(new Date())
+  const [maxDate, setMaxDate] = useState<Date>(new Date())
+
+  // Special hours state
+  const [specialHourForDate, setSpecialHourForDate] = useState<SpecialHour | null>(null)
+  const [checkingSpecialHours, setCheckingSpecialHours] = useState(false)
+
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { authState } = useAuth()
+  const { toast } = useToast()
   const businessId = params.id as string
   const preSelectedServiceId = searchParams.get('service')
   const supabase = createClient()
@@ -88,6 +111,14 @@ export default function BookingPage() {
   }, [preSelectedServiceId, services])
 
   useEffect(() => {
+    if (selectedDate) {
+      checkSpecialHours(selectedDate)
+    } else {
+      setSpecialHourForDate(null)
+    }
+  }, [selectedDate])
+
+  useEffect(() => {
     if (selectedDate && selectedEmployee && selectedService) {
       generateTimeSlots()
     }
@@ -97,10 +128,10 @@ export default function BookingPage() {
     try {
       setLoading(true)
 
-      // Fetch business
+      // Fetch business with booking restrictions
       const { data: businessData, error: businessError } = await supabase
         .from('businesses')
-        .select('id, name, address, phone')
+        .select('id, name, address, phone, min_booking_hours, max_booking_days, cancellation_policy_text')
         .eq('id', businessId)
         .eq('is_active', true)
         .single()
@@ -112,6 +143,21 @@ export default function BookingPage() {
       }
 
       setBusiness(businessData)
+
+      // Calculate min and max booking dates based on business settings
+      const now = new Date()
+      const minBookingHours = businessData.min_booking_hours || 1
+      const maxBookingDays = businessData.max_booking_days || 90
+
+      // Minimum date: current time + min_booking_hours
+      const calculatedMinDate = new Date()
+      calculatedMinDate.setHours(calculatedMinDate.getHours() + minBookingHours)
+      setMinDate(calculatedMinDate)
+
+      // Maximum date: today + max_booking_days
+      const calculatedMaxDate = new Date()
+      calculatedMaxDate.setDate(calculatedMaxDate.getDate() + maxBookingDays)
+      setMaxDate(calculatedMaxDate)
 
       // Fetch services
       const { data: servicesData, error: servicesError } = await supabase
@@ -144,13 +190,50 @@ export default function BookingPage() {
     }
   }
 
+  const checkSpecialHours = async (date: Date) => {
+    if (!businessId) return
+
+    try {
+      setCheckingSpecialHours(true)
+
+      const formatDateForDB = (date: Date) => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+
+      const dateStr = formatDateForDB(date)
+
+      const { data, error } = await supabase
+        .from('business_special_hours')
+        .select('*')
+        .eq('business_id', businessId)
+        .eq('special_date', dateStr)
+        .maybeSingle()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking special hours:', error)
+        return
+      }
+
+      setSpecialHourForDate(data)
+
+    } catch (error) {
+      console.error('Error checking special hours:', error)
+    } finally {
+      setCheckingSpecialHours(false)
+    }
+  }
+
   const generateTimeSlots = async () => {
     if (!selectedDate || !selectedEmployee || !selectedService) return
 
-    const slots: TimeSlot[] = []
-    const startHour = 9
-    const endHour = 18
-    const slotDuration = 30 // minutes
+    // Check if business is closed on this date (special hours)
+    if (specialHourForDate?.is_closed) {
+      setAvailableSlots([])
+      return
+    }
 
     // Format date for database query
     const formatDateForDB = (date: Date) => {
@@ -161,6 +244,45 @@ export default function BookingPage() {
     }
 
     const selectedDateStr = formatDateForDB(selectedDate)
+
+    // ✅ CHECK: Verify if business is closed on this day of week (regular hours)
+    const dayOfWeek = selectedDate.getDay() // 0 = Sunday, 1 = Monday, etc.
+
+    try {
+      const { data: businessHours, error: hoursError } = await supabase
+        .from('business_hours')
+        .select('is_closed, open_time, close_time')
+        .eq('business_id', businessId)
+        .eq('day_of_week', dayOfWeek)
+        .maybeSingle()
+
+      if (hoursError) {
+        console.error('Error fetching business hours:', hoursError)
+      }
+
+      // If business is closed on this day of week, show no slots
+      if (businessHours?.is_closed) {
+        setAvailableSlots([])
+        return
+      }
+    } catch (error) {
+      console.error('Error checking business hours:', error)
+    }
+
+    const slots: TimeSlot[] = []
+
+    // Use special hours if available, otherwise use default hours
+    let startHour = 9
+    let endHour = 18
+
+    if (specialHourForDate && !specialHourForDate.is_closed && specialHourForDate.open_time && specialHourForDate.close_time) {
+      const openTime = specialHourForDate.open_time.split(':')
+      const closeTime = specialHourForDate.close_time.split(':')
+      startHour = parseInt(openTime[0])
+      endHour = parseInt(closeTime[0])
+    }
+
+    const slotDuration = 30 // minutes
 
     try {
       // 1) Ask Postgres to compute availability with RPC
@@ -205,6 +327,18 @@ export default function BookingPage() {
         const slotStart = new Date(`${selectedDateStr}T${timeStr}`)
         const slotEnd = new Date(slotStart.getTime() + selectedService.duration_minutes * 60000)
 
+        // ✅ FILTER: Remove slots that have already passed (respecting min_booking_hours)
+        const now = new Date()
+        if (slotStart <= now) {
+          return false // Slot is in the past
+        }
+
+        // Check if slot is before minDate (which includes min_booking_hours buffer)
+        if (slotStart < minDate) {
+          return false // Too soon to book (violates min_booking_hours)
+        }
+
+        // Check for conflicts with client's own appointments
         const conflicts = clientAppointments.some(ap => {
           const apStart = new Date(`${selectedDateStr}T${ap.start_time}`)
           const apEnd = new Date(`${selectedDateStr}T${ap.end_time}`)
@@ -288,8 +422,67 @@ export default function BookingPage() {
       return
     }
 
-    if (!selectedService || !selectedEmployee || !selectedDate || !selectedTime) {
+    if (!selectedService || !selectedEmployee || !selectedDate || !selectedTime || !business) {
       return
+    }
+
+    // ✅ VALIDATION: Check booking restrictions
+    const now = new Date()
+    const appointmentDateTime = new Date(selectedDate)
+    const [hours, minutes] = selectedTime.split(':').map(Number)
+    appointmentDateTime.setHours(hours, minutes, 0, 0)
+
+    // Check min_booking_hours
+    const hoursUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+    if (hoursUntilAppointment < business.min_booking_hours) {
+      toast({
+        variant: 'destructive',
+        title: 'No se puede reservar',
+        description: `Debes reservar con al menos ${business.min_booking_hours} hora${business.min_booking_hours !== 1 ? 's' : ''} de anticipación.`,
+      })
+      return
+    }
+
+    // Check max_booking_days
+    const daysUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    if (daysUntilAppointment > business.max_booking_days) {
+      toast({
+        variant: 'destructive',
+        title: 'No se puede reservar',
+        description: `Solo puedes reservar hasta ${business.max_booking_days} día${business.max_booking_days !== 1 ? 's' : ''} en el futuro.`,
+      })
+      return
+    }
+
+    // ✅ VALIDATION: Check if business is open at selected date/time (special hours)
+    const formatDateForDB = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    try {
+      const { data: isOpen, error: isOpenError } = await supabase.rpc('is_business_open', {
+        p_business_id: businessId,
+        p_check_date: formatDateForDB(selectedDate),
+        p_check_time: selectedTime + ':00'
+      })
+
+      if (isOpenError) {
+        console.error('Error checking business hours:', isOpenError)
+        // Continue anyway if check fails (don't block user)
+      } else if (isOpen === false) {
+        toast({
+          variant: 'destructive',
+          title: 'Negocio cerrado',
+          description: 'El negocio no está disponible en esta fecha y hora. Por favor selecciona otra fecha.',
+        })
+        return
+      }
+    } catch (error) {
+      console.error('Error checking if business is open:', error)
+      // Continue anyway if check fails
     }
 
     try {
@@ -695,6 +888,26 @@ export default function BookingPage() {
                 </div>
               </div>
 
+              {/* Booking Restrictions Alert */}
+              {business && (business.min_booking_hours > 0 || business.max_booking_days < 365) && (
+                <Alert className="bg-emerald-50 border-emerald-200">
+                  <Info className="h-4 w-4 text-emerald-600" />
+                  <AlertTitle className="text-emerald-900 font-semibold">Políticas de reserva</AlertTitle>
+                  <AlertDescription className="text-emerald-700 text-sm space-y-1">
+                    {business.min_booking_hours > 0 && (
+                      <p>
+                        • Debes reservar con al menos <strong>{business.min_booking_hours} hora{business.min_booking_hours !== 1 ? 's' : ''}</strong> de anticipación
+                      </p>
+                    )}
+                    {business.max_booking_days < 365 && (
+                      <p>
+                        • Solo puedes reservar hasta <strong>{business.max_booking_days} día{business.max_booking_days !== 1 ? 's' : ''}</strong> en el futuro
+                      </p>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Card>
                 <CardHeader>
                   <CardTitle>Selecciona una fecha</CardTitle>
@@ -705,13 +918,23 @@ export default function BookingPage() {
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     disabled={(date) => {
-                      // More explicit approach - create clean date objects for comparison
+                      // Create clean date objects for comparison (date-only, no time)
                       const today = new Date()
                       const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
                       const checkingDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                      const minDateOnly = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())
+                      const maxDateOnly = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())
 
-                      // Block Sundays (day 0) and dates before today
-                      return checkingDateOnly < todayDateOnly || date.getDay() === 0
+                      // Block Sundays (day 0)
+                      if (date.getDay() === 0) return true
+
+                      // Block dates before minDate (respects min_booking_hours)
+                      if (checkingDateOnly < minDateOnly) return true
+
+                      // Block dates after maxDate (respects max_booking_days)
+                      if (checkingDateOnly > maxDateOnly) return true
+
+                      return false
                     }}
                     className="rounded-md border"
                   />
@@ -719,39 +942,95 @@ export default function BookingPage() {
               </Card>
 
               {selectedDate && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Horarios disponibles - {formatDate(selectedDate)}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-                      {availableSlots.map((slot) => (
-                        <Button
-                          key={slot.time}
-                          variant={selectedTime === slot.time ? 'default' : 'outline'}
-                          disabled={!slot.available}
-                          onClick={() => setSelectedTime(slot.time)}
-                          className="h-12"
-                        >
-                          {slot.time}
-                        </Button>
-                      ))}
-                    </div>
-                    {availableSlots.length === 0 && (
-                      <div className="mt-4 p-4 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-900">
-                        <div className="font-medium">El profesional no tiene disponibilidad en esta fecha.</div>
-                        <div className="text-sm mt-1">Por favor, intenta con otra fecha u otro profesional.</div>
+                <>
+                  {/* Special Hours Alerts */}
+                  {specialHourForDate && specialHourForDate.is_closed && (
+                    <Alert className="bg-red-50 border-red-200">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <AlertTitle className="text-red-900 font-semibold">Negocio cerrado</AlertTitle>
+                      <AlertDescription className="text-red-700 text-sm">
+                        {specialHourForDate.description || `El negocio estará cerrado este día (${
+                          specialHourForDate.reason === 'holiday' ? 'Feriado' :
+                          specialHourForDate.reason === 'special_event' ? 'Evento Especial' :
+                          specialHourForDate.reason === 'maintenance' ? 'Mantenimiento' :
+                          'Día especial'
+                        }).`}
+                        <br />
+                        <span className="font-medium">Por favor selecciona otra fecha.</span>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {specialHourForDate && !specialHourForDate.is_closed && specialHourForDate.open_time && specialHourForDate.close_time && (
+                    <Alert className="bg-blue-50 border-blue-200">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      <AlertTitle className="text-blue-900 font-semibold">Horario especial</AlertTitle>
+                      <AlertDescription className="text-blue-700 text-sm">
+                        {specialHourForDate.description && (
+                          <>
+                            {specialHourForDate.description}
+                            <br />
+                          </>
+                        )}
+                        <span className="font-medium">
+                          Horario de atención: {specialHourForDate.open_time.substring(0, 5)} - {specialHourForDate.close_time.substring(0, 5)}
+                        </span>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Horarios disponibles - {formatDate(selectedDate)}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+                        {availableSlots.map((slot) => (
+                          <Button
+                            key={slot.time}
+                            variant={selectedTime === slot.time ? 'default' : 'outline'}
+                            disabled={!slot.available}
+                            onClick={() => setSelectedTime(slot.time)}
+                            className="h-12"
+                          >
+                            {slot.time}
+                          </Button>
+                        ))}
                       </div>
-                    )}
-                    {selectedTime && (
-                      <div className="mt-6 text-center">
-                        <Button onClick={handleDateTimeConfirm} size="lg">
-                          Continuar
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      {availableSlots.length === 0 && !specialHourForDate?.is_closed && (
+                        <div className="mt-4 p-4 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-900">
+                          <div className="font-medium">El profesional no tiene disponibilidad en esta fecha.</div>
+                          <div className="text-sm mt-1">Por favor, intenta con otra fecha u otro profesional.</div>
+                        </div>
+                      )}
+                      {selectedTime && (
+                        <div className="mt-6 text-center">
+                          <Button onClick={handleDateTimeConfirm} size="lg">
+                            Continuar
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Info: Why no slots? */}
+                  {availableSlots.length === 0 && !specialHourForDate?.is_closed && !checkingSpecialHours && (
+                    <Alert className="bg-gray-50 border-gray-200">
+                      <Info className="h-4 w-4 text-gray-600" />
+                      <AlertTitle className="text-gray-900 font-semibold">Sin horarios disponibles</AlertTitle>
+                      <AlertDescription className="text-gray-600 text-sm">
+                        Esto puede deberse a que:
+                        <ul className="list-disc list-inside mt-2 space-y-1">
+                          <li>El negocio está cerrado este día</li>
+                          <li>El profesional no tiene disponibilidad</li>
+                          <li>Las horas disponibles ya pasaron (debes reservar con anticipación)</li>
+                          <li>Ya tienes una cita agendada en este día</li>
+                        </ul>
+                        <p className="mt-2 font-medium">Por favor, intenta con otra fecha u otro profesional.</p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -770,6 +1049,18 @@ export default function BookingPage() {
                   Volver a Fecha y Hora
                 </Button>
               </div>
+
+              {/* Cancellation Policy Alert */}
+              {business?.cancellation_policy_text && (
+                <Alert className="bg-amber-50 border-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-900 font-semibold">Política de cancelación</AlertTitle>
+                  <AlertDescription className="text-amber-700 text-sm">
+                    {business.cancellation_policy_text}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Booking Summary */}
               <Card>
                 <CardHeader>

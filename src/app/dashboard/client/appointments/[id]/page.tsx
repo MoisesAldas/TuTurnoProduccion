@@ -8,12 +8,20 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import {
   ArrowLeft, Calendar, Clock, MapPin, Phone, User,
-  CheckCircle, AlertCircle, Edit, CalendarIcon, Trash2
+  CheckCircle, AlertCircle, Edit, CalendarIcon, Trash2, Info, Ban
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 
 interface Appointment {
@@ -29,6 +37,10 @@ interface Appointment {
     name: string
     address?: string
     phone?: string
+    allow_client_cancellation: boolean
+    allow_client_reschedule: boolean
+    cancellation_policy_hours: number
+    cancellation_policy_text?: string
   }
   appointment_services: {
     service: {
@@ -64,6 +76,7 @@ export default function ManageAppointmentPage() {
   const params = useParams()
   const router = useRouter()
   const { authState } = useAuth()
+  const { toast } = useToast()
   const appointmentId = params.id as string
   const supabase = createClient()
 
@@ -103,7 +116,16 @@ export default function ManageAppointmentPage() {
         .from('appointments')
         .select(`
           *,
-          business:businesses(id, name, address, phone),
+          business:businesses(
+            id,
+            name,
+            address,
+            phone,
+            allow_client_cancellation,
+            allow_client_reschedule,
+            cancellation_policy_hours,
+            cancellation_policy_text
+          ),
           employee:employees(id, first_name, last_name, position, avatar_url),
           appointment_services(
             service:services(id, name, description),
@@ -376,8 +398,63 @@ export default function ManageAppointmentPage() {
     }
   }
 
+  // ✅ VALIDATION: Check if client can cancel based on policies
+  const canCancelAppointment = () => {
+    if (!appointment) return false
+
+    // Check if business allows client cancellations
+    if (!appointment.business.allow_client_cancellation) {
+      return false
+    }
+
+    // Calculate hours until appointment
+    const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
+    const now = new Date()
+    const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+
+    // Check if meets cancellation policy hours
+    return hoursUntil >= appointment.business.cancellation_policy_hours
+  }
+
+  // ✅ VALIDATION: Check if client can reschedule
+  const canRescheduleAppointment = () => {
+    if (!appointment) return false
+
+    // Check if business allows client rescheduling
+    if (!appointment.business.allow_client_reschedule) {
+      return false
+    }
+
+    // Calculate hours until appointment
+    const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
+    const now = new Date()
+    const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+
+    // Use same policy hours as cancellation
+    return hoursUntil >= appointment.business.cancellation_policy_hours
+  }
+
+  // Get hours remaining until appointment
+  const getHoursUntilAppointment = () => {
+    if (!appointment) return 0
+    const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
+    const now = new Date()
+    return Math.max(0, (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60))
+  }
+
   const handleCancelAppointment = async () => {
     if (!appointment) return
+
+    // Validate cancellation policy
+    if (!canCancelAppointment()) {
+      const hoursUntil = getHoursUntilAppointment()
+      toast({
+        variant: 'destructive',
+        title: 'No se puede cancelar',
+        description: `Debes cancelar con al menos ${appointment.business.cancellation_policy_hours} horas de anticipación. Solo quedan ${Math.floor(hoursUntil)} horas.`,
+      })
+      return
+    }
 
     try {
       setCancelling(true)
@@ -389,14 +466,29 @@ export default function ManageAppointmentPage() {
 
       if (error) {
         console.error('Error cancelling appointment:', error)
-        alert('Error al cancelar la cita')
+        toast({
+          variant: 'destructive',
+          title: 'Error al cancelar',
+          description: 'No se pudo cancelar la cita. Por favor intenta nuevamente.',
+        })
         return
       }
 
-      router.push('/dashboard/client')
+      toast({
+        title: 'Cita cancelada',
+        description: 'Tu cita ha sido cancelada exitosamente.',
+      })
+
+      setTimeout(() => {
+        router.push('/dashboard/client')
+      }, 1000)
     } catch (error) {
       console.error('Error cancelling appointment:', error)
-      alert('Error al cancelar la cita')
+      toast({
+        variant: 'destructive',
+        title: 'Error al cancelar',
+        description: 'No se pudo cancelar la cita. Por favor intenta nuevamente.',
+      })
     } finally {
       setCancelling(false)
     }
@@ -575,32 +667,151 @@ export default function ManageAppointmentPage() {
           </CardContent>
         </Card>
 
+        {/* Cancellation Policy Alert */}
+        {step === 'options' && appointment.business.cancellation_policy_text && (
+          <Alert className="bg-amber-50 border-amber-200 mb-6">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-900 font-semibold">Política de cancelación</AlertTitle>
+            <AlertDescription className="text-amber-700 text-sm">
+              {appointment.business.cancellation_policy_text}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Actions */}
         {step === 'options' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleStartModification}>
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Edit className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Modificar Cita</h3>
-                <p className="text-gray-600">Cambiar empleado, fecha o hora de la cita</p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleCancelAppointment}>
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Trash2 className="w-8 h-8 text-red-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancelar Cita</h3>
-                <p className="text-gray-600">Cancelar esta cita permanentemente</p>
-                {cancelling && (
-                  <p className="text-sm text-red-600 mt-2">Cancelando...</p>
+          <>
+            {/* Info Alert - Hours Until Appointment */}
+            <Alert className="bg-blue-50 border-blue-200 mb-6">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertTitle className="text-blue-900 font-semibold">Tiempo restante</AlertTitle>
+              <AlertDescription className="text-blue-700 text-sm">
+                Tu cita es en <strong>{Math.floor(getHoursUntilAppointment())} horas</strong>.
+                {appointment.business.cancellation_policy_hours > 0 && (
+                  <> Puedes cancelar o reagendar con al menos <strong>{appointment.business.cancellation_policy_hours} horas</strong> de anticipación.</>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Reschedule Card */}
+              {appointment.business.allow_client_reschedule ? (
+                canRescheduleAppointment() ? (
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleStartModification}>
+                    <CardContent className="p-8 text-center">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Edit className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Modificar Cita</h3>
+                      <p className="text-gray-600">Cambiar empleado, fecha o hora de la cita</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Card className="opacity-50 cursor-not-allowed">
+                          <CardContent className="p-8 text-center">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <Ban className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Modificar Cita</h3>
+                            <p className="text-gray-600">No disponible</p>
+                          </CardContent>
+                        </Card>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
+                        <p className="text-sm">
+                          No puedes modificar esta cita porque faltan menos de {appointment.business.cancellation_policy_hours} horas.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Card className="opacity-50 cursor-not-allowed">
+                        <CardContent className="p-8 text-center">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Ban className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Modificar Cita</h3>
+                          <p className="text-gray-600">No permitido</p>
+                        </CardContent>
+                      </Card>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
+                      <p className="text-sm">
+                        El negocio no permite que los clientes modifiquen citas. Contacta directamente al negocio.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+
+              {/* Cancel Card */}
+              {appointment.business.allow_client_cancellation ? (
+                canCancelAppointment() ? (
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleCancelAppointment}>
+                    <CardContent className="p-8 text-center">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Trash2 className="w-8 h-8 text-red-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancelar Cita</h3>
+                      <p className="text-gray-600">Cancelar esta cita permanentemente</p>
+                      {cancelling && (
+                        <p className="text-sm text-red-600 mt-2">Cancelando...</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Card className="opacity-50 cursor-not-allowed">
+                          <CardContent className="p-8 text-center">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <Ban className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancelar Cita</h3>
+                            <p className="text-gray-600">No disponible</p>
+                          </CardContent>
+                        </Card>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
+                        <p className="text-sm">
+                          No puedes cancelar esta cita porque faltan menos de {appointment.business.cancellation_policy_hours} horas.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )
+              ) : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Card className="opacity-50 cursor-not-allowed">
+                        <CardContent className="p-8 text-center">
+                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Ban className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancelar Cita</h3>
+                          <p className="text-gray-600">No permitido</p>
+                        </CardContent>
+                      </Card>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
+                      <p className="text-sm">
+                        El negocio no permite que los clientes cancelen citas. Contacta directamente al negocio.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </>
         )}
 
         {/* Employee Selection Step */}

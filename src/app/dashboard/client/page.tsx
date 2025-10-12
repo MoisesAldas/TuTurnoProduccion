@@ -23,6 +23,7 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
+import ReviewModal from '@/components/ReviewModal'
 
 interface Appointment {
   id: string
@@ -54,6 +55,7 @@ interface Appointment {
     avatar_url?: string
   } | null
   created_at: string
+  has_review?: boolean
 }
 
 interface QuickStats {
@@ -75,6 +77,10 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Review Modal State
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
   const { authState, signOut } = useAuth()
   const supabase = createClient()
@@ -120,7 +126,24 @@ export default function ClientDashboard() {
       }
 
       const appointmentData = data || []
-      setAppointments(appointmentData)
+
+      // Check if each appointment has a review
+      const appointmentsWithReviewStatus = await Promise.all(
+        appointmentData.map(async (appointment) => {
+          const { data: reviewData } = await supabase
+            .from('reviews')
+            .select('id')
+            .eq('appointment_id', appointment.id)
+            .maybeSingle()
+
+          return {
+            ...appointment,
+            has_review: !!reviewData
+          }
+        })
+      )
+
+      setAppointments(appointmentsWithReviewStatus)
 
       // Calculate stats in LOCAL timezone to avoid UTC date shifting
       const now = new Date()
@@ -132,16 +155,16 @@ export default function ClientDashboard() {
       const mm = String(now.getMinutes()).padStart(2, '0')
       const currentTime = `${hh}:${mm}`
 
-      const upcoming = appointmentData.filter(apt => {
+      const upcoming = appointmentsWithReviewStatus.filter(apt => {
         const aptDate = apt.appointment_date
         const aptTime = apt.start_time
         return (aptDate > today || (aptDate === today && aptTime > currentTime)) &&
                ['pending', 'confirmed'].includes(apt.status)
       }).length
 
-      const completed = appointmentData.filter(apt => apt.status === 'completed').length
-      const cancelled = appointmentData.filter(apt => ['cancelled', 'no_show'].includes(apt.status)).length
-      const totalSpent = appointmentData
+      const completed = appointmentsWithReviewStatus.filter(apt => apt.status === 'completed').length
+      const cancelled = appointmentsWithReviewStatus.filter(apt => ['cancelled', 'no_show'].includes(apt.status)).length
+      const totalSpent = appointmentsWithReviewStatus
         .filter(apt => apt.status === 'completed')
         .reduce((sum, apt) => sum + apt.total_price, 0)
 
@@ -191,6 +214,21 @@ export default function ClientDashboard() {
       style: 'currency',
       currency: 'USD'
     }).format(price)
+  }
+
+  const handleOpenReviewModal = (appointment: Appointment) => {
+    setSelectedAppointment(appointment)
+    setReviewModalOpen(true)
+  }
+
+  const handleCloseReviewModal = () => {
+    setReviewModalOpen(false)
+    setSelectedAppointment(null)
+  }
+
+  const handleReviewSubmitted = () => {
+    // Refresh appointments to update review status
+    fetchAppointments()
   }
 
   const isUpcoming = (appointment: Appointment) => {
@@ -666,10 +704,27 @@ export default function ClientDashboard() {
                             </Link>
                           )}
 
-                          {appointment.status === 'completed' && (
-                            <Button variant="outline" size="sm">
+                          {appointment.status === 'completed' && !appointment.has_review && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenReviewModal(appointment)}
+                              className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                            >
                               <Star className="w-4 h-4 mr-1" />
-                              Reseña
+                              Dejar Reseña
+                            </Button>
+                          )}
+
+                          {appointment.status === 'completed' && appointment.has_review && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-green-300 text-green-700 cursor-default"
+                              disabled
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Reseña Enviada
                             </Button>
                           )}
 
@@ -727,6 +782,18 @@ export default function ClientDashboard() {
         </div>
       </div>
 
+      {/* Review Modal */}
+      {selectedAppointment && (
+        <ReviewModal
+          isOpen={reviewModalOpen}
+          onClose={handleCloseReviewModal}
+          appointmentId={selectedAppointment.id}
+          businessId={selectedAppointment.business?.id || ''}
+          businessName={selectedAppointment.business?.name || 'Negocio'}
+          clientId={authState.user?.id || ''}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   )
 }

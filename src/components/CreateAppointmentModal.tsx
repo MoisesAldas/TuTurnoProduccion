@@ -288,6 +288,33 @@ export default function CreateAppointmentModal({
         if (appointmentError) throw appointmentError
         appointmentId = appointment.id
 
+        // Send rescheduled email if appointment was edited
+        const hasChanges =
+          appointment.appointment_date !== appointmentDate ||
+          appointment.start_time.substring(0, 5) !== startTime ||
+          appointment.employee_id !== selectedEmployeeIdState
+
+        if (hasChanges) {
+          try {
+            await fetch('/api/send-rescheduled-notification', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                appointmentId: appointment.id,
+                changes: {
+                  oldDate: appointment.appointment_date !== appointmentDate ? appointment.appointment_date : undefined,
+                  oldTime: appointment.start_time.substring(0, 5) !== startTime ? appointment.start_time : undefined,
+                  oldEndTime: appointment.end_time,
+                  oldEmployeeId: appointment.employee_id !== selectedEmployeeIdState ? appointment.employee_id : undefined
+                }
+              })
+            })
+          } catch (emailError) {
+            console.warn('⚠️ Failed to send rescheduled email:', emailError)
+            // Don't block the operation if email fails
+          }
+        }
+
         // Delete existing services
         const { error: deleteError } = await supabase
           .from('appointment_services')
