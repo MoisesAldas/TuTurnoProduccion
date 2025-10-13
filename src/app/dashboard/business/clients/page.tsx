@@ -442,12 +442,12 @@ export default function ClientsPage() {
     // Título principal
     doc.setTextColor(255, 255, 255)
     doc.setFontSize(22)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text('LISTADO DE CLIENTES', 15, 15)
 
     // Subtítulo
     doc.setFontSize(10)
-    doc.setFont(undefined, 'normal')
+    doc.setFont('helvetica', 'normal')
     doc.text(dateStr.charAt(0).toUpperCase() + dateStr.slice(1), 15, 23)
 
     // Información del reporte
@@ -456,7 +456,7 @@ export default function ClientsPage() {
 
     doc.setTextColor(120, 53, 15) // amber-900
     doc.setFontSize(9)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text(`Total de clientes: ${totalCount}`, 15, 42)
 
     // Filtros aplicados (si hay)
@@ -512,7 +512,7 @@ export default function ClientsPage() {
           const isActive = data.cell.raw === 'Activo'
           if (isActive) {
             doc.setTextColor(22, 163, 74) // green-600
-            doc.setFont(undefined, 'bold')
+            doc.setFont('helvetica', 'bold')
           } else {
             doc.setTextColor(107, 114, 128) // gray-500
           }
