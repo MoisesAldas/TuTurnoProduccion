@@ -91,6 +91,8 @@ export function useRealtimeAppointments({
       return
     }
 
+    console.log('[Realtime] ✅ Valid businessId found, proceeding with subscription')
+
     // Crear canal único por business
     const channelName = `appointments:business_id=eq.${businessId}`
     console.log(`[Realtime] 📡 Subscribing to channel: ${channelName}`)
@@ -181,6 +183,11 @@ export function useRealtimeAppointments({
       }
     }
   }, [businessId, debug]) // Solo re-suscribir si cambia businessId
+
+  // Debug: Log cuando cambia businessId
+  useEffect(() => {
+    console.log('[Realtime] 🔄 businessId changed:', { businessId, type: typeof businessId })
+  }, [businessId])
 
   // No retornamos nada porque el hook maneja todo internamente
   // Los callbacks se ejecutan automáticamente cuando hay eventos
