@@ -76,18 +76,19 @@ export function useRealtimeAppointments({
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
+    console.log('[Realtime] 🚀 Initializing useRealtimeAppointments hook')
+    console.log(`[Realtime] 🏢 Business ID: ${businessId}`)
+    console.log(`[Realtime] 🐛 Debug mode: ${debug}`)
+    
     // No suscribirse si no hay businessId
     if (!businessId) {
-      if (debug) console.warn('[Realtime] No businessId provided, skipping subscription')
+      console.warn('[Realtime] ⚠️ No businessId provided, skipping subscription')
       return
     }
 
     // Crear canal único por business
     const channelName = `appointments:business_id=eq.${businessId}`
-
-    if (debug) {
-      console.log(`[Realtime] Subscribing to channel: ${channelName}`)
-    }
+    console.log(`[Realtime] 📡 Subscribing to channel: ${channelName}`)
 
     const channel = supabase
       .channel(channelName)
@@ -100,8 +101,9 @@ export function useRealtimeAppointments({
           filter: `business_id=eq.${businessId}`
         },
         (payload: RealtimePostgresChangesPayload<Appointment>) => {
+          console.log('[Realtime] 🆕 Nueva cita insertada:', payload.new)
           if (debug) {
-            console.log('[Realtime] 🆕 Nueva cita insertada:', payload.new)
+            console.log('[Realtime] 📊 Payload completo INSERT:', payload)
           }
           onInsert?.(payload.new as Appointment)
         }
@@ -115,8 +117,9 @@ export function useRealtimeAppointments({
           filter: `business_id=eq.${businessId}`
         },
         (payload: RealtimePostgresChangesPayload<Appointment>) => {
+          console.log('[Realtime] ✏️ Cita actualizada:', payload.new)
           if (debug) {
-            console.log('[Realtime] ✏️ Cita actualizada:', payload.new)
+            console.log('[Realtime] 📊 Payload completo UPDATE:', payload)
           }
           onUpdate?.(payload.new as Appointment)
         }
@@ -130,8 +133,9 @@ export function useRealtimeAppointments({
           filter: `business_id=eq.${businessId}`
         },
         (payload: RealtimePostgresChangesPayload<Appointment>) => {
+          console.log('[Realtime] 🗑️ Cita eliminada:', payload.old)
           if (debug) {
-            console.log('[Realtime] 🗑️ Cita eliminada:', payload.old)
+            console.log('[Realtime] 📊 Payload completo DELETE:', payload)
           }
           if (payload.old && 'id' in payload.old && payload.old.id) {
             onDelete?.(payload.old.id)
@@ -139,18 +143,20 @@ export function useRealtimeAppointments({
         }
       )
       .subscribe((status) => {
-        if (debug) {
-          console.log(`[Realtime] Subscription status: ${status}`)
-        }
-
+        console.log(`[Realtime] 📡 Subscription status: ${status}`)
+        
         if (status === 'SUBSCRIBED') {
-          if (debug) {
-            console.log('[Realtime] ✅ Successfully subscribed to appointments channel')
-          }
+          console.log('[Realtime] ✅ Successfully subscribed to appointments channel')
+          console.log(`[Realtime] 🎯 Listening for appointments with business_id: ${businessId}`)
+          console.log('[Realtime] 👂 Ready to receive INSERT, UPDATE, DELETE events')
         } else if (status === 'CHANNEL_ERROR') {
           console.error('[Realtime] ❌ Error subscribing to channel')
+          console.error('[Realtime] 🔍 Check your Supabase configuration and RLS policies')
         } else if (status === 'TIMED_OUT') {
           console.error('[Realtime] ⏱️ Subscription timed out')
+          console.error('[Realtime] 🔄 Try refreshing the page or check your internet connection')
+        } else if (status === 'CLOSED') {
+          console.warn('[Realtime] 🔌 Channel closed')
         }
       })
 
@@ -159,13 +165,14 @@ export function useRealtimeAppointments({
 
     // Cleanup: desuscribirse al desmontar o cuando cambie businessId
     return () => {
-      if (debug) {
-        console.log(`[Realtime] Unsubscribing from channel: ${channelName}`)
-      }
-
+      console.log(`[Realtime] 🔌 Unsubscribing from channel: ${channelName}`)
+      
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
+        console.log('[Realtime] ✅ Channel removed successfully')
+      } else {
+        console.log('[Realtime] ⚠️ No channel to remove')
       }
     }
   }, [businessId, debug]) // Solo re-suscribir si cambia businessId
