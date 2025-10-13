@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import StarRating from '@/components/StarRating'
+import BusinessInfoTab from '@/components/BusinessInfoTab'
 
 interface Business {
   id: string
@@ -124,12 +125,6 @@ export default function BusinessProfilePage() {
         .order('name')
 
       if (!servicesError) {
-        // Debug: Log service duration values
-        ('Services data:', servicesData?.map(s => ({
-          name: s.name,
-          duration_minutes: s.duration_minutes,
-          type: typeof s.duration_minutes
-        })))
         setServices(servicesData || [])
       }
 
@@ -742,33 +737,7 @@ export default function BusinessProfilePage() {
 
           {/* Info Tab */}
           <TabsContent value="info" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Información del Negocio</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Horarios de Atención</h4>
-                  <p className="text-gray-600">
-                    Los horarios específicos se mostrarán al seleccionar un servicio para reservar.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Políticas de Cancelación</h4>
-                  <p className="text-gray-600">
-                    Las cancelaciones deben realizarse con al menos 24 horas de anticipación.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Métodos de Pago</h4>
-                  <p className="text-gray-600">
-                    Efectivo, tarjetas de débito y crédito, transferencias bancarias.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <BusinessInfoTab businessId={businessId} />
           </TabsContent>
         </Tabs>
       </section>

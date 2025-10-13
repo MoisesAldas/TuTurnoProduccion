@@ -20,33 +20,39 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
+import ReviewModal from '@/components/ReviewModal'
 
 interface Appointment {
   id: string
   appointment_date: string
-  appointment_time: string
-  duration: number
+  start_time: string
+  end_time: string
   total_price: number
   status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
   client_notes?: string
-  business: {
+  business?: {
     id: string
     name: string
     address?: string
     phone?: string
-  }
-  service: {
-    id: string
-    name: string
-    description?: string
-  }
-  employee: {
+  } | null
+  appointment_services: {
+    service?: {
+      id: string
+      name: string
+      description?: string
+    } | null
+    price: number
+  }[]
+  employee?: {
     id: string
     first_name: string
     last_name: string
     position?: string
-  }
+    avatar_url?: string
+  } | null
   created_at: string
+  has_review?: boolean
 }
 
 export default function ClientAppointmentsPage() {
@@ -57,10 +63,8 @@ export default function ClientAppointmentsPage() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false)
-  const [showReviewDialog, setShowReviewDialog] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
-  const [reviewRating, setReviewRating] = useState(5)
-  const [reviewComment, setReviewComment] = useState('')
   const [newDate, setNewDate] = useState<Date | undefined>(undefined)
   const [newTime, setNewTime] = useState('')
 
@@ -84,19 +88,40 @@ export default function ClientAppointmentsPage() {
         .select(`
           *,
           business:businesses(id, name, address, phone),
-          service:services(id, name, description),
-          employee:employees(id, first_name, last_name, position)
+          employee:employees(id, first_name, last_name, position, avatar_url),
+          appointment_services(
+            service:services(id, name, description),
+            price
+          )
         `)
         .eq('client_id', authState.user.id)
         .order('appointment_date', { ascending: false })
-        .order('appointment_time', { ascending: false })
+        .order('start_time', { ascending: false })
 
       if (error) {
         console.error('Error fetching appointments:', error)
         return
       }
 
-      setAppointments(data || [])
+      const appointmentData = data || []
+
+      // Check if each appointment has a review
+      const appointmentsWithReviewStatus = await Promise.all(
+        appointmentData.map(async (appointment) => {
+          const { data: reviewData } = await supabase
+            .from('reviews')
+            .select('id')
+            .eq('appointment_id', appointment.id)
+            .maybeSingle()
+
+          return {
+            ...appointment,
+            has_review: !!reviewData
+          }
+        })
+      )
+
+      setAppointments(appointmentsWithReviewStatus)
 
     } catch (error) {
       console.error('Error fetching appointments:', error)
@@ -142,7 +167,7 @@ export default function ClientAppointmentsPage() {
         .from('appointments')
         .update({
           appointment_date: newDate.toISOString().split('T')[0],
-          appointment_time: newTime,
+          start_time: newTime,
           status: 'pending' // Reset to pending for business confirmation
         })
         .eq('id', selectedAppointment.id)
@@ -165,30 +190,13 @@ export default function ClientAppointmentsPage() {
     }
   }
 
-  const handleSubmitReview = async () => {
-    if (!selectedAppointment) return
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false)
+    setSelectedAppointment(null)
+  }
 
-    try {
-      // In a real implementation, this would go to a reviews table
-      ('Review submitted:', {
-        appointmentId: selectedAppointment.id,
-        businessId: selectedAppointment.business.id,
-        rating: reviewRating,
-        comment: reviewComment
-      })
-
-      // For now, just close the dialog
-      setShowReviewDialog(false)
-      setSelectedAppointment(null)
-      setReviewRating(5)
-      setReviewComment('')
-
-      alert('¡Gracias por tu reseña!')
-
-    } catch (error) {
-      console.error('Error submitting review:', error)
-      alert('Error al enviar la reseña')
-    }
+  const handleReviewSubmitted = () => {
+    fetchAppointments() // Refresh to update review status
   }
 
   const getStatusInfo = (status: string) => {
@@ -228,13 +236,13 @@ export default function ClientAppointmentsPage() {
 
   const isUpcoming = (appointment: Appointment) => {
     const now = new Date()
-    const aptDate = new Date(`${appointment.appointment_date}T${appointment.appointment_time}`)
+    const aptDate = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
     return aptDate > now && ['pending', 'confirmed'].includes(appointment.status)
   }
 
   const isPast = (appointment: Appointment) => {
     const now = new Date()
-    const aptDate = new Date(`${appointment.appointment_date}T${appointment.appointment_time}`)
+    const aptDate = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
     return aptDate <= now || ['completed', 'cancelled', 'no_show'].includes(appointment.status)
   }
 
@@ -243,10 +251,16 @@ export default function ClientAppointmentsPage() {
   }
 
   const filteredAppointments = appointments.filter(appointment => {
+    const businessName = appointment.business?.name || 'Sin nombre'
+    const serviceName = appointment.appointment_services[0]?.service?.name || 'Sin servicio'
+    const employeeName = appointment.employee
+      ? `${appointment.employee.first_name} ${appointment.employee.last_name}`
+      : 'Sin empleado'
+
     const matchesSearch =
-      appointment.business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      appointment.service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${appointment.employee.first_name} ${appointment.employee.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())
+      businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employeeName.toLowerCase().includes(searchQuery.toLowerCase())
 
     switch (filter) {
       case 'upcoming':
@@ -370,7 +384,7 @@ export default function ClientAppointmentsPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-4">
                           <h3 className="font-semibold text-xl text-gray-900">
-                            {appointment.business.name}
+                            {appointment.business?.name || 'Negocio'}
                           </h3>
                           <Badge className={statusInfo.color}>
                             <StatusIcon className="w-3 h-3 mr-1" />
@@ -381,46 +395,50 @@ export default function ClientAppointmentsPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <div className="space-y-3">
                             <div className="flex items-center text-gray-600">
-                              <User className="w-4 h-4 mr-3 text-green-600" />
+                              <User className="w-4 h-4 mr-3 text-emerald-600" />
                               <div>
-                                <p className="font-medium">{appointment.service.name}</p>
+                                <p className="font-medium">
+                                  {appointment.appointment_services[0]?.service?.name || 'Servicio'}
+                                </p>
                                 <p className="text-sm">
-                                  con {appointment.employee.first_name} {appointment.employee.last_name}
+                                  con {appointment.employee ? `${appointment.employee.first_name} ${appointment.employee.last_name}` : 'Sin empleado'}
                                 </p>
                               </div>
                             </div>
 
                             <div className="flex items-center text-gray-600">
-                              <CalendarIcon className="w-4 h-4 mr-3 text-green-600" />
+                              <CalendarIcon className="w-4 h-4 mr-3 text-emerald-600" />
                               <div>
                                 <p className="font-medium">{formatDate(appointment.appointment_date)}</p>
-                                <p className="text-sm">{appointment.appointment_time} • {appointment.duration} min</p>
+                                <p className="text-sm">{appointment.start_time} - {appointment.end_time}</p>
                               </div>
                             </div>
 
-                            <div className="flex items-center text-gray-600">
-                              <MapPin className="w-4 h-4 mr-3 text-green-600" />
-                              <p className="text-sm">{appointment.business.address}</p>
-                            </div>
+                            {appointment.business?.address && (
+                              <div className="flex items-center text-gray-600">
+                                <MapPin className="w-4 h-4 mr-3 text-emerald-600" />
+                                <p className="text-sm">{appointment.business.address}</p>
+                              </div>
+                            )}
                           </div>
 
                           <div className="space-y-3">
-                            {appointment.business.phone && (
+                            {appointment.business?.phone && (
                               <div className="flex items-center text-gray-600">
-                                <Phone className="w-4 h-4 mr-3 text-green-600" />
+                                <Phone className="w-4 h-4 mr-3 text-emerald-600" />
                                 <p className="text-sm">{appointment.business.phone}</p>
                               </div>
                             )}
 
                             <div className="flex items-center">
-                              <span className="text-2xl font-bold text-green-600">
+                              <span className="text-2xl font-bold text-emerald-600">
                                 {formatPrice(appointment.total_price)}
                               </span>
                             </div>
 
                             {appointment.client_notes && (
-                              <div className="p-3 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-600">
+                              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <p className="text-sm text-gray-700">
                                   <strong>Notas:</strong> {appointment.client_notes}
                                 </p>
                               </div>
@@ -529,69 +547,31 @@ export default function ClientAppointmentsPage() {
                           </>
                         )}
 
-                        {appointment.status === 'completed' && (
-                          <Dialog open={showReviewDialog && selectedAppointment?.id === appointment.id}>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedAppointment(appointment)
-                                  setShowReviewDialog(true)
-                                }}
-                              >
-                                <Star className="w-4 h-4 mr-2" />
-                                Reseña
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Deja una Reseña</DialogTitle>
-                                <DialogDescription>
-                                  Comparte tu experiencia en {appointment.business.name}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="text-sm font-medium">Calificación</label>
-                                  <div className="flex items-center space-x-1 mt-2">
-                                    {[1, 2, 3, 4, 5].map((rating) => (
-                                      <button
-                                        key={rating}
-                                        onClick={() => setReviewRating(rating)}
-                                        className="focus:outline-none"
-                                      >
-                                        <Star
-                                          className={`w-6 h-6 ${
-                                            rating <= reviewRating
-                                              ? 'text-yellow-400 fill-current'
-                                              : 'text-gray-300'
-                                          }`}
-                                        />
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Comentario</label>
-                                  <Textarea
-                                    placeholder="Cuéntanos sobre tu experiencia..."
-                                    value={reviewComment}
-                                    onChange={(e) => setReviewComment(e.target.value)}
-                                    rows={4}
-                                  />
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
-                                  Cancelar
-                                </Button>
-                                <Button onClick={handleSubmitReview}>
-                                  Enviar Reseña
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                        {appointment.status === 'completed' && !appointment.has_review && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedAppointment(appointment)
+                              setShowReviewModal(true)
+                            }}
+                            className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                          >
+                            <Star className="w-4 h-4 mr-2" />
+                            Dejar Reseña
+                          </Button>
+                        )}
+
+                        {appointment.status === 'completed' && appointment.has_review && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-emerald-300 text-emerald-700 cursor-default"
+                            disabled
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Reseña Enviada
+                          </Button>
                         )}
 
                         <Button variant="ghost" size="sm">
@@ -606,6 +586,19 @@ export default function ClientAppointmentsPage() {
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      {selectedAppointment && (
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={handleCloseReviewModal}
+          appointmentId={selectedAppointment.id}
+          businessId={selectedAppointment.business?.id || ''}
+          businessName={selectedAppointment.business?.name || 'Negocio'}
+          clientId={authState.user?.id || ''}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </div>
   )
 }

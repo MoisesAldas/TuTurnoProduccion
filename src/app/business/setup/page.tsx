@@ -239,7 +239,7 @@ export default function BusinessSetupPage() {
         is_active: true,
       }
 
-      ('🏢 Creando negocio con datos:', businessData)
+      console.log('🏢 Creando negocio con datos:', businessData)
 
       const { data: insertedBusiness, error: businessError } = await supabase
         .from('businesses')
@@ -252,8 +252,8 @@ export default function BusinessSetupPage() {
         throw businessError
       }
 
-      ('✅ Negocio creado exitosamente:', insertedBusiness)
-      ('🚀 Redirigiendo al dashboard...')
+      console.log('✅ Negocio creado exitosamente:', insertedBusiness)
+      console.log('🚀 Redirigiendo al dashboard...')
 
       // Forzar recarga de la página para que el middleware detecte el nuevo negocio
       window.location.href = '/dashboard/business'
