@@ -248,8 +248,19 @@ export default function AppointmentsPage() {
   // ========================================
   // REALTIME: Suscripción a cambios en appointments
   // ========================================
+  // Debug: Log business state
+  console.log('[AppointmentsPage] Business state:', { 
+    business: business, 
+    businessId: business?.id, 
+    hasBusiness: !!business 
+  })
+
+  // Solo usar realtime si business está disponible
+  const shouldUseRealtime = business?.id && business.id.trim() !== ''
+  console.log('[AppointmentsPage] Should use realtime:', shouldUseRealtime)
+
   useRealtimeAppointments({
-    businessId: business?.id || '',
+    businessId: shouldUseRealtime ? business.id : undefined,
     debug: true, // ← Mantener para ver logs de suscripción
     onInsert: (newAppointment) => {
       console.log('🆕 Nueva cita recibida via Realtime:', newAppointment)

@@ -37,8 +37,9 @@ interface UseRealtimeAppointmentsProps {
   /**
    * ID del negocio para filtrar eventos
    * Solo se recibirán eventos de citas de este negocio
+   * Si es una cadena vacía o undefined, no se suscribirá
    */
-  businessId: string
+  businessId: string | undefined
 
   /**
    * Callback cuando se inserta una nueva cita
@@ -77,12 +78,16 @@ export function useRealtimeAppointments({
 
   useEffect(() => {
     console.log('[Realtime] 🚀 Initializing useRealtimeAppointments hook')
-    console.log(`[Realtime] 🏢 Business ID: ${businessId}`)
+    console.log(`[Realtime] 🏢 Business ID: "${businessId}"`)
+    console.log(`[Realtime] 🏢 Business ID type: ${typeof businessId}`)
+    console.log(`[Realtime] 🏢 Business ID length: ${businessId?.length || 0}`)
     console.log(`[Realtime] 🐛 Debug mode: ${debug}`)
     
-    // No suscribirse si no hay businessId
-    if (!businessId) {
-      console.warn('[Realtime] ⚠️ No businessId provided, skipping subscription')
+    // No suscribirse si no hay businessId válido
+    if (!businessId || businessId.trim() === '' || businessId === 'undefined' || businessId === 'null') {
+      console.warn('[Realtime] ⚠️ No valid businessId provided, skipping subscription')
+      console.warn(`[Realtime] ⚠️ businessId value: "${businessId}"`)
+      console.warn(`[Realtime] ⚠️ businessId type: ${typeof businessId}`)
       return
     }
 
