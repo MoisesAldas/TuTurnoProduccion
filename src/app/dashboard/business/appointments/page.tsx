@@ -266,11 +266,10 @@ export default function AppointmentsPage() {
     }
   }, [shouldUseRealtime])
 
-  // Solo ejecutar el hook cuando business esté disponible
-  if (shouldUseRealtime) {
-    useRealtimeAppointments({
-      businessId: business.id,
-      debug: true, // ← Mantener para ver logs de suscripción
+  // Siempre ejecutar el hook, pero con businessId condicional
+  useRealtimeAppointments({
+    businessId: shouldUseRealtime ? business.id : undefined,
+    debug: true, // ← Mantener para ver logs de suscripción
     onInsert: (newAppointment) => {
       console.log('🆕 Nueva cita recibida via Realtime:', newAppointment)
 
@@ -316,10 +315,7 @@ export default function AppointmentsPage() {
       // Remover del estado local
       setAppointments(prev => prev.filter(apt => apt.id !== appointmentId))
     }
-    })
-  } else {
-    console.log('[AppointmentsPage] ⏳ Waiting for business data to load...')
-  }
+  })
 
   const handlePreviousDay = () => {
     const newDate = new Date(selectedDate)
