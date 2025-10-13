@@ -133,7 +133,9 @@ export function useRealtimeAppointments({
           if (debug) {
             console.log('[Realtime] 🗑️ Cita eliminada:', payload.old)
           }
-          onDelete?.(payload.old.id)
+          if (payload.old && 'id' in payload.old && payload.old.id) {
+            onDelete?.(payload.old.id)
+          }
         }
       )
       .subscribe((status) => {
