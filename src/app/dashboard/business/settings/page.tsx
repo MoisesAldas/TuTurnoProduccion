@@ -172,7 +172,7 @@ export default function BusinessSettingsPage() {
       setUploadingLogo(true)
       setShowLogoCropper(false)
 
-      (`📁 Logo original: ${originalLogoFile?.name} (${formatFileSize(originalLogoFile?.size || 0)})`)
+      console.log(`📁 Logo original: ${originalLogoFile?.name} (${formatFileSize(originalLogoFile?.size || 0)})`)
 
       // Comprimir para logo (ULTRA calidad para tesis)
       const compressedFile = await compressImage(croppedFile, {
@@ -182,7 +182,7 @@ export default function BusinessSettingsPage() {
         maxSizeKB: 800
       })
 
-      (`🗜️ Logo comprimido: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
+      console.log(`🗜️ Logo comprimido: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
 
       setLogoFile(compressedFile)
 
@@ -207,7 +207,7 @@ export default function BusinessSettingsPage() {
       setUploadingCover(true)
       setShowCoverCropper(false)
 
-      (`📁 Cover original: ${originalCoverFile?.name} (${formatFileSize(originalCoverFile?.size || 0)})`)
+      console.log(`📁 Cover original: ${originalCoverFile?.name} (${formatFileSize(originalCoverFile?.size || 0)})`)
 
       // Comprimir para cover (ULTRA calidad para tesis)
       const compressedFile = await compressImage(croppedFile, {
@@ -217,7 +217,7 @@ export default function BusinessSettingsPage() {
         maxSizeKB: 2500
       })
 
-      (`🗜️ Cover comprimido: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
+      console.log(`🗜️ Cover comprimido: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
 
       setCoverFile(compressedFile)
 
