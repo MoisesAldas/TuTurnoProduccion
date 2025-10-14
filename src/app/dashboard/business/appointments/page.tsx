@@ -72,6 +72,7 @@ export default function AppointmentsPage() {
     if (!authState.user) return
 
     try {
+      console.log('🏢 [BUSINESS] Starting to fetch business data for user:', authState.user.id)
       setLoading(true)
 
       // Obtener negocio
@@ -83,6 +84,7 @@ export default function AppointmentsPage() {
 
       if (businessError) throw businessError
 
+      console.log('🏢 [BUSINESS] Business data fetched successfully:', businessData)
       setBusiness(businessData)
 
       // Obtener empleados activos
@@ -108,8 +110,9 @@ export default function AppointmentsPage() {
       setSelectedEmployees((employeesData || []).map(e => e.id))
 
     } catch (error) {
-      console.error('Error fetching business data:', error)
+      console.error('❌ [BUSINESS] Error fetching business data:', error)
     } finally {
+      console.log('🏢 [BUSINESS] Business data fetch completed, setting loading to false')
       setLoading(false)
     }
   }
@@ -267,6 +270,7 @@ export default function AppointmentsPage() {
   }, [shouldUseRealtime])
 
   // Siempre ejecutar el hook, pero con businessId condicional
+  // El hook maneja internamente el caso cuando businessId es undefined
   useRealtimeAppointments({
     businessId: shouldUseRealtime ? business.id : undefined,
     debug: true, // ← Mantener para ver logs de suscripción

@@ -417,24 +417,57 @@ export default function BookingPage() {
   }
 
   const handleBookingSubmit = async () => {
+    console.log('🚀 [BOOKING] Starting booking submission process')
+    console.log('🚀 [BOOKING] Auth state:', { 
+      user: authState.user, 
+      userId: authState.user?.id,
+      isAuthenticated: !!authState.user 
+    })
+    console.log('🚀 [BOOKING] Selected data:', {
+      service: selectedService,
+      employee: selectedEmployee,
+      date: selectedDate,
+      time: selectedTime,
+      business: business,
+      businessId: businessId
+    })
+
     if (!authState.user) {
+      console.log('❌ [BOOKING] No user authenticated, redirecting to login')
       router.push('/auth/client/login')
       return
     }
 
     if (!selectedService || !selectedEmployee || !selectedDate || !selectedTime || !business) {
+      console.log('❌ [BOOKING] Missing required data:', {
+        hasService: !!selectedService,
+        hasEmployee: !!selectedEmployee,
+        hasDate: !!selectedDate,
+        hasTime: !!selectedTime,
+        hasBusiness: !!business
+      })
       return
     }
 
     // ✅ VALIDATION: Check booking restrictions
+    console.log('🔍 [BOOKING] Starting validation checks')
     const now = new Date()
     const appointmentDateTime = new Date(selectedDate)
     const [hours, minutes] = selectedTime.split(':').map(Number)
     appointmentDateTime.setHours(hours, minutes, 0, 0)
 
+    console.log('🔍 [BOOKING] Time calculations:', {
+      now: now.toISOString(),
+      appointmentDateTime: appointmentDateTime.toISOString(),
+      businessMinHours: business.min_booking_hours,
+      businessMaxDays: business.max_booking_days
+    })
+
     // Check min_booking_hours
     const hoursUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
+    console.log('🔍 [BOOKING] Hours until appointment:', hoursUntilAppointment)
     if (hoursUntilAppointment < business.min_booking_hours) {
+      console.log('❌ [BOOKING] Failed min booking hours validation')
       toast({
         variant: 'destructive',
         title: 'No se puede reservar',
@@ -445,7 +478,9 @@ export default function BookingPage() {
 
     // Check max_booking_days
     const daysUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    console.log('🔍 [BOOKING] Days until appointment:', daysUntilAppointment)
     if (daysUntilAppointment > business.max_booking_days) {
+      console.log('❌ [BOOKING] Failed max booking days validation')
       toast({
         variant: 'destructive',
         title: 'No se puede reservar',
@@ -454,47 +489,29 @@ export default function BookingPage() {
       return
     }
 
-    // ✅ VALIDATION: Check if business is open at selected date/time (special hours)
-    const formatDateForDB = (date: Date) => {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
+    // ✅ NOTE: Business hours validation is handled by get_available_time_slots function
+    // which already validates business hours, employee availability, and absences
+    console.log('✅ [BOOKING] Skipping business hours check - handled by get_available_time_slots function')
 
+    console.log('🔄 [BOOKING] About to start appointment creation process')
+    
     try {
-      const { data: isOpen, error: isOpenError } = await supabase.rpc('is_business_open', {
-        p_business_id: businessId,
-        p_check_date: formatDateForDB(selectedDate),
-        p_check_time: selectedTime + ':00'
-      })
-
-      if (isOpenError) {
-        console.error('Error checking business hours:', isOpenError)
-        // Continue anyway if check fails (don't block user)
-      } else if (isOpen === false) {
-        toast({
-          variant: 'destructive',
-          title: 'Negocio cerrado',
-          description: 'El negocio no está disponible en esta fecha y hora. Por favor selecciona otra fecha.',
-        })
-        return
-      }
-    } catch (error) {
-      console.error('Error checking if business is open:', error)
-      // Continue anyway if check fails
-    }
-
-    try {
+      console.log('✅ [BOOKING] All validations passed, starting appointment creation')
       setSubmitting(true)
 
       // Calcular hora de fin basada en la duración del servicio
       const startTime = selectedTime
       const serviceDuration = selectedService.duration_minutes
 
+      console.log('📅 [BOOKING] Service details:', {
+        serviceName: selectedService.name,
+        serviceDuration: serviceDuration,
+        servicePrice: selectedService.price
+      })
+
       // Verificar que la duración sea válida
       if (!serviceDuration || isNaN(serviceDuration) || serviceDuration <= 0) {
-        console.error('Invalid service duration:', serviceDuration, selectedService)
+        console.error('❌ [BOOKING] Invalid service duration:', serviceDuration, selectedService)
         alert('Error: Duración del servicio no válida. Por favor contacta al negocio.')
         return
       }
@@ -525,6 +542,8 @@ export default function BookingPage() {
         client_notes: clientNotes || null
       }
 
+      console.log('📝 [BOOKING] Creating appointment with data:', appointmentData)
+
       // Crear la cita
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
@@ -533,10 +552,18 @@ export default function BookingPage() {
         .single()
 
       if (appointmentError) {
-        console.error('Error creating appointment:', appointmentError)
+        console.error('❌ [BOOKING] Error creating appointment:', appointmentError)
+        console.error('❌ [BOOKING] Error details:', {
+          code: appointmentError.code,
+          message: appointmentError.message,
+          details: appointmentError.details,
+          hint: appointmentError.hint
+        })
         alert('Error al crear la cita. Por favor intenta de nuevo.')
         return
       }
+
+      console.log('✅ [BOOKING] Appointment created successfully:', appointment)
 
       // Crear la relación con el servicio en appointment_services
       const appointmentServiceData = {
@@ -545,17 +572,28 @@ export default function BookingPage() {
         price: selectedService.price
       }
 
+      console.log('🔗 [BOOKING] Creating appointment service with data:', appointmentServiceData)
+
       const { error: serviceError } = await supabase
         .from('appointment_services')
         .insert([appointmentServiceData])
 
       if (serviceError) {
-        console.error('Error creating appointment service:', serviceError)
+        console.error('❌ [BOOKING] Error creating appointment service:', serviceError)
+        console.error('❌ [BOOKING] Service error details:', {
+          code: serviceError.code,
+          message: serviceError.message,
+          details: serviceError.details,
+          hint: serviceError.hint
+        })
         // Si falla, eliminar la cita creada
+        console.log('🗑️ [BOOKING] Cleaning up failed appointment:', appointment.id)
         await supabase.from('appointments').delete().eq('id', appointment.id)
         alert('Error al crear la cita. Por favor intenta de nuevo.')
         return
       }
+
+      console.log('✅ [BOOKING] Appointment service created successfully')
 
       // Intentar confirmar la cita (esto puede fallar por las notificaciones pero no es crítico)
       try {
@@ -595,12 +633,15 @@ export default function BookingPage() {
         // No bloqueamos el flujo si el email falla
       }
 
+      console.log('🎉 [BOOKING] Booking process completed successfully!')
       setCurrentStep('confirmation')
 
     } catch (error) {
-      console.error('Error creating appointment:', error)
+      console.error('❌ [BOOKING] Unexpected error in booking process:', error)
+      console.error('❌ [BOOKING] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
       alert('Error al crear la cita. Por favor intenta de nuevo.')
     } finally {
+      console.log('🏁 [BOOKING] Booking process finished, setting submitting to false')
       setSubmitting(false)
     }
   }

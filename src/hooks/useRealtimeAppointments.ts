@@ -85,9 +85,14 @@ export function useRealtimeAppointments({
     
     // No suscribirse si no hay businessId válido
     if (!businessId || businessId.trim() === '' || businessId === 'undefined' || businessId === 'null') {
-      console.warn('[Realtime] ⚠️ No valid businessId provided, skipping subscription')
-      console.warn(`[Realtime] ⚠️ businessId value: "${businessId}"`)
-      console.warn(`[Realtime] ⚠️ businessId type: ${typeof businessId}`)
+      // Solo mostrar warning si businessId es explícitamente inválido (no undefined inicial)
+      if (businessId === 'undefined' || businessId === 'null' || businessId === '') {
+        console.warn('[Realtime] ⚠️ Invalid businessId provided, skipping subscription')
+        console.warn(`[Realtime] ⚠️ businessId value: "${businessId}"`)
+        console.warn(`[Realtime] ⚠️ businessId type: ${typeof businessId}`)
+      } else {
+        console.log('[Realtime] ⏳ Waiting for business data to load...')
+      }
       return
     }
 
