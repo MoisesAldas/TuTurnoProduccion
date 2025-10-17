@@ -2,19 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
   MapPin, Phone, Mail, Globe, Star, Clock, ArrowLeft,
-  Calendar, Users, Scissors, Sparkles, LogOut
+  Calendar, Users, Sparkles, LogOut, ChevronLeft, ChevronRight, X
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
-import StarRating from '@/components/StarRating'
-import BusinessInfoTab from '@/components/BusinessInfoTab'
+import LocationMapModal from '@/components/LocationMapModal'
 
 interface Business {
   id: string
@@ -27,10 +26,22 @@ interface Business {
   business_type: string
   logo_url?: string
   cover_image_url?: string
+  latitude?: number
+  longitude?: number
   rating?: number
   total_reviews?: number
   is_active: boolean
   created_at: string
+  category?: {
+    id: string
+    name: string
+  }
+}
+
+interface Photo {
+  id: string
+  photo_url: string
+  display_order: number
 }
 
 interface Service {
@@ -70,8 +81,12 @@ export default function BusinessProfilePage() {
   const [services, setServices] = useState<Service[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
+  const [businessPhotos, setBusinessPhotos] = useState<Photo[]>([])
+  const [showLocationModal, setShowLocationModal] = useState(false)
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false)
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('services')
 
   const params = useParams()
   const router = useRouter()
@@ -158,9 +173,24 @@ export default function BusinessProfilePage() {
         .order('created_at', { ascending: false })
 
       if (!reviewsError && reviewsData) {
-        setReviews(reviewsData as any[])
+        // Filter out reviews where client is null (deleted users)
+        const validReviews = reviewsData.filter((review: any) => review.client !== null)
+        setReviews(validReviews)
       } else {
         setReviews([])
+      }
+
+      // Fetch business photos
+      const { data: photosData, error: photosError } = await supabase
+        .from('business_photos')
+        .select('id, photo_url, display_order')
+        .eq('business_id', businessId)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: true })
+
+      if (!photosError && photosData) {
+        setBusinessPhotos(photosData)
       }
 
     } catch (error) {
@@ -225,7 +255,7 @@ export default function BusinessProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full mx-auto mb-4"></div>
+          <div className="animate-spin w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando información del negocio...</p>
         </div>
       </div>
@@ -239,7 +269,7 @@ export default function BusinessProfilePage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Negocio no encontrado</h1>
           <p className="text-gray-600 mb-4">El negocio que buscas no existe o no está disponible.</p>
           <Link href="/marketplace">
-            <Button>Volver al Marketplace</Button>
+            <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white">Volver al Marketplace</Button>
           </Link>
         </div>
       </div>
@@ -248,42 +278,57 @@ export default function BusinessProfilePage() {
 
   const categoryInfo = getCategoryInfo(business.business_type)
 
+  // Get unique service categories
+  const serviceCategories = ['all', ...Array.from(new Set(services.map(s => s.category).filter(Boolean)))]
+  const filteredServices = selectedCategory === 'all'
+    ? services
+    : services.filter(s => s.category === selectedCategory)
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      {/* Header - Clean & Minimal */}
+      <header className="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-gray-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
+            {/* Left: Logo & Back */}
+            <div className="flex items-center gap-4">
               <Link href="/marketplace">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver al Marketplace
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Marketplace</span>
                 </Button>
               </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <Link href="/" className="text-xl font-bold text-green-600">
+              <div className="h-6 w-px bg-gray-200"></div>
+              <Link href="/" className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                 TuTurno
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
+
+            {/* Right: Auth Actions */}
+            <div className="flex items-center gap-2">
               {authState?.user ? (
                 <>
                   <Link href="/dashboard/client">
-                    <Button variant="outline">Mi Dashboard</Button>
+                    <Button variant="outline" size="sm" className="hidden sm:flex">
+                      Mi Dashboard
+                    </Button>
                   </Link>
-                  <Button variant="ghost" onClick={signOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Cerrar Sesión
+                  <Button variant="ghost" size="sm" onClick={signOut}>
+                    <LogOut className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Cerrar Sesión</span>
                   </Button>
                 </>
               ) : (
                 <>
                   <Link href="/auth/client/login">
-                    <Button variant="ghost">Iniciar Sesión</Button>
+                    <Button variant="ghost" size="sm">
+                      Iniciar Sesión
+                    </Button>
                   </Link>
                   <Link href="/auth/client/register">
-                    <Button>Registrarse</Button>
+                    <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
+                      Registrarse
+                    </Button>
                   </Link>
                 </>
               )}
@@ -292,455 +337,560 @@ export default function BusinessProfilePage() {
         </div>
       </header>
 
-      {/* Hero Banner - ULTRA Quality Design */}
-      {business.cover_image_url && (
-        <section className="relative w-full overflow-hidden">
-          <div className="max-w-6xl mx-auto">
-            <div className="relative w-full" style={{ aspectRatio: '2.2/1' }}>
-              {/* Main Cover Image - ULTRA Quality */}
-              <img
-                src={business.cover_image_url}
-                alt={business.name}
-                className="w-full h-full object-cover"
-                style={{ imageRendering: 'auto' }}
-                loading="eager"
-                fetchPriority="high"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 1152px, 1280px"
-              />
-
-              {/* Premium Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent"></div>
-
-              {/* Content Overlay */}
-              <div className="absolute inset-0 flex flex-col justify-end">
-                <div className="p-8 md:p-12">
-                  <div className="max-w-4xl">
-                    {/* Business Category Badge */}
-                    <div className="mb-4">
-                      <div className="inline-flex items-center gap-2 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold text-gray-800 shadow-lg">
-                        <span className="text-lg">{categoryInfo.emoji}</span>
-                        <span>{categoryInfo.label}</span>
-                      </div>
-                    </div>
-
-                    {/* Business Name - Hero Title */}
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
-                      {business.name}
-                    </h1>
-
-                    {/* Business Details */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-                      {business.address && (
-                        <div className="flex items-center gap-2 text-white/90 text-lg">
-                          <div className="p-2 bg-white/20 backdrop-blur-md rounded-full">
-                            <MapPin className="w-4 h-4" />
-                          </div>
-                          <span>{business.address}</span>
-                        </div>
-                      )}
-
-                      {business.rating && (
-                        <div className="flex items-center gap-2 text-white/90 text-lg">
-                          <div className="p-2 bg-yellow-500/20 backdrop-blur-md rounded-full">
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          </div>
-                          <span className="font-semibold">{business.rating}</span>
-                          <span className="text-white/70">({business.total_reviews || 0} reseñas)</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Business Description */}
-                    {business.description && (
-                      <p className="text-white/85 text-lg md:text-xl leading-relaxed max-w-2xl mb-8">
-                        {business.description}
-                      </p>
-                    )}
-
-                    {/* Quick Action Button */}
-                    <div className="flex items-center gap-4">
-                      <Link href={`/business/${business.id}/book`}>
-                        <button className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white font-bold py-4 px-8 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-lg">
-                          <div className="flex items-center gap-3">
-                            <Calendar className="w-5 h-5" />
-                            <span>Reservar Ahora</span>
-                          </div>
-                        </button>
-                      </Link>
-
-                      {business.phone && (
-                        <a
-                          href={`tel:${business.phone}`}
-                          className="bg-white/10 backdrop-blur-md hover:bg-white/20 text-white font-semibold py-4 px-6 rounded-xl border border-white/30 hover:border-white/50 transition-all duration-300 text-lg"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            <span>Llamar</span>
-                          </div>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Business Hero Section */}
-      <section className="bg-white">
+      {/* Main Content */}
+      <main className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="w-full">
-            {/* Business Info */}
-            <div className="w-full">
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    {!business.cover_image_url && (
-                      <>
-                        <h1 className="text-3xl font-bold text-gray-900">{business.name}</h1>
-                        <Badge className={categoryInfo.color}>
-                          {categoryInfo.emoji} {categoryInfo.label}
-                        </Badge>
-                      </>
-                    )}
-                    {business.cover_image_url && (
-                      <Badge className={categoryInfo.color}>
-                        {categoryInfo.emoji} {categoryInfo.label}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {business.rating && (
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center">
+          {/* Hero Section - Title + Photos */}
+          <div className="mb-8">
+            {/* Title and Rating */}
+            <div className="mb-6">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">{business.name}</h1>
+              <div className="flex items-center gap-3 text-sm text-gray-600 mb-1">
+                {business.rating && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold text-gray-900">{business.rating}</span>
+                      <div className="flex">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`w-5 h-5 ${
+                            className={`w-4 h-4 ${
                               i < Math.floor(business.rating || 0)
-                                ? 'text-yellow-400 fill-current'
+                                ? 'text-yellow-400 fill-yellow-400'
                                 : 'text-gray-300'
                             }`}
                           />
                         ))}
                       </div>
-                      <span className="font-medium text-gray-900">{business.rating}</span>
-                      <span className="text-gray-500">
-                        ({business.total_reviews || 0} reseñas)
-                      </span>
+                      <span className="text-gray-500">({business.total_reviews || 0})</span>
                     </div>
-                  )}
+                    <span className="text-gray-400">•</span>
+                  </>
+                )}
+                <Badge className={categoryInfo.color}>
+                  {categoryInfo.emoji} {categoryInfo.label}
+                </Badge>
+              </div>
+              {business.address && (
+                <p className="text-gray-600 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {business.address}
+                </p>
+              )}
+            </div>
 
-                  {business.description && (
-                    <p className="text-gray-600 text-lg leading-relaxed mb-4">
-                      {business.description}
+            {/* Photo Grid - 2 Photos only (1 large + 1 small) */}
+            <div className="grid grid-cols-3 gap-2 mb-8" style={{ height: '500px' }}>
+              {/* Large Photo (Left - 2/3 width) */}
+              <div
+                className="col-span-2 relative rounded-lg overflow-hidden cursor-pointer bg-gray-100"
+                onClick={() => {
+                  setSelectedPhotoIndex(0)
+                  setShowPhotoGallery(true)
+                }}
+              >
+                {(business.cover_image_url || businessPhotos[0]) ? (
+                  <img
+                    src={business.cover_image_url || businessPhotos[0]?.photo_url}
+                    alt={business.name}
+                    className="w-full h-full object-cover hover:opacity-95 transition-opacity"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <Sparkles className="w-12 h-12" />
+                  </div>
+                )}
+              </div>
+
+              {/* Small Photo (Right - 1/3 width) with overlay button */}
+              <div
+                className="col-span-1 relative rounded-lg overflow-hidden cursor-pointer bg-gray-100"
+                onClick={() => {
+                  setSelectedPhotoIndex(1)
+                  setShowPhotoGallery(true)
+                }}
+              >
+                {businessPhotos[0] ? (
+                  <>
+                    <img
+                      src={businessPhotos[0].photo_url}
+                      alt={`${business.name}`}
+                      className="w-full h-full object-cover hover:opacity-95 transition-opacity"
+                    />
+                    {/* Show "Ver más" button if there are more photos */}
+                    {(businessPhotos.length > 1 || business.cover_image_url) && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <button
+                          className="bg-white text-gray-900 px-3 py-1.5 rounded-md font-medium hover:bg-gray-100 transition-colors text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedPhotoIndex(0)
+                            setShowPhotoGallery(true)
+                          }}
+                        >
+                          Ver más
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <Sparkles className="w-8 h-8" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 2-Column Layout: Content + Sidebar */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-12">
+
+              {/* Services Section */}
+              <section id="services">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Servicios</h2>
+
+                {services.length === 0 ? (
+                  <div className="text-center py-16 bg-gray-50 rounded-lg">
+                    <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No hay servicios disponibles
+                    </h3>
+                    <p className="text-gray-500">
+                      Este negocio aún no ha publicado sus servicios.
                     </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Category Tabs */}
+                    {serviceCategories.length > 1 && (
+                      <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-gray-200 scrollbar-hide">
+                        {serviceCategories.map((category) => (
+                          <button
+                            key={category}
+                            onClick={() => setSelectedCategory(category)}
+                            className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
+                              selectedCategory === category
+                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {category === 'all' ? 'Todos' : category}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Services List */}
+                    <div className="space-y-3">
+                      {filteredServices.map((service) => (
+                        <div
+                          key={service.id}
+                          className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900 mb-1">
+                              {service.name}
+                            </h3>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <Clock className="w-4 h-4" />
+                              <span>{formatDuration(service.duration_minutes)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="text-lg font-semibold text-gray-900">
+                              {formatPrice(service.price)}
+                            </span>
+                            <Button
+                              size="sm"
+                              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                              onClick={() => handleBookAppointment(service.id)}
+                            >
+                              Reservar
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Show message if no services in category */}
+                    {filteredServices.length === 0 && (
+                      <div className="text-center py-12 text-gray-500">
+                        No hay servicios en esta categoría.
+                      </div>
+                    )}
+                  </>
+                )}
+              </section>
+
+              {/* Team Section */}
+              <section id="team">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Equipo</h2>
+
+                {employees.length === 0 ? (
+                  <div className="text-center py-16 bg-gray-50 rounded-lg">
+                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No hay información del equipo
+                    </h3>
+                    <p className="text-gray-500">
+                      Este negocio aún no ha publicado información sobre su equipo.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex gap-6 overflow-x-auto pb-4">
+                    {employees.map((employee) => (
+                      <div key={employee.id} className="flex flex-col items-center flex-shrink-0">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 mb-2">
+                          {employee.avatar_url ? (
+                            <img
+                              src={employee.avatar_url}
+                              alt={`${employee.first_name} ${employee.last_name}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <Users className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="font-medium text-gray-900 text-sm text-center">
+                          {employee.first_name}
+                        </p>
+                        {employee.position && (
+                          <p className="text-xs text-gray-500 text-center">{employee.position}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Reviews Section */}
+              <section id="reviews">
+                <div className="flex items-center gap-3 mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Reseñas</h2>
+                  {reviews.length > 0 && (
+                    <div className="flex items-center gap-1 text-sm">
+                      <span className="font-semibold text-gray-900">
+                        {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                      </span>
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < Math.floor(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length)
+                                ? 'text-yellow-400 fill-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {/* Contact Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {business.address && (
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="w-5 h-5 mr-3 text-green-600 flex-shrink-0" />
-                      <span>{business.address}</span>
-                    </div>
-                  )}
-
-                  {business.phone && (
-                    <div className="flex items-center text-gray-600">
-                      <Phone className="w-5 h-5 mr-3 text-green-600 flex-shrink-0" />
-                      <span>{business.phone}</span>
-                    </div>
-                  )}
-
-                  {business.email && (
-                    <div className="flex items-center text-gray-600">
-                      <Mail className="w-5 h-5 mr-3 text-green-600 flex-shrink-0" />
-                      <span>{business.email}</span>
-                    </div>
-                  )}
-
-                  {business.website && (
-                    <div className="flex items-center text-gray-600">
-                      <Globe className="w-5 h-5 mr-3 text-green-600 flex-shrink-0" />
-                      <a
-                        href={business.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-600 hover:text-green-700 underline"
-                      >
-                        Sitio web
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* Quick Action Buttons */}
-                <div className="flex flex-wrap gap-3 pt-4">
-                  <Button
-                    size="lg"
-                    className="flex-1 min-w-[200px]"
-                    onClick={() => handleBookAppointment()}
-                  >
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Reservar Cita
-                  </Button>
-                  {business.phone && (
-                    <Button variant="outline" size="lg">
-                      <Phone className="w-5 h-5 mr-2" />
-                      Llamar
+                {reviews.length === 0 ? (
+                  <div className="text-center py-16 bg-gray-50 rounded-lg">
+                    <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No hay reseñas aún
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Sé el primero en compartir tu experiencia.
+                    </p>
+                    <Button
+                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                      onClick={() => handleBookAppointment()}
+                    >
+                      Reservar Cita
                     </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {reviews.map((review) => {
+                      // Safety check: skip if client is null
+                      if (!review.client) return null
+
+                      return (
+                        <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold flex-shrink-0">
+                              {review.client.first_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">
+                                    {review.client.first_name} {review.client.last_name}
+                                  </h4>
+                                <p className="text-sm text-gray-500">
+                                  {formatDate(review.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex mb-2">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${
+                                    i < review.rating
+                                      ? 'text-yellow-400 fill-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            {review.comment && (
+                              <p className="text-gray-700 text-sm leading-relaxed">
+                                {review.comment}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {/* About Section */}
+              <section id="about">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Acerca de</h2>
+                <div className="prose max-w-none">
+                  {business.description ? (
+                    <p className="text-gray-700 leading-relaxed">{business.description}</p>
+                  ) : (
+                    <p className="text-gray-500 italic">No hay información adicional disponible.</p>
                   )}
                 </div>
+
+                {/* Additional Info */}
+                <div className="mt-8 pt-8 border-t border-gray-200">
+                  <h3 className="font-semibold text-gray-900 mb-4">Información de contacto</h3>
+                  <div className="space-y-3">
+                    {business.address && (
+                      <div className="flex items-start gap-3 text-sm">
+                        <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700">{business.address}</span>
+                      </div>
+                    )}
+                    {business.phone && (
+                      <div className="flex items-start gap-3 text-sm">
+                        <Phone className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <a href={`tel:${business.phone}`} className="text-gray-700 hover:text-gray-900">
+                          {business.phone}
+                        </a>
+                      </div>
+                    )}
+                    {business.email && (
+                      <div className="flex items-start gap-3 text-sm">
+                        <Mail className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <a href={`mailto:${business.email}`} className="text-gray-700 hover:text-gray-900">
+                          {business.email}
+                        </a>
+                      </div>
+                    )}
+                    {business.website && (
+                      <div className="flex items-start gap-3 text-sm">
+                        <Globe className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <a
+                          href={business.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-700 hover:text-gray-900"
+                        >
+                          Sitio web
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+            </div>
+
+            {/* Sidebar - Sticky */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 space-y-6">
+                {/* CTA Card */}
+                <Card className="border-2 border-gray-200">
+                  <CardContent className="p-6">
+                    <Button
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold mb-4"
+                      onClick={() => handleBookAppointment()}
+                    >
+                      Reservar ahora
+                    </Button>
+
+                    {/* Quick Info */}
+                    <div className="space-y-3 pt-4 border-t border-gray-200">
+                      {business.address && (
+                        <div className="flex items-start gap-3 text-sm">
+                          <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-gray-900 mb-1">Ubicación</p>
+                            <p className="text-gray-600">{business.address}</p>
+                            {business.latitude && business.longitude && (
+                              <button
+                                onClick={() => setShowLocationModal(true)}
+                                className="text-emerald-600 hover:text-emerald-700 text-sm font-medium mt-1"
+                              >
+                                Ver en mapa
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {business.phone && (
+                        <div className="flex items-start gap-3 text-sm">
+                          <Phone className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-medium text-gray-900 mb-1">Teléfono</p>
+                            <a
+                              href={`tel:${business.phone}`}
+                              className="text-gray-600 hover:text-gray-900"
+                            >
+                              {business.phone}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Business Info Card */}
+                <Card className="border border-gray-200">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4">Información del negocio</h3>
+                    <div className="space-y-3 text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Categoría</span>
+                        <span className="font-medium text-gray-900">{categoryInfo.label}</span>
+                      </div>
+                      {business.rating && (
+                        <div className="flex justify-between">
+                          <span>Calificación</span>
+                          <span className="font-medium text-gray-900">{business.rating} ⭐</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </main>
 
-      {/* Content Tabs */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="services">
-              <Scissors className="w-4 h-4 mr-2" />
-              Servicios
-            </TabsTrigger>
-            <TabsTrigger value="team">
-              <Users className="w-4 h-4 mr-2" />
-              Equipo
-            </TabsTrigger>
-            <TabsTrigger value="reviews">
-              <Star className="w-4 h-4 mr-2" />
-              Reseñas
-            </TabsTrigger>
-            <TabsTrigger value="info">
-              <Clock className="w-4 h-4 mr-2" />
-              Información
-            </TabsTrigger>
-          </TabsList>
+      {/* Location Map Modal */}
+      {business.latitude && business.longitude && (
+        <LocationMapModal
+          isOpen={showLocationModal}
+          onClose={() => setShowLocationModal(false)}
+          latitude={business.latitude}
+          longitude={business.longitude}
+          businessName={business.name}
+          address={business.address || ''}
+        />
+      )}
 
-          {/* Services Tab */}
-          <TabsContent value="services" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {services.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No hay servicios disponibles
-                  </h3>
-                  <p className="text-gray-500">
-                    Este negocio aún no ha publicado sus servicios.
-                  </p>
-                </div>
-              ) : (
-                services.map((service) => (
-                  <Card key={service.id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="font-semibold text-lg text-gray-900">
-                          {service.name}
-                        </h3>
-                        <span className="text-xl font-bold text-green-600">
-                          {formatPrice(service.price)}
-                        </span>
-                      </div>
+      {/* Photo Gallery Modal */}
+      <Dialog open={showPhotoGallery} onOpenChange={setShowPhotoGallery}>
+        <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0 overflow-hidden bg-black/95 backdrop-blur-xl border-none">
+          {/* Close Button */}
+          <button
+            onClick={() => setShowPhotoGallery(false)}
+            className="absolute top-4 right-4 z-50 text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
 
-                      {service.description && (
-                        <p className="text-gray-600 mb-4">{service.description}</p>
-                      )}
+          {/* Photo Counter */}
+          <div className="absolute top-4 left-4 z-50 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium">
+            {selectedPhotoIndex + 1} / {(business.cover_image_url ? 1 : 0) + businessPhotos.length}
+          </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {formatDuration(service.duration_minutes)}
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleBookAppointment(service.id)}
-                        >
-                          <Calendar className="w-4 h-4 mr-2" />
-                          Reservar
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
+          {/* Main Photo */}
+          <div className="relative w-full h-full flex items-center justify-center p-4 md:p-12">
+            {(() => {
+              const allPhotos = [
+                ...(business.cover_image_url ? [{ id: 'cover', photo_url: business.cover_image_url }] : []),
+                ...businessPhotos
+              ]
+              const currentPhoto = allPhotos[selectedPhotoIndex]
 
-          {/* Team Tab */}
-          <TabsContent value="team" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {employees.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No hay información del equipo
-                  </h3>
-                  <p className="text-gray-500">
-                    Este negocio aún no ha publicado información sobre su equipo.
-                  </p>
-                </div>
-              ) : (
-                employees.map((employee) => (
-                  <Card key={employee.id}>
-                    <CardContent className="p-6 text-center">
-                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
-                        {employee.avatar_url ? (
-                          <img
-                            src={employee.avatar_url}
-                            alt={`${employee.first_name} ${employee.last_name}`}
-                            className="w-full h-full rounded-full object-cover border-2 border-white shadow-md"
-                          />
-                        ) : (
-                          <Users className="w-10 h-10 text-green-600" />
-                        )}
-                      </div>
+              return currentPhoto ? (
+                <img
+                  src={currentPhoto.photo_url}
+                  alt={`${business.name} - Foto ${selectedPhotoIndex + 1}`}
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                />
+              ) : null
+            })()}
 
-                      <h3 className="font-semibold text-lg text-gray-900 mb-1">
-                        {employee.first_name} {employee.last_name}
-                      </h3>
-
-                      {employee.position && (
-                        <p className="text-green-600 font-medium mb-3">
-                          {employee.position}
-                        </p>
-                      )}
-
-                      {employee.bio && (
-                        <p className="text-gray-600 text-sm">
-                          {employee.bio}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Reviews Tab */}
-          <TabsContent value="reviews" className="mt-6">
-            {/* Reviews Summary */}
-            {reviews.length > 0 && (
-              <Card className="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                        Calificación General
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        <div className="text-4xl font-bold text-amber-600">
-                          {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-                        </div>
-                        <div>
-                          <StarRating
-                            rating={reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length}
-                            readonly
-                            size="lg"
-                          />
-                          <p className="text-sm text-gray-600 mt-1">
-                            Basado en {reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Rating Distribution */}
-                    <div className="hidden md:block">
-                      <div className="space-y-2">
-                        {[5, 4, 3, 2, 1].map((stars) => {
-                          const count = reviews.filter(r => r.rating === stars).length
-                          const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
-                          return (
-                            <div key={stars} className="flex items-center gap-2 text-sm">
-                              <span className="w-12 text-gray-700">{stars} ⭐</span>
-                              <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-amber-400"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                              <span className="w-12 text-gray-600">{count}</span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Navigation Arrows */}
+            {((business.cover_image_url ? 1 : 0) + businessPhotos.length) > 1 && (
+              <>
+                <button
+                  onClick={() => {
+                    const totalPhotos = (business.cover_image_url ? 1 : 0) + businessPhotos.length
+                    setSelectedPhotoIndex((prev) => (prev === 0 ? totalPhotos - 1 : prev - 1))
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 md:p-4 shadow-xl hover:shadow-2xl transition-all hover:scale-110 z-10"
+                >
+                  <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                </button>
+                <button
+                  onClick={() => {
+                    const totalPhotos = (business.cover_image_url ? 1 : 0) + businessPhotos.length
+                    setSelectedPhotoIndex((prev) => (prev === totalPhotos - 1 ? 0 : prev + 1))
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 md:p-4 shadow-xl hover:shadow-2xl transition-all hover:scale-110 z-10"
+                >
+                  <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                </button>
+              </>
             )}
+          </div>
 
-            {/* Individual Reviews */}
-            <div className="space-y-4">
-              {reviews.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Star className="w-8 h-8 text-amber-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No hay reseñas aún
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Sé el primero en compartir tu experiencia con este negocio.
-                  </p>
-                  <Button onClick={() => handleBookAppointment()}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Reservar Cita
-                  </Button>
+          {/* Thumbnails */}
+          {((business.cover_image_url ? 1 : 0) + businessPhotos.length) > 1 && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
+              <div className="max-w-7xl mx-auto">
+                <div className="flex gap-2 overflow-x-auto justify-center scrollbar-hide">
+                  {[
+                    ...(business.cover_image_url ? [{ id: 'cover', photo_url: business.cover_image_url }] : []),
+                    ...businessPhotos
+                  ].map((photo, index) => (
+                    <button
+                      key={photo.id}
+                      onClick={() => setSelectedPhotoIndex(index)}
+                      className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-3 transition-all duration-300 ${
+                        index === selectedPhotoIndex
+                          ? 'border-white shadow-xl scale-110'
+                          : 'border-white/30 hover:border-white/60 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={photo.photo_url}
+                        alt={`Miniatura ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                reviews.map((review) => (
-                  <Card key={review.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        {/* Client Avatar */}
-                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
-                          {review.client.first_name.charAt(0).toUpperCase()}
-                        </div>
-
-                        {/* Review Content */}
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-semibold text-gray-900">
-                                {review.client.first_name} {review.client.last_name}
-                              </h4>
-                              <p className="text-sm text-gray-500">
-                                {formatDate(review.created_at)}
-                              </p>
-                            </div>
-                            <StarRating rating={review.rating} readonly size="sm" />
-                          </div>
-
-                          {review.comment && (
-                            <p className="text-gray-700 leading-relaxed">
-                              {review.comment}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+              </div>
             </div>
-          </TabsContent>
-
-          {/* Info Tab */}
-          <TabsContent value="info" className="mt-6">
-            <BusinessInfoTab businessId={businessId} />
-          </TabsContent>
-        </Tabs>
-      </section>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

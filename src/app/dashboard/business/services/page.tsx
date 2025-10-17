@@ -97,18 +97,13 @@ export default function ServicesPage() {
     }).format(price)
   }
 
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
+const formatDuration = (minutes: number) => {
+  const hours = Math.floor(minutes / 60);
+  const mins = Math.round(minutes % 60);
 
-    if (hours === 0) {
-      return `${mins} min`
-    } else if (mins === 0) {
-      return `${hours}h`
-    } else {
-      return `${hours}h ${mins}min`
-    }
-  }
+  return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+};
+
 
   const filteredServices = services.filter(service =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -199,8 +194,11 @@ export default function ServicesPage() {
                 <p className="text-sm text-gray-600 mb-1">Duración Promedio</p>
                 <p className="text-3xl font-bold text-purple-600">
                   {formatDuration(
-                    services.reduce((sum, s) => sum + s.duration_minutes, 0) / services.length || 0
-                  )}
+  parseFloat(
+    ((services.reduce((sum, s) => sum + s.duration_minutes, 0) / services.length) || 0).toFixed(2)
+  )
+)}
+
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">

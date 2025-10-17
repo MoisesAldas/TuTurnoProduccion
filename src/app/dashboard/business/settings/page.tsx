@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { compressImage, validateImageFile, formatFileSize } from '@/lib/imageUtils'
 import ImageCropper from '@/components/ImageCropper'
+import BusinessPhotoGallery from '@/components/BusinessPhotoGallery'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Business } from '@/types/database'
@@ -562,6 +563,9 @@ export default function BusinessSettingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Galería de Fotos */}
+          {business && <BusinessPhotoGallery businessId={business.id} />}
 
           {/* Información básica */}
           <Card className="hover:shadow-lg transition-shadow border-t-4 border-t-orange-500">

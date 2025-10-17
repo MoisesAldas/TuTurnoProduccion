@@ -201,19 +201,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-
+      await supabase.auth.signOut({ scope: 'global' })
+    } catch (error) {
+      console.error('Error signing out:', error)
+    } finally {
       setAuthState({
         user: null,
         session: null,
         loading: false,
       })
-
       router.push('/')
-    } catch (error) {
-      console.error('Error signing out:', error)
-      throw error
     }
   }
 
