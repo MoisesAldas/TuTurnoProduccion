@@ -64,7 +64,7 @@ export default function PhotoCollage({ photos, coverImage, businessName }: Photo
                   setSelectedIndex(0)
                 }}
                 loading="eager"
-                fetchpriority="high"
+                fetchPriority="high"
               />
               {/* Gradient overlay for better text contrast */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
@@ -98,7 +98,7 @@ export default function PhotoCollage({ photos, coverImage, businessName }: Photo
                   alt={`${businessName} - Principal`}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="eager"
-                  fetchpriority="high"
+                  fetchPriority="high"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
               </div>
@@ -156,7 +156,7 @@ export default function PhotoCollage({ photos, coverImage, businessName }: Photo
                 alt={`${businessName} - Principal`}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 loading="eager"
-                fetchpriority="high"
+                fetchPriority="high"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
             </div>
