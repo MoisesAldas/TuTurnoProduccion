@@ -163,7 +163,8 @@ export default function BusinessProfilePage() {
           rating,
           comment,
           created_at,
-          client:users!client_id(
+          client_id,
+          users!reviews_client_id_fkey(
             first_name,
             last_name,
             email
@@ -173,8 +174,16 @@ export default function BusinessProfilePage() {
         .order('created_at', { ascending: false })
 
       if (!reviewsError && reviewsData) {
-        // Filter out reviews where client is null (deleted users)
-        const validReviews = reviewsData.filter((review: any) => review.client !== null)
+        // Transform and filter reviews - Supabase returns users as array
+        const validReviews = reviewsData
+          .filter((review: any) => review.users && review.users.length > 0)
+          .map((review: any) => ({
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment,
+            created_at: review.created_at,
+            client: review.users[0] // Extract first user from array
+          }))
         setReviews(validReviews)
       } else {
         setReviews([])
@@ -278,8 +287,14 @@ export default function BusinessProfilePage() {
 
   const categoryInfo = getCategoryInfo(business.business_type)
 
-  // Get unique service categories
-  const serviceCategories = ['all', ...Array.from(new Set(services.map(s => s.category).filter(Boolean)))]
+  // Get unique service categories (filter out null/undefined and convert to string)
+  const uniqueCategories = Array.from(new Set(
+    services
+      .map(s => s.category)
+      .filter((cat): cat is string => Boolean(cat))
+  ))
+  const serviceCategories = ['all', ...uniqueCategories]
+
   const filteredServices = selectedCategory === 'all'
     ? services
     : services.filter(s => s.category === selectedCategory)
@@ -466,9 +481,9 @@ export default function BusinessProfilePage() {
                     {/* Category Tabs */}
                     {serviceCategories.length > 1 && (
                       <div className="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-gray-200 scrollbar-hide">
-                        {serviceCategories.map((category) => (
+                        {serviceCategories.map((category, index) => (
                           <button
-                            key={category}
+                            key={`category-${index}-${category}`}
                             onClick={() => setSelectedCategory(category)}
                             className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
                               selectedCategory === category
