@@ -1,14 +1,22 @@
 'use client'
-
+import "@fontsource/poppins/900.css"
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Search, MapPin, Star, Clock, Filter, Grid, List, LogOut, Sparkles, TrendingUp, Users, ArrowRight } from 'lucide-react'
+import { Search, MapPin, Star, Clock, Filter, Grid, List, LogOut, Sparkles, TrendingUp, Users, ArrowRight, Scissors, Heart, Dumbbell, Activity, Building2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
+import Logo from '@/components/logo'
+
+interface BusinessCategory {
+  id: string
+  name: string
+  description?: string
+  icon_url?: string
+}
 
 interface Business {
   id: string
@@ -18,17 +26,21 @@ interface Business {
   phone?: string
   email?: string
   website?: string
-  business_type: string
+  business_category_id?: string
   logo_url?: string
   cover_image_url?: string
-  rating?: number
-  total_reviews?: number
   is_active: boolean
   created_at: string
+  // Campos de JOIN
+  business_categories?: BusinessCategory
+  // Campos calculados de reviews
+  average_rating?: number
+  review_count?: number
 }
 
 export default function MarketplacePage() {
   const [businesses, setBusinesses] = useState<Business[]>([])
+  const [categories, setCategories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
@@ -37,28 +49,65 @@ export default function MarketplacePage() {
   const { authState, signOut } = useAuth()
   const supabase = createClient()
 
-  const businessCategories = [
-    { value: 'salon', label: 'Salón de Belleza', emoji: '💇' },
-    { value: 'barbershop', label: 'Barbería', emoji: '✂️' },
-    { value: 'spa', label: 'Spa', emoji: '🧖' },
-    { value: 'nail_salon', label: 'Uñas', emoji: '💅' },
-    { value: 'massage', label: 'Masajes', emoji: '💆' },
-    { value: 'gym', label: 'Gimnasio', emoji: '🏋️' },
-    { value: 'clinic', label: 'Clínica', emoji: '🏥' },
-    { value: 'other', label: 'Otros', emoji: '📍' }
-  ]
+  // Mapeo de categorías a iconos (fallback si no hay icon_url en DB)
+  const getCategoryIcon = (categoryName?: string) => {
+    if (!categoryName) return Building2
+
+    const iconMap: Record<string, any> = {
+      'salón de belleza': Sparkles,
+      'salon de belleza': Sparkles,
+      'barbería': Scissors,
+      'barberia': Scissors,
+      'spa': Heart,
+      'uñas': Sparkles,
+      'masajes': Activity,
+      'gimnasio': Dumbbell,
+      'clínica': Activity,
+      'clinica': Activity,
+    }
+
+    return iconMap[categoryName.toLowerCase()] || Building2
+  }
 
   useEffect(() => {
+    fetchCategories()
     fetchBusinesses()
   }, [])
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('business_categories')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching categories:', error)
+        return
+      }
+
+      setCategories(data || [])
+    } catch (error) {
+      console.error('Error fetching categories:', error)
+    }
+  }
 
   const fetchBusinesses = async () => {
     try {
       setLoading(true)
 
+      // Traer negocios activos con JOIN a business_categories
       const { data, error } = await supabase
         .from('businesses')
-        .select('*')
+        .select(`
+          *,
+          business_categories (
+            id,
+            name,
+            description,
+            icon_url
+          )
+        `)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
@@ -67,7 +116,26 @@ export default function MarketplacePage() {
         return
       }
 
-      setBusinesses(data || [])
+      // Para cada negocio, obtener rating y reviews usando las funciones SQL
+      const businessesWithReviews = await Promise.all(
+        (data || []).map(async (business) => {
+          // Obtener rating promedio
+          const { data: avgData } = await supabase
+            .rpc('get_business_average_rating', { p_business_id: business.id })
+
+          // Obtener número de reseñas
+          const { data: countData } = await supabase
+            .rpc('get_business_review_count', { p_business_id: business.id })
+
+          return {
+            ...business,
+            average_rating: avgData || 0,
+            review_count: countData || 0
+          }
+        })
+      )
+
+      setBusinesses(businessesWithReviews)
     } catch (error) {
       console.error('Error fetching businesses:', error)
     } finally {
@@ -78,16 +146,13 @@ export default function MarketplacePage() {
   const filteredBusinesses = businesses.filter(business => {
     const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          business.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         business.address?.toLowerCase().includes(searchQuery.toLowerCase())
+                         business.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         business.business_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesCategory = !selectedCategory || business.business_type === selectedCategory
+    const matchesCategory = !selectedCategory || business.business_category_id === selectedCategory
 
     return matchesSearch && matchesCategory
   })
-
-  const getCategoryInfo = (type: string) => {
-    return businessCategories.find(cat => cat.value === type) || { label: type, emoji: '📍' }
-  }
 
   if (loading) {
     return (
@@ -131,29 +196,10 @@ export default function MarketplacePage() {
       <header className="absolute top-0 left-0 right-0 z-50 transition-all duration-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            {/* Logo Premium - Enhanced Design */}
-            <div className="flex items-center">
-              <Link href="/" className="group relative">
-                {/* Background Glow Effect */}
-                <div className="absolute -inset-2 bg-white/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-700"></div>
+            {/* Logo Turnito - Modern Rounded Style */}
+<Logo color="white" className="ml-10"  />
 
-                {/* Main Logo Text */}
-                <span className="relative text-4xl font-black text-white group-hover:scale-110 group-hover:tracking-wider transition-all duration-500
-                  bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text
-                  drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]
-                  group-hover:drop-shadow-[0_0_40px_rgba(255,255,255,0.8)]
-                  group-hover:text-shadow-lg
-                  filter group-hover:brightness-125">
 
-                  {/* Animated underline */}
-                  TuTurno
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-white/60 to-white/30 group-hover:w-full transition-all duration-700 delay-200"></span>
-
-                  {/* Shimmer effect */}
-                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 delay-300"></span>
-                </span>
-              </Link>
-            </div>
 
             {/* Navigation with Premium Animations */}
             <div className="flex items-center space-x-4">
@@ -315,20 +361,23 @@ export default function MarketplacePage() {
               <Sparkles className="w-4 h-4 mr-2" />
               Todos los servicios
             </Button>
-            {businessCategories.map((category) => (
-              <Button
-                key={category.value}
-                variant={selectedCategory === category.value ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory(category.value)}
-                className={selectedCategory === category.value ?
-                  'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105' :
-                  'border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-emerald-300 font-medium transition-all duration-300 hover:scale-105'
-                }
-              >
-                <span className="text-lg mr-2">{category.emoji}</span>
-                {category.label}
-              </Button>
-            ))}
+            {categories.map((category) => {
+              const CategoryIcon = getCategoryIcon(category.name)
+              return (
+                <Button
+                  key={category.id}
+                  variant={selectedCategory === category.id ? 'default' : 'outline'}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={selectedCategory === category.id ?
+                    'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 transform hover:scale-105' :
+                    'border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-emerald-300 hover:text-gray-900 font-medium transition-all duration-300 hover:scale-105'
+                  }
+                >
+                  <CategoryIcon className="w-4 h-4 mr-2" />
+                  {category.name}
+                </Button>
+              )
+            })}
           </div>
         </div>
 
@@ -404,138 +453,134 @@ export default function MarketplacePage() {
           </div>
         ) : (
           <div className={viewMode === 'grid'
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr"
             : "space-y-4"
           }>
             {filteredBusinesses.map((business) => {
-              const categoryInfo = getCategoryInfo(business.business_type)
+              const CategoryIcon = getCategoryIcon(business.business_categories?.name)
+              const categoryName = business.business_categories?.name || 'Sin categoría'
 
               return (
                 <Link key={business.id} href={`/business/${business.id}`}>
                   {viewMode === 'grid' ? (
-                    // GRID VIEW - Diseño vertical moderno
-                    <div className="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100">
+                    // GRID VIEW - Diseño elegante y profesional
+                    <div className="group bg-white rounded-lg overflow-hidden border-2 border-gray-200 hover:border-emerald-300 transition-all duration-200 hover:shadow-md h-full flex flex-col">
                       {/* Cover Image */}
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative h-48 overflow-hidden bg-gray-100 flex-shrink-0">
                         {business.cover_image_url ? (
                           <img
                             src={business.cover_image_url}
                             alt={business.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover"
                             loading="lazy"
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-green-100 via-emerald-50 to-green-200 flex items-center justify-center">
-                            <div className="text-6xl opacity-80">{categoryInfo.emoji}</div>
-                          </div>
-                        )}
-
-                        {/* Gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-
-                        {/* Category badge */}
-                        <div className="absolute top-3 left-3">
-                          <div className="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700 border border-white/20">
-                            {categoryInfo.emoji} {categoryInfo.label}
-                          </div>
-                        </div>
-
-                        {/* Rating badge */}
-                        {business.rating && (
-                          <div className="absolute top-3 right-3">
-                            <div className="bg-yellow-400/95 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-bold text-yellow-900 flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-current" />
-                              {business.rating}
-                            </div>
+                          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                            <CategoryIcon className="w-16 h-16 text-gray-300" />
                           </div>
                         )}
                       </div>
 
                       {/* Content */}
-                      <div className="p-4">
+                      <div className="p-4 flex flex-col flex-1">
                         {/* Business name */}
-                        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1 group-hover:text-green-600 transition-colors">
+                        <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-1">
                           {business.name}
                         </h3>
 
-                        {/* Description */}
-                        {business.description && (
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2 leading-relaxed">
-                            {business.description}
-                          </p>
-                        )}
+                        {/* Category */}
+                        <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-2">
+                          <CategoryIcon className="w-4 h-4 flex-shrink-0" />
+                          <span className="line-clamp-1">{categoryName}</span>
+                        </div>
 
                         {/* Location */}
                         {business.address && (
-                          <div className="flex items-center text-gray-500 text-sm mb-4">
-                            <MapPin className="w-4 h-4 mr-2 text-green-500 flex-shrink-0" />
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3">
+                            <MapPin className="w-4 h-4 flex-shrink-0" />
                             <span className="line-clamp-1">{business.address}</span>
                           </div>
                         )}
 
-                        {/* Action button */}
-                        <button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-sm hover:shadow-md">
-                          Ver servicios y reservar
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    // LIST VIEW - Diseño horizontal moderno
-                    <div className="group bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 flex h-32">
-                      {/* Cover Image */}
-                      <div className="relative w-48 h-full overflow-hidden">
-                        {business.cover_image_url ? (
-                          <img
-                            src={business.cover_image_url}
-                            alt={business.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                            sizes="192px"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-green-100 via-emerald-50 to-green-200 flex items-center justify-center">
-                            <div className="text-4xl opacity-80">{categoryInfo.emoji}</div>
-                          </div>
-                        )}
-
-                        {/* Category badge */}
-                        <div className="absolute top-2 left-2">
-                          <div className="bg-white/95 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-gray-700">
-                            {categoryInfo.emoji}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 p-4 flex flex-col justify-between">
-                        <div>
-                          {/* Header */}
-                          <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-green-600 transition-colors">
-                              {business.name}
-                            </h3>
-                            {business.rating && (
-                              <div className="bg-yellow-100 px-2 py-1 rounded-full text-xs font-medium text-yellow-800 flex items-center gap-1 ml-2">
-                                <Star className="w-3 h-3 fill-current text-yellow-500" />
-                                {business.rating}
+                        {/* Rating */}
+                        <div className="flex items-center gap-2 mb-4 mt-auto">
+                          {business.average_rating && business.average_rating > 0 ? (
+                            <>
+                              <div className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                <span>{business.average_rating.toFixed(1)}</span>
                               </div>
-                            )}
-                          </div>
-
-                          {/* Location */}
-                          {business.address && (
-                            <div className="flex items-center text-gray-500 text-sm mb-2">
-                              <MapPin className="w-3 h-3 mr-2 text-green-500 flex-shrink-0" />
-                              <span className="line-clamp-1">{business.address}</span>
-                            </div>
+                              <span className="text-sm text-gray-500">({business.review_count})</span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-400">Sin reseñas aún</span>
                           )}
                         </div>
 
                         {/* Action button */}
-                        <button className="self-start bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-4 rounded-lg transition-colors text-sm">
-                          Ver más
+                        <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200">
+                          Ver servicios
                         </button>
+                      </div>
+                    </div>
+                  ) : (
+                    // LIST VIEW - Diseño horizontal profesional
+                    <div className="group bg-white rounded-lg overflow-hidden border-2 border-gray-200 hover:border-emerald-300 transition-all duration-200 hover:shadow-md flex h-36">
+                      {/* Cover Image */}
+                      <div className="relative w-36 h-full overflow-hidden bg-gray-100 flex-shrink-0">
+                        {business.cover_image_url ? (
+                          <img
+                            src={business.cover_image_url}
+                            alt={business.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            sizes="144px"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                            <CategoryIcon className="w-10 h-10 text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                        <div className="min-w-0">
+                          {/* Business name */}
+                          <h3 className="font-semibold text-lg text-gray-900 mb-1.5 line-clamp-1">
+                            {business.name}
+                          </h3>
+
+                          {/* Category */}
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-1.5">
+                            <CategoryIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="line-clamp-1">{categoryName}</span>
+                          </div>
+
+                          {/* Location */}
+                          {business.address && (
+                            <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-2">
+                              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="line-clamp-1">{business.address}</span>
+                            </div>
+                          )}
+
+                          {/* Rating */}
+                          <div className="flex items-center gap-2">
+                            {business.average_rating && business.average_rating > 0 ? (
+                              <>
+                                <div className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                                  <span>{business.average_rating.toFixed(1)}</span>
+                                </div>
+                                <span className="text-sm text-gray-500">({business.review_count})</span>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-400">Sin reseñas</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

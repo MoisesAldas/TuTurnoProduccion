@@ -1,6 +1,7 @@
 'use client'
 
 export const dynamic = 'force-dynamic'
+import Logo from '@/components/logo'
 
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -56,7 +57,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
   const router = useRouter()
   const { authState, signOut } = useAuth()
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true) // Start collapsed for hover effect
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [businessName, setBusinessName] = useState<string>('')
   const supabase = createClient()
@@ -135,27 +136,43 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Sidebar */}
       <aside
+        onMouseEnter={() => setCollapsed(false)}
+        onMouseLeave={() => setCollapsed(true)}
         className={`${
-          collapsed ? 'lg:w-16' : 'lg:w-64'
+          collapsed ? 'lg:w-20' : 'lg:w-64'
         }
         fixed lg:static inset-y-0 left-0 z-50
         w-64 lg:w-auto
         bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white
-        transition-all duration-300 ease-in-out
+        transition-all duration-500 ease-in-out
         flex flex-col border-r border-gray-700 shadow-2xl
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        group
         `}
       >
         {/* Logo Section */}
-        <div className="h-16 flex items-center justify-center px-4 border-b border-gray-700 relative">
-          {/* Logo - Always show on mobile, hide when collapsed on desktop */}
+        <div className="h-16 flex items-center justify-center px-4 border-b border-gray-700/50 relative">
+          {/* Logo - Centered, always visible with smooth animations */}
           <Link
             href="/dashboard/business"
-            className={`${collapsed ? 'lg:hidden' : ''}`}
+            className="flex items-center justify-center transition-all duration-500"
           >
-            <span className="text-xl font-bold bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">
-              TuTurno
-            </span>
+            {/* Mobile logo - always white */}
+            <Logo color="white" size="sm" className="lg:hidden" />
+
+            {/* Desktop expanded logo - Full text with orange gradient */}
+            <div className={`hidden lg:flex items-center justify-center transition-all duration-500 ${collapsed ? 'opacity-0 scale-75 w-0' : 'opacity-100 scale-100 w-auto'}`}>
+              <span className="text-2xl font-black font-[Poppins] tracking-tight bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">
+                turnito
+              </span>
+            </div>
+
+            {/* Desktop collapsed logo - Icon "T" */}
+            <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-orange-500/50 hover:scale-110 transition-transform duration-300">
+                T
+              </div>
+            </div>
           </Link>
 
           {/* Mobile Close Button */}
@@ -165,22 +182,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           >
             <X className="w-5 h-5" />
           </button>
-
-          {/* Desktop Collapse Button */}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:block p-1.5 hover:bg-gray-700 rounded-lg transition-colors absolute right-4"
-          >
-            {collapsed ? (
-              <ChevronRight className="w-5 h-5" />
-            ) : (
-              <ChevronLeft className="w-5 h-5" />
-            )}
-          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
           {navigation.map((item) => {
             // Lógica mejorada para determinar si está activo
             let isActive = false
@@ -211,11 +216,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   setMobileMenuOpen(false)
                 }}
                 className={`
-                  flex items-center px-3 py-2.5 rounded-lg text-sm font-medium
-                  transition-all duration-300 ease-in-out group
+                  flex items-center px-3 py-2.5 rounded-xl text-sm font-medium
+                  transition-all duration-500 ease-in-out
                   ${isActive
-                    ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg shadow-orange-500/50 scale-105 translate-x-1'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white hover:translate-x-1 hover:scale-[1.02]'
+                    ? 'bg-gradient-to-r from-orange-600 via-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
+                    : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:shadow-md hover:scale-[1.02]'
                   }
                 `}
               >
@@ -224,18 +229,18 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                     flex-shrink-0
                     ${collapsed ? 'lg:mx-auto mr-3' : 'mr-3'}
                     w-5 h-5
-                    transition-all duration-300 ease-in-out
+                    transition-all duration-500 ease-in-out
                     ${isActive
-                      ? 'text-white rotate-0 scale-110'
-                      : 'text-gray-400 group-hover:text-white group-hover:rotate-12 group-hover:scale-110'
+                      ? 'text-white scale-110'
+                      : 'text-gray-400 group-hover:text-white group-hover:scale-110'
                     }
                   `}
                 />
                 {/* Always show text on mobile, hide on desktop when collapsed */}
                 <span
                   className={`
-                    transition-all duration-300 ease-in-out
-                    ${collapsed ? 'lg:hidden' : ''}
+                    transition-all duration-500 ease-in-out whitespace-nowrap overflow-hidden
+                    ${collapsed ? 'lg:opacity-0 lg:w-0' : 'lg:opacity-100 lg:w-auto'}
                     ${isActive ? 'font-semibold' : ''}
                   `}
                 >
@@ -249,15 +254,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         {/* User Section */}
         <div className="p-3 border-t border-gray-700">
           {/* Expanded view - Show on mobile always, show on desktop when not collapsed */}
-          <div className={`space-y-2 ${collapsed ? 'hidden lg:hidden' : 'block'}`}>
-            <div className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors cursor-pointer">
-              <Avatar className="w-9 h-9 border-2 border-orange-500">
+          <div className={`space-y-2 transition-all duration-500 ${collapsed ? 'lg:hidden' : ''}`}>
+            <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/50 transition-all duration-300 cursor-pointer group">
+              <Avatar className="w-9 h-9 border-2 border-orange-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <AvatarImage src={authState.user?.avatar_url} />
                 <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <p className="text-sm font-medium text-white truncate">
                   {authState.user?.first_name} {authState.user?.last_name}
                 </p>
@@ -267,7 +272,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <Button
               onClick={handleSignOut}
               variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
+              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md"
             >
               <LogOut className="w-4 h-4 mr-3" />
               Cerrar sesión
@@ -275,12 +280,23 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           {/* Collapsed view - Only show on desktop when collapsed */}
-          <button
-            onClick={handleSignOut}
-            className={`w-full p-2 hover:bg-gray-800 rounded-lg transition-colors ${collapsed ? 'hidden lg:block' : 'hidden'}`}
-          >
-            <LogOut className="w-5 h-5 mx-auto text-gray-400 hover:text-white" />
-          </button>
+          <div className={`transition-all duration-500 ${collapsed ? 'lg:block' : 'lg:hidden'} hidden`}>
+            <div className="flex flex-col items-center space-y-3">
+              <Avatar className="w-10 h-10 border-2 border-orange-500 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
+                <AvatarImage src={authState.user?.avatar_url} />
+                <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-xs">
+                  {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={handleSignOut}
+                className="w-10 h-10 flex items-center justify-center hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md group"
+                title="Cerrar sesión"
+              >
+                <LogOut className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors duration-300" />
+              </button>
+            </div>
+          </div>
         </div>
       </aside>
 

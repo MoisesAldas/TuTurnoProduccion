@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth'
+import "@fontsource/poppins/900.css"; // Black weight for Logo component (extra bold)
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",

@@ -154,22 +154,38 @@ export function useRealtimeAppointments({
           }
         }
       )
-      .subscribe((status) => {
-        console.log(`[Realtime] 📡 Subscription status: ${status}`)
-        
+      .subscribe((status, err) => {
+        console.log('═══════════════════════════════════════════════')
+        console.log(`[Realtime] 📡 SUBSCRIPTION STATUS CHANGED`)
+        console.log('═══════════════════════════════════════════════')
+        console.log(`[Realtime] Status: ${status}`)
+        console.log(`[Realtime] Channel name: ${channelName}`)
+        console.log(`[Realtime] Business ID: ${businessId}`)
+        console.log(`[Realtime] Timestamp: ${new Date().toISOString()}`)
+        if (err) {
+          console.error('[Realtime] ❌ Error details:', err)
+        }
+
         if (status === 'SUBSCRIBED') {
-          console.log('[Realtime] ✅ Successfully subscribed to appointments channel')
+          console.log('[Realtime] ✅ ✅ ✅ Successfully subscribed to appointments channel ✅ ✅ ✅')
           console.log(`[Realtime] 🎯 Listening for appointments with business_id: ${businessId}`)
           console.log('[Realtime] 👂 Ready to receive INSERT, UPDATE, DELETE events')
+          console.log('[Realtime] 🚀 Realtime is NOW ACTIVE and working!')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('[Realtime] ❌ Error subscribing to channel')
+          console.error('[Realtime] ❌ ❌ ❌ Error subscribing to channel ❌ ❌ ❌')
           console.error('[Realtime] 🔍 Check your Supabase configuration and RLS policies')
+          console.error('[Realtime] 💡 Verify Realtime is enabled in Supabase Dashboard → Database → Replication')
         } else if (status === 'TIMED_OUT') {
-          console.error('[Realtime] ⏱️ Subscription timed out')
+          console.error('[Realtime] ⏱️ ⏱️ ⏱️ Subscription timed out ⏱️ ⏱️ ⏱️')
           console.error('[Realtime] 🔄 Try refreshing the page or check your internet connection')
         } else if (status === 'CLOSED') {
           console.warn('[Realtime] 🔌 Channel closed')
+        } else if (status === 'CHANNEL_TIMEOUT') {
+          console.error('[Realtime] ⏱️ Channel timeout')
+        } else {
+          console.log(`[Realtime] 🔄 Status: ${status}`)
         }
+        console.log('═══════════════════════════════════════════════\n')
       })
 
     // Guardar referencia al canal

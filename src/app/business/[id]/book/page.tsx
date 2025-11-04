@@ -70,7 +70,7 @@ export default function BookingPage() {
 
   // Booking state
   const [currentStep, setCurrentStep] = useState<BookingStep>('service')
-  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]) // Changed to array for multi-selection
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<string>('')
@@ -104,7 +104,7 @@ export default function BookingPage() {
     if (preSelectedServiceId && services.length > 0) {
       const service = services.find(s => s.id === preSelectedServiceId)
       if (service) {
-        setSelectedService(service)
+        setSelectedServices([service]) // Pre-select as array
         setCurrentStep('employee')
       }
     }
@@ -119,10 +119,10 @@ export default function BookingPage() {
   }, [selectedDate])
 
   useEffect(() => {
-    if (selectedDate && selectedEmployee && selectedService) {
+    if (selectedDate && selectedEmployee && selectedServices.length > 0) {
       generateTimeSlots()
     }
-  }, [selectedDate, selectedEmployee, selectedService])
+  }, [selectedDate, selectedEmployee, selectedServices])
 
   const fetchData = async () => {
     try {
@@ -227,7 +227,10 @@ export default function BookingPage() {
   }
 
   const generateTimeSlots = async () => {
-    if (!selectedDate || !selectedEmployee || !selectedService) return
+    if (!selectedDate || !selectedEmployee || selectedServices.length === 0) return
+
+    // Calculate total duration of all selected services
+    const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
 
     // Check if business is closed on this date (special hours)
     if (specialHourForDate?.is_closed) {
@@ -295,7 +298,7 @@ export default function BookingPage() {
         p_date: selectedDateStr,
         p_business_start: businessStart,
         p_business_end: businessEnd,
-        p_service_duration_minutes: selectedService.duration_minutes,
+        p_service_duration_minutes: totalDuration, // Use total duration of all services
         p_slot_step_minutes: slotDuration
       })
 
@@ -325,7 +328,7 @@ export default function BookingPage() {
         if (!timeStr) return false
 
         const slotStart = new Date(`${selectedDateStr}T${timeStr}`)
-        const slotEnd = new Date(slotStart.getTime() + selectedService.duration_minutes * 60000)
+        const slotEnd = new Date(slotStart.getTime() + totalDuration * 60000)
 
         // ✅ FILTER: Remove slots that have already passed (respecting min_booking_hours)
         const now = new Date()
@@ -363,7 +366,7 @@ export default function BookingPage() {
           const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
           // Check if service fits within business hours
           const slotStart = new Date(`${selectedDateStr}T${timeString}:00`)
-          const slotEnd = new Date(slotStart.getTime() + selectedService.duration_minutes * 60000)
+          const slotEnd = new Date(slotStart.getTime() + totalDuration * 60000)
           const slotEndHour = slotEnd.getHours()
           const slotEndMinute = slotEnd.getMinutes()
           const wouldExtendBeyondHours = slotEndHour > endHour || (slotEndHour === endHour && slotEndMinute > 0)
@@ -381,8 +384,23 @@ export default function BookingPage() {
   }
 
   const handleServiceSelect = (service: Service) => {
-    setSelectedService(service)
-    setCurrentStep('employee')
+    // Toggle service selection
+    setSelectedServices(prev => {
+      const isSelected = prev.some(s => s.id === service.id)
+      if (isSelected) {
+        // Remove service
+        return prev.filter(s => s.id !== service.id)
+      } else {
+        // Add service
+        return [...prev, service]
+      }
+    })
+  }
+
+  const handleContinueToEmployee = () => {
+    if (selectedServices.length > 0) {
+      setCurrentStep('employee')
+    }
   }
 
   const handleEmployeeSelect = (employee: Employee) => {
@@ -399,7 +417,7 @@ export default function BookingPage() {
   // Navigation functions
   const goBackToService = () => {
     setCurrentStep('service')
-    setSelectedService(null)
+    setSelectedServices([])
     setSelectedEmployee(null)
     setSelectedDate(undefined)
     setSelectedTime('')
@@ -418,13 +436,14 @@ export default function BookingPage() {
 
   const handleBookingSubmit = async () => {
     console.log('🚀 [BOOKING] Starting booking submission process')
-    console.log('🚀 [BOOKING] Auth state:', { 
-      user: authState.user, 
+    console.log('🚀 [BOOKING] Auth state:', {
+      user: authState.user,
       userId: authState.user?.id,
-      isAuthenticated: !!authState.user 
+      isAuthenticated: !!authState.user
     })
     console.log('🚀 [BOOKING] Selected data:', {
-      service: selectedService,
+      services: selectedServices,
+      servicesCount: selectedServices.length,
       employee: selectedEmployee,
       date: selectedDate,
       time: selectedTime,
@@ -438,9 +457,10 @@ export default function BookingPage() {
       return
     }
 
-    if (!selectedService || !selectedEmployee || !selectedDate || !selectedTime || !business) {
+    if (selectedServices.length === 0 || !selectedEmployee || !selectedDate || !selectedTime || !business) {
       console.log('❌ [BOOKING] Missing required data:', {
-        hasService: !!selectedService,
+        hasServices: selectedServices.length > 0,
+        serviceCount: selectedServices.length,
         hasEmployee: !!selectedEmployee,
         hasDate: !!selectedDate,
         hasTime: !!selectedTime,
@@ -499,25 +519,28 @@ export default function BookingPage() {
       console.log('✅ [BOOKING] All validations passed, starting appointment creation')
       setSubmitting(true)
 
-      // Calcular hora de fin basada en la duración del servicio
+      // Calculate total duration and price from all selected services
+      const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
+      const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0)
       const startTime = selectedTime
-      const serviceDuration = selectedService.duration_minutes
 
-      console.log('📅 [BOOKING] Service details:', {
-        serviceName: selectedService.name,
-        serviceDuration: serviceDuration,
-        servicePrice: selectedService.price
+      console.log('📅 [BOOKING] Services details:', {
+        servicesCount: selectedServices.length,
+        serviceNames: selectedServices.map(s => s.name).join(', '),
+        totalDuration: totalDuration,
+        totalPrice: totalPrice,
+        services: selectedServices
       })
 
-      // Verificar que la duración sea válida
-      if (!serviceDuration || isNaN(serviceDuration) || serviceDuration <= 0) {
-        console.error('❌ [BOOKING] Invalid service duration:', serviceDuration, selectedService)
-        alert('Error: Duración del servicio no válida. Por favor contacta al negocio.')
+      // Validate total duration
+      if (!totalDuration || isNaN(totalDuration) || totalDuration <= 0) {
+        console.error('❌ [BOOKING] Invalid total service duration:', totalDuration, selectedServices)
+        alert('Error: Duración total de servicios no válida. Por favor contacta al negocio.')
         return
       }
 
       const startMinutes = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1])
-      const endMinutes = startMinutes + serviceDuration
+      const endMinutes = startMinutes + totalDuration
       const endHours = Math.floor(endMinutes / 60)
       const endMins = endMinutes % 60
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`
@@ -537,7 +560,7 @@ export default function BookingPage() {
         appointment_date: formatDateForDB(selectedDate),
         start_time: startTime,
         end_time: endTime,
-        total_price: selectedService.price,
+        total_price: totalPrice, // Total price of all selected services
         status: 'pending', // Cambiado a pending para evitar problemas con notificaciones
         client_notes: clientNotes || null
       }
@@ -565,26 +588,26 @@ export default function BookingPage() {
 
       console.log('✅ [BOOKING] Appointment created successfully:', appointment)
 
-      // Crear la relación con el servicio en appointment_services
-      const appointmentServiceData = {
+      // Create multiple appointment_services records (one for each selected service)
+      const appointmentServicesData = selectedServices.map(service => ({
         appointment_id: appointment.id,
-        service_id: selectedService.id,
-        price: selectedService.price
-      }
+        service_id: service.id,
+        price: service.price
+      }))
 
-      console.log('🔗 [BOOKING] Creating appointment service with data:', appointmentServiceData)
+      console.log('🔗 [BOOKING] Creating appointment services with data:', appointmentServicesData)
 
-      const { error: serviceError } = await supabase
+      const { error: servicesError } = await supabase
         .from('appointment_services')
-        .insert([appointmentServiceData])
+        .insert(appointmentServicesData)
 
-      if (serviceError) {
-        console.error('❌ [BOOKING] Error creating appointment service:', serviceError)
-        console.error('❌ [BOOKING] Service error details:', {
-          code: serviceError.code,
-          message: serviceError.message,
-          details: serviceError.details,
-          hint: serviceError.hint
+      if (servicesError) {
+        console.error('❌ [BOOKING] Error creating appointment services:', servicesError)
+        console.error('❌ [BOOKING] Services error details:', {
+          code: servicesError.code,
+          message: servicesError.message,
+          details: servicesError.details,
+          hint: servicesError.hint
         })
         // Si falla, eliminar la cita creada
         console.log('🗑️ [BOOKING] Cleaning up failed appointment:', appointment.id)
@@ -593,7 +616,7 @@ export default function BookingPage() {
         return
       }
 
-      console.log('✅ [BOOKING] Appointment service created successfully')
+      console.log('✅ [BOOKING] All appointment services created successfully')
 
       // Intentar confirmar la cita (esto puede fallar por las notificaciones pero no es crítico)
       try {
@@ -800,46 +823,105 @@ export default function BookingPage() {
           {/* Service Selection */}
           {currentStep === 'service' && (
             <div className="space-y-6">
-              <div className="space-y-4">
-              {services.map((service) => (
-                <Card
-                  key={service.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedService?.id === service.id ? 'ring-2 ring-green-500' : ''
-                  }`}
-                  onClick={() => handleServiceSelect(service)}
-                >
+              {/* Selected Services Summary */}
+              {selectedServices.length > 0 && (
+                <Card className="bg-green-50 border-green-200">
                   <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                          {service.name}
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-semibold text-green-900 mb-2">
+                          Servicios seleccionados ({selectedServices.length})
                         </h3>
-                        {service.description && (
-                          <p className="text-gray-600 mb-3">{service.description}</p>
-                        )}
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <div className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {formatDuration(service.duration_minutes)}
-                            {/* Debug info - remover en producción */}
-                            {process.env.NODE_ENV === 'development' && (
-                              <span className="ml-2 text-xs text-red-500">
-                                (raw: {service.duration_minutes})
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedServices.map(service => (
+                            <Badge
+                              key={service.id}
+                              className="bg-green-600 text-white hover:bg-green-700"
+                            >
+                              {service.name}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
-                          {formatPrice(service.price)}
-                        </div>
+                      <Button
+                        onClick={handleContinueToEmployee}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Continuar
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-green-200">
+                      <div>
+                        <p className="text-sm text-green-700">Duración total</p>
+                        <p className="font-semibold text-green-900">
+                          {formatDuration(selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0))}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-green-700">Precio total</p>
+                        <p className="font-semibold text-green-900">
+                          {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )}
+
+              {/* Service List with Checkboxes */}
+              <div className="space-y-4">
+              {services.map((service) => {
+                const isSelected = selectedServices.some(s => s.id === service.id)
+                return (
+                  <Card
+                    key={service.id}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      isSelected ? 'ring-2 ring-green-500 bg-green-50' : ''
+                    }`}
+                    onClick={() => handleServiceSelect(service)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        {/* Checkbox */}
+                        <div className="flex items-center pt-1">
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                            isSelected
+                              ? 'bg-green-600 border-green-600'
+                              : 'border-gray-300'
+                          }`}>
+                            {isSelected && (
+                              <CheckCircle className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Service Info */}
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg text-gray-900 mb-2">
+                            {service.name}
+                          </h3>
+                          {service.description && (
+                            <p className="text-gray-600 mb-3">{service.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <div className="flex items-center">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {formatDuration(service.duration_minutes)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Price */}
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-green-600">
+                            {formatPrice(service.price)}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
               </div>
             </div>
           )}
@@ -860,9 +942,24 @@ export default function BookingPage() {
               </div>
 
               <div className="space-y-4">
-              <div className="mb-6 p-4 bg-green-50 rounded-lg">
-                <h3 className="font-medium text-green-900">Servicio seleccionado:</h3>
-                <p className="text-green-700">{selectedService?.name} - {formatPrice(selectedService?.price || 0)}</p>
+              <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <h3 className="font-medium text-green-900 mb-3">
+                  Servicios seleccionados ({selectedServices.length})
+                </h3>
+                <div className="space-y-2">
+                  {selectedServices.map(service => (
+                    <div key={service.id} className="flex justify-between items-center">
+                      <span className="text-green-700">{service.name}</span>
+                      <span className="text-green-900 font-medium">{formatPrice(service.price)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-green-200 flex justify-between font-semibold">
+                  <span className="text-green-900">Total:</span>
+                  <span className="text-green-900">
+                    {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                  </span>
+                </div>
               </div>
 
               {employees.map((employee) => (
@@ -916,16 +1013,32 @@ export default function BookingPage() {
                   Volver a Empleados
                 </Button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 bg-green-50 rounded-lg">
-                <div>
-                  <h4 className="font-medium text-green-900">Servicio:</h4>
-                  <p className="text-green-700">{selectedService?.name}</p>
+              <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <h4 className="font-medium text-green-900 mb-2">
+                      Servicios ({selectedServices.length})
+                    </h4>
+                    <div className="space-y-1">
+                      {selectedServices.map(service => (
+                        <p key={service.id} className="text-green-700 text-sm">
+                          • {service.name}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-green-900">Profesional:</h4>
+                    <p className="text-green-700">
+                      {selectedEmployee?.first_name} {selectedEmployee?.last_name}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-medium text-green-900">Profesional:</h4>
-                  <p className="text-green-700">
-                    {selectedEmployee?.first_name} {selectedEmployee?.last_name}
-                  </p>
+                <div className="pt-3 border-t border-green-200 flex justify-between text-sm">
+                  <span className="text-green-700">Precio total:</span>
+                  <span className="text-green-900 font-semibold">
+                    {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                  </span>
                 </div>
               </div>
 
@@ -1108,15 +1221,25 @@ export default function BookingPage() {
                   <CardTitle>Resumen de tu cita</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-500">Servicio</Label>
-                      <p className="font-medium">{selectedService?.name}</p>
+                  {/* Services Section */}
+                  <div className="col-span-2">
+                    <Label className="text-sm font-medium text-gray-500 mb-2 block">
+                      Servicios ({selectedServices.length})
+                    </Label>
+                    <div className="space-y-2">
+                      {selectedServices.map((service, index) => (
+                        <div key={service.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium">{service.name}</p>
+                            <p className="text-sm text-gray-500">{formatDuration(service.duration_minutes)}</p>
+                          </div>
+                          <p className="font-semibold text-green-600">{formatPrice(service.price)}</p>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-500">Precio</Label>
-                      <p className="font-medium">{formatPrice(selectedService?.price || 0)}</p>
-                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
                       <Label className="text-sm font-medium text-gray-500">Profesional</Label>
                       <div className="flex items-center space-x-3 mt-1">
@@ -1137,8 +1260,10 @@ export default function BookingPage() {
                       </div>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-500">Duración</Label>
-                      <p className="font-medium">{formatDuration(selectedService?.duration_minutes || 0)}</p>
+                      <Label className="text-sm font-medium text-gray-500">Duración Total</Label>
+                      <p className="font-medium">
+                        {formatDuration(selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0))}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium text-gray-500">Fecha</Label>
@@ -1147,6 +1272,16 @@ export default function BookingPage() {
                     <div>
                       <Label className="text-sm font-medium text-gray-500">Hora</Label>
                       <p className="font-medium">{selectedTime}</p>
+                    </div>
+                  </div>
+
+                  {/* Total Price */}
+                  <div className="pt-4 border-t">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-900">Precio Total:</span>
+                      <span className="text-2xl font-bold text-green-600">
+                        {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -1211,16 +1346,31 @@ export default function BookingPage() {
                 <CardHeader>
                   <CardTitle>Detalles de tu cita</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Negocio:</span>
-                    <span className="font-medium">{business.name}</span>
+                <CardContent className="space-y-4">
+                  <div>
+                    <span className="text-gray-600 text-sm font-medium">Negocio:</span>
+                    <p className="font-medium text-gray-900 mt-1">{business.name}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Servicio:</span>
-                    <span className="font-medium">{selectedService?.name}</span>
+
+                  {/* Services List */}
+                  <div>
+                    <span className="text-gray-600 text-sm font-medium">
+                      Servicios ({selectedServices.length}):
+                    </span>
+                    <div className="space-y-2 mt-2">
+                      {selectedServices.map((service) => (
+                        <div key={service.id} className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-gray-900">{service.name}</p>
+                            <p className="text-sm text-gray-500">{formatDuration(service.duration_minutes)}</p>
+                          </div>
+                          <p className="font-semibold text-green-600">{formatPrice(service.price)}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
+
+                  <div className="flex justify-between items-center pt-2 border-t">
                     <span className="text-gray-600">Profesional:</span>
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
@@ -1239,17 +1389,25 @@ export default function BookingPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Fecha:</span>
-                    <span className="font-medium">{selectedDate ? formatDate(selectedDate) : ''}</span>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-gray-600 text-sm">Fecha:</span>
+                      <p className="font-medium text-gray-900 mt-1">
+                        {selectedDate ? formatDate(selectedDate) : ''}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm">Hora:</span>
+                      <p className="font-medium text-gray-900 mt-1">{selectedTime}</p>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Hora:</span>
-                    <span className="font-medium">{selectedTime}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-semibold pt-2 border-t">
-                    <span>Total:</span>
-                    <span className="text-green-600">{formatPrice(selectedService?.price || 0)}</span>
+
+                  <div className="flex justify-between items-center text-lg font-semibold pt-4 border-t">
+                    <span className="text-gray-900">Total:</span>
+                    <span className="text-green-600">
+                      {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

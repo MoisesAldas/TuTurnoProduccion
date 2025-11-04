@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select"
 import {
   Save, Settings, Clock, Calendar, Bell, Shield, X, Plus,
-  AlertCircle, Info, CheckCircle2
+  AlertCircle, Info, CheckCircle2, Receipt
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
@@ -28,6 +28,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Business } from '@/types/database'
 import SpecialHoursManager from '@/components/SpecialHoursManager'
+import InvoiceConfigSection from '@/components/InvoiceConfigSection'
 import { useToast } from '@/hooks/use-toast'
 
 // Schema de validación para configuraciones avanzadas
@@ -300,6 +301,12 @@ export default function AdvancedSettingsPage() {
                         <span>Recordatorios</span>
                       </div>
                     )}
+                    {activeTab === 'invoicing' && (
+                      <div className="flex items-center gap-2">
+                        <Receipt className="w-4 h-4" />
+                        <span>Facturación</span>
+                      </div>
+                    )}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -327,6 +334,12 @@ export default function AdvancedSettingsPage() {
                       <span>Recordatorios</span>
                     </div>
                   </SelectItem>
+                  <SelectItem value="invoicing">
+                    <div className="flex items-center gap-2">
+                      <Receipt className="w-4 h-4" />
+                      <span>Facturación</span>
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -335,7 +348,7 @@ export default function AdvancedSettingsPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Tabs desktop */}
             <div className="hidden lg:block bg-white rounded-lg border shadow-sm p-1">
-              <TabsList className="grid w-full grid-cols-4 gap-1 bg-transparent">
+              <TabsList className="grid w-full grid-cols-5 gap-1 bg-transparent">
                 <TabsTrigger
                   value="policies"
                   className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=inactive]:text-gray-700 transition-all duration-300 flex items-center justify-center gap-2 py-3"
@@ -363,6 +376,13 @@ export default function AdvancedSettingsPage() {
                 >
                   <Bell className="w-4 h-4" />
                   <span className="text-sm font-medium">Recordatorios</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="invoicing"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=inactive]:text-gray-700 transition-all duration-300 flex items-center justify-center gap-2 py-3"
+                >
+                  <Receipt className="w-4 h-4" />
+                  <span className="text-sm font-medium">Facturación</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -788,6 +808,11 @@ export default function AdvancedSettingsPage() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Tab 5: Facturación */}
+            <TabsContent value="invoicing" className="space-y-6">
+              <InvoiceConfigSection />
             </TabsContent>
           </Tabs>
 

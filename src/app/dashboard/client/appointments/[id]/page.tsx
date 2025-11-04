@@ -22,6 +22,7 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
+import { parseDateString, toDateString, formatSpanishDate } from '@/lib/dateUtils'
 import Link from 'next/link'
 
 interface Appointment {
@@ -67,6 +68,14 @@ interface Employee {
   avatar_url?: string
 }
 
+interface Service {
+  id: string
+  name: string
+  description?: string
+  price: number
+  duration_minutes: number
+}
+
 interface TimeSlot {
   time: string
   available: boolean
@@ -88,11 +97,13 @@ export default function ManageAppointmentPage() {
 
   // Form state
   const [availableEmployees, setAvailableEmployees] = useState<Employee[]>([])
+  const [availableServices, setAvailableServices] = useState<Service[]>([])
+  const [selectedServices, setSelectedServices] = useState<Service[]>([])
   const [selectedEmployee, setSelectedEmployee] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([])
-  const [step, setStep] = useState<'options' | 'employee' | 'datetime'>('options')
+  const [step, setStep] = useState<'options' | 'services' | 'employee' | 'datetime'>('options')
 
   useEffect(() => {
     if (appointmentId && authState.user) {
@@ -101,10 +112,10 @@ export default function ManageAppointmentPage() {
   }, [appointmentId, authState.user])
 
   useEffect(() => {
-    if (selectedDate && selectedEmployee && appointment) {
+    if (selectedDate && selectedEmployee && appointment && selectedServices.length > 0) {
       generateTimeSlots()
     }
-  }, [selectedDate, selectedEmployee, appointment])
+  }, [selectedDate, selectedEmployee, appointment, selectedServices])
 
   const fetchAppointment = async () => {
     if (!authState.user || !appointmentId) return
@@ -144,8 +155,20 @@ export default function ManageAppointmentPage() {
 
       setAppointment(data)
       setSelectedEmployee(data.employee.id)
-      setSelectedDate(new Date(data.appointment_date))
+      setSelectedDate(parseDateString(data.appointment_date)) // Fix timezone issue
       setSelectedTime(data.start_time.slice(0, 5))
+
+      // Initialize selected services with current appointment services
+      // Fetch full service data (with duration_minutes)
+      const serviceIds = data.appointment_services.map(as => as.service.id)
+      const { data: servicesData } = await supabase
+        .from('services')
+        .select('id, name, description, price, duration_minutes')
+        .in('id', serviceIds)
+
+      if (servicesData) {
+        setSelectedServices(servicesData)
+      }
 
     } catch (error) {
       console.error('Error fetching appointment:', error)
@@ -175,8 +198,55 @@ export default function ManageAppointmentPage() {
     }
   }
 
+  const fetchAvailableServices = async (businessId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name, description, price, duration_minutes')
+        .eq('business_id', businessId)
+        .eq('is_active', true)
+        .order('name')
+
+      if (error) {
+        console.error('Error fetching services:', error)
+        return
+      }
+
+      setAvailableServices(data || [])
+    } catch (error) {
+      console.error('Error fetching services:', error)
+    }
+  }
+
+  const handleServiceToggle = (service: Service) => {
+    // Check if service is already in the original appointment
+    const isOriginalService = appointment?.appointment_services.some(
+      as => as.service.id === service.id
+    )
+
+    // If it's an original service, don't allow removal
+    if (isOriginalService) {
+      toast({
+        variant: 'destructive',
+        title: 'No se puede quitar',
+        description: 'No puedes quitar servicios que ya tienes reservados. Solo puedes agregar nuevos servicios.',
+      })
+      return
+    }
+
+    // Toggle service (only for new services)
+    setSelectedServices(prev => {
+      const isSelected = prev.some(s => s.id === service.id)
+      if (isSelected) {
+        return prev.filter(s => s.id !== service.id) // Remove
+      } else {
+        return [...prev, service] // Add
+      }
+    })
+  }
+
   const generateTimeSlots = async () => {
-    if (!selectedDate || !selectedEmployee || !appointment) return
+    if (!selectedDate || !selectedEmployee || !appointment || selectedServices.length === 0) return
 
     const slots: TimeSlot[] = []
     const startHour = 9
@@ -193,22 +263,15 @@ export default function ManageAppointmentPage() {
     const selectedDateStr = formatDateForDB(selectedDate)
 
     try {
-      // Get service duration from the appointment
-      let serviceDuration = 60 // Default fallback
-      if (appointment.appointment_services && appointment.appointment_services.length > 0) {
-        // Try to get duration from service data
-        const { data: serviceData } = await supabase
-          .from('services')
-          .select('duration_minutes')
-          .eq('id', appointment.appointment_services[0].service.id)
-          .single()
+      // Calculate total duration from selected services
+      const serviceDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
 
-        if (serviceData && serviceData.duration_minutes && serviceData.duration_minutes > 0) {
-          serviceDuration = serviceData.duration_minutes
-        }
+      if (!serviceDuration || serviceDuration <= 0) {
+        console.error('Invalid service duration:', serviceDuration)
+        return
       }
 
-      console.log('Using service duration:', serviceDuration, 'minutes')
+      console.log('Using total service duration:', serviceDuration, 'minutes from', selectedServices.length, 'services')
 
       // Fetch employee schedule for the selected day
       const dayOfWeek = selectedDate.getDay()
@@ -495,7 +558,7 @@ export default function ManageAppointmentPage() {
   }
 
   const handleSaveChanges = async () => {
-    if (!appointment || !selectedEmployee || !selectedDate || !selectedTime) return
+    if (!appointment || !selectedEmployee || !selectedDate || !selectedTime || selectedServices.length === 0) return
 
     try {
       setSaving(true)
@@ -507,21 +570,11 @@ export default function ManageAppointmentPage() {
         return `${year}-${month}-${day}`
       }
 
-      // Get service duration dynamically
-      let serviceDuration = 60 // Default fallback
-      if (appointment.appointment_services && appointment.appointment_services.length > 0) {
-        const { data: serviceData } = await supabase
-          .from('services')
-          .select('duration_minutes')
-          .eq('id', appointment.appointment_services[0].service.id)
-          .single()
+      // Calculate total duration and price from all selected services
+      const serviceDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
+      const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0)
 
-        if (serviceData && serviceData.duration_minutes && serviceData.duration_minutes > 0) {
-          serviceDuration = serviceData.duration_minutes
-        }
-      }
-
-      // Calculate end time based on actual service duration
+      // Calculate end time based on total service duration
       const startTime = selectedTime
       const startMinutes = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1])
       const endMinutes = startMinutes + serviceDuration
@@ -529,33 +582,124 @@ export default function ManageAppointmentPage() {
       const endMins = endMinutes % 60
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`
 
-      const { error } = await supabase
+      // ✅ VALIDATION: Check if new duration fits in the selected slot
+      // We need to check against business hours or employee schedule
+      const selectedDateStr = formatDateForDB(selectedDate)
+      const dayOfWeek = selectedDate.getDay()
+
+      // Fetch employee schedule to check if end time exceeds working hours
+      const { data: scheduleData } = await supabase
+        .from('employee_schedules')
+        .select('end_time')
+        .eq('employee_id', selectedEmployee)
+        .eq('day_of_week', dayOfWeek)
+        .eq('is_available', true)
+        .single()
+
+      if (scheduleData) {
+        const employeeEndHour = parseInt(scheduleData.end_time.split(':')[0])
+        const employeeEndMinute = parseInt(scheduleData.end_time.split(':')[1])
+        const employeeEndTotalMinutes = employeeEndHour * 60 + employeeEndMinute
+
+        if (endMinutes > employeeEndTotalMinutes) {
+          toast({
+            variant: 'destructive',
+            title: 'Duración excedida',
+            description: `La duración total de los servicios (${serviceDuration} min) excede el horario de cierre del empleado. Por favor selecciona otra hora o reduce los servicios.`,
+          })
+          setSaving(false)
+          return
+        }
+      }
+
+      // Update appointment
+      const { error: appointmentError } = await supabase
         .from('appointments')
         .update({
           employee_id: selectedEmployee,
-          appointment_date: formatDateForDB(selectedDate),
+          appointment_date: selectedDateStr,
           start_time: `${startTime}:00`,
-          end_time: endTime
+          end_time: endTime,
+          total_price: totalPrice
         })
         .eq('id', appointment.id)
 
-      if (error) {
-        console.error('Error updating appointment:', error)
-        alert('Error al actualizar la cita')
+      if (appointmentError) {
+        console.error('Error updating appointment:', appointmentError)
+        toast({
+          variant: 'destructive',
+          title: 'Error al actualizar',
+          description: 'No se pudo actualizar la cita. Por favor intenta nuevamente.',
+        })
         return
       }
 
-      router.push('/dashboard/client')
+      // Check if services have changed
+      const originalServiceIds = appointment.appointment_services.map(as => as.service.id).sort()
+      const newServiceIds = selectedServices.map(s => s.id).sort()
+      const servicesChanged = JSON.stringify(originalServiceIds) !== JSON.stringify(newServiceIds)
+
+      if (servicesChanged) {
+        // Delete old appointment_services
+        const { error: deleteError } = await supabase
+          .from('appointment_services')
+          .delete()
+          .eq('appointment_id', appointment.id)
+
+        if (deleteError) {
+          console.error('Error deleting old services:', deleteError)
+          toast({
+            variant: 'destructive',
+            title: 'Error al actualizar servicios',
+            description: 'No se pudieron actualizar los servicios. Por favor intenta nuevamente.',
+          })
+          return
+        }
+
+        // Insert new appointment_services
+        const appointmentServicesData = selectedServices.map(service => ({
+          appointment_id: appointment.id,
+          service_id: service.id,
+          price: service.price
+        }))
+
+        const { error: insertError } = await supabase
+          .from('appointment_services')
+          .insert(appointmentServicesData)
+
+        if (insertError) {
+          console.error('Error inserting new services:', insertError)
+          toast({
+            variant: 'destructive',
+            title: 'Error al actualizar servicios',
+            description: 'No se pudieron agregar los nuevos servicios. Por favor intenta nuevamente.',
+          })
+          return
+        }
+      }
+
+      toast({
+        title: 'Cita actualizada',
+        description: 'Los cambios se han guardado exitosamente.',
+      })
+
+      setTimeout(() => {
+        router.push('/dashboard/client')
+      }, 1000)
     } catch (error) {
       console.error('Error updating appointment:', error)
-      alert('Error al actualizar la cita')
+      toast({
+        variant: 'destructive',
+        title: 'Error inesperado',
+        description: 'Ocurrió un error al actualizar la cita. Por favor intenta nuevamente.',
+      })
     } finally {
       setSaving(false)
     }
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-EC', {
+    return formatSpanishDate(dateString, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -571,8 +715,8 @@ export default function ManageAppointmentPage() {
   }
 
   const handleStartModification = () => {
-    setStep('employee')
-    fetchAvailableEmployees(appointment!.business.id)
+    setStep('services')
+    fetchAvailableServices(appointment!.business.id)
   }
 
   if (loading) {
@@ -641,8 +785,19 @@ export default function ManageAppointmentPage() {
                   <p className="text-lg font-semibold">{appointment.business.name}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Servicio</p>
-                  <p className="text-base">{appointment.appointment_services[0]?.service.name}</p>
+                  <p className="text-sm font-medium text-gray-500">
+                    Servicios ({appointment.appointment_services.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {appointment.appointment_services.map((appService, index) => (
+                      <Badge
+                        key={index}
+                        className="bg-green-100 text-green-700 hover:bg-green-200"
+                      >
+                        {appService.service.name}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Empleado</p>
@@ -814,6 +969,141 @@ export default function ManageAppointmentPage() {
           </>
         )}
 
+        {/* Services Selection Step */}
+        {step === 'services' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Agregar Servicios</CardTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                Puedes agregar más servicios a tu cita. Los servicios originales no se pueden quitar.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {/* Current Services (cannot be removed) */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  Servicios actuales (no se pueden quitar):
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {appointment?.appointment_services.map((appService, index) => (
+                    <Badge
+                      key={index}
+                      className="bg-gray-200 text-gray-700 cursor-not-allowed"
+                    >
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      {appService.service.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Available Services to Add */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  Servicios disponibles para agregar:
+                </h3>
+                <div className="space-y-3">
+                  {availableServices.map((service) => {
+                    const isOriginal = appointment?.appointment_services.some(
+                      as => as.service.id === service.id
+                    )
+                    const isSelected = selectedServices.some(s => s.id === service.id)
+                    const isNewlyAdded = isSelected && !isOriginal
+
+                    return (
+                      <Card
+                        key={service.id}
+                        className={`cursor-pointer transition-all ${
+                          isOriginal
+                            ? 'opacity-50 cursor-not-allowed bg-gray-50'
+                            : isNewlyAdded
+                            ? 'ring-2 ring-green-500 bg-green-50'
+                            : 'hover:shadow-md'
+                        }`}
+                        onClick={() => !isOriginal && handleServiceToggle(service)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            {/* Checkbox */}
+                            <div className="pt-1">
+                              {isOriginal ? (
+                                <CheckCircle className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                <div
+                                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                                    isNewlyAdded
+                                      ? 'bg-green-600 border-green-600'
+                                      : 'border-gray-300'
+                                  }`}
+                                >
+                                  {isNewlyAdded && (
+                                    <CheckCircle className="w-4 h-4 text-white" />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Service Info */}
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900">{service.name}</h4>
+                              {service.description && (
+                                <p className="text-sm text-gray-600 mt-1">{service.description}</p>
+                              )}
+                              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                                <div className="flex items-center">
+                                  <Clock className="w-4 h-4 mr-1" />
+                                  {service.duration_minutes} min
+                                </div>
+                                <div className="font-semibold text-green-600">
+                                  {formatPrice(service.price)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Summary */}
+              {selectedServices.length > appointment.appointment_services.length && (
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-medium text-green-900 mb-2">
+                    Total de servicios: {selectedServices.length}
+                  </h4>
+                  <div className="text-sm text-green-800">
+                    <div>
+                      <strong>Duración total:</strong>{' '}
+                      {selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0)} minutos
+                    </div>
+                    <div>
+                      <strong>Precio total:</strong>{' '}
+                      {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 mt-6">
+                <Button variant="outline" onClick={() => setStep('options')}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => {
+                    setStep('employee')
+                    fetchAvailableEmployees(appointment!.business.id)
+                  }}
+                  disabled={selectedServices.length === 0}
+                >
+                  Continuar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Employee Selection Step */}
         {step === 'employee' && (
           <Card>
@@ -861,8 +1151,8 @@ export default function ManageAppointmentPage() {
               </div>
 
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep('options')}>
-                  Cancelar
+                <Button variant="outline" onClick={() => setStep('services')}>
+                  Atrás
                 </Button>
                 <Button
                   onClick={() => setStep('datetime')}

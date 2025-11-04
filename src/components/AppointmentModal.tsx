@@ -223,43 +223,11 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
   }
 
   const handleCheckoutSuccess = async () => {
-    try {
-      setUpdating(true)
-      setShowCheckout(false)
-
-      // Only mark as completed if not already completed
-      if (appointment.status !== 'completed') {
-        const { error } = await supabase
-          .from('appointments')
-          .update({ status: 'completed' })
-          .eq('id', appointment.id)
-
-        if (error) throw error
-
-        toast({
-          title: 'Cita completada',
-          description: 'La cita ha sido completada y el pago registrado exitosamente.',
-        })
-      } else {
-        toast({
-          title: 'Pago registrado',
-          description: 'El pago ha sido registrado exitosamente.',
-        })
-      }
-
-      // Close the appointment modal and refresh
-      onClose()
-      onUpdate()
-    } catch (error) {
-      console.error('Error completing appointment:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Error al procesar',
-        description: 'No se pudo completar la operación.',
-      })
-    } finally {
-      setUpdating(false)
-    }
+    // CheckoutModal now handles marking appointment as completed and creating invoice
+    // Just close modals and refresh
+    setShowCheckout(false)
+    onClose()
+    onUpdate()
   }
 
   const handleOpenCheckout = () => {

@@ -8,12 +8,21 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import {
   MapPin, Phone, Mail, Globe, Star, Clock, ArrowLeft,
-  Calendar, Users, Sparkles, LogOut, ChevronLeft, ChevronRight, X
+  Calendar, Users, Sparkles, LogOut, ChevronLeft, ChevronRight, X,
+  Scissors, Heart, Dumbbell, Activity, Building2, Info, CreditCard, Ban, RefreshCw, Bell
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import LocationMapModal from '@/components/LocationMapModal'
+import StarRating from '@/components/StarRating'
+
+interface BusinessCategory {
+  id: string
+  name: string
+  description?: string
+  icon_url?: string
+}
 
 interface Business {
   id: string
@@ -23,7 +32,7 @@ interface Business {
   phone?: string
   email?: string
   website?: string
-  business_type: string
+  business_category_id?: string
   logo_url?: string
   cover_image_url?: string
   latitude?: number
@@ -32,10 +41,26 @@ interface Business {
   total_reviews?: number
   is_active: boolean
   created_at: string
-  category?: {
-    id: string
-    name: string
-  }
+  business_categories?: BusinessCategory
+  cancellation_policy_hours?: number
+  cancellation_policy_text?: string
+  allow_client_cancellation?: boolean
+  allow_client_reschedule?: boolean
+  min_booking_hours?: number
+  max_booking_days?: number
+  enable_reminders?: boolean
+  reminder_hours_before?: number
+  require_deposit?: boolean
+  deposit_percentage?: number
+}
+
+interface BusinessHours {
+  id: string
+  business_id: string
+  day_of_week: number
+  open_time: string
+  close_time: string
+  is_closed: boolean
 }
 
 interface Photo {
@@ -82,6 +107,7 @@ export default function BusinessProfilePage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [businessPhotos, setBusinessPhotos] = useState<Photo[]>([])
+  const [businessHours, setBusinessHours] = useState<BusinessHours[]>([])
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showPhotoGallery, setShowPhotoGallery] = useState(false)
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
@@ -94,15 +120,24 @@ export default function BusinessProfilePage() {
   const businessId = params.id as string
   const supabase = createClient()
 
-  const businessCategories = {
-    'salon': { label: 'Salón de Belleza', emoji: '💇', color: 'bg-pink-100 text-pink-800' },
-    'barbershop': { label: 'Barbería', emoji: '✂️', color: 'bg-blue-100 text-blue-800' },
-    'spa': { label: 'Spa', emoji: '🧖', color: 'bg-purple-100 text-purple-800' },
-    'nail_salon': { label: 'Uñas', emoji: '💅', color: 'bg-red-100 text-red-800' },
-    'massage': { label: 'Masajes', emoji: '💆', color: 'bg-green-100 text-green-800' },
-    'gym': { label: 'Gimnasio', emoji: '🏋️', color: 'bg-orange-100 text-orange-800' },
-    'clinic': { label: 'Clínica', emoji: '🏥', color: 'bg-teal-100 text-teal-800' },
-    'other': { label: 'Otros', emoji: '📍', color: 'bg-gray-100 text-gray-800' }
+  // Mapeo de categorías a iconos (igual que marketplace)
+  const getCategoryIcon = (categoryName?: string) => {
+    if (!categoryName) return Building2
+
+    const iconMap: Record<string, any> = {
+      'salón de belleza': Sparkles,
+      'salon de belleza': Sparkles,
+      'barbería': Scissors,
+      'barberia': Scissors,
+      'spa': Heart,
+      'uñas': Sparkles,
+      'masajes': Activity,
+      'gimnasio': Dumbbell,
+      'clínica': Activity,
+      'clinica': Activity,
+    }
+
+    return iconMap[categoryName.toLowerCase()] || Building2
   }
 
   useEffect(() => {
@@ -115,10 +150,22 @@ export default function BusinessProfilePage() {
     try {
       setLoading(true)
 
-      // Fetch business details
+      // Debug: Check current user
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('👤 [AUTH DEBUG] Current user:', user?.id, user?.email)
+
+      // Fetch business details with JOIN to business_categories
       const { data: businessData, error: businessError } = await supabase
         .from('businesses')
-        .select('*')
+        .select(`
+          *,
+          business_categories (
+            id,
+            name,
+            description,
+            icon_url
+          )
+        `)
         .eq('id', businessId)
         .eq('is_active', true)
         .single()
@@ -156,6 +203,8 @@ export default function BusinessProfilePage() {
       }
 
       // Fetch reviews from database
+      console.log('🔍 [REVIEWS DEBUG] Fetching reviews for business:', businessId)
+
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('reviews')
         .select(`
@@ -164,7 +213,7 @@ export default function BusinessProfilePage() {
           comment,
           created_at,
           client_id,
-          users!reviews_client_id_fkey(
+          users (
             first_name,
             last_name,
             email
@@ -173,19 +222,35 @@ export default function BusinessProfilePage() {
         .eq('business_id', businessId)
         .order('created_at', { ascending: false })
 
+      console.log('📊 [REVIEWS DEBUG] Raw reviews data:', reviewsData)
+      console.log('❌ [REVIEWS DEBUG] Reviews error:', reviewsError)
+
       if (!reviewsError && reviewsData) {
-        // Transform and filter reviews - Supabase returns users as array
-        const validReviews = reviewsData
-          .filter((review: any) => review.users && review.users.length > 0)
-          .map((review: any) => ({
+        console.log('✅ [REVIEWS DEBUG] Total reviews fetched:', reviewsData.length)
+
+        // Transform and filter reviews - Supabase returns users object
+        const validReviews = (reviewsData as any[])
+          .filter(review => {
+            const isValid = review.users !== null && review.users !== undefined
+            if (!isValid) {
+              console.log('⚠️ [REVIEWS DEBUG] Skipping review with null/undefined users:', review.id)
+            }
+            return isValid
+          })
+          .map(review => ({
             id: review.id,
             rating: review.rating,
             comment: review.comment,
             created_at: review.created_at,
-            client: review.users[0] // Extract first user from array
+            client: review.users  // Rename 'users' to 'client' to match interface
           }))
+
+        console.log('✅ [REVIEWS DEBUG] Valid reviews after filter:', validReviews.length)
+        console.log('📝 [REVIEWS DEBUG] Valid reviews data:', validReviews)
+
         setReviews(validReviews)
       } else {
+        console.log('❌ [REVIEWS DEBUG] No reviews data or error occurred')
         setReviews([])
       }
 
@@ -200,6 +265,17 @@ export default function BusinessProfilePage() {
 
       if (!photosError && photosData) {
         setBusinessPhotos(photosData)
+      }
+
+      // Fetch business hours
+      const { data: hoursData, error: hoursError } = await supabase
+        .from('business_hours')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('day_of_week', { ascending: true })
+
+      if (!hoursError && hoursData) {
+        setBusinessHours(hoursData)
       }
 
     } catch (error) {
@@ -239,8 +315,14 @@ export default function BusinessProfilePage() {
     })
   }
 
-  const getCategoryInfo = (type: string) => {
-    return businessCategories[type as keyof typeof businessCategories] || businessCategories.other
+  const getDayName = (dayOfWeek: number) => {
+    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+    return days[dayOfWeek]
+  }
+
+  const formatTime = (time: string) => {
+    // Time comes as HH:MM:SS, we want HH:MM
+    return time.substring(0, 5)
   }
 
   const handleBookAppointment = (serviceId?: string) => {
@@ -285,7 +367,8 @@ export default function BusinessProfilePage() {
     )
   }
 
-  const categoryInfo = getCategoryInfo(business.business_type)
+  const CategoryIcon = getCategoryIcon(business.business_categories?.name)
+  const categoryName = business.business_categories?.name || 'Sin categoría'
 
   // Get unique service categories (filter out null/undefined and convert to string)
   const uniqueCategories = Array.from(new Set(
@@ -307,16 +390,19 @@ export default function BusinessProfilePage() {
           <div className="flex justify-between items-center h-16">
             {/* Left: Logo & Back */}
             <div className="flex items-center gap-4">
-              <Link href="/marketplace">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Marketplace</span>
-                </Button>
-              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+                onClick={() => window.location.href = '/marketplace'}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Marketplace</span>
+              </Button>
               <div className="h-6 w-px bg-gray-200"></div>
-              <Link href="/" className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                 TuTurno
-              </Link>
+              </span>
             </div>
 
             {/* Right: Auth Actions */}
@@ -382,8 +468,9 @@ export default function BusinessProfilePage() {
                     <span className="text-gray-400">•</span>
                   </>
                 )}
-                <Badge className={categoryInfo.color}>
-                  {categoryInfo.emoji} {categoryInfo.label}
+                <Badge className="bg-gray-100 text-gray-800 flex items-center gap-1.5">
+                  <CategoryIcon className="w-3.5 h-3.5" />
+                  {categoryName}
                 </Badge>
               </div>
               {business.address && (
@@ -502,29 +589,26 @@ export default function BusinessProfilePage() {
                       {filteredServices.map((service) => (
                         <div
                           key={service.id}
-                          className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                          className="flex items-start justify-between p-5 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                         >
                           <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 mb-1">
+                            <h3 className="font-semibold text-gray-900 mb-1.5">
                               {service.name}
                             </h3>
+                            <span className="text-lg font-bold text-gray-900 mb-2 block">
+                              {formatPrice(service.price)}
+                            </span>
                             <div className="flex items-center gap-2 text-sm text-gray-500">
                               <Clock className="w-4 h-4" />
                               <span>{formatDuration(service.duration_minutes)}</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-lg font-semibold text-gray-900">
-                              {formatPrice(service.price)}
-                            </span>
-                            <Button
-                              size="sm"
-                              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                              onClick={() => handleBookAppointment(service.id)}
-                            >
-                              Reservar
-                            </Button>
-                          </div>
+                          <Button
+                            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-6 py-2.5 h-auto rounded-xl font-medium"
+                            onClick={() => handleBookAppointment(service.id)}
+                          >
+                            Reservar
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -584,92 +668,121 @@ export default function BusinessProfilePage() {
 
               {/* Reviews Section */}
               <section id="reviews">
-                <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Reseñas</h2>
-                  {reviews.length > 0 && (
-                    <div className="flex items-center gap-1 text-sm">
-                      <span className="font-semibold text-gray-900">
-                        {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-                      </span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length)
-                                ? 'text-yellow-400 fill-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Reseñas</h2>
+                {/* Reviews Summary Card */}
+                {reviews.length > 0 && (
+                  <Card className="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                            Calificación General
+                          </h3>
+                          <div className="flex items-center gap-3">
+                            <div className="text-4xl font-bold text-amber-600">
+                              {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                            </div>
+                            <div>
+                              <StarRating
+                                rating={reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length}
+                                readonly
+                                size="lg"
+                              />
+                              <p className="text-sm text-gray-600 mt-1">
+                                Basado en {reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
 
-                {reviews.length === 0 ? (
-                  <div className="text-center py-16 bg-gray-50 rounded-lg">
-                    <Star className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      No hay reseñas aún
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      Sé el primero en compartir tu experiencia.
-                    </p>
-                    <Button
-                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                      onClick={() => handleBookAppointment()}
-                    >
-                      Reservar Cita
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {reviews.map((review) => {
+                        {/* Rating Distribution */}
+                        <div className="hidden md:block">
+                          <div className="space-y-2">
+                            {[5, 4, 3, 2, 1].map((stars) => {
+                              const count = reviews.filter(r => r.rating === stars).length
+                              const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
+                              return (
+                                <div key={stars} className="flex items-center gap-2 text-sm">
+                                  <span className="w-12 text-gray-700">{stars} ⭐</span>
+                                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-amber-400"
+                                      style={{ width: `${percentage}%` }}
+                                    />
+                                  </div>
+                                  <span className="w-12 text-gray-600">{count}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Individual Reviews */}
+                <div className="space-y-4">
+                  {reviews.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Star className="w-8 h-8 text-amber-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        No hay reseñas aún
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Sé el primero en compartir tu experiencia con este negocio.
+                      </p>
+                      <Button
+                        className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                        onClick={() => handleBookAppointment()}
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Reservar Cita
+                      </Button>
+                    </div>
+                  ) : (
+                    reviews.map((review) => {
                       // Safety check: skip if client is null
                       if (!review.client) return null
 
                       return (
-                        <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-semibold flex-shrink-0">
-                              {review.client.first_name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-2">
-                                <div>
-                                  <h4 className="font-semibold text-gray-900">
-                                    {review.client.first_name} {review.client.last_name}
-                                  </h4>
-                                <p className="text-sm text-gray-500">
-                                  {formatDate(review.created_at)}
-                                </p>
+                        <Card key={review.id} className="hover:shadow-md transition-shadow">
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                              {/* Client Avatar */}
+                              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                                {review.client.first_name.charAt(0).toUpperCase()}
+                              </div>
+
+                              {/* Review Content */}
+                              <div className="flex-1">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <h4 className="font-semibold text-gray-900">
+                                      {review.client.first_name} {review.client.last_name}
+                                    </h4>
+                                    <p className="text-sm text-gray-500">
+                                      {formatDate(review.created_at)}
+                                    </p>
+                                  </div>
+                                  <StarRating rating={review.rating} readonly size="sm" />
+                                </div>
+
+                                {review.comment && (
+                                  <p className="text-gray-700 leading-relaxed">
+                                    {review.comment}
+                                  </p>
+                                )}
                               </div>
                             </div>
-                            <div className="flex mb-2">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-4 h-4 ${
-                                    i < review.rating
-                                      ? 'text-yellow-400 fill-yellow-400'
-                                      : 'text-gray-300'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            {review.comment && (
-                              <p className="text-gray-700 text-sm leading-relaxed">
-                                {review.comment}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                          </CardContent>
+                        </Card>
                       )
-                    })}
-                  </div>
-                )}
+                    })
+                  )}
+                </div>
               </section>
 
               {/* About Section */}
@@ -682,47 +795,216 @@ export default function BusinessProfilePage() {
                     <p className="text-gray-500 italic">No hay información adicional disponible.</p>
                   )}
                 </div>
+              </section>
 
-                {/* Additional Info */}
-                <div className="mt-8 pt-8 border-t border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-4">Información de contacto</h3>
-                  <div className="space-y-3">
-                    {business.address && (
-                      <div className="flex items-start gap-3 text-sm">
-                        <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700">{business.address}</span>
-                      </div>
-                    )}
-                    {business.phone && (
-                      <div className="flex items-start gap-3 text-sm">
-                        <Phone className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                        <a href={`tel:${business.phone}`} className="text-gray-700 hover:text-gray-900">
-                          {business.phone}
-                        </a>
-                      </div>
-                    )}
-                    {business.email && (
-                      <div className="flex items-start gap-3 text-sm">
-                        <Mail className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                        <a href={`mailto:${business.email}`} className="text-gray-700 hover:text-gray-900">
-                          {business.email}
-                        </a>
-                      </div>
-                    )}
-                    {business.website && (
-                      <div className="flex items-start gap-3 text-sm">
-                        <Globe className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                        <a
-                          href={business.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gray-700 hover:text-gray-900"
-                        >
-                          Sitio web
-                        </a>
-                      </div>
-                    )}
+              {/* Map Section */}
+              {business.latitude && business.longitude && (
+                <section id="location" className="mt-12">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">Ubicación</h2>
+                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm" style={{ height: '400px' }}>
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      src={`https://www.google.com/maps?q=${business.latitude},${business.longitude}&hl=es&z=15&output=embed`}
+                    />
                   </div>
+                  {business.address && (
+                    <p className="mt-3 text-sm text-gray-600 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      {business.address}
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {/* Business Information Section */}
+              <section id="info" className="mt-12">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Información adicional</h2>
+
+                <div className="space-y-6">
+                  {/* Business Hours */}
+                  {businessHours.length > 0 && (
+                    <Card className="border border-gray-200">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <h3 className="font-semibold text-gray-900">Horarios de atención</h3>
+                        </div>
+                        <div className="space-y-2">
+                          {businessHours.map((hours) => (
+                            <div key={hours.id} className="flex justify-between items-center text-sm py-1.5">
+                              <span className="text-gray-700 font-medium">{getDayName(hours.day_of_week)}</span>
+                              {hours.is_closed ? (
+                                <span className="text-gray-500 italic">Cerrado</span>
+                              ) : (
+                                <span className="text-gray-900">
+                                  {formatTime(hours.open_time)} - {formatTime(hours.close_time)}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Cancellation Policy */}
+                  {business.cancellation_policy_text && (
+                    <Card className="border border-gray-200">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
+                            <Ban className="w-5 h-5 text-red-600" />
+                          </div>
+                          <h3 className="font-semibold text-gray-900">Política de cancelación</h3>
+                        </div>
+                        <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                          {business.cancellation_policy_text}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {business.allow_client_cancellation && (
+                            <Badge variant="outline" className="text-xs">
+                              <Ban className="w-3 h-3 mr-1" />
+                              Cancelación permitida
+                            </Badge>
+                          )}
+                          {business.allow_client_reschedule && (
+                            <Badge variant="outline" className="text-xs">
+                              <RefreshCw className="w-3 h-3 mr-1" />
+                              Reagendamiento permitido
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Booking Restrictions */}
+                  {(business.min_booking_hours || business.max_booking_days) && (
+                    <Card className="border border-gray-200">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <h3 className="font-semibold text-gray-900">Condiciones de reserva</h3>
+                        </div>
+                        <div className="space-y-2 text-sm text-gray-700">
+                          {business.min_booking_hours && business.min_booking_hours > 0 && (
+                            <div className="flex items-start gap-2">
+                              <Info className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <span>
+                                Las reservas deben hacerse con al menos{' '}
+                                <span className="font-semibold">
+                                  {business.min_booking_hours} {business.min_booking_hours === 1 ? 'hora' : 'horas'}
+                                </span>{' '}
+                                de anticipación
+                              </span>
+                            </div>
+                          )}
+                          {business.max_booking_days && (
+                            <div className="flex items-start gap-2">
+                              <Info className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <span>
+                                Puedes reservar con hasta{' '}
+                                <span className="font-semibold">{business.max_booking_days} días</span> de anticipación
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Reminders & Deposit */}
+                  {(business.enable_reminders || business.require_deposit) && (
+                    <Card className="border border-gray-200">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+                            <Bell className="w-5 h-5 text-purple-600" />
+                          </div>
+                          <h3 className="font-semibold text-gray-900">Otros servicios</h3>
+                        </div>
+                        <div className="space-y-2 text-sm text-gray-700">
+                          {business.enable_reminders && business.reminder_hours_before && (
+                            <div className="flex items-start gap-2">
+                              <Bell className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <span>
+                                Recibirás un recordatorio{' '}
+                                <span className="font-semibold">
+                                  {business.reminder_hours_before} {business.reminder_hours_before === 1 ? 'hora' : 'horas'}
+                                </span>{' '}
+                                antes de tu cita
+                              </span>
+                            </div>
+                          )}
+                          {business.require_deposit && business.deposit_percentage && business.deposit_percentage > 0 && (
+                            <div className="flex items-start gap-2">
+                              <CreditCard className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <span>
+                                Se requiere un depósito del{' '}
+                                <span className="font-semibold">{business.deposit_percentage}%</span> para confirmar tu cita
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Contact Info */}
+                  <Card className="border border-gray-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center">
+                          <Phone className="w-5 h-5 text-gray-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-900">Información de contacto</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {business.address && (
+                          <div className="flex items-start gap-3 text-sm">
+                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-700">{business.address}</span>
+                          </div>
+                        )}
+                        {business.phone && (
+                          <div className="flex items-start gap-3 text-sm">
+                            <Phone className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <a href={`tel:${business.phone}`} className="text-gray-700 hover:text-emerald-600 transition-colors">
+                              {business.phone}
+                            </a>
+                          </div>
+                        )}
+                        {business.email && (
+                          <div className="flex items-start gap-3 text-sm">
+                            <Mail className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <a href={`mailto:${business.email}`} className="text-gray-700 hover:text-emerald-600 transition-colors">
+                              {business.email}
+                            </a>
+                          </div>
+                        )}
+                        {business.website && (
+                          <div className="flex items-start gap-3 text-sm">
+                            <Globe className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <a
+                              href={business.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gray-700 hover:text-emerald-600 transition-colors"
+                            >
+                              Visitar sitio web
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </section>
 
@@ -785,9 +1067,12 @@ export default function BusinessProfilePage() {
                   <CardContent className="p-6">
                     <h3 className="font-semibold text-gray-900 mb-4">Información del negocio</h3>
                     <div className="space-y-3 text-sm text-gray-600">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span>Categoría</span>
-                        <span className="font-medium text-gray-900">{categoryInfo.label}</span>
+                        <span className="font-medium text-gray-900 flex items-center gap-1.5">
+                          <CategoryIcon className="w-4 h-4" />
+                          {categoryName}
+                        </span>
                       </div>
                       {business.rating && (
                         <div className="flex justify-between">

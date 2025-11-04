@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { X, DollarSign, CreditCard, Banknote, ArrowRight, Check, AlertCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { X, DollarSign, CreditCard, Banknote, ArrowRight, Check, AlertCircle, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,6 +35,7 @@ export default function CheckoutModal({
   const [error, setError] = useState('')
   const supabase = createClient()
   const { toast } = useToast()
+  const router = useRouter()
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-ES', {
@@ -67,50 +69,57 @@ export default function CheckoutModal({
       setProcessing(true)
       setError('')
 
-      // 1. First, check if invoice exists, if not create it
-      let { data: invoice, error: invoiceError } = await supabase
-        .from('invoices')
-        .select('id')
-        .eq('appointment_id', appointmentId)
-        .maybeSingle()
+      // 1. Get the appointment to check its status
+      const { data: appointment, error: appointmentError } = await supabase
+        .from('appointments')
+        .select('status')
+        .eq('id', appointmentId)
+        .single()
 
-      // If no invoice exists, create one (for appointments not yet marked as completed)
-      if (!invoice) {
-        const { data: newInvoice, error: createError } = await supabase
-          .rpc('generate_invoice_number')
+      if (appointmentError) throw appointmentError
 
-        if (createError) {
-          throw new Error('No se pudo generar el número de factura')
-        }
+      // 2. If appointment is not completed, mark it as completed first
+      // This will trigger the automatic invoice creation
+      if (appointment.status !== 'completed') {
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({ status: 'completed' })
+          .eq('id', appointmentId)
 
-        const invoiceNumber = newInvoice
+        if (updateError) throw updateError
 
-        const { data: createdInvoice, error: insertError } = await supabase
+        // Wait a moment for the trigger to create the invoice
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+
+      // 3. Get or wait for invoice (with retry logic for trigger race condition)
+      let invoice = null
+      let retries = 0
+      const maxRetries = 5
+
+      while (!invoice && retries < maxRetries) {
+        const { data: invoiceData, error: invoiceError } = await supabase
           .from('invoices')
-          .insert({
-            appointment_id: appointmentId,
-            invoice_number: invoiceNumber,
-            subtotal: totalAmount,
-            tax: 0,
-            discount: 0,
-            total: totalAmount,
-            status: 'pending'
-          })
           .select('id')
-          .single()
+          .eq('appointment_id', appointmentId)
+          .maybeSingle()
 
-        if (insertError) {
-          throw new Error('No se pudo crear la factura')
+        if (invoiceError) throw invoiceError
+
+        if (invoiceData) {
+          invoice = invoiceData
+        } else {
+          // Wait before retrying
+          retries++
+          await new Promise(resolve => setTimeout(resolve, 300))
         }
-
-        invoice = createdInvoice
       }
 
       if (!invoice) {
-        throw new Error('No se pudo obtener la factura')
+        throw new Error('No se pudo obtener la factura. Por favor intenta nuevamente.')
       }
 
-      // 2. Create payment record
+      // 4. Create payment record
       const { error: paymentError } = await supabase
         .from('payments')
         .insert({
@@ -129,7 +138,7 @@ export default function CheckoutModal({
         throw paymentError
       }
 
-      // 3. Send invoice email
+      // 5. Send invoice email
       try {
         await fetch('/api/send-invoice-notification', {
           method: 'POST',
@@ -141,7 +150,7 @@ export default function CheckoutModal({
         // Don't block the operation if email fails
       }
 
-      // 4. Success!
+      // 6. Success!
       toast({
         title: '¡Pago registrado exitosamente!',
         description: `El pago de ${formatPrice(totalAmount)} ha sido registrado correctamente.`,
@@ -150,12 +159,45 @@ export default function CheckoutModal({
       onSuccess()
     } catch (error: any) {
       console.error('Error processing payment:', error)
-      setError(error.message || 'Ocurrió un error al procesar el pago. Por favor intenta nuevamente.')
-      toast({
-        variant: 'destructive',
-        title: 'Error al procesar pago',
-        description: error.message || 'No se pudo completar el pago.',
-      })
+
+      // Check if error is about missing invoice prefix configuration
+      const errorMessage = error.message || ''
+      const isMissingPrefix =
+        errorMessage.includes('prefijo de factura') ||
+        errorMessage.includes('configurar el prefijo') ||
+        errorMessage.includes('Configuración → Facturación')
+
+      if (isMissingPrefix) {
+        // Show special error for missing invoice prefix
+        setError('Debes configurar el prefijo de factura antes de finalizar un pago.')
+        toast({
+          variant: 'destructive',
+          title: 'Configuración de Facturación Requerida',
+          description: 'Necesitas configurar el prefijo de tus facturas antes de poder registrar pagos.',
+          action: (
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-white hover:bg-gray-100 text-orange-600 border-orange-300"
+              onClick={() => {
+                onClose()
+                router.push('/dashboard/business/settings/advanced?tab=invoicing')
+              }}
+            >
+              <Settings className="w-4 h-4 mr-1" />
+              Configurar Ahora
+            </Button>
+          ),
+        })
+      } else {
+        // Generic error handling
+        setError(error.message || 'Ocurrió un error al procesar el pago. Por favor intenta nuevamente.')
+        toast({
+          variant: 'destructive',
+          title: 'Error al procesar pago',
+          description: error.message || 'No se pudo completar el pago.',
+        })
+      }
     } finally {
       setProcessing(false)
     }

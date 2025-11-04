@@ -1,4 +1,5 @@
 'use client'
+import Logo from '@/components/logo'
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -271,9 +272,7 @@ export default function ClientDashboard() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-xl font-bold text-gray-900">
-              TuTurno
-            </Link>
+             <Logo />
 
             <div className="flex items-center space-x-3">
               <Link href="/marketplace" className="hidden sm:block">
@@ -632,6 +631,22 @@ export default function ClientDashboard() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div className="space-y-2">
+                              {/* Services List */}
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 mb-1">Servicios:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {appointment.appointment_services.map((appService, index) => (
+                                    <Badge
+                                      key={index}
+                                      className="bg-green-100 text-green-700 hover:bg-green-200 text-xs"
+                                    >
+                                      {appService.service?.name || 'Servicio'}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Employee */}
                               <div className="flex items-center text-gray-600">
                                 <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center overflow-hidden mr-2 border">
                                   {appointment.employee?.avatar_url ? (
@@ -645,7 +660,7 @@ export default function ClientDashboard() {
                                   )}
                                 </div>
                                 <span className="text-sm">
-                                  {appointment.appointment_services[0]?.service?.name || 'Servicio'} con {appointment.employee ? `${appointment.employee.first_name} ${appointment.employee.last_name}` : 'Sin empleado'}
+                                  {appointment.employee ? `${appointment.employee.first_name} ${appointment.employee.last_name}` : 'Sin empleado'}
                                 </span>
                               </div>
 
