@@ -160,7 +160,7 @@ export default function ManageAppointmentPage() {
 
       // Initialize selected services with current appointment services
       // Fetch full service data (with duration_minutes)
-      const serviceIds = data.appointment_services.map(as => as.service.id)
+      const serviceIds = data.appointment_services.map((as: { service: { id: string } }) => as.service.id)
       const { data: servicesData } = await supabase
         .from('services')
         .select('id, name, description, price, duration_minutes')
