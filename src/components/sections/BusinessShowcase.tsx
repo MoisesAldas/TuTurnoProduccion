@@ -1,125 +1,67 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, Calendar } from "lucide-react"
+import Image from "next/image"
 
 export default function BusinessShowcase() {
-  const businesses = [
-    {
-      name: "Bella Vista Spa",
-      type: "Spa & Wellness",
-      image: "/modern-spa-interior-with-relaxing-atmosphere.jpg",
-      rating: 4.9,
-      bookings: "2,500+ reservas/mes",
-      location: "Madrid, España",
-      description: "Spa de lujo especializado en tratamientos faciales y corporales",
-    },
-    {
-      name: "Clínica Dental Sonrisa",
-      type: "Consultorio Médico",
-      image: "/modern-dental-clinic-interior-clean-and-profession.jpg",
-      rating: 4.8,
-      bookings: "1,800+ citas/mes",
-      location: "Barcelona, España",
-      description: "Clínica dental moderna con tecnología de vanguardia",
-    },
-    {
-      name: "Estudio Fitness Pro",
-      type: "Gimnasio & Fitness",
-      image: "/modern-gym-interior-with-equipment-and-natural-lig.jpg",
-      rating: 4.9,
-      bookings: "3,200+ clases/mes",
-      location: "Valencia, España",
-      description: "Centro de entrenamiento personal y clases grupales",
-    },
-    {
-      name: "Salón Elegance",
-      type: "Salón de Belleza",
-      image: "/elegant-hair-salon-interior-with-modern-styling-ch.jpg",
-      rating: 4.7,
-      bookings: "2,100+ servicios/mes",
-      location: "Sevilla, España",
-      description: "Salón de belleza especializado en cortes y coloración",
-    },
-    {
-      name: "Taller AutoExpert",
-      type: "Taller Mecánico",
-      image: "/professional-auto-repair-shop-interior-clean-and-o.jpg",
-      rating: 4.8,
-      bookings: "800+ reparaciones/mes",
-      location: "Bilbao, España",
-      description: "Taller especializado en reparación y mantenimiento automotriz",
-    },
-    {
-      name: "Veterinaria Amigos",
-      type: "Clínica Veterinaria",
-      image: "/modern-veterinary-clinic-interior-with-examination.jpg",
-      rating: 4.9,
-      bookings: "1,500+ consultas/mes",
-      location: "Málaga, España",
-      description: "Clínica veterinaria integral para mascotas",
-    },
-  ]
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
-    <section id="businesses" className="py-24 px-4 bg-gradient-to-br from-white via-gray-50 to-slate-50">
-      <div className="container mx-auto">
-        <div className="text-center mb-20">
-          <Badge className="mb-6 bg-emerald-100 text-emerald-700 hover:bg-emerald-200">
-            Negocios de Éxito
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            Negocios que ya <span className="text-emerald-600">confían en TuTurno</span>
-          </h2>
-          <p className="text-xl text-slate-600 text-pretty max-w-3xl mx-auto">
-            Descubre cómo diferentes tipos de negocios están transformando su gestión de citas con nuestra plataforma.
-          </p>
-        </div>
+    <section id="showcase" className="py-16 lg:py-24 bg-slate-50 overflow-hidden">
+      <div className="container mx-auto px-4">
+        <div className="max-w-6xl mx-auto">
+          <div
+            className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 border-orange-300 text-orange-600">
+                TU CENTRO DE MANDO
+              </Badge>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {businesses.map((business, index) => (
-            <Card
-              key={index}
-              className="bg-white border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group overflow-hidden transform hover:scale-105"
-            >
-              <div className="relative">
-                <img
-                  src={business.image}
-                  alt={business.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1 shadow-lg">
-                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                  <span className="text-sm font-semibold text-slate-700">{business.rating}</span>
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                Control Total, Desde un Solo Lugar.
+              </h2>
+
+              <p className="text-lg text-gray-600 text-balance max-w-3xl mx-auto leading-relaxed">
+                Nuestra plataforma te da una vista de 360° de tu negocio. Citas, empleados, clientes y facturación, todo organizado y al alcance de tu mano.
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={`transition-all duration-700 ease-out delay-200 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            {/* Browser Frame */}
+            <div className="bg-white rounded-xl shadow-2xl shadow-slate-300/60 border border-slate-200">
+              {/* Browser Header */}
+              <div className="p-4 border-b border-slate-200 flex items-center">
+                <div className="flex space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                </div>
+                <div className="flex-grow text-center">
+                  <p className="text-sm text-slate-500">app.tuturno.com</p>
                 </div>
               </div>
-              
-              <CardHeader className="p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <CardTitle className="text-slate-900 text-lg font-bold">{business.name}</CardTitle>
-                    <Badge variant="secondary" className="text-xs mt-2 bg-emerald-100 text-emerald-700">
-                      {business.type}
-                    </Badge>
-                  </div>
-                </div>
-                
-                <CardDescription className="text-sm mb-4 text-slate-600 leading-relaxed">
-                  {business.description}
-                </CardDescription>
-                
-                <div className="space-y-3 text-sm text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-emerald-600" />
-                    <span>{business.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-emerald-600" />
-                    <span className="font-semibold text-emerald-700">{business.bookings}</span>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+
+              {/* Application Screenshot */}
+              <div className="p-2 bg-slate-100">
+                              <Image
+                                src="/muckup2.png"
+                                alt="Dashboard de TuTurno"
+                                width={1200}
+                                height={800}
+                                quality={100}
+                                unoptimized={true}
+                                className="rounded-md shadow-inner"
+                              />              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

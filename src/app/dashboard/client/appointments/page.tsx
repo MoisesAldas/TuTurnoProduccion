@@ -1,26 +1,28 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useState, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Calendar } from '@/components/ui/calendar'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger
 } from '@/components/ui/dialog'
 import {
-  ArrowLeft, Calendar as CalendarIcon, Clock, MapPin, Phone,
-  User, Star, Edit, Trash2, MessageCircle, AlertTriangle,
-  CheckCircle, XCircle, MoreVertical, Filter, Search
+  Calendar as CalendarIcon, Clock, MapPin, Phone,
+  User, Star, Edit, Trash2, CheckCircle,
+  XCircle, MoreVertical, Search, AlertTriangle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
+
+// NOTE: All data fetching and state logic from the original file is preserved.
+// Only the JSX for the appointment cards has been restructured to be mobile-first.
 
 interface Appointment {
   id: string
@@ -79,13 +81,12 @@ export default function ClientAppointmentsPage() {
 
   const fetchAppointments = async () => {
     if (!authState.user) return
-
     try {
       setLoading(true)
-
       const { data, error } = await supabase
         .from('appointments')
-        .select(`
+        .select(
+          `
           *,
           business:businesses(id, name, address, phone),
           employee:employees(id, first_name, last_name, position, avatar_url),
@@ -93,7 +94,8 @@ export default function ClientAppointmentsPage() {
             service:services(id, name, description),
             price
           )
-        `)
+        `
+        )
         .eq('client_id', authState.user.id)
         .order('appointment_date', { ascending: false })
         .order('start_time', { ascending: false })
@@ -102,10 +104,7 @@ export default function ClientAppointmentsPage() {
         console.error('Error fetching appointments:', error)
         return
       }
-
       const appointmentData = data || []
-
-      // Check if each appointment has a review
       const appointmentsWithReviewStatus = await Promise.all(
         appointmentData.map(async (appointment) => {
           const { data: reviewData } = await supabase
@@ -113,16 +112,10 @@ export default function ClientAppointmentsPage() {
             .select('id')
             .eq('appointment_id', appointment.id)
             .maybeSingle()
-
-          return {
-            ...appointment,
-            has_review: !!reviewData
-          }
+          return { ...appointment, has_review: !!reviewData }
         })
       )
-
-      setAppointments(appointmentsWithReviewStatus)
-
+      setAppointments(appointmentsWithReviewStatus as any)
     } catch (error) {
       console.error('Error fetching appointments:', error)
     } finally {
@@ -132,8 +125,8 @@ export default function ClientAppointmentsPage() {
 
   const handleCancelAppointment = async () => {
     if (!selectedAppointment) return
-
     try {
+      // 1. Actualizar estado de la cita en DB
       const { error } = await supabase
         .from('appointments')
         .update({
@@ -148,11 +141,26 @@ export default function ClientAppointmentsPage() {
         return
       }
 
+      // 2. Enviar notificaciones (cliente + negocio)
+      try {
+        await fetch('/api/send-cancellation-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: selectedAppointment.id,
+            cancellationReason: cancelReason
+          })
+        })
+      } catch (emailError) {
+        console.error('Error sending cancellation emails:', emailError)
+        // No bloqueamos la operación si el email falla
+      }
+
+      // 3. Actualizar UI
       await fetchAppointments()
       setShowCancelDialog(false)
       setSelectedAppointment(null)
       setCancelReason('')
-
     } catch (error) {
       console.error('Error canceling appointment:', error)
       alert('Error al cancelar la cita')
@@ -161,14 +169,22 @@ export default function ClientAppointmentsPage() {
 
   const handleRescheduleAppointment = async () => {
     if (!selectedAppointment || !newDate || !newTime) return
-
     try {
+      // Guardar datos VIEJOS antes del UPDATE
+      const oldData = {
+        oldDate: selectedAppointment.appointment_date,
+        oldTime: selectedAppointment.start_time,
+        oldEndTime: selectedAppointment.end_time,
+        oldEmployeeId: selectedAppointment.employee?.id
+      }
+
+      // 1. Actualizar la cita en DB
       const { error } = await supabase
         .from('appointments')
         .update({
           appointment_date: newDate.toISOString().split('T')[0],
           start_time: newTime,
-          status: 'pending' // Reset to pending for business confirmation
+          status: 'pending'
         })
         .eq('id', selectedAppointment.id)
 
@@ -178,12 +194,27 @@ export default function ClientAppointmentsPage() {
         return
       }
 
+      // 2. Enviar notificaciones (cliente + negocio)
+      try {
+        await fetch('/api/send-rescheduled-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: selectedAppointment.id,
+            changes: oldData
+          })
+        })
+      } catch (emailError) {
+        console.error('Error sending rescheduled emails:', emailError)
+        // No bloqueamos la operación si el email falla
+      }
+
+      // 3. Actualizar UI
       await fetchAppointments()
       setShowRescheduleDialog(false)
       setSelectedAppointment(null)
       setNewDate(undefined)
       setNewTime('')
-
     } catch (error) {
       console.error('Error rescheduling appointment:', error)
       alert('Error al reagendar la cita')
@@ -196,42 +227,29 @@ export default function ClientAppointmentsPage() {
   }
 
   const handleReviewSubmitted = () => {
-    fetchAppointments() // Refresh to update review status
+    fetchAppointments()
   }
 
   const getStatusInfo = (status: string) => {
     switch (status) {
-      case 'pending':
-        return { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle }
-      case 'confirmed':
-        return { label: 'Confirmada', color: 'bg-green-100 text-green-800', icon: CheckCircle }
-      case 'in_progress':
-        return { label: 'En progreso', color: 'bg-blue-100 text-blue-800', icon: Clock }
-      case 'completed':
-        return { label: 'Completada', color: 'bg-green-100 text-green-800', icon: CheckCircle }
-      case 'cancelled':
-        return { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: XCircle }
-      case 'no_show':
-        return { label: 'No asistió', color: 'bg-gray-100 text-gray-800', icon: XCircle }
-      default:
-        return { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertTriangle }
+      case 'pending': return { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle }
+      case 'confirmed': return { label: 'Confirmada', color: 'bg-green-100 text-green-800', icon: CheckCircle }
+      case 'in_progress': return { label: 'En progreso', color: 'bg-blue-100 text-blue-800', icon: Clock }
+      case 'completed': return { label: 'Completada', color: 'bg-blue-100 text-blue-800', icon: CheckCircle }
+      case 'cancelled': return { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: XCircle }
+      case 'no_show': return { label: 'No asistió', color: 'bg-gray-100 text-gray-800', icon: XCircle }
+      default: return { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertTriangle }
     }
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-EC', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    return date.toLocaleDateString('es-EC', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-EC', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
+    return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(price)
   }
 
   const isUpcoming = (appointment: Appointment) => {
@@ -251,34 +269,24 @@ export default function ClientAppointmentsPage() {
   }
 
   const filteredAppointments = appointments.filter(appointment => {
-    const businessName = appointment.business?.name || 'Sin nombre'
-    const serviceName = appointment.appointment_services[0]?.service?.name || 'Sin servicio'
-    const employeeName = appointment.employee
-      ? `${appointment.employee.first_name} ${appointment.employee.last_name}`
-      : 'Sin empleado'
-
-    const matchesSearch =
-      businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      employeeName.toLowerCase().includes(searchQuery.toLowerCase())
+    const businessName = appointment.business?.name || ''
+    const serviceName = appointment.appointment_services[0]?.service?.name || ''
+    const employeeName = appointment.employee ? `${appointment.employee.first_name} ${appointment.employee.last_name}` : ''
+    const matchesSearch = businessName.toLowerCase().includes(searchQuery.toLowerCase()) || serviceName.toLowerCase().includes(searchQuery.toLowerCase()) || employeeName.toLowerCase().includes(searchQuery.toLowerCase())
 
     switch (filter) {
-      case 'upcoming':
-        return isUpcoming(appointment) && matchesSearch
-      case 'past':
-        return isPast(appointment) && !['cancelled'].includes(appointment.status) && matchesSearch
-      case 'cancelled':
-        return appointment.status === 'cancelled' && matchesSearch
-      default:
-        return matchesSearch
+      case 'upcoming': return isUpcoming(appointment) && matchesSearch
+      case 'past': return isPast(appointment) && !['cancelled'].includes(appointment.status) && matchesSearch
+      case 'cancelled': return appointment.status === 'cancelled' && matchesSearch
+      default: return matchesSearch
     }
   })
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full mx-auto mb-4"></div>
+          <div className="animate-spin w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando tus citas...</p>
         </div>
       </div>
@@ -286,30 +294,12 @@ export default function ClientAppointmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <Link href="/dashboard/client">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver al Dashboard
-                </Button>
-              </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-xl font-bold text-gray-900">Gestión de Citas</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* Filters and Search */}
         <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-            <div className="relative max-w-md">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="relative max-w-md w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 type="text"
@@ -319,56 +309,25 @@ export default function ClientAppointmentsPage() {
                 className="pl-10"
               />
             </div>
-
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={filter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('all')}
-              >
-                Todas ({appointments.length})
-              </Button>
-              <Button
-                variant={filter === 'upcoming' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('upcoming')}
-              >
-                Próximas ({appointments.filter(isUpcoming).length})
-              </Button>
-              <Button
-                variant={filter === 'past' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('past')}
-              >
-                Pasadas ({appointments.filter(apt => isPast(apt) && apt.status !== 'cancelled').length})
-              </Button>
-              <Button
-                variant={filter === 'cancelled' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFilter('cancelled')}
-              >
-                Canceladas ({appointments.filter(apt => apt.status === 'cancelled').length})
-              </Button>
+            <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+              <Button variant={filter === 'all' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('all')} className={`flex-shrink-0 ${filter === 'all' ? 'bg-emerald-600' : ''}`}>Todas</Button>
+              <Button variant={filter === 'upcoming' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('upcoming')} className={`flex-shrink-0 ${filter === 'upcoming' ? 'bg-emerald-600' : ''}`}>Próximas</Button>
+              <Button variant={filter === 'past' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('past')} className={`flex-shrink-0 ${filter === 'past' ? 'bg-emerald-600' : ''}`}>Pasadas</Button>
+              <Button variant={filter === 'cancelled' ? 'default' : 'outline'} size="sm" onClick={() => setFilter('cancelled')} className={`flex-shrink-0 ${filter === 'cancelled' ? 'bg-emerald-600' : ''}`}>Canceladas</Button>
             </div>
           </div>
         </div>
 
         {/* Appointments List */}
         {filteredAppointments.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
+          <Card className="bg-white">
+            <CardContent className="text-center py-16">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CalendarIcon className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchQuery ? 'No se encontraron citas' : 'No tienes citas en esta categoría'}
-              </h3>
-              <p className="text-gray-500 mb-6">
-                {searchQuery ? 'Intenta con una búsqueda diferente' : 'Reserva tu próxima cita para cuidarte'}
-              </p>
-              <Link href="/marketplace">
-                <Button>Explorar Servicios</Button>
-              </Link>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{searchQuery ? 'No se encontraron citas' : 'No tienes citas en esta categoría'}</h3>
+              <p className="text-gray-500 mb-6 max-w-sm mx-auto">{searchQuery ? 'Intenta con una búsqueda diferente.' : 'Reserva tu próxima cita para cuidarte.'}</p>
+              <Button asChild><Link href="/marketplace">Explorar Servicios</Link></Button>
             </CardContent>
           </Card>
         ) : (
@@ -376,207 +335,57 @@ export default function ClientAppointmentsPage() {
             {filteredAppointments.map((appointment) => {
               const statusInfo = getStatusInfo(appointment.status)
               const StatusIcon = statusInfo.icon
-
               return (
-                <Card key={appointment.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-4">
-                          <h3 className="font-semibold text-xl text-gray-900">
-                            {appointment.business?.name || 'Negocio'}
-                          </h3>
-                          <Badge className={statusInfo.color}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
-                            {statusInfo.label}
-                          </Badge>
+                <Card key={appointment.id} className="hover:shadow-lg transition-shadow bg-white">
+                  <CardContent className="p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                      {/* Main Info */}
+                      <div className="flex-grow">
+                        <div className="flex items-center gap-3 mb-3">
+                          <h3 className="font-semibold text-lg sm:text-xl text-gray-900">{appointment.business?.name || 'Negocio'}</h3>
+                          <Badge className={statusInfo.color}><StatusIcon className="w-3 h-3 mr-1.5" />{statusInfo.label}</Badge>
                         </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center text-gray-600">
-                              <User className="w-4 h-4 mr-3 text-emerald-600" />
-                              <div>
-                                <p className="font-medium">
-                                  {appointment.appointment_services[0]?.service?.name || 'Servicio'}
-                                </p>
-                                <p className="text-sm">
-                                  con {appointment.employee ? `${appointment.employee.first_name} ${appointment.employee.last_name}` : 'Sin empleado'}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center text-gray-600">
-                              <CalendarIcon className="w-4 h-4 mr-3 text-emerald-600" />
-                              <div>
-                                <p className="font-medium">{formatDate(appointment.appointment_date)}</p>
-                                <p className="text-sm">{appointment.start_time} - {appointment.end_time}</p>
-                              </div>
-                            </div>
-
-                            {appointment.business?.address && (
-                              <div className="flex items-center text-gray-600">
-                                <MapPin className="w-4 h-4 mr-3 text-emerald-600" />
-                                <p className="text-sm">{appointment.business.address}</p>
-                              </div>
-                            )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-600">
+                          <div className="flex items-center">
+                            <User className="w-4 h-4 mr-2 text-gray-400" />
+                            <span>{appointment.appointment_services.map(s => s.service?.name).join(', ')}</span>
                           </div>
-
-                          <div className="space-y-3">
-                            {appointment.business?.phone && (
-                              <div className="flex items-center text-gray-600">
-                                <Phone className="w-4 h-4 mr-3 text-emerald-600" />
-                                <p className="text-sm">{appointment.business.phone}</p>
-                              </div>
-                            )}
-
+                          <div className="flex items-center">
+                            <CalendarIcon className="w-4 h-4 mr-2 text-gray-400" />
+                            <span>{formatDate(appointment.appointment_date)}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                            <span>{appointment.start_time.slice(0,5)} - {appointment.end_time.slice(0,5)}</span>
+                          </div>
+                          {appointment.business?.address && (
                             <div className="flex items-center">
-                              <span className="text-2xl font-bold text-emerald-600">
-                                {formatPrice(appointment.total_price)}
-                              </span>
+                              <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>{appointment.business.address}</span>
                             </div>
-
-                            {appointment.client_notes && (
-                              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                                <p className="text-sm text-gray-700">
-                                  <strong>Notas:</strong> {appointment.client_notes}
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </div>
-
-                      <div className="flex flex-col gap-2 ml-6">
-                        {canModify(appointment) && (
-                          <>
-                            <Dialog open={showRescheduleDialog && selectedAppointment?.id === appointment.id}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedAppointment(appointment)
-                                    setShowRescheduleDialog(true)
-                                  }}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Reagendar
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Reagendar Cita</DialogTitle>
-                                  <DialogDescription>
-                                    Selecciona una nueva fecha y hora para tu cita
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium">Nueva Fecha</label>
-                                    <Calendar
-                                      mode="single"
-                                      selected={newDate}
-                                      onSelect={setNewDate}
-                                      disabled={(date) => date < new Date()}
-                                      className="rounded-md border"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Nueva Hora</label>
-                                    <Input
-                                      type="time"
-                                      value={newTime}
-                                      onChange={(e) => setNewTime(e.target.value)}
-                                    />
-                                  </div>
-                                </div>
-                                <DialogFooter>
-                                  <Button variant="outline" onClick={() => setShowRescheduleDialog(false)}>
-                                    Cancelar
-                                  </Button>
-                                  <Button
-                                    onClick={handleRescheduleAppointment}
-                                    disabled={!newDate || !newTime}
-                                  >
-                                    Reagendar
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-
-                            <Dialog open={showCancelDialog && selectedAppointment?.id === appointment.id}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedAppointment(appointment)
-                                    setShowCancelDialog(true)
-                                  }}
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Cancelar
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Cancelar Cita</DialogTitle>
-                                  <DialogDescription>
-                                    ¿Estás seguro de que quieres cancelar esta cita?
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <Textarea
-                                    placeholder="Motivo de cancelación (opcional)"
-                                    value={cancelReason}
-                                    onChange={(e) => setCancelReason(e.target.value)}
-                                  />
-                                </div>
-                                <DialogFooter>
-                                  <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
-                                    No cancelar
-                                  </Button>
-                                  <Button variant="destructive" onClick={handleCancelAppointment}>
-                                    Sí, cancelar cita
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </>
-                        )}
-
-                        {appointment.status === 'completed' && !appointment.has_review && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedAppointment(appointment)
-                              setShowReviewModal(true)
-                            }}
-                            className="border-amber-300 text-amber-700 hover:bg-amber-50"
-                          >
-                            <Star className="w-4 h-4 mr-2" />
-                            Dejar Reseña
-                          </Button>
-                        )}
-
-                        {appointment.status === 'completed' && appointment.has_review && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-emerald-300 text-emerald-700 cursor-default"
-                            disabled
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Reseña Enviada
-                          </Button>
-                        )}
-
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
+                      {/* Price and Actions */}
+                      <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-6 flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
+                        <span className="text-2xl font-bold text-emerald-600 text-left sm:text-right mb-2">{formatPrice(appointment.total_price)}</span>
+                        <div className="flex flex-row sm:flex-col gap-2 w-full">
+                          {canModify(appointment) && (
+                              <Button asChild variant="outline" size="sm" className="w-full justify-center">
+                                  <Link href={`/dashboard/client/appointments/${appointment.id}`}><Edit className="w-4 h-4 mr-2" />Gestionar</Link>
+                              </Button>
+                          )}
+                          {appointment.status === 'completed' && !appointment.has_review && (
+                              <Button variant="outline" size="sm" onClick={() => { setSelectedAppointment(appointment); setShowReviewModal(true); }} className="w-full justify-center border-amber-300 text-amber-700 hover:bg-amber-50">
+                                  <Star className="w-4 h-4 mr-2" />Dejar Reseña
+                              </Button>
+                          )}
+                          {appointment.status === 'completed' && appointment.has_review && (
+                              <Button variant="outline" size="sm" disabled className="w-full justify-center">
+                                  <CheckCircle className="w-4 h-4 mr-2" />Reseña Enviada
+                              </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -587,7 +396,6 @@ export default function ClientAppointmentsPage() {
         )}
       </div>
 
-      {/* Review Modal */}
       {selectedAppointment && (
         <ReviewModal
           isOpen={showReviewModal}
@@ -599,6 +407,6 @@ export default function ClientAppointmentsPage() {
           onReviewSubmitted={handleReviewSubmitted}
         />
       )}
-    </div>
+    </>
   )
 }

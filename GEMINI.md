@@ -71,3 +71,23 @@ npm run lint
 -   **File Export:** ExcelJS and jsPDF are used for exporting data to Excel and PDF formats.
 -   **Code Style:** ESLint is used for linting, with a configuration for Next.js and TypeScript.
 -   **Package Manager:** npm is used for package management.
+
+## Principios de Diseño (Landing Page)
+
+Esta sección resume el manual de estilo y los principios de diseño establecidos durante el rediseño de la página principal, inspirados en sitios como Stripe.
+
+### 1. Layout y Espaciado
+- **Ancho Contenido:** Todas las secciones de contenido deben estar dentro de un contenedor centrado con un ancho máximo de `max-w-6xl` (1152px). Esto crea una columna de contenido enfocada y profesional con "aire" en los márgenes.
+- **Layout Asimétrico para el Hero:** La `HeroSection` utiliza un layout de dos columnas en escritorio (texto a la izquierda, visual a la derecha) para un mayor dinamismo.
+- **Espaciado Vertical:** Las secciones deben tener un `padding` vertical generoso y consistente (ej: `py-16 lg:py-24`) para crear un ritmo de scroll agradable y una clara separación entre temas.
+
+### 2. Estilo Visual y Componentes
+- **Paleta de Colores:** Se prioriza el **Tema Naranja (Negocio)** para las llamadas a la acción principales (CTAs). Los fondos de sección son limpios (`bg-white` o `bg-slate-50`), con secciones de alto contraste (`bg-gray-900`) para elementos clave como el Footer o el CTA final.
+- **Tarjetas (Cards):** Los componentes de `Card` deben ser limpios, con bordes sutiles (`border-gray-200`), una sombra de caja ligera (`shadow-sm`) y efectos de `hover` que eleven la tarjeta (`hover:shadow-xl`, `hover:-translate-y-2`).
+- **Iconografía:** Se utiliza `lucide-react` para iconos minimalistas y consistentes. A menudo se usan como un acento visual con el color de la marca (naranja).
+- **Mockups de Producto:** Para mostrar la aplicación, se utiliza un mockup estilizado dentro de un marco de "navegador" para dar una sensación tangible y profesional del producto.
+
+### 3. Animación e Interactividad
+- **Animaciones de Entrada:** Los elementos de cada sección deben aparecer con una animación suave de fundido y deslizamiento (`fade-in` y `slide-up`) al hacer scroll para guiar la atención del usuario. Se pueden usar delays para crear un efecto escalonado.
+- **Header Inteligente:** El `Header` es fijo (`sticky`) y utiliza "scroll-spying" para resaltar el enlace de la sección que se está viendo actualmente.
+- **CTA Pegajoso (Sticky CTA):** Un banner de llamada a la acción aparece en la parte inferior después de que el usuario ha pasado la `HeroSection`, manteniendo la conversión siempre accesible.

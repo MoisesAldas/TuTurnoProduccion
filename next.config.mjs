@@ -24,6 +24,7 @@ const nextConfig = {
       'lh3.googleusercontent.com', // Para avatares de Google
       'supabase.com',
       'your-supabase-project.supabase.co',
+      'fruvzdwfuvnryneccqmb.supabase.co', // Added Supabase project host
     ],
   },
   env: {

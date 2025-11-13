@@ -7,7 +7,11 @@ import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments'
 import { parseDateString, toDateString } from '@/lib/dateUtils'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { Calendar, ChevronLeft, ChevronRight, Plus, Settings, RefreshCw } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import CalendarView from '@/components/CalendarView'
 import CreateAppointmentModal from '@/components/CreateAppointmentModal'
 import type { Business, Employee, Appointment } from '@/types/database'
@@ -26,6 +30,9 @@ export default function AppointmentsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [allowOverlapping, setAllowOverlapping] = useState(false)
+  const [updatingSettings, setUpdatingSettings] = useState(false)
   const [createModalData, setCreateModalData] = useState<{
     date: Date
     time?: string
@@ -35,6 +42,7 @@ export default function AppointmentsPage() {
   })
   const { authState } = useAuth()
   const supabase = createClient()
+  const { toast } = useToast()
 
   // ========================================
   // FIX: useRef para evitar stale closures
@@ -107,6 +115,7 @@ export default function AppointmentsPage() {
 
       console.log('🏢 [BUSINESS] Business data fetched successfully:', businessData)
       setBusiness(businessData)
+      setAllowOverlapping(businessData.allow_overlapping_appointments || false)
 
       // Obtener empleados activos
       const { data: employeesData, error: employeesError } = await supabase
@@ -509,6 +518,37 @@ export default function AppointmentsPage() {
     setEditingAppointment(appointment)
   }
 
+  const handleUpdateOverlappingSetting = async (enabled: boolean) => {
+    if (!business) return
+
+    setUpdatingSettings(true)
+    try {
+      const { error } = await supabase
+        .from('businesses')
+        .update({ allow_overlapping_appointments: enabled })
+        .eq('id', business.id)
+
+      if (error) throw error
+
+      setAllowOverlapping(enabled)
+      toast({
+        title: enabled ? 'Citas superpuestas activadas' : 'Citas superpuestas desactivadas',
+        description: enabled
+          ? 'Ahora puedes crear citas en horarios superpuestos'
+          : 'Se validarán conflictos de horario al crear citas'
+      })
+    } catch (error) {
+      console.error('Error updating overlapping setting:', error)
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar la configuración',
+        variant: 'destructive'
+      })
+    } finally {
+      setUpdatingSettings(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -629,7 +669,12 @@ export default function AppointmentsPage() {
             </Button>
 
             {/* Botón configuración */}
-            <Button variant="outline" size="sm" className="hidden lg:flex">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden lg:flex"
+              onClick={() => setShowSettingsModal(true)}
+            >
               <Settings className="w-4 h-4" />
             </Button>
 
@@ -681,6 +726,40 @@ export default function AppointmentsPage() {
           onSuccess={handleCreateSuccess}
         />
       )}
+
+      {/* Modal de configuración */}
+      <Dialog open={showSettingsModal} onOpenChange={setShowSettingsModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Configuración del Calendario</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="allow-overlapping" className="text-base font-medium">
+                  Permitir citas superpuestas
+                </Label>
+                <p className="text-sm text-gray-500">
+                  Desactiva la validación de conflictos. Útil cuando una empleada puede atender múltiples clientes durante tiempos de espera (ej: tintes).
+                </p>
+              </div>
+              <Switch
+                id="allow-overlapping"
+                checked={allowOverlapping}
+                onCheckedChange={handleUpdateOverlappingSetting}
+                disabled={updatingSettings}
+              />
+            </div>
+            {allowOverlapping && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <p className="text-sm text-orange-800">
+                  ⚠️ <strong>Atención:</strong> Con esta opción activada, podrás crear citas en horarios superpuestos. Asegúrate de gestionar correctamente los tiempos de tu equipo.
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

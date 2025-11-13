@@ -7,6 +7,7 @@ export const runtime = 'nodejs'
 interface Business {
   name: string
   address: string
+  owner_id: string
 }
 
 interface Employee {
@@ -19,6 +20,7 @@ interface Client {
   email: string
   first_name: string
   last_name: string
+  phone: string
 }
 
 interface Service {
@@ -68,9 +70,11 @@ export async function POST(request: NextRequest) {
         total_price,
         client_id,
         employee_id,
+        business_id,
         businesses (
           name,
-          address
+          address,
+          owner_id
         ),
         employees (
           first_name,
@@ -80,7 +84,8 @@ export async function POST(request: NextRequest) {
         users!appointments_client_id_fkey (
           email,
           first_name,
-          last_name
+          last_name,
+          phone
         )
       `)
       .eq('id', appointmentId)
@@ -205,10 +210,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('📧 Sending rescheduled email to:', client.email)
+    console.log('📧 Sending rescheduled email to CLIENT:', client.email)
     console.log('📊 Changes:', { dateChanged, timeChanged, employeeChanged })
 
-    // Enviar email
+    // EMAIL 1: Enviar email al CLIENTE
     const emailResponse = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-rescheduled-email`,
       {
@@ -221,24 +226,99 @@ export async function POST(request: NextRequest) {
       }
     )
 
+    let clientEmailSuccess = false
     if (emailResponse.ok) {
       const result = await emailResponse.json()
-      console.log('✅ Rescheduled email sent successfully:', result)
-      return NextResponse.json({
-        success: true,
-        message: 'Email de reagendamiento enviado',
-        data: result
-      }, { status: 200 })
+      console.log('✅ Client rescheduled email sent successfully:', result)
+      clientEmailSuccess = true
     } else {
       const errorText = await emailResponse.text()
-      console.error('⚠️ Failed to send rescheduled email:', errorText)
-      // No bloqueamos el flujo si el email falla
-      return NextResponse.json({
-        success: false,
-        message: 'Error al enviar email',
-        error: errorText
-      }, { status: 200 }) // 200 para no bloquear la operación
+      console.error('⚠️ Failed to send client email:', errorText)
     }
+
+    // EMAIL 2: Enviar notificación al NEGOCIO
+    let businessEmailSuccess = false
+
+    // Obtener datos del dueño del negocio
+    console.log('🔍 Fetching business owner with owner_id:', business.owner_id)
+    const { data: businessOwner, error: ownerError } = await supabase
+      .from('users')
+      .select('email, first_name, last_name')
+      .eq('id', business.owner_id)
+      .single()
+
+    if (ownerError) {
+      console.error('⚠️ Error fetching business owner:', ownerError)
+    }
+
+    if (businessOwner) {
+      console.log('📧 Sending rescheduled notification to BUSINESS:', businessOwner.email)
+
+      const businessEmailData = {
+        to: businessOwner.email,
+        userName: `${businessOwner.first_name} ${businessOwner.last_name}`,
+        data: {
+          businessName: business.name,
+          businessAddress: business.address || '',
+          serviceName: service.name,
+          servicePrice: appointmentServices[0].price,
+          serviceDuration: service.duration_minutes,
+          // NEW data
+          newAppointmentDate,
+          newAppointmentTime: appointment.start_time.substring(0, 5),
+          newAppointmentEndTime: appointment.end_time.substring(0, 5),
+          newEmployeeName: `${newEmployee.first_name} ${newEmployee.last_name}`,
+          newEmployeePosition: newEmployee.position || '',
+          // OLD data
+          oldAppointmentDate,
+          oldAppointmentTime: changes.oldTime?.substring(0, 5) || appointment.start_time.substring(0, 5),
+          oldAppointmentEndTime: changes.oldEndTime?.substring(0, 5) || appointment.end_time.substring(0, 5),
+          oldEmployeeName: oldEmployee ? `${oldEmployee.first_name} ${oldEmployee.last_name}` : `${newEmployee.first_name} ${newEmployee.last_name}`,
+          oldEmployeePosition: oldEmployee ? (oldEmployee.position || '') : (newEmployee.position || ''),
+          // Change indicators
+          dateChanged,
+          timeChanged,
+          employeeChanged,
+          // Client info
+          clientName: `${client.first_name} ${client.last_name}`,
+          clientEmail: client.email,
+          clientPhone: client.phone || ''
+        }
+      }
+
+      const businessEmailResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-rescheduled-business-notification`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+          },
+          body: JSON.stringify(businessEmailData)
+        }
+      )
+
+      if (businessEmailResponse.ok) {
+        const businessResult = await businessEmailResponse.json()
+        console.log('✅ Business notification email sent successfully:', businessResult)
+        businessEmailSuccess = true
+      } else {
+        const errorText = await businessEmailResponse.text()
+        console.error('⚠️ Failed to send business email:', errorText)
+      }
+    } else {
+      console.warn('⚠️ Business owner not found, skipping business notification email')
+    }
+
+    // Return success response
+    return NextResponse.json({
+      success: true,
+      message: 'Notificaciones enviadas',
+      details: {
+        clientEmail: clientEmailSuccess ? 'sent' : 'failed',
+        businessEmail: businessEmailSuccess ? 'sent' : 'failed'
+      }
+    }, { status: 200 })
 
   } catch (error) {
     console.error('💥 Error in send-rescheduled-notification:', error)

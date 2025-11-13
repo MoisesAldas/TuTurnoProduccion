@@ -1,0 +1,73 @@
+Requerimientos Funcionales,,,
+,,,
+ID,Requerimiento,Descripción,Prioridad
+RF-01,Gestión de Autenticación,Permitir a los usuarios registrarse e iniciar sesión con roles diferenciados.,Alta
+RF-02,Completar Perfil de Usuario,Solicitar al usuario completar su perfil básico tras el primer inicio de sesión.,Alta
+RF-03,Gestión del Perfil de Negocio,Permitir al proveedor crear y actualizar la información de su negocio.,Alta
+RF-04,Gestión de Servicios,"Permitir al proveedor definir los servicios que ofrece (nombre, duración, precio).",Alta
+RF-05,Gestión de Horarios,Permitir al proveedor configurar su horario laboral estándar para la disponibilidad.,Alta
+RF-06,Visualización de Calendario,Mostrar al proveedor un calendario con todas las citas agendadas.,Alta
+RF-07,Búsqueda de Negocios,Permitir al cliente buscar y explorar los perfiles de los negocios registrados.,Media
+RF-08,Reserva de Citas,"Permitir al cliente seleccionar negocio, servicio y horario para agendar una cita.",Alta
+RF-09,Cancelación de Citas,"Permitir a cliente y proveedor cancelar una cita existente, notificando a la otra parte.",Media
+RF-10,Historial de Citas,Permitir al cliente ver un listado de sus citas pasadas y futuras.,Media
+RF-11,Notificaciones por Correo,Enviar notificaciones automáticas por correo para eventos clave.,Media
+RF-12,Gestión de Empleados,"Permitir al proveedor crear, actualizar y gestionar empleados del negocio con horarios y avatares.",Alta
+RF-13,Gestión de Ausencias de Empleados,Permitir registrar ausencias de empleados con motivos y fechas para gestión de disponibilidad.,Media
+RF-14,Sistema de Múltiples Tipos de Clientes,"Soportar 3 tipos de clientes: Walk-in (sin cuenta), Registered (con cuenta TuTurno), y Business Client (base de datos privada del negocio).",Alta
+RF-15,Base de Datos Privada de Clientes,Permitir al negocio gestionar su propia base de datos de clientes con búsqueda avanzada y exportación CSV.,Alta
+RF-16,Generación Automática de Facturas,Crear facturas automáticamente cuando una cita se completa con numeración única (INV-YYYY-####).,Alta
+RF-17,Sistema de Pagos Múltiples Métodos,"Permitir registrar pagos en efectivo o transferencia con validación de referencias únicas para transferencias.",Alta
+RF-18,Checkout y Cobro de Citas,Proporcionar interfaz de cobro al finalizar citas con selección de método de pago y generación de comprobantes.,Alta
+RF-19,Múltiples Servicios por Cita,Permitir agendar citas con múltiples servicios simultáneos con cálculo automático de duración y precio total.,Alta
+RF-20,Edición y Reprogramación de Citas,"Permitir modificar citas existentes (fecha, hora, empleado, servicios) con notificación a las partes.",Alta
+RF-21,Estados Avanzados de Citas,"Gestionar estados de citas: pending, confirmed, in_progress, completed, cancelled, no_show con flujos específicos.",Alta
+RF-22,Configuración de Políticas de Cancelación,Permitir al negocio configurar políticas de cancelación (horas de anticipación) y permisos para clientes.,Media
+RF-23,Restricciones de Reserva,Configurar booking anticipado mínimo y máximo para controlar ventana de reservas.,Media
+RF-24,Gestión de Horarios Especiales,Permitir configurar días festivos y horarios especiales que sobrescriben el horario regular del negocio.,Media
+RF-25,Sistema de Recordatorios Automáticos,Enviar recordatorios automáticos a clientes antes de sus citas por email (configurable en horas de anticipación).,Media
+RF-26,Actualización en Tiempo Real (Realtime),Sincronizar cambios del calendario automáticamente entre múltiples usuarios sin refrescar la página usando WebSockets.,Alta
+RF-27,Analytics y Reportes de Negocio,"Proporcionar dashboard con métricas: ventas, ingresos, citas completadas, servicios top, performance de empleados.",Alta
+RF-28,Métricas de Performance de Empleados,Calcular y mostrar estadísticas de rendimiento de cada empleado (citas completadas, ingresos generados).,Media
+RF-29,Distribución de Métodos de Pago,Mostrar reportes de distribución de pagos por método (efectivo vs transferencia) para análisis financiero.,Media
+RF-30,Calendario Multi-Empleado,Visualizar calendario con vista de todos los empleados simultáneamente en formato grid estilo Fresha.,Alta
+RF-31,Creación de Citas Walk-in,Permitir al negocio crear citas para clientes sin cuenta TuTurno (walk-in) con datos temporales.,Alta
+RF-32,Upload y Gestión de Imágenes,"Permitir subir y actualizar avatares de usuarios, logos y portadas de negocios con crop y optimización automática.",Media
+RF-33,Crop de Imágenes con Preview,Proporcionar herramienta de recorte de imágenes con zoom y rotación antes de guardar avatares y logos.,Media
+RF-34,Autenticación con Google OAuth,Permitir registro e inicio de sesión con cuentas de Google además de email/password tradicional.,Alta
+RF-35,Búsqueda Geográfica con Mapbox,Integrar búsqueda de negocios por ubicación geográfica con mapa interactivo (Mapbox).,Media
+RF-36,Sistema de Depósitos,Permitir configurar requerimiento de depósito porcentual al momento de la reserva.,Media
+RF-37,Auto-confirmación de Citas,Configurar confirmación automática de citas sin aprobación manual del negocio.,Media
+RF-38,Visualización de Tooltips en Calendario,Mostrar información resumida de citas al pasar el mouse sobre bloques del calendario.,Media
+RF-39,Exportación de Datos,Permitir exportar listados de clientes y reportes en formato CSV para análisis externo.,Media
+RF-40,Gestión de Avatar de Cliente,Permitir a clientes actualizar su foto de perfil con crop circular y sincronización con avatar de Google OAuth.,Media
+,,,
+,,,
+Requerimientos No Funcionales,,,
+,,,
+ID,Requerimiento,Descripción,Prioridad
+RNF-01,Usabilidad,"La interfaz debe ser intuitiva y fácil de usar, minimizando la curva de aprendizaje.",Alta
+RNF-02,Rendimiento,La aplicación debe tener tiempos de carga rápidos (inferiores a 3 segundos).,Alta
+RNF-03,Seguridad,Los datos de cada negocio deben estar completamente aislados.,Alta
+RNF-04,Compatibilidad,Compatible con las últimas versiones de navegadores web modernos.,Alta
+RNF-05,Progresividad (PWA),"Debe cumplir criterios de PWA, permitiendo su ""instalación"" en dispositivos.",Alta
+RNF-06,Diseño Responsivo,La interfaz debe adaptarse a diferentes tamaños de pantalla.,Alta
+RNF-07,Escalabilidad,La arquitectura debe ser modular para facilitar la adición de nuevas funcionalidades.,Media
+RNF-08,Mantenibilidad,El código fuente debe estar documentado y seguir convenciones claras.,Media
+RNF-09,Ley de Protección de datos personales,El tratamiento de la informacion debe regirse a la ley y notificar al usuario que leyo los terminos y condiciones,Alta
+RNF-10,Row Level Security (RLS),"Implementar políticas RLS en todas las tablas de la base de datos para garantizar aislamiento total de datos entre negocios y usuarios.",Alta
+RNF-11,Optimización de Imágenes,Las imágenes subidas deben optimizarse automáticamente (tamaño y calidad) para mejorar tiempos de carga sin sacrificar experiencia visual.,Media
+RNF-12,Disponibilidad del Sistema,La aplicación debe mantener una disponibilidad mínima del 99% con manejo robusto de errores y fallbacks.,Alta
+RNF-13,Backup y Recuperación de Datos,Implementar sistema de respaldos automáticos diarios con capacidad de restauración en caso de pérdida de datos.,Alta
+RNF-14,Validación de Datos,"Todas las entradas de usuario deben validarse tanto en frontend (Zod schemas) como en backend para prevenir datos inválidos.",Alta
+RNF-15,Manejo de Timezone,La aplicación debe manejar correctamente fechas y horas evitando problemas de zona horaria con funciones dedicadas.,Alta
+RNF-16,Transacciones Atómicas,Las operaciones críticas (pagos, facturas, citas) deben ejecutarse como transacciones atómicas para garantizar consistencia.,Alta
+RNF-17,Auditoría y Logs,Registrar eventos importantes del sistema (creación de citas, pagos, cambios de configuración) para trazabilidad y debugging.,Media
+RNF-18,Accesibilidad (WCAG 2.1),La interfaz debe cumplir estándares de accesibilidad nivel AA para usuarios con discapacidades.,Media
+RNF-19,Encriptación de Datos Sensibles,Información sensible (referencias de pago) debe almacenarse con encriptación y transmitirse mediante HTTPS.,Alta
+RNF-20,Rate Limiting,Implementar límites de tasa en APIs para prevenir abuso y garantizar disponibilidad equitativa del servicio.,Media
+RNF-21,Feedback Visual Consistente,Todas las acciones del usuario deben tener feedback visual inmediato (toasts, loaders, estados de carga) para mejorar UX.,Alta
+RNF-22,Manejo de Errores Graceful,"La aplicación debe manejar errores sin crashes, mostrando mensajes claros al usuario y permitiendo recuperación.",Alta
+RNF-23,Optimización de Consultas,"Las consultas a base de datos deben estar optimizadas con índices apropiados (trigram, btree) para búsquedas rápidas.",Media
+RNF-24,Conexiones Persistentes (WebSocket),Mantener conexiones WebSocket estables para Realtime con reconexión automática en caso de pérdida de conexión.,Media
+RNF-25,Separación de Concerns,Mantener arquitectura modular con separación clara entre componentes UI, lógica de negocio y acceso a datos.,Media

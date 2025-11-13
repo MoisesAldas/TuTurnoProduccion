@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth'
 import "@fontsource/poppins/900.css"; // Black weight for Logo component (extra bold)
+import StickyCTA from "@/components/StickyCTA";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,6 +34,8 @@ export default function RootLayout({
       >
         <AuthProvider>
           {children}
+          <StickyCTA />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

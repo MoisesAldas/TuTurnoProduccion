@@ -45,6 +45,20 @@ export async function POST(request: NextRequest) {
       }, { status: 409 })
     }
 
+    // Extraer avatar de Google (puede estar en diferentes lugares)
+    const googleAvatar =
+      session.user.user_metadata?.avatar_url ||
+      session.user.user_metadata?.picture ||
+      session.user.user_metadata?.photo ||
+      null
+
+    console.log('🖼️ Avatar detection:', {
+      user_id: session.user.id,
+      email: session.user.email,
+      avatar_url: googleAvatar,
+      full_metadata: session.user.user_metadata
+    })
+
     // Crear/actualizar el perfil del usuario
     const userData = {
       id: session.user.id,
@@ -52,7 +66,7 @@ export async function POST(request: NextRequest) {
       first_name,
       last_name,
       phone: phone || null,
-      avatar_url: session.user.user_metadata?.avatar_url || null,
+      avatar_url: googleAvatar,
       is_business_owner: user_type === 'business_owner',
       is_client: user_type === 'client',
     }

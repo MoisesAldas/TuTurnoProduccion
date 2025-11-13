@@ -1,97 +1,95 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Badge } from "@/components/ui/badge"
-import { Card, CardDescription, CardHeader } from "@/components/ui/card"
-import { Star, Quote } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Star } from "lucide-react"
+import Image from "next/image"
+
+const testimonials = [
+  {
+    name: "Ana Lucía",
+    role: "Dueña de The Beauty Room",
+    avatar: "/hair-stylist-woman-professional-salon-environment-.jpg",
+    rating: 5,
+    quote: "Desde que uso TuTurno, mis citas 'no-show' han disminuido en un 90%. La gestión de mi salón nunca ha sido tan fácil y organizada.",
+  },
+  {
+    name: "Dr. Javier Torres",
+    role: "Odontólogo en Sonrisa Perfecta",
+    avatar: "/professional-male-dentist-in-white-coat-smiling.jpg",
+    rating: 5,
+    quote: "La página de reservas online es increíble. Mis pacientes agendan a cualquier hora y mi calendario se llena solo. ¡Recomendadísimo!",
+  },
+  {
+    name: "Roberto Silva",
+    role: "Propietario de AutoExpert",
+    avatar: "/mechanic-man-in-work-uniform-professional-smiling.jpg",
+    rating: 5,
+    quote: "Nunca pensé que un taller mecánico necesitara esto, pero TuTurno nos ayudó a organizar el trabajo y reducir la espera. Los clientes están más satisfechos.",
+  },
+]
 
 export default function TestimonialsSection() {
-  const testimonials = [
-    {
-      name: "María González",
-      role: "Propietaria de Bella Vista Spa",
-      image: "/professional-woman-spa-owner-smiling.jpg",
-      content: "TuTurno revolucionó completamente nuestro negocio. Antes perdíamos muchas citas por llamadas perdidas, ahora nuestros clientes reservan 24/7 y hemos aumentado nuestros ingresos un 40%.",
-      rating: 5,
-    },
-    {
-      name: "Dr. Carlos Ruiz",
-      role: "Director de Clínica Dental Sonrisa",
-      image: "/professional-male-dentist-in-white-coat-smiling.jpg",
-      content: "La integración con nuestro sistema de gestión fue perfecta. Los recordatorios automáticos redujeron las ausencias en un 60%. Es una herramienta indispensable para cualquier consultorio.",
-      rating: 5,
-    },
-    {
-      name: "Ana Martín",
-      role: "Entrenadora Personal en Fitness Pro",
-      image: "/fitness-trainer-woman-athletic-wear-smiling.jpg",
-      content: "Mis clientes aman la facilidad para reservar y cambiar citas. La app móvil es increíble y me permite gestionar mi agenda desde cualquier lugar. ¡Totalmente recomendado!",
-      rating: 5,
-    },
-    {
-      name: "Roberto Silva",
-      role: "Propietario de Taller AutoExpert",
-      image: "/mechanic-man-in-work-uniform-professional-smiling.jpg",
-      content: "Nunca pensé que un taller mecánico necesitara un sistema de reservas, pero TuTurno nos ayudó a organizar mejor el trabajo y reducir los tiempos de espera. Nuestros clientes están más satisfechos.",
-      rating: 5,
-    },
-    {
-      name: "Laura Fernández",
-      role: "Estilista en Salón Elegance",
-      image: "/hair-stylist-woman-professional-salon-environment-.jpg",
-      content: "La gestión de clientes es fantástica. Puedo ver el historial completo de cada cliente y sus preferencias. Esto me permite ofrecer un servicio más personalizado y profesional.",
-      rating: 5,
-    },
-    {
-      name: "Dr. Miguel Torres",
-      role: "Veterinario en Clínica Amigos",
-      image: "/veterinarian-man-with-stethoscope-professional-smi.jpg",
-      content: "Los dueños de mascotas pueden reservar citas fácilmente y reciben recordatorios automáticos. Esto ha mejorado significativamente la puntualidad y ha reducido nuestro trabajo administrativo.",
-      rating: 5,
-    },
-  ]
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
-    <section id="testimonials" className="py-24 px-4 bg-white">
-      <div className="container mx-auto">
-        <div className="text-center mb-20">
-          <Badge className="mb-6 bg-slate-100 text-slate-700 hover:bg-slate-200">
-            Testimonios Reales
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            Lo que dicen nuestros clientes
-          </h2>
-          <p className="text-xl text-slate-600 text-pretty max-w-3xl mx-auto">
-            Miles de negocios han transformado su gestión de citas con TuTurno. Estas son sus experiencias.
-          </p>
-        </div>
+    <section id="testimonials" className="py-16 lg:py-24 bg-slate-50 overflow-hidden">
+      <div className="container mx-auto px-4">
+        <div className="max-w-6xl mx-auto">
+          <div
+            className={`text-center mb-12 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <Badge variant="outline" className="mb-4 border-orange-300 text-orange-600">
+              VOCES DE NUESTROS CLIENTES
+            </Badge>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <Card key={index} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 relative group">
-              <CardHeader className="p-8">
-                <div className="flex items-start gap-4">
-                  <img
-                    src={testimonial.image || "/placeholder-user.jpg"}
-                    alt={testimonial.name}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-emerald-200 bg-white"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-bold text-slate-900">{testimonial.name}</h4>
-                      <div className="flex">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-500 fill-current" />
-                        ))}
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+              No confíes en nuestra palabra. Confía en la de ellos.
+            </h2>
+
+            <p className="text-lg text-gray-600 text-balance max-w-3xl mx-auto leading-relaxed">
+              Miles de negocios en Ecuador ya están creciendo y optimizando su día a día con TuTurno.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                style={{ transitionDelay: `${100 * (index + 1)}ms` }}>
+                <Card className="bg-white border-gray-200 shadow-sm flex flex-col h-full">
+                  <CardContent className="p-6 flex flex-col flex-grow">
+                    <div className="flex mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
+                      ))}
+                    </div>
+                    <blockquote className="text-gray-700 italic text-lg flex-grow">
+                      <p>"{testimonial.quote}"</p>
+                    </blockquote>
+                    <div className="mt-6 pt-6 border-t border-gray-200 flex items-center">
+                      <Image
+                        src={testimonial.avatar}
+                        alt={testimonial.name}
+                        width={48}
+                        height={48}
+                        className="w-12 h-12 rounded-full object-cover mr-4" />
+                      <div>
+                        <p className="font-semibold text-gray-900">{testimonial.name}</p>
+                        <p className="text-sm text-gray-500">{testimonial.role}</p>
                       </div>
                     </div>
-                    <p className="text-sm text-slate-600 mb-4">{testimonial.role}</p>
-                  </div>
-                </div>
-                <Quote className="w-8 h-8 text-emerald-200 absolute top-4 right-6" />
-                <CardDescription className="text-sm leading-relaxed italic text-slate-700">
-                  "{testimonial.content}"
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

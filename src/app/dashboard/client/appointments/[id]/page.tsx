@@ -537,6 +537,21 @@ export default function ManageAppointmentPage() {
         return
       }
 
+      // Send cancellation notifications (client + business)
+      try {
+        await fetch('/api/send-cancellation-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: appointment.id,
+            cancellationReason: ''
+          })
+        })
+      } catch (emailError) {
+        console.error('Error sending cancellation emails:', emailError)
+        // Don't block the operation if email fails
+      }
+
       toast({
         title: 'Cita cancelada',
         description: 'Tu cita ha sido cancelada exitosamente.',
@@ -612,6 +627,14 @@ export default function ManageAppointmentPage() {
         }
       }
 
+      // Capture old data BEFORE updating (for email notifications)
+      const oldData = {
+        oldDate: appointment.appointment_date,
+        oldTime: appointment.start_time,
+        oldEndTime: appointment.end_time,
+        oldEmployeeId: appointment.employee.id
+      }
+
       // Update appointment
       const { error: appointmentError } = await supabase
         .from('appointments')
@@ -676,6 +699,21 @@ export default function ManageAppointmentPage() {
           })
           return
         }
+      }
+
+      // Send rescheduled notifications (client + business)
+      try {
+        await fetch('/api/send-rescheduled-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: appointment.id,
+            changes: oldData
+          })
+        })
+      } catch (emailError) {
+        console.error('Error sending rescheduled emails:', emailError)
+        // Don't block the operation if email fails
       }
 
       toast({

@@ -94,6 +94,8 @@ interface Review {
   rating: number
   comment?: string
   created_at: string
+  business_reply?: string
+  business_reply_at?: string
   client: {
     first_name: string
     last_name: string
@@ -113,6 +115,11 @@ export default function BusinessProfilePage() {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [loading, setLoading] = useState(true)
+  const [isOwner, setIsOwner] = useState(false)
+  const [showReplyModal, setShowReplyModal] = useState(false)
+  const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
+  const [submittingReply, setSubmittingReply] = useState(false)
 
   const params = useParams()
   const router = useRouter()
@@ -178,6 +185,11 @@ export default function BusinessProfilePage() {
 
       setBusiness(businessData)
 
+      // Check if current user is owner
+      if (user && businessData.owner_id === user.id) {
+        setIsOwner(true)
+      }
+
       // Fetch services
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
@@ -212,6 +224,8 @@ export default function BusinessProfilePage() {
           rating,
           comment,
           created_at,
+          business_reply,
+          business_reply_at,
           client_id,
           users (
             first_name,
@@ -242,6 +256,8 @@ export default function BusinessProfilePage() {
             rating: review.rating,
             comment: review.comment,
             created_at: review.created_at,
+            business_reply: review.business_reply,
+            business_reply_at: review.business_reply_at,
             client: review.users  // Rename 'users' to 'client' to match interface
           }))
 
@@ -340,6 +356,39 @@ export default function BusinessProfilePage() {
       ? `/business/${businessId}/book?service=${serviceId}`
       : `/business/${businessId}/book`
     router.push(bookingUrl)
+  }
+
+  const handleReplyToReview = async () => {
+    if (!selectedReviewId || !replyText.trim()) return
+
+    setSubmittingReply(true)
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .update({
+          business_reply: replyText.trim(),
+          business_reply_at: new Date().toISOString()
+        })
+        .eq('id', selectedReviewId)
+
+      if (error) throw error
+
+      // Update local state
+      setReviews(reviews.map(r =>
+        r.id === selectedReviewId
+          ? { ...r, business_reply: replyText.trim(), business_reply_at: new Date().toISOString() }
+          : r
+      ))
+
+      setShowReplyModal(false)
+      setReplyText('')
+      setSelectedReviewId(null)
+    } catch (error) {
+      console.error('Error replying to review:', error)
+      alert('Error al enviar la respuesta')
+    } finally {
+      setSubmittingReply(false)
+    }
   }
 
   if (loading) {
@@ -775,6 +824,38 @@ export default function BusinessProfilePage() {
                                     {review.comment}
                                   </p>
                                 )}
+
+                                {/* Business Reply */}
+                                {review.business_reply && (
+                                  <div className="mt-4 pl-4 border-l-2 border-orange-400 bg-orange-50 p-3 rounded-r">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="font-semibold text-orange-900 text-sm">Respuesta del negocio</span>
+                                      {review.business_reply_at && (
+                                        <span className="text-xs text-orange-600">
+                                          {formatDate(review.business_reply_at)}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-gray-700 text-sm leading-relaxed">
+                                      {review.business_reply}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Reply Button (only for owner) */}
+                                {isOwner && !review.business_reply && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-3 text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
+                                    onClick={() => {
+                                      setSelectedReviewId(review.id)
+                                      setShowReplyModal(true)
+                                    }}
+                                  >
+                                    Responder
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </CardContent>
@@ -1100,6 +1181,45 @@ export default function BusinessProfilePage() {
           address={business.address || ''}
         />
       )}
+
+      {/* Reply to Review Modal */}
+      <Dialog open={showReplyModal} onOpenChange={setShowReplyModal}>
+        <DialogContent className="max-w-lg">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Responder a la reseña</h2>
+              <p className="text-sm text-gray-600 mt-1">Tu respuesta será visible para todos los usuarios</p>
+            </div>
+            <textarea
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder="Escribe tu respuesta..."
+              className="w-full min-h-[120px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+              disabled={submittingReply}
+            />
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReplyModal(false)
+                  setReplyText('')
+                  setSelectedReviewId(null)
+                }}
+                disabled={submittingReply}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleReplyToReview}
+                disabled={submittingReply || !replyText.trim()}
+                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
+              >
+                {submittingReply ? 'Enviando...' : 'Enviar respuesta'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Photo Gallery Modal */}
       <Dialog open={showPhotoGallery} onOpenChange={setShowPhotoGallery}>
