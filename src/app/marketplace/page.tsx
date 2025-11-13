@@ -1,19 +1,18 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useState, useEffect, useRef } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { Search, MapPin, Star, Filter, Map, Building2, Sparkles, Scissors, Heart, Dumbbell, Activity } from 'lucide-react'
+import { Search, MapPin, Star, Filter, Map, Building2, Sparkles, Scissors, Heart, Dumbbell, Activity, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import Image from 'next/image'
 import MarketplaceMap from '@/components/MarketplaceMap'
 import Logo from '@/components/logo'
-
-// NOTE: All data fetching and state logic from the original file is preserved.
+import FilterSheet from '@/components/FilterSheet' // Import the new component
 
 interface BusinessCategory {
   id: string
@@ -38,8 +37,17 @@ export default function MarketplacePage() {
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [categories, setCategories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Filter States
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [ratingFilter, setRatingFilter] = useState<number>(0);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+
+  // Interaction States
+  const [hoveredBusinessId, setHoveredBusinessId] = useState<string | null>(null);
+  const [clickedBusinessId, setClickedBusinessId] = useState<string | null>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const supabase = createClient()
 
@@ -47,6 +55,33 @@ export default function MarketplacePage() {
     fetchCategories()
     fetchBusinesses()
   }, [])
+
+  // Fix: Asegurar que el body sea scrollable al montar/desmontar
+  useEffect(() => {
+    document.body.style.overflow = 'unset'
+    document.body.style.paddingRight = '0px'
+
+    return () => {
+      // Cleanup al desmontar (cuando navegas al negocio)
+      document.body.style.overflow = 'unset'
+      document.body.style.paddingRight = '0px'
+    }
+  }, [])
+
+  useEffect(() => {
+    if (clickedBusinessId && cardRefs.current[clickedBusinessId]) {
+      cardRefs.current[clickedBusinessId]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+      setHoveredBusinessId(clickedBusinessId);
+      const timer = setTimeout(() => {
+        setHoveredBusinessId(null);
+        setClickedBusinessId(null);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [clickedBusinessId]);
 
   const fetchCategories = async () => {
     try {
@@ -84,14 +119,15 @@ export default function MarketplacePage() {
                          business.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          business.business_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = !selectedCategory || business.business_category_id === selectedCategory
-    return matchesSearch && matchesCategory
+    const matchesRating = ratingFilter === 0 || (business.average_rating || 0) >= ratingFilter;
+    return matchesSearch && matchesCategory && matchesRating;
   })
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-50">
         <header className="flex-shrink-0 bg-white border-b border-gray-200 z-20 shadow-sm">
-            <div className="container mx-auto px-4">
-                <div className="flex flex-col md:flex-row items-center gap-4 h-auto py-4 md:h-20">
+            <div className="container mx-auto px-4 space-y-3 py-4">
+                <div className="flex flex-col md:flex-row items-center gap-4">
                     <div className="w-full md:w-auto flex-shrink-0">
                         <Link href="/">
                             <Logo color="emerald" size="md" />
@@ -108,17 +144,38 @@ export default function MarketplacePage() {
                         />
                     </div>
                     <div className="w-full md:w-auto">
-                        <Button variant="outline" className="w-full h-12">
+                        <Button variant="outline" className="w-full h-12" onClick={() => setIsFilterSheetOpen(true)}>
                             <Filter className="w-4 h-4 mr-2" />
                             Filtros
                         </Button>
                     </div>
                 </div>
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <Button
+                        variant={!selectedCategory ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedCategory('')}
+                        className={`flex-shrink-0 ${!selectedCategory ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Todos
+                    </Button>
+                    {categories.map((category) => (
+                        <Button
+                            key={category.id}
+                            variant={selectedCategory === category.id ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedCategory(category.id)}
+                            className={`flex-shrink-0 ${selectedCategory === category.id ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                        >
+                            {category.name}
+                        </Button>
+                    ))}
+                </div>
             </div>
         </header>
 
         <div className="flex-grow grid grid-cols-1 lg:grid-cols-5 overflow-hidden">
-            {/* Left Panel: List of Businesses */}
             <div className="lg:col-span-2 overflow-y-auto border-r border-gray-200">
                 <div className="p-4">
                     <div className="px-2 mb-4 flex items-center justify-between">
@@ -132,41 +189,64 @@ export default function MarketplacePage() {
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {filteredBusinesses.map(business => (
-                                <BusinessCard key={business.id} business={business} />
+                                <div
+                                    key={business.id}
+                                    ref={el => { cardRefs.current[business.id] = el }}
+                                >
+                                    <BusinessCard
+                                        business={business}
+                                        isHovered={hoveredBusinessId === business.id || clickedBusinessId === business.id}
+                                        onMouseEnter={() => setHoveredBusinessId(business.id)}
+                                        onMouseLeave={() => setHoveredBusinessId(null)}
+                                    />
+                                </div>
                             ))}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Right Panel: Map */}
             <div className="hidden lg:block lg:col-span-3 relative">
-                <MarketplaceMap businesses={filteredBusinesses} />
+                <MarketplaceMap 
+                    businesses={filteredBusinesses} 
+                    hoveredBusinessId={hoveredBusinessId}
+                    setHoveredBusinessId={setHoveredBusinessId}
+                    onMarkerClick={setClickedBusinessId}
+                />
             </div>
         </div>
 
-        {/* Mobile Map Button */}
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30">
             <Button className="rounded-full shadow-lg bg-gray-900 hover:bg-gray-800 text-white" size="lg">
                 <Map className="w-5 h-5 mr-2" />
                 Mapa
             </Button>
         </div>
+
+        <FilterSheet
+            isOpen={isFilterSheetOpen}
+            onOpenChange={setIsFilterSheetOpen}
+            ratingFilter={ratingFilter}
+            setRatingFilter={setRatingFilter}
+        />
     </div>
   )
 }
 
-// New, vertical Business Card component
-const BusinessCard = ({ business }: { business: Business }) => {
+const BusinessCard = ({ business, isHovered, onMouseEnter, onMouseLeave }: { business: Business, isHovered: boolean, onMouseEnter: () => void, onMouseLeave: () => void }) => {
     const CategoryIcon = getCategoryIcon(business.business_categories?.name)
 
     return (
       <Link href={`/business/${business.id}`}>
-        <Card className="group transition-all duration-300 hover:shadow-xl cursor-pointer overflow-hidden h-full flex flex-col">
+        <Card 
+            className={`group transition-all duration-300 cursor-pointer overflow-hidden h-full flex flex-col ${isHovered ? 'shadow-2xl border-emerald-500 scale-[1.02]' : 'hover:shadow-xl hover:border-emerald-300'}`}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
+        >
             <div className="w-full">
                 <AspectRatio ratio={16 / 10}>
                     {business.cover_image_url ? (
-                        <Image src={business.cover_image_url} alt={business.name} layout="fill" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                        <Image src={business.cover_image_url} alt={business.name} layout="fill" className="object-cover transition-transform duration-300 group-hover:scale-105" unoptimized={true} />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-slate-100">
                             <Building2 className="w-10 h-10 text-slate-300" />

@@ -153,6 +153,20 @@ export default function BusinessProfilePage() {
     }
   }, [businessId])
 
+  // Fix: Resetear scroll del body al montar el componente
+  // Previene el bug donde el overflow:hidden queda pegado al navegar desde marketplace
+  useEffect(() => {
+    // Forzar que el body sea scrollable
+    document.body.style.overflow = 'unset'
+    document.body.style.paddingRight = '0px'
+
+    // Cleanup al desmontar
+    return () => {
+      document.body.style.overflow = 'unset'
+      document.body.style.paddingRight = '0px'
+    }
+  }, [])
+
   const fetchBusinessData = async () => {
     try {
       setLoading(true)

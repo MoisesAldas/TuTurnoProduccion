@@ -4,26 +4,31 @@ import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-// Define a simplified Business type for the map
 interface MapBusiness {
   id: string;
   name: string;
   latitude?: number;
   longitude?: number;
   address?: string;
+  average_rating?: number;
+  review_count?: number;
 }
 
 interface MarketplaceMapProps {
   businesses: MapBusiness[];
-  // Will add more props later for interactivity, like onMarkerHover
+  hoveredBusinessId: string | null;
+  setHoveredBusinessId: (id: string | null) => void;
+  onMarkerClick: (id: string) => void; // New prop for click events
 }
 
-export default function MarketplaceMap({ businesses }: MarketplaceMapProps) {
+export default function MarketplaceMap({ businesses, hoveredBusinessId, setHoveredBusinessId, onMarkerClick }: MarketplaceMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
+  const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
 
+  // Effect for initializing the map
   useEffect(() => {
-    if (map.current || !mapContainer.current) return; // Initialize map only once
+    if (map.current || !mapContainer.current) return;
 
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
     if (!mapboxgl.accessToken) {
@@ -34,32 +39,41 @@ export default function MarketplaceMap({ businesses }: MarketplaceMapProps) {
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [-78.4678, -0.1807], // Default center (Quito, Ecuador)
+      center: [-78.4678, -0.1807],
       zoom: 12,
     });
 
-    map.current.on('load', () => {
-      if (!map.current) return;
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
 
-      // Create a LngLatBounds object to fit all markers.
-      const bounds = new mapboxgl.LngLatBounds();
+  // Effect for adding/updating markers when businesses change
+  useEffect(() => {
+    if (!map.current) return;
 
-      businesses.forEach(business => {
-        if (business.latitude && business.longitude) {
-          // Create a custom marker
-          const el = document.createElement('div');
-          el.className = 'custom-marker';
-          el.style.width = '32px';
-          el.style.height = '32px';
-          el.style.borderRadius = '50%';
-          el.style.background = '#ea580c'; // Use brand orange color
-          el.style.border = '2px solid white';
-          el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-          el.style.cursor = 'pointer';
+    Object.values(markersRef.current).forEach(marker => marker.remove());
+    markersRef.current = {};
 
-          const marker = new mapboxgl.Marker(el)
-            .setLngLat([business.longitude, business.latitude])
-            .setPopup(
+    const bounds = new mapboxgl.LngLatBounds();
+
+    businesses.forEach(business => {
+      if (business.latitude && business.longitude) {
+        const el = document.createElement('div');
+        el.className = 'marker';
+        el.innerHTML = `
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="#059669" stroke="#FFFFFF" stroke-width="1.5">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3" fill="#FFFFFF"></circle>
+          </svg>
+        `;
+        
+        const marker = new mapboxgl.Marker(el)
+          .setLngLat([business.longitude, business.latitude])
+          .setPopup(
             new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(
               `
               <div style="font-family: sans-serif; max-width: 220px; padding: 8px;">
@@ -78,30 +92,45 @@ export default function MarketplaceMap({ businesses }: MarketplaceMapProps) {
               `
             )
           )
-            .addTo(map.current!)
+          .addTo(map.current!);
 
-          // Extend the bounds to include this marker's location
-          bounds.extend([business.longitude, business.latitude]);
-        }
-      });
-
-      // Fit the map to the bounds if there are any markers
-      if (!bounds.isEmpty()) {
-        map.current.fitBounds(bounds, {
-          padding: { top: 50, bottom: 50, left: 50, right: 50 },
-          maxZoom: 15,
-        });
+        const markerElement = marker.getElement();
+        markerElement.addEventListener('mouseenter', () => setHoveredBusinessId(business.id));
+        markerElement.addEventListener('mouseleave', () => setHoveredBusinessId(null));
+        markerElement.addEventListener('click', () => onMarkerClick(business.id)); // Add click listener
+        
+        markersRef.current[business.id] = marker;
+        bounds.extend([business.longitude, business.latitude]);
       }
     });
 
-    // Clean up on unmount
-    return () => {
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
-      }
-    };
-  }, [businesses]); // Re-run if businesses change
+    if (!bounds.isEmpty()) {
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 15,
+        duration: 1000
+      });
+    }
+  }, [businesses, setHoveredBusinessId, onMarkerClick]);
 
-  return <div ref={mapContainer} className="w-full h-full" />;
+  // Effect for highlighting marker based on hover state
+  useEffect(() => {
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      const element = marker.getElement();
+      if (id === hoveredBusinessId) {
+        element.style.transform = 'scale(1.5)';
+        element.style.zIndex = '10';
+      } else {
+        element.style.transform = 'scale(1)';
+        element.style.zIndex = '1';
+      }
+    });
+  }, [hoveredBusinessId]);
+
+  return (
+    <>
+
+      <div ref={mapContainer} className="w-full h-full" />
+    </>
+  );
 }

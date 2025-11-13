@@ -19,6 +19,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { compressImage, validateImageFile, formatFileSize } from '@/lib/imageUtils'
 import ImageCropper from '@/components/ImageCropper'
 import BusinessPhotoGallery from '@/components/BusinessPhotoGallery'
+import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
+import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Business } from '@/types/database'
@@ -44,8 +46,7 @@ const businessSettingsSchema = z.object({
     .optional()
     .or(z.literal('')),
   address: z.string()
-    .min(10, 'La dirección debe tener al menos 10 caracteres')
-    .max(200, 'La dirección no puede exceder 200 caracteres')
+    .optional() // Opcional porque se maneja con Mapbox
 })
 
 type BusinessSettingsData = z.infer<typeof businessSettingsSchema>
@@ -71,9 +72,17 @@ export default function BusinessSettingsPage() {
   const [originalCoverFile, setOriginalCoverFile] = useState<File | null>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
 
+  // Estado para ubicación con Mapbox
+  const [locationData, setLocationData] = useState({
+    address: '',
+    latitude: -0.2295, // Quito por defecto
+    longitude: -78.5249
+  })
+
   const { authState } = useAuth()
   const supabase = createClient()
   const router = useRouter()
+  const { toast } = useToast()
 
   const {
     register,
@@ -122,6 +131,13 @@ export default function BusinessSettingsPage() {
         address: businessData.address || ''
       })
 
+      // Cargar ubicación actual del negocio
+      setLocationData({
+        address: businessData.address || '',
+        latitude: businessData.latitude || -0.2295,
+        longitude: businessData.longitude || -78.5249
+      })
+
       // Establecer previews de imágenes existentes
       if (businessData.logo_url) {
         setLogoPreview(businessData.logo_url)
@@ -144,7 +160,11 @@ export default function BusinessSettingsPage() {
 
     const validation = validateImageFile(file)
     if (!validation.isValid) {
-      alert(validation.error)
+      toast({
+        variant: 'destructive',
+        title: 'Error en el archivo',
+        description: validation.error
+      })
       return
     }
 
@@ -159,7 +179,11 @@ export default function BusinessSettingsPage() {
 
     const validation = validateImageFile(file)
     if (!validation.isValid) {
-      alert(validation.error)
+      toast({
+        variant: 'destructive',
+        title: 'Error en el archivo',
+        description: validation.error
+      })
       return
     }
 
@@ -173,8 +197,6 @@ export default function BusinessSettingsPage() {
       setUploadingLogo(true)
       setShowLogoCropper(false)
 
-      console.log(`📁 Logo original: ${originalLogoFile?.name} (${formatFileSize(originalLogoFile?.size || 0)})`)
-
       // Comprimir para logo (ULTRA calidad para tesis)
       const compressedFile = await compressImage(croppedFile, {
         maxWidth: 500,
@@ -182,8 +204,6 @@ export default function BusinessSettingsPage() {
         quality: 0.98,
         maxSizeKB: 800
       })
-
-      console.log(`🗜️ Logo comprimido: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
 
       setLogoFile(compressedFile)
 
@@ -194,9 +214,18 @@ export default function BusinessSettingsPage() {
       }
       reader.readAsDataURL(compressedFile)
 
+      toast({
+        title: 'Logo procesado',
+        description: 'La imagen está lista. Guarda los cambios para aplicar.'
+      })
+
     } catch (error) {
       console.error('Error al procesar logo:', error)
-      alert('Error al procesar la imagen. Intenta con otro archivo.')
+      toast({
+        variant: 'destructive',
+        title: 'Error al procesar imagen',
+        description: 'No se pudo procesar la imagen. Intenta con otro archivo.'
+      })
     } finally {
       setUploadingLogo(false)
     }
@@ -208,8 +237,6 @@ export default function BusinessSettingsPage() {
       setUploadingCover(true)
       setShowCoverCropper(false)
 
-      console.log(`📁 Cover original: ${originalCoverFile?.name} (${formatFileSize(originalCoverFile?.size || 0)})`)
-
       // Comprimir para cover (ULTRA calidad para tesis)
       const compressedFile = await compressImage(croppedFile, {
         maxWidth: 2000,
@@ -217,8 +244,6 @@ export default function BusinessSettingsPage() {
         quality: 0.98,
         maxSizeKB: 2500
       })
-
-      console.log(`🗜️ Cover comprimido: ${compressedFile.name} (${formatFileSize(compressedFile.size)})`)
 
       setCoverFile(compressedFile)
 
@@ -229,9 +254,18 @@ export default function BusinessSettingsPage() {
       }
       reader.readAsDataURL(compressedFile)
 
+      toast({
+        title: 'Portada procesada',
+        description: 'La imagen está lista. Guarda los cambios para aplicar.'
+      })
+
     } catch (error) {
       console.error('Error al procesar cover:', error)
-      alert('Error al procesar la imagen. Intenta con otro archivo.')
+      toast({
+        variant: 'destructive',
+        title: 'Error al procesar imagen',
+        description: 'No se pudo procesar la imagen. Intenta con otro archivo.'
+      })
     } finally {
       setUploadingCover(false)
     }
@@ -298,6 +332,16 @@ export default function BusinessSettingsPage() {
   const onSubmit = async (data: BusinessSettingsData) => {
     if (!business) return
 
+    // Validar que se haya seleccionado una ubicación
+    if (!locationData.address || locationData.address.trim() === '') {
+      toast({
+        variant: 'destructive',
+        title: 'Ubicación requerida',
+        description: 'Por favor selecciona una ubicación para tu negocio en el mapa'
+      })
+      return
+    }
+
     try {
       setSubmitting(true)
 
@@ -320,11 +364,14 @@ export default function BusinessSettingsPage() {
         }
       }
 
-      // Actualizar business
+      // Actualizar business (incluye ubicación actualizada)
       const { error } = await supabase
         .from('businesses')
         .update({
           ...data,
+          address: locationData.address,
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
           logo_url: logoUrl,
           cover_image_url: coverUrl,
           updated_at: new Date().toISOString()
@@ -333,12 +380,20 @@ export default function BusinessSettingsPage() {
 
       if (error) throw error
 
-      alert('¡Configuración actualizada exitosamente!')
+      toast({
+        title: '¡Configuración actualizada!',
+        description: 'Los cambios se han guardado exitosamente.'
+      })
+
       await fetchBusiness() // Recargar datos
 
     } catch (error) {
       console.error('Error updating business:', error)
-      alert('Error al actualizar la configuración')
+      toast({
+        variant: 'destructive',
+        title: 'Error al actualizar',
+        description: 'No se pudo guardar la configuración. Intenta nuevamente.'
+      })
     } finally {
       setSubmitting(false)
     }
@@ -609,22 +664,67 @@ export default function BusinessSettingsPage() {
                 )}
               </div>
 
-              {/* Dirección */}
-              <div className="space-y-2">
-                <Label htmlFor="address">Dirección *</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    id="address"
-                    {...register('address')}
-                    className="pl-10"
-                    placeholder="Calle, número, ciudad"
-                  />
+            </CardContent>
+          </Card>
+
+          {/* Ubicación con Mapa */}
+          <Card className="hover:shadow-lg transition-shadow border-t-4 border-t-orange-500">
+            <CardHeader className="border-b bg-white">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-orange-600" />
                 </div>
-                {errors.address && (
-                  <p className="text-sm text-red-600">{errors.address.message}</p>
-                )}
-              </div>
+                <span>Ubicación del Negocio</span>
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                Actualiza la ubicación de tu negocio en el mapa. Los clientes podrán encontrarte fácilmente.
+              </p>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <MapboxLocationPicker
+                onLocationSelect={(location) => {
+                  setLocationData({
+                    address: location.address,
+                    latitude: location.latitude,
+                    longitude: location.longitude
+                  })
+                }}
+                initialLocation={locationData}
+              />
+
+              {/* Mostrar dirección actual */}
+              {locationData.address && (
+                <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-orange-800 mb-1">Dirección seleccionada</p>
+                      <p className="text-sm text-orange-700">{locationData.address}</p>
+                      <p className="text-xs text-orange-600 mt-1">
+                        Coordenadas: {locationData.latitude.toFixed(4)}, {locationData.longitude.toFixed(4)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!locationData.address && (
+                <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      ⚠️
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-800 mb-1">Ubicación requerida</p>
+                      <p className="text-sm text-amber-700">
+                        Selecciona la ubicación de tu negocio en el mapa usando la búsqueda o arrastrando el marcador.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
