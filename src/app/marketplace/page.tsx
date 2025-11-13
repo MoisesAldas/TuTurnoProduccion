@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { Search, MapPin, Star, Filter, Map, Building2, Sparkles, Scissors, Heart, Dumbbell, Activity, ChevronRight } from 'lucide-react'
+import { Search, MapPin, Star, Filter, Map, Building2, Sparkles, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
+import { getCategoryIcon } from '@/lib/categoryIcons'
 import Link from 'next/link'
 import Image from 'next/image'
 import MarketplaceMap from '@/components/MarketplaceMap'
 import Logo from '@/components/logo'
-import FilterSheet from '@/components/FilterSheet' // Import the new component
+import FilterSheet from '@/components/FilterSheet'
 
 interface BusinessCategory {
   id: string
@@ -37,17 +38,18 @@ export default function MarketplacePage() {
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [categories, setCategories] = useState<BusinessCategory[]>([])
   const [loading, setLoading] = useState(true)
-  
+  const [error, setError] = useState<string | null>(null)
+
   // Filter States
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
-  const [ratingFilter, setRatingFilter] = useState<number>(0);
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [ratingFilter, setRatingFilter] = useState<number>(0)
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
 
   // Interaction States
-  const [hoveredBusinessId, setHoveredBusinessId] = useState<string | null>(null);
-  const [clickedBusinessId, setClickedBusinessId] = useState<string | null>(null);
-  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [hoveredBusinessId, setHoveredBusinessId] = useState<string | null>(null)
+  const [clickedBusinessId, setClickedBusinessId] = useState<string | null>(null)
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const supabase = createClient()
 
@@ -107,19 +109,35 @@ export default function MarketplacePage() {
   const fetchBusinesses = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase.from('businesses').select(`*, business_categories (*)`).eq('is_active', true).order('created_at', { ascending: false })
-      if (error) throw error
+      setError(null)
 
+      const { data, error: businessError } = await supabase
+        .from('businesses')
+        .select(`*, business_categories (*)`)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+
+      if (businessError) throw businessError
+
+      // Optimización: Fetch ratings en paralelo
       const businessesWithReviews = await Promise.all(
         (data || []).map(async (business) => {
-          const { data: avgData } = await supabase.rpc('get_business_average_rating', { p_business_id: business.id })
-          const { data: countData } = await supabase.rpc('get_business_review_count', { p_business_id: business.id })
-          return { ...business, average_rating: avgData || 0, review_count: countData || 0 }
+          const [avgResult, countResult] = await Promise.all([
+            supabase.rpc('get_business_average_rating', { p_business_id: business.id }),
+            supabase.rpc('get_business_review_count', { p_business_id: business.id })
+          ])
+          return {
+            ...business,
+            average_rating: avgResult.data || 0,
+            review_count: countResult.data || 0
+          }
         })
       )
+
       setBusinesses(businessesWithReviews)
-    } catch (error) {
-      console.error('Error fetching businesses:', error)
+    } catch (err) {
+      console.error('Error fetching businesses:', err)
+      setError('No se pudieron cargar los negocios. Por favor, intenta recargar la página.')
     } finally {
       setLoading(false)
     }
@@ -130,9 +148,15 @@ export default function MarketplacePage() {
                          business.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          business.business_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = !selectedCategory || business.business_category_id === selectedCategory
-    const matchesRating = ratingFilter === 0 || (business.average_rating || 0) >= ratingFilter;
-    return matchesSearch && matchesCategory && matchesRating;
+    const matchesRating = ratingFilter === 0 || (business.average_rating || 0) >= ratingFilter
+    return matchesSearch && matchesCategory && matchesRating
   })
+
+  // Contar filtros activos
+  const activeFiltersCount = [
+    selectedCategory ? 1 : 0,
+    ratingFilter > 0 ? 1 : 0
+  ].reduce((sum, val) => sum + val, 0)
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-50">
@@ -154,10 +178,15 @@ export default function MarketplacePage() {
                             className="pl-10 w-full h-12 text-base focus:ring-emerald-500"
                         />
                     </div>
-                    <div className="w-full md:w-auto">
+                    <div className="w-full md:w-auto relative">
                         <Button variant="outline" className="w-full h-12" onClick={() => setIsFilterSheetOpen(true)}>
                             <Filter className="w-4 h-4 mr-2" />
                             Filtros
+                            {activeFiltersCount > 0 && (
+                                <Badge className="ml-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+                                    {activeFiltersCount}
+                                </Badge>
+                            )}
                         </Button>
                     </div>
                 </div>
@@ -193,9 +222,38 @@ export default function MarketplacePage() {
                         <h2 className="font-semibold text-gray-800">{filteredBusinesses.length} resultados</h2>
                     </div>
 
-                    {loading ? (
+                    {error ? (
+                        <div className="flex flex-col items-center justify-center py-12 px-4">
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md w-full">
+                                <div className="flex items-start gap-3">
+                                    <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-red-900 mb-1">Error al cargar negocios</h3>
+                                        <p className="text-sm text-red-700 mb-4">{error}</p>
+                                        <Button
+                                            onClick={fetchBusinesses}
+                                            variant="outline"
+                                            size="sm"
+                                            className="border-red-300 text-red-700 hover:bg-red-50"
+                                        >
+                                            <RefreshCw className="w-4 h-4 mr-2" />
+                                            Reintentar
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : loading ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {[...Array(6)].map((_, i) => <BusinessCardSkeleton key={i} />)}
+                        </div>
+                    ) : filteredBusinesses.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 px-4">
+                            <Building2 className="w-16 h-16 text-gray-300 mb-4" />
+                            <h3 className="font-semibold text-gray-700 mb-2">No se encontraron negocios</h3>
+                            <p className="text-sm text-gray-500 text-center">
+                                Intenta ajustar los filtros o la búsqueda
+                            </p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -303,13 +361,3 @@ const BusinessCardSkeleton = () => (
         </CardContent>
     </Card>
 )
-
-const getCategoryIcon = (categoryName?: string) => {
-    if (!categoryName) return Building2
-    const iconMap: Record<string, any> = {
-      'salón de belleza': Sparkles, 'salon de belleza': Sparkles, 'barbería': Scissors,
-      'barberia': Scissors, 'spa': Heart, 'uñas': Sparkles, 'masajes': Activity,
-      'gimnasio': Dumbbell, 'clínica': Activity, 'clinica': Activity,
-    }
-    return iconMap[categoryName.toLowerCase()] || Building2
-}

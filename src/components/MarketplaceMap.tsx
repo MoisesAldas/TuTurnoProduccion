@@ -43,6 +43,13 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
       zoom: 12,
     });
 
+    // Cerrar todos los popups al hacer clic en el mapa
+    map.current.on('click', () => {
+      Object.values(markersRef.current).forEach(marker => {
+        marker.getPopup().remove();
+      });
+    });
+
     return () => {
       if (map.current) {
         map.current.remove();
@@ -74,19 +81,25 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
         const marker = new mapboxgl.Marker(el)
           .setLngLat([business.longitude, business.latitude])
           .setPopup(
-            new mapboxgl.Popup({ offset: 25, closeButton: false }).setHTML(
+            new mapboxgl.Popup({
+              offset: 25,
+              closeButton: true,
+              closeOnClick: false,
+              className: 'business-popup'
+            }).setHTML(
               `
-              <div style="font-family: sans-serif; max-width: 220px; padding: 8px;">
-                <h3 style="font-weight: 700; font-size: 1rem; margin: 0 0 4px 0; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${business.name}</h3>
+              <div style="font-family: sans-serif; min-width: 220px; padding: 12px;">
+                <h3 style="font-weight: 700; font-size: 1.125rem; margin: 0 0 8px 0; color: #1f2937; line-height: 1.3;">${business.name}</h3>
                 ${business.average_rating && business.average_rating > 0 ? `
-                <div style="display: flex; align-items: center; gap: 4px; font-size: 0.875rem; color: #4b5563; margin-bottom: 12px;">
-                  <span style="color: #f59e0b;">★</span>
-                  <span style="font-weight: 600;">${business.average_rating.toFixed(1)}</span>
-                  <span style="color: #6b7280;">(${business.review_count} reseñas)</span>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: #4b5563; margin-bottom: 12px;">
+                  <span style="color: #f59e0b; font-size: 1rem;">★</span>
+                  <span style="font-weight: 700; color: #1f2937;">${business.average_rating.toFixed(1)}</span>
+                  <span style="color: #9ca3af;">(${business.review_count} reseñas)</span>
                 </div>
-                ` : '<p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 12px;">Sin reseñas aún</p>'}
-                <a href="/business/${business.id}" target="_blank" style="display: block; width: 100%; padding: 8px; background-color: #059669; color: white; text-align: center; border-radius: 6px; text-decoration: none; font-weight: 600; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#047857'" onmouseout="this.style.backgroundColor='#059669'">
-                  Ver Detalles
+                ` : '<p style="font-size: 0.875rem; color: #9ca3af; margin-bottom: 12px;">Sin reseñas aún</p>'}
+                ${business.address ? `<p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">${business.address}</p>` : ''}
+                <a href="/business/${business.id}" style="display: block; width: 100%; padding: 10px 16px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; text-align: center; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(5, 150, 105, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(5, 150, 105, 0.2)'">
+                  Ver Detalles →
                 </a>
               </div>
               `
@@ -95,10 +108,34 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
           .addTo(map.current!);
 
         const markerElement = marker.getElement();
-        markerElement.addEventListener('mouseenter', () => setHoveredBusinessId(business.id));
-        markerElement.addEventListener('mouseleave', () => setHoveredBusinessId(null));
-        markerElement.addEventListener('click', () => onMarkerClick(business.id)); // Add click listener
-        
+
+        // Hover: solo resaltar marcador y card (sin abrir popup)
+        markerElement.addEventListener('mouseenter', () => {
+          setHoveredBusinessId(business.id);
+        });
+
+        markerElement.addEventListener('mouseleave', () => {
+          setHoveredBusinessId(null);
+        });
+
+        // Click: abrir popup persistente y scroll a la card
+        markerElement.addEventListener('click', (e) => {
+          e.stopPropagation();
+
+          // Cerrar otros popups abiertos
+          Object.values(markersRef.current).forEach(m => {
+            if (m !== marker) {
+              m.getPopup().remove();
+            }
+          });
+
+          // Abrir este popup
+          marker.togglePopup();
+
+          // Scroll a la card
+          onMarkerClick(business.id);
+        });
+
         markersRef.current[business.id] = marker;
         bounds.extend([business.longitude, business.latitude]);
       }
