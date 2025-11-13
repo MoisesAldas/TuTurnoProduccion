@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import LocationMapModal from '@/components/LocationMapModal'
 import StarRating from '@/components/StarRating'
+import Logo from '@/components/logo'
 
 interface BusinessCategory {
   id: string
@@ -479,9 +480,7 @@ export default function BusinessProfilePage() {
                 <span className="hidden sm:inline">Marketplace</span>
               </Button>
               <div className="h-6 w-px bg-gray-200"></div>
-              <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                TuTurno
-              </span>
+              <Logo color="emerald" size="md" />
             </div>
 
             {/* Right: Auth Actions */}
@@ -506,7 +505,7 @@ export default function BusinessProfilePage() {
                     </Button>
                   </Link>
                   <Link href="/auth/client/register">
-                    <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
                       Registrarse
                     </Button>
                   </Link>

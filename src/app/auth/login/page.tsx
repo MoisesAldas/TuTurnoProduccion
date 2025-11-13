@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CalendarDays, Building, User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import Logo from '@/components/logo'
 
 const ERROR_MESSAGES = {
   auth_error: 'Ocurrió un error durante la autenticación.',
@@ -48,9 +49,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-slate-700 rounded-xl flex items-center justify-center">
               <CalendarDays className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-slate-700 bg-clip-text text-transparent">
-              TuTurno
-            </span>
+            <Logo color="black" size="md" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Bienvenido</h1>
           <p className="text-gray-600">Elige cómo quieres continuar</p>

@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CalendarDays, Building, ArrowLeft, TrendingUp, Users, Shield, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
+import Logo from '@/components/logo'
 
 const ERROR_MESSAGES = {
   auth_error: 'Ocurrió un error durante la autenticación.',
@@ -77,7 +78,7 @@ export default function BusinessLoginPage() {
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-xl border border-white/30">
               <CalendarDays className="w-7 h-7 text-white" />
             </div>
-            <span className="text-3xl font-bold text-white">TuTurno</span>
+            <Logo color="white" size="lg" />
           </div>
 
           <div className="mb-8">

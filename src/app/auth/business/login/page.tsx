@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CalendarDays, LogIn, ArrowLeft, Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
+import Logo from '@/components/logo'
 
 const loginSchema = z.object({
   email: z
@@ -162,10 +163,10 @@ export default function BusinessLoginPage() {
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`} style={{ transitionDelay: '200ms' }}>
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
               <CalendarDays className="w-7 h-7 text-white" />
             </div>
-            <span className="text-3xl font-bold text-black">TuTurno</span>
+            <Logo color="black" size="lg" />
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 mb-2">

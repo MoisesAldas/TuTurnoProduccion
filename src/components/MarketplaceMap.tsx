@@ -24,7 +24,8 @@ interface MarketplaceMapProps {
 export default function MarketplaceMap({ businesses, hoveredBusinessId, setHoveredBusinessId, onMarkerClick }: MarketplaceMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
-  const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
+  const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({})
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Effect for initializing the map
   useEffect(() => {
@@ -43,17 +44,13 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
       zoom: 12,
     });
 
-    // Cerrar todos los popups al hacer clic en el mapa
-    map.current.on('click', () => {
-      Object.values(markersRef.current).forEach(marker => {
-        marker.getPopup().remove();
-      });
-    });
-
     return () => {
       if (map.current) {
         map.current.remove();
         map.current = null;
+      }
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
       }
     };
   }, []);
@@ -83,7 +80,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
           .setPopup(
             new mapboxgl.Popup({
               offset: 25,
-              closeButton: true,
+              closeButton: false,
               closeOnClick: false,
               className: 'business-popup'
             }).setHTML(
@@ -108,31 +105,62 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
           .addTo(map.current!);
 
         const markerElement = marker.getElement();
+        const popup = marker.getPopup();
 
-        // Hover: solo resaltar marcador y card (sin abrir popup)
+        // Validar que el popup exista
+        if (!popup) return;
+
+        // Función para cerrar el popup después de 3 segundos
+        const scheduleClose = () => {
+          // Limpiar timer anterior si existe
+          if (closeTimerRef.current) {
+            clearTimeout(closeTimerRef.current);
+          }
+
+          // Programar cierre en 3 segundos
+          closeTimerRef.current = setTimeout(() => {
+            if (popup && popup.isOpen()) {
+              popup.remove();
+            }
+            setHoveredBusinessId(null);
+          }, 3000);
+        };
+
+        // Función para cancelar el cierre programado
+        const cancelClose = () => {
+          if (closeTimerRef.current) {
+            clearTimeout(closeTimerRef.current);
+            closeTimerRef.current = null;
+          }
+        };
+
+        // Hover: abrir popup y resaltar
         markerElement.addEventListener('mouseenter', () => {
           setHoveredBusinessId(business.id);
+          if (popup && !popup.isOpen()) {
+            marker.togglePopup();
+          }
+          cancelClose(); // Cancelar cierre si vuelve a entrar
         });
 
+        // Salir: programar cierre en 5 segundos
         markerElement.addEventListener('mouseleave', () => {
-          setHoveredBusinessId(null);
+          scheduleClose();
         });
 
-        // Click: abrir popup persistente y scroll a la card
-        markerElement.addEventListener('click', (e) => {
-          e.stopPropagation();
-
-          // Cerrar otros popups abiertos
-          Object.values(markersRef.current).forEach(m => {
-            if (m !== marker) {
-              m.getPopup().remove();
+        // Agregar listeners al popup para mantenerlo abierto cuando el mouse está sobre él
+        if (popup) {
+          popup.on('open', () => {
+            const popupElement = popup.getElement();
+            if (popupElement) {
+              popupElement.addEventListener('mouseenter', cancelClose);
+              popupElement.addEventListener('mouseleave', scheduleClose);
             }
           });
+        }
 
-          // Abrir este popup
-          marker.togglePopup();
-
-          // Scroll a la card
+        // Click: scroll a la card (el popup ya está abierto por hover)
+        markerElement.addEventListener('click', () => {
           onMarkerClick(business.id);
         });
 

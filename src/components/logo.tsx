@@ -20,7 +20,7 @@ export default function Logo({
   // Colores disponibles
   const colorClass =
     color === "emerald"
-      ? "bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent"
+      ? "text-emerald-600"
       : color === "white"
       ? "text-white"
       : color === "black"

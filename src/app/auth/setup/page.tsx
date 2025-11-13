@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { User, Building, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import Logo from '@/components/logo'
 
 // Configuración para Ecuador
 const ecuadorConfig = {
@@ -193,9 +194,7 @@ export default function SetupPage() {
       }`}>
         <CardHeader className="text-center pb-6">
           <div className="flex items-center justify-center mb-6">
-            <span className="text-2xl font-bold text-black">
-              <AnimatedText text="TuTurno" delay={300} />
-            </span>
+            <Logo color="black" size="md" />
           </div>
 
           <div className={`flex items-center justify-center mb-6 transition-all duration-700 ${

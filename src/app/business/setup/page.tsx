@@ -16,6 +16,7 @@ import { MapPin, Building2, ArrowRight, ArrowLeft, Phone, Mail, Globe, FileText,
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
+import Logo from '@/components/logo'
 
 const businessSchema = z.object({
   name: z
@@ -303,10 +304,10 @@ export default function BusinessSetupPage() {
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`}>
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg">
               <Building2 className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-black">TuTurno</span>
+            <Logo color="black" size="md" />
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
             Configura tu <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent">Negocio</span>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CalendarDays, Building, ArrowLeft, Sparkles, Star, CheckCircle, LogIn, UserPlus } from 'lucide-react'
 import Link from 'next/link'
+import Logo from '@/components/logo'
 
 const ERROR_MESSAGES = {
   auth_error: 'Ocurrió un error durante la autenticación.',
@@ -74,10 +75,10 @@ export default function BusinessAuthPage() {
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`} style={{ transitionDelay: '200ms' }}>
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
               <CalendarDays className="w-7 h-7 text-white" />
             </div>
-            <span className="text-3xl font-bold text-black">TuTurno</span>
+            <Logo color="black" size="lg" />
           </div>
 
           <div className="mb-8">
