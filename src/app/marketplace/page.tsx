@@ -58,13 +58,24 @@ export default function MarketplacePage() {
 
   // Fix: Asegurar que el body sea scrollable al montar/desmontar
   useEffect(() => {
-    document.body.style.overflow = 'unset'
-    document.body.style.paddingRight = '0px'
+    const forceScroll = () => {
+      document.body.style.removeProperty('overflow')
+      document.body.style.removeProperty('padding-right')
+      document.documentElement.style.removeProperty('overflow')
+      document.documentElement.style.removeProperty('padding-right')
+    }
+
+    forceScroll()
+
+    const timers = [
+      setTimeout(forceScroll, 0),
+      setTimeout(forceScroll, 50),
+      setTimeout(forceScroll, 100)
+    ]
 
     return () => {
-      // Cleanup al desmontar (cuando navegas al negocio)
-      document.body.style.overflow = 'unset'
-      document.body.style.paddingRight = '0px'
+      timers.forEach(timer => clearTimeout(timer))
+      forceScroll()
     }
   }, [])
 

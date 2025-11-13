@@ -156,14 +156,30 @@ export default function BusinessProfilePage() {
   // Fix: Resetear scroll del body al montar el componente
   // Previene el bug donde el overflow:hidden queda pegado al navegar desde marketplace
   useEffect(() => {
-    // Forzar que el body sea scrollable
-    document.body.style.overflow = 'unset'
-    document.body.style.paddingRight = '0px'
+    // Función para forzar scroll
+    const forceScroll = () => {
+      document.body.style.removeProperty('overflow')
+      document.body.style.removeProperty('padding-right')
+      document.documentElement.style.removeProperty('overflow')
+      document.documentElement.style.removeProperty('padding-right')
+    }
+
+    // Ejecutar inmediatamente
+    forceScroll()
+
+    // Ejecutar varias veces con pequeños delays para sobrescribir cualquier cambio
+    const timers = [
+      setTimeout(forceScroll, 0),
+      setTimeout(forceScroll, 50),
+      setTimeout(forceScroll, 100),
+      setTimeout(forceScroll, 200),
+      setTimeout(forceScroll, 500)
+    ]
 
     // Cleanup al desmontar
     return () => {
-      document.body.style.overflow = 'unset'
-      document.body.style.paddingRight = '0px'
+      timers.forEach(timer => clearTimeout(timer))
+      forceScroll()
     }
   }, [])
 
