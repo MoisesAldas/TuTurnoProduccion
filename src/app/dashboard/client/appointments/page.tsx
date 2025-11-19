@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger
@@ -18,6 +19,8 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
+import { patterns } from '@/lib/design-tokens'
 import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
 
@@ -71,6 +74,7 @@ export default function ClientAppointmentsPage() {
   const [newTime, setNewTime] = useState('')
 
   const { authState } = useAuth()
+  const { toast } = useToast()
   const supabase = createClient()
 
   useEffect(() => {
@@ -134,7 +138,11 @@ export default function ClientAppointmentsPage() {
 
       if (error) {
         console.error('Error canceling appointment:', error)
-        alert('Error al cancelar la cita')
+        toast({
+          variant: 'destructive',
+          title: 'Error al cancelar',
+          description: 'No pudimos cancelar tu cita. Por favor intenta nuevamente.',
+        })
         return
       }
 
@@ -158,9 +166,17 @@ export default function ClientAppointmentsPage() {
       setShowCancelDialog(false)
       setSelectedAppointment(null)
       setCancelReason('')
+      toast({
+        title: 'Cita cancelada',
+        description: 'Tu cita ha sido cancelada exitosamente.',
+      })
     } catch (error) {
       console.error('Error canceling appointment:', error)
-      alert('Error al cancelar la cita')
+      toast({
+        variant: 'destructive',
+        title: 'Error al cancelar',
+        description: 'Ocurrió un error inesperado. Por favor intenta nuevamente.',
+      })
     }
   }
 
@@ -187,7 +203,11 @@ export default function ClientAppointmentsPage() {
 
       if (error) {
         console.error('Error rescheduling appointment:', error)
-        alert('Error al reagendar la cita')
+        toast({
+          variant: 'destructive',
+          title: 'Error al reagendar',
+          description: 'No pudimos reagendar tu cita. Por favor intenta nuevamente.',
+        })
         return
       }
 
@@ -212,9 +232,17 @@ export default function ClientAppointmentsPage() {
       setSelectedAppointment(null)
       setNewDate(undefined)
       setNewTime('')
+      toast({
+        title: 'Cita reagendada',
+        description: 'Tu cita ha sido reagendada exitosamente.',
+      })
     } catch (error) {
       console.error('Error rescheduling appointment:', error)
-      alert('Error al reagendar la cita')
+      toast({
+        variant: 'destructive',
+        title: 'Error al reagendar',
+        description: 'Ocurrió un error inesperado. Por favor intenta nuevamente.',
+      })
     }
   }
 
@@ -281,10 +309,46 @@ export default function ClientAppointmentsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando tus citas...</p>
+      <div className="p-4 sm:p-6 lg:p-8">
+        {/* Filters Skeleton */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <Skeleton className="h-10 w-full max-w-md" />
+            <div className="flex items-center space-x-2">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-28" />
+            </div>
+          </div>
+        </div>
+
+        {/* Appointments List Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div className="flex-grow space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-6 w-48" />
+                      <Skeleton className="h-6 w-24" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-9 w-32" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     )
@@ -303,7 +367,7 @@ export default function ClientAppointmentsPage() {
                 placeholder="Buscar por negocio, servicio o profesional..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className={`${patterns.input.DEFAULT} pl-10`}
               />
             </div>
             <div className="flex items-center space-x-2 overflow-x-auto pb-2">
@@ -319,12 +383,50 @@ export default function ClientAppointmentsPage() {
         {filteredAppointments.length === 0 ? (
           <Card className="bg-white">
             <CardContent className="text-center py-16">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CalendarIcon className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{searchQuery ? 'No se encontraron citas' : 'No tienes citas en esta categoría'}</h3>
-              <p className="text-gray-500 mb-6 max-w-sm mx-auto">{searchQuery ? 'Intenta con una búsqueda diferente.' : 'Reserva tu próxima cita para cuidarte.'}</p>
-              <Button asChild><Link href="/marketplace">Explorar Servicios</Link></Button>
+              {searchQuery ? (
+                <>
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No encontramos "{searchQuery}"</h3>
+                  <p className="text-gray-500 mb-6 max-w-sm mx-auto">Intenta buscando por el nombre del negocio, servicio o profesional.</p>
+                  <Button variant="outline" onClick={() => setSearchQuery('')}>Limpiar búsqueda</Button>
+                </>
+              ) : filter === 'upcoming' ? (
+                <>
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CalendarIcon className="w-8 h-8 text-emerald-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Tu agenda está libre</h3>
+                  <p className="text-gray-500 mb-6 max-w-sm mx-auto">Es un buen momento para reservar un servicio que te guste.</p>
+                  <Button asChild className="bg-gradient-to-r from-emerald-600 to-teal-500"><Link href="/marketplace"><CalendarIcon className="w-4 h-4 mr-2" />Reservar una Cita</Link></Button>
+                </>
+              ) : filter === 'past' ? (
+                <>
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aún no tienes citas completadas</h3>
+                  <p className="text-gray-500 mb-6 max-w-sm mx-auto">Tu historial de citas aparecerá aquí después de tu primer servicio.</p>
+                </>
+              ) : filter === 'cancelled' ? (
+                <>
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No has cancelado ninguna cita</h3>
+                  <p className="text-gray-500 mb-6 max-w-sm mx-auto">Excelente compromiso con tus reservas.</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CalendarIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes citas registradas</h3>
+                  <p className="text-gray-500 mb-6 max-w-sm mx-auto">Empieza a reservar tus servicios favoritos.</p>
+                  <Button asChild className="bg-gradient-to-r from-emerald-600 to-teal-500"><Link href="/marketplace">Explorar Servicios</Link></Button>
+                </>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -333,56 +435,96 @@ export default function ClientAppointmentsPage() {
               const statusInfo = getStatusInfo(appointment.status)
               const StatusIcon = statusInfo.icon
               return (
-                <Card key={appointment.id} className="hover:shadow-lg transition-shadow bg-white">
+                <Card
+                  key={appointment.id}
+                  className={`hover:shadow-xl transition-all duration-300 bg-white border-l-4 ${
+                    appointment.status === 'confirmed' ? 'border-l-emerald-500' :
+                    appointment.status === 'pending' ? 'border-l-yellow-500' :
+                    appointment.status === 'completed' ? 'border-l-blue-500' :
+                    appointment.status === 'cancelled' ? 'border-l-red-500' :
+                    'border-l-gray-300'
+                  } hover:scale-[1.01]`}
+                >
                   <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                    {/* Mobile: Price & Badge at top */}
+                    <div className="flex sm:hidden items-center justify-between mb-3 pb-3 border-b border-gray-100">
+                      <Badge className={statusInfo.color}><StatusIcon className="w-3 h-3 mr-1.5" />{statusInfo.label}</Badge>
+                      <span className="text-xl font-bold text-emerald-600">{formatPrice(appointment.total_price)}</span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       {/* Main Info */}
-                      <div className="flex-grow">
-                        <div className="flex items-center gap-3 mb-3">
+                      <div className="flex-grow space-y-3">
+                        {/* Desktop: Name & Badge inline */}
+                        <div className="flex items-center justify-between gap-3">
                           <h3 className="font-semibold text-lg sm:text-xl text-gray-900">{appointment.business?.name || 'Negocio'}</h3>
-                          <Badge className={statusInfo.color}><StatusIcon className="w-3 h-3 mr-1.5" />{statusInfo.label}</Badge>
+                          <Badge className={`hidden sm:inline-flex ${statusInfo.color}`}>
+                            <StatusIcon className="w-3 h-3 mr-1.5" />{statusInfo.label}
+                          </Badge>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-600">
-                          <div className="flex items-center">
-                            <User className="w-4 h-4 mr-2 text-gray-400" />
-                            <span>{appointment.appointment_services.map(s => s.service?.name).join(', ')}</span>
+
+                        {/* Info Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-x-6 sm:gap-y-3">
+                          <div className="flex items-center text-sm text-gray-600 bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded-md">
+                            <User className="w-4 h-4 mr-2 text-emerald-600 flex-shrink-0" />
+                            <span className="truncate">{appointment.appointment_services.map(s => s.service?.name).join(', ')}</span>
                           </div>
-                          <div className="flex items-center">
-                            <CalendarIcon className="w-4 h-4 mr-2 text-gray-400" />
-                            <span>{formatDate(appointment.appointment_date)}</span>
+                          <div className="flex items-center text-sm text-gray-600 bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded-md">
+                            <CalendarIcon className="w-4 h-4 mr-2 text-emerald-600 flex-shrink-0" />
+                            <span className="truncate">{formatDate(appointment.appointment_date)}</span>
                           </div>
-                          <div className="flex items-center">
-                            <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                          <div className="flex items-center text-sm text-gray-600 bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded-md">
+                            <Clock className="w-4 h-4 mr-2 text-emerald-600 flex-shrink-0" />
                             <span>{appointment.start_time.slice(0,5)} - {appointment.end_time.slice(0,5)}</span>
                           </div>
                           {appointment.business?.address && (
-                            <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                              <span>{appointment.business.address}</span>
+                            <div className="flex items-center text-sm text-gray-600 bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded-md">
+                              <MapPin className="w-4 h-4 mr-2 text-emerald-600 flex-shrink-0" />
+                              <span className="truncate">{appointment.business.address}</span>
                             </div>
                           )}
                         </div>
                       </div>
-                      {/* Price and Actions */}
-                      <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-6 flex flex-col items-stretch sm:items-end gap-2 w-full sm:w-auto">
-                        <span className="text-2xl font-bold text-emerald-600 text-left sm:text-right mb-2">{formatPrice(appointment.total_price)}</span>
-                        <div className="flex flex-row sm:flex-col gap-2 w-full">
+
+                      {/* Desktop: Price and Actions */}
+                      <div className="hidden sm:flex flex-col items-end gap-2 flex-shrink-0 min-w-[140px]">
+                        <span className="text-2xl font-bold text-emerald-600">{formatPrice(appointment.total_price)}</span>
+                        <div className="flex flex-col gap-2 w-full">
                           {canModify(appointment) && (
-                              <Button asChild variant="outline" size="sm" className="w-full justify-center">
+                              <Button asChild variant="outline" size="sm" className="w-full hover:bg-emerald-50 hover:border-emerald-300 transition-colors">
                                   <Link href={`/dashboard/client/appointments/${appointment.id}`}><Edit className="w-4 h-4 mr-2" />Gestionar</Link>
                               </Button>
                           )}
                           {appointment.status === 'completed' && !appointment.has_review && (
-                              <Button variant="outline" size="sm" onClick={() => { setSelectedAppointment(appointment); setShowReviewModal(true); }} className="w-full justify-center border-amber-300 text-amber-700 hover:bg-amber-50">
-                                  <Star className="w-4 h-4 mr-2" />Dejar Reseña
+                              <Button variant="outline" size="sm" onClick={() => { setSelectedAppointment(appointment); setShowReviewModal(true); }} className="w-full border-amber-300 text-amber-700 hover:bg-amber-50">
+                                  <Star className="w-4 h-4 mr-2" />Reseña
                               </Button>
                           )}
                           {appointment.status === 'completed' && appointment.has_review && (
-                              <Button variant="outline" size="sm" disabled className="w-full justify-center">
-                                  <CheckCircle className="w-4 h-4 mr-2" />Reseña Enviada
+                              <Button variant="outline" size="sm" disabled className="w-full">
+                                  <CheckCircle className="w-4 h-4 mr-2" />Reseñado
                               </Button>
                           )}
                         </div>
+                      </div>
+
+                      {/* Mobile: Actions at bottom */}
+                      <div className="flex sm:hidden gap-2 pt-3 border-t border-gray-100">
+                        {canModify(appointment) && (
+                            <Button asChild variant="outline" size="sm" className="flex-1 hover:bg-emerald-50 hover:border-emerald-300 transition-colors">
+                                <Link href={`/dashboard/client/appointments/${appointment.id}`}><Edit className="w-4 h-4 mr-2" />Gestionar</Link>
+                            </Button>
+                        )}
+                        {appointment.status === 'completed' && !appointment.has_review && (
+                            <Button variant="outline" size="sm" onClick={() => { setSelectedAppointment(appointment); setShowReviewModal(true); }} className="flex-1 border-amber-300 text-amber-700 hover:bg-amber-50">
+                                <Star className="w-4 h-4 mr-2" />Reseña
+                            </Button>
+                        )}
+                        {appointment.status === 'completed' && appointment.has_review && (
+                            <Button variant="outline" size="sm" disabled className="flex-1">
+                                <CheckCircle className="w-4 h-4 mr-2" />Reseñado
+                            </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>

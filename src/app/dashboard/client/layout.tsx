@@ -115,7 +115,11 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
               </div>
             </div>
           </Link>
-          <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden p-1.5 hover:bg-gray-700 rounded-lg transition-colors absolute right-4">
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="lg:hidden p-1.5 hover:bg-gray-700 rounded-lg transition-colors absolute right-4"
+            aria-label="Cerrar menú de navegación"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -172,7 +176,12 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'U'}
                 </AvatarFallback>
               </Avatar>
-              <button onClick={handleSignOut} className="w-10 h-10 flex items-center justify-center hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md group" title="Cerrar sesión">
+              <button
+                onClick={handleSignOut}
+                className="w-10 h-10 flex items-center justify-center hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md group"
+                title="Cerrar sesión"
+                aria-label="Cerrar sesión"
+              >
                 <LogOut className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors duration-300" />
               </button>
             </div>
@@ -184,7 +193,11 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
           <div className="flex items-center space-x-4">
-            <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+              aria-label="Abrir menú de navegación"
+            >
               <Menu className="w-6 h-6 text-gray-600" />
             </button>
             <h1 className="text-xl font-bold text-gray-900">

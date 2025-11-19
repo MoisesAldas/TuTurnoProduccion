@@ -26,6 +26,23 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({})
   const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasInitializedBoundsRef = useRef(false);
+
+  // Use refs to store latest callback functions to avoid recreating markers
+  const setHoveredBusinessIdRef = useRef(setHoveredBusinessId);
+  const onMarkerClickRef = useRef(onMarkerClick);
+
+  // Store previous business IDs to detect real changes
+  const prevBusinessIdsRef = useRef<string>('');
+
+  // Keep refs up to date
+  useEffect(() => {
+    setHoveredBusinessIdRef.current = setHoveredBusinessId;
+  }, [setHoveredBusinessId]);
+
+  useEffect(() => {
+    onMarkerClickRef.current = onMarkerClick;
+  }, [onMarkerClick]);
 
   // Effect for initializing the map
   useEffect(() => {
@@ -59,22 +76,64 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
   useEffect(() => {
     if (!map.current) return;
 
-    Object.values(markersRef.current).forEach(marker => marker.remove());
-    markersRef.current = {};
+    // Get current marker IDs and create a hash to detect real changes
+    const currentMarkerIds = Object.keys(markersRef.current);
+    const newBusinessIds = businesses
+      .filter(b => b.latitude && b.longitude)
+      .map(b => b.id);
 
+    // Create a sorted string hash of business IDs to detect if list actually changed
+    const newBusinessIdsHash = newBusinessIds.sort().join(',');
+
+    // If the business list hasn't actually changed, skip everything
+    if (prevBusinessIdsRef.current === newBusinessIdsHash) {
+      console.log('🛑 MarketplaceMap: Business list unchanged, skipping marker recreation');
+      return;
+    }
+
+    console.log('🔄 MarketplaceMap: Business list changed, updating markers');
+    // Update the previous hash
+    prevBusinessIdsRef.current = newBusinessIdsHash;
+
+    // Remove markers that are no longer in the business list
+    currentMarkerIds.forEach(id => {
+      if (!newBusinessIds.includes(id)) {
+        markersRef.current[id].remove();
+        delete markersRef.current[id];
+      }
+    });
+
+    // Only fit bounds if markers were actually added or removed
+    let boundsChanged = false;
     const bounds = new mapboxgl.LngLatBounds();
 
     businesses.forEach(business => {
       if (business.latitude && business.longitude) {
+        // Skip if marker already exists
+        if (markersRef.current[business.id]) {
+          bounds.extend([business.longitude, business.latitude]);
+          return;
+        }
+
+        boundsChanged = true;
+
         const el = document.createElement('div');
         el.className = 'marker';
-        el.innerHTML = `
+        el.style.cursor = 'pointer';
+
+        // Create an inner wrapper for scaling to avoid interfering with Mapbox positioning
+        const innerWrapper = document.createElement('div');
+        innerWrapper.className = 'marker-inner';
+        innerWrapper.style.transformOrigin = 'center bottom';
+        innerWrapper.style.transition = 'transform 0.2s ease-out';
+        innerWrapper.innerHTML = `
           <svg viewBox="0 0 24 24" width="32" height="32" fill="#059669" stroke="#FFFFFF" stroke-width="1.5">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3" fill="#FFFFFF"></circle>
           </svg>
         `;
-        
+        el.appendChild(innerWrapper);
+
         const marker = new mapboxgl.Marker(el)
           .setLngLat([business.longitude, business.latitude])
           .setPopup(
@@ -122,7 +181,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
             if (popup && popup.isOpen()) {
               popup.remove();
             }
-            setHoveredBusinessId(null);
+            setHoveredBusinessIdRef.current(null);
           }, 3000);
         };
 
@@ -136,7 +195,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
 
         // Hover: abrir popup y resaltar
         markerElement.addEventListener('mouseenter', () => {
-          setHoveredBusinessId(business.id);
+          setHoveredBusinessIdRef.current(business.id);
           if (popup && !popup.isOpen()) {
             marker.togglePopup();
           }
@@ -161,7 +220,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
 
         // Click: scroll a la card (el popup ya está abierto por hover)
         markerElement.addEventListener('click', () => {
-          onMarkerClick(business.id);
+          onMarkerClickRef.current(business.id);
         });
 
         markersRef.current[business.id] = marker;
@@ -169,24 +228,32 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
       }
     });
 
-    if (!bounds.isEmpty()) {
+    // Only fit bounds if markers were actually added or removed AND it's the first time
+    if (boundsChanged && !bounds.isEmpty() && !hasInitializedBoundsRef.current) {
+      hasInitializedBoundsRef.current = true;
       map.current.fitBounds(bounds, {
         padding: 50,
         maxZoom: 15,
         duration: 1000
       });
     }
-  }, [businesses, setHoveredBusinessId, onMarkerClick]);
+  }, [businesses]); // Only depend on businesses, not on callback functions
 
   // Effect for highlighting marker based on hover state
   useEffect(() => {
+    console.log('🎯 MarketplaceMap: Hover state changed to:', hoveredBusinessId);
     Object.entries(markersRef.current).forEach(([id, marker]) => {
       const element = marker.getElement();
+      const innerElement = element.querySelector('.marker-inner') as HTMLElement;
+
+      if (!innerElement) return;
+
       if (id === hoveredBusinessId) {
-        element.style.transform = 'scale(1.5)';
+        // Scale the inner wrapper, not the outer container (avoids Mapbox positioning conflicts)
+        innerElement.style.transform = 'scale(1.3)';
         element.style.zIndex = '10';
       } else {
-        element.style.transform = 'scale(1)';
+        innerElement.style.transform = 'scale(1)';
         element.style.zIndex = '1';
       }
     });

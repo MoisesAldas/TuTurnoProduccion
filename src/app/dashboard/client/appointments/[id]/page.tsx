@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -17,12 +16,12 @@ import {
 } from '@/components/ui/tooltip'
 import {
   ArrowLeft, Calendar, Clock, MapPin, Phone, User,
-  CheckCircle, AlertCircle, Edit, CalendarIcon, Trash2, Info, Ban
+  CheckCircle, AlertCircle, Edit, CalendarIcon, Trash2, Ban, Loader2, XCircle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
-import { parseDateString, toDateString, formatSpanishDate } from '@/lib/dateUtils'
+import { parseDateString, formatSpanishDate } from '@/lib/dateUtils'
 import Link from 'next/link'
 
 interface Appointment {
@@ -783,227 +782,385 @@ export default function ManageAppointmentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/20">
+      {/* Header Mejorado */}
+      <header className="bg-white border-b border-gray-200/80 sticky top-0 z-10 shadow-sm backdrop-blur-sm bg-white/95">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-3">
               <Link href="/dashboard/client">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver al Dashboard
+                <Button variant="ghost" size="sm" className="hover:bg-emerald-50 hover:text-emerald-700 transition-all duration-200 -ml-2">
+                  <ArrowLeft className="w-4 h-4 mr-1.5" />
+                  Volver
                 </Button>
               </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
+              <div className="h-6 w-px bg-gray-200"></div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">
-                  Gestionar Cita
+                <h1 className="text-lg font-bold text-gray-900 leading-tight">
+                  Detalle de Cita
                 </h1>
+                <p className="text-xs text-gray-500 leading-tight">{appointment.business.name}</p>
               </div>
             </div>
+            <Badge
+              variant="outline"
+              className={
+                appointment.status === 'confirmed'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold px-3 py-1'
+                  : appointment.status === 'pending'
+                  ? 'bg-yellow-50 text-yellow-700 border-yellow-300 font-semibold px-3 py-1'
+                  : 'bg-gray-100 text-gray-700 border-gray-300 font-semibold px-3 py-1'
+              }
+            >
+              {appointment.status === 'confirmed' ? '✓ Confirmada' :
+               appointment.status === 'pending' ? '⏳ Pendiente' : appointment.status}
+            </Badge>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Current Appointment Info */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Información de la Cita
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Negocio</p>
-                  <p className="text-lg font-semibold">{appointment.business.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Servicios ({appointment.appointment_services.length})
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {appointment.appointment_services.map((appService, index) => (
-                      <Badge
-                        key={index}
-                        className="bg-green-100 text-green-700 hover:bg-green-200"
-                      >
-                        {appService.service.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Empleado</p>
-                  <p className="text-base">{appointment.employee.first_name} {appointment.employee.last_name}</p>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
+        {/* Hero Card - Información Principal */}
+        <Card className="overflow-hidden shadow-lg border-0">
+          <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 px-4 py-4 text-white">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h2 className="text-xl font-bold mb-2">{appointment.business.name}</h2>
+                <div className="flex flex-wrap gap-1.5">
+                  {appointment.appointment_services.map((appService, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="bg-emerald-700/30 text-white border-emerald-400/40 hover:bg-emerald-700/40 backdrop-blur-sm px-2.5 py-0.5 text-xs font-medium"
+                    >
+                      {appService.service.name}
+                    </Badge>
+                  ))}
                 </div>
               </div>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Fecha</p>
-                  <p className="text-base">{formatDate(appointment.appointment_date)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Hora</p>
-                  <p className="text-base">{appointment.start_time} - {appointment.end_time}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Precio</p>
-                  <p className="text-lg font-semibold text-green-600">{formatPrice(appointment.total_price)}</p>
-                </div>
+              <div className="text-right ml-4">
+                <p className="text-xs text-emerald-100 font-medium mb-0.5">Total</p>
+                <p className="text-3xl font-bold tracking-tight">{formatPrice(appointment.total_price)}</p>
               </div>
             </div>
+          </div>
+
+          <CardContent className="p-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {/* Fecha */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg p-3 border border-blue-200/60 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Calendar className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-blue-700 font-semibold uppercase tracking-wide mb-0.5">Fecha</p>
+                    <p className="text-xs font-bold text-gray-900 leading-tight truncate">{formatDate(appointment.appointment_date).split(',')[0]}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hora */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg p-3 border border-purple-200/60 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Clock className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-purple-700 font-semibold uppercase tracking-wide mb-0.5">Hora</p>
+                    <p className="text-xs font-bold text-gray-900 leading-tight">{appointment.start_time.slice(0,5)} - {appointment.end_time.slice(0,5)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profesional */}
+              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-lg p-3 border border-emerald-200/60 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-emerald-700 font-semibold uppercase tracking-wide mb-0.5">Profesional</p>
+                    <p className="text-xs font-bold text-gray-900 leading-tight truncate">{appointment.employee.first_name} {appointment.employee.last_name}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ubicación */}
+              {appointment.business.address && (
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-lg p-3 border border-orange-200/60 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md">
+                      <MapPin className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] text-orange-700 font-semibold uppercase tracking-wide mb-0.5">Ubicación</p>
+                      <p className="text-xs font-bold text-gray-900 leading-tight truncate" title={appointment.business.address}>{appointment.business.address}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Contacto del Negocio */}
+            {appointment.business.phone && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <div className="w-7 h-7 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-gray-900 block text-[10px] uppercase tracking-wide">Contacto</span>
+                      <span className="text-gray-700 font-medium text-xs">{appointment.business.phone}</span>
+                    </div>
+                  </div>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 transition-all shadow-sm h-8 text-xs"
+                  >
+                    <a href={`tel:${appointment.business.phone}`}>
+                      <Phone className="w-3.5 h-3.5 mr-1.5" />
+                      Llamar
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Cancellation Policy Alert */}
-        {step === 'options' && appointment.business.cancellation_policy_text && (
-          <Alert className="bg-amber-50 border-amber-200 mb-6">
-            <AlertCircle className="h-4 w-4 text-amber-600" />
-            <AlertTitle className="text-amber-900 font-semibold">Política de cancelación</AlertTitle>
-            <AlertDescription className="text-amber-700 text-sm">
-              {appointment.business.cancellation_policy_text}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Actions */}
+        {/* Alert Inteligente - Muestra el estado más relevante */}
         {step === 'options' && (
           <>
-            {/* Info Alert - Hours Until Appointment */}
-            <Alert className="bg-blue-50 border-blue-200 mb-6">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertTitle className="text-blue-900 font-semibold">Tiempo restante</AlertTitle>
-              <AlertDescription className="text-blue-700 text-sm">
-                Tu cita es en <strong>{Math.floor(getHoursUntilAppointment())} horas</strong>.
-                {appointment.business.cancellation_policy_hours > 0 && (
-                  <> Puedes cancelar o reagendar con al menos <strong>{appointment.business.cancellation_policy_hours} horas</strong> de anticipación.</>
-                )}
-              </AlertDescription>
-            </Alert>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Reschedule Card */}
-              {appointment.business.allow_client_reschedule ? (
-                canRescheduleAppointment() ? (
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleStartModification}>
-                    <CardContent className="p-8 text-center">
-                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Edit className="w-8 h-8 text-blue-600" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Modificar Cita</h3>
-                      <p className="text-gray-600">Cambiar empleado, fecha o hora de la cita</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Card className="opacity-50 cursor-not-allowed">
-                          <CardContent className="p-8 text-center">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                              <Ban className="w-8 h-8 text-gray-400" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Modificar Cita</h3>
-                            <p className="text-gray-600">No disponible</p>
-                          </CardContent>
-                        </Card>
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
-                        <p className="text-sm">
-                          No puedes modificar esta cita porque faltan menos de {appointment.business.cancellation_policy_hours} horas.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )
-              ) : (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Card className="opacity-50 cursor-not-allowed">
-                        <CardContent className="p-8 text-center">
-                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Ban className="w-8 h-8 text-gray-400" />
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Modificar Cita</h3>
-                          <p className="text-gray-600">No permitido</p>
-                        </CardContent>
-                      </Card>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
-                      <p className="text-sm">
-                        El negocio no permite que los clientes modifiquen citas. Contacta directamente al negocio.
+            {/* Alerta principal - Depende si puede o no cancelar/modificar */}
+            {!canCancelAppointment() || !canRescheduleAppointment() ? (
+              <Alert className="bg-white border-2 border-red-300 shadow-lg rounded-lg overflow-hidden">
+                <div className="flex items-start gap-3 p-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <AlertCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <AlertTitle className="text-red-900 font-bold text-sm mb-1.5 leading-tight">Ventana de modificación cerrada</AlertTitle>
+                    <AlertDescription className="space-y-2">
+                      <p className="text-xs text-gray-800 leading-relaxed">
+                        Tu cita es en <span className="font-bold text-red-600">{Math.floor(getHoursUntilAppointment())} horas</span>, pero necesitas al menos <span className="font-bold text-red-600">{appointment.business.cancellation_policy_hours} horas</span> de anticipación para cancelar o modificar.
                       </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-
-              {/* Cancel Card */}
-              {appointment.business.allow_client_cancellation ? (
-                canCancelAppointment() ? (
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleCancelAppointment}>
-                    <CardContent className="p-8 text-center">
-                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Trash2 className="w-8 h-8 text-red-600" />
+                      <div className="flex items-start gap-2 p-2 bg-red-50 rounded-lg border border-red-200">
+                        <Phone className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-red-600" />
+                        <p className="text-xs text-gray-700 leading-relaxed">
+                          Si necesitas hacer cambios, contacta directamente al negocio al <a href={`tel:${appointment.business.phone}`} className="font-semibold text-red-600 hover:text-red-700 hover:underline">{appointment.business.phone || 'teléfono del negocio'}</a>.
+                        </p>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancelar Cita</h3>
-                      <p className="text-gray-600">Cancelar esta cita permanentemente</p>
-                      {cancelling && (
-                        <p className="text-sm text-red-600 mt-2">Cancelando...</p>
+                    </AlertDescription>
+                  </div>
+                </div>
+              </Alert>
+            ) : (
+              <Alert className="bg-white border-2 border-emerald-300 shadow-lg rounded-lg overflow-hidden">
+                <div className="flex items-start gap-3 p-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <CheckCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <AlertTitle className="text-emerald-900 font-bold text-sm mb-1.5 leading-tight">Puedes gestionar tu cita</AlertTitle>
+                    <AlertDescription className="space-y-2">
+                      <p className="text-xs text-gray-800 leading-relaxed">
+                        Tu cita es en <span className="font-bold text-emerald-600">{Math.floor(getHoursUntilAppointment())} horas</span>. Aún puedes cancelar o modificar con al menos <span className="font-bold text-emerald-600">{appointment.business.cancellation_policy_hours} horas</span> de anticipación.
+                      </p>
+                      {appointment.business.cancellation_policy_text && (
+                        <div className="flex items-start gap-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-emerald-600" />
+                          <p className="text-xs text-gray-700 leading-relaxed">
+                            <span className="font-semibold text-emerald-900">Política:</span> {appointment.business.cancellation_policy_text}
+                          </p>
+                        </div>
                       )}
-                    </CardContent>
-                  </Card>
+                    </AlertDescription>
+                  </div>
+                </div>
+              </Alert>
+            )}
+          </>
+        )}
+
+        {/* Actions - Rediseñadas */}
+        {step === 'options' && (
+          <>
+            <Card className="shadow-md">
+              <CardHeader className="pb-3 pt-4 px-4">
+                <CardTitle className="text-lg font-bold text-gray-900">¿Qué deseas hacer?</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
+                {/* Modificar Card */}
+                {appointment.business.allow_client_reschedule ? (
+                  canRescheduleAppointment() ? (
+                    <button
+                      type="button"
+                      onClick={handleStartModification}
+                      className="group relative overflow-hidden rounded-xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 via-emerald-50/80 to-teal-50 p-4 text-left transition-all duration-300 hover:border-emerald-400 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-11 h-11 bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                          <Edit className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-emerald-700 transition-colors">Modificar Cita</h3>
+                          <p className="text-xs text-gray-600 leading-snug mb-2">Cambia empleado, fecha u hora</p>
+                          <div className="inline-flex items-center gap-1 text-xs text-emerald-700 font-semibold">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            <span>Disponible</span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative overflow-hidden rounded-xl border-2 border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100/50 p-4 opacity-70 cursor-not-allowed">
+                            <div className="flex items-start gap-3">
+                              <div className="w-11 h-11 bg-gray-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                <Ban className="w-5 h-5 text-gray-100" />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="text-base font-bold text-gray-600 mb-1">Modificar Cita</h3>
+                                <p className="text-xs text-gray-500 leading-snug mb-2">No disponible</p>
+                                <div className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold">
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span>Tiempo insuficiente</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 text-white p-2.5 max-w-xs rounded-lg shadow-xl">
+                          <p className="text-xs leading-relaxed">
+                            No puedes modificar esta cita porque faltan menos de {appointment.business.cancellation_policy_hours} horas.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
                 ) : (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Card className="opacity-50 cursor-not-allowed">
-                          <CardContent className="p-8 text-center">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                              <Ban className="w-8 h-8 text-gray-400" />
+                        <div className="relative overflow-hidden rounded-xl border-2 border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100/50 p-4 opacity-70 cursor-not-allowed">
+                          <div className="flex items-start gap-3">
+                            <div className="w-11 h-11 bg-gray-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                              <Ban className="w-5 h-5 text-gray-100" />
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancelar Cita</h3>
-                            <p className="text-gray-600">No disponible</p>
-                          </CardContent>
-                        </Card>
+                            <div className="flex-1">
+                              <h3 className="text-base font-bold text-gray-600 mb-1">Modificar Cita</h3>
+                              <p className="text-xs text-gray-500 leading-snug mb-2">No permitido por el negocio</p>
+                              <div className="inline-flex items-center gap-1 text-xs text-gray-600 font-semibold">
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>Contacta al negocio</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
-                        <p className="text-sm">
-                          No puedes cancelar esta cita porque faltan menos de {appointment.business.cancellation_policy_hours} horas.
+                      <TooltipContent className="bg-gray-900 text-white p-2.5 max-w-xs rounded-lg shadow-xl">
+                        <p className="text-xs leading-relaxed">
+                          El negocio no permite que los clientes modifiquen citas. Contacta directamente al negocio.
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                )
-              ) : (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Card className="opacity-50 cursor-not-allowed">
-                        <CardContent className="p-8 text-center">
-                          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Ban className="w-8 h-8 text-gray-400" />
+                )}
+
+                {/* Cancelar Card */}
+                {appointment.business.allow_client_cancellation ? (
+                  canCancelAppointment() ? (
+                    <button
+                      type="button"
+                      onClick={handleCancelAppointment}
+                      disabled={cancelling}
+                      className="group relative overflow-hidden rounded-xl border-2 border-red-200 bg-gradient-to-br from-red-50 via-red-50/80 to-rose-50 p-4 text-left transition-all duration-300 hover:border-red-400 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-11 h-11 bg-gradient-to-br from-red-500 via-red-500 to-rose-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300">
+                          <Trash2 className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-red-700 transition-colors">Cancelar Cita</h3>
+                          <p className="text-xs text-gray-600 leading-snug mb-2">Cancelar permanentemente</p>
+                          {cancelling ? (
+                            <div className="inline-flex items-center gap-1 text-xs text-red-700 font-semibold">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Cancelando...</span>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-1 text-xs text-red-700 font-semibold">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              <span>Disponible</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ) : (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative overflow-hidden rounded-xl border-2 border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100/50 p-4 opacity-70 cursor-not-allowed">
+                            <div className="flex items-start gap-3">
+                              <div className="w-11 h-11 bg-gray-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                <Ban className="w-5 h-5 text-gray-100" />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="text-base font-bold text-gray-600 mb-1">Cancelar Cita</h3>
+                                <p className="text-xs text-gray-500 leading-snug mb-2">No disponible</p>
+                                <div className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold">
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span>Tiempo insuficiente</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Cancelar Cita</h3>
-                          <p className="text-gray-600">No permitido</p>
-                        </CardContent>
-                      </Card>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-gray-900 text-white p-3 max-w-xs">
-                      <p className="text-sm">
-                        El negocio no permite que los clientes cancelen citas. Contacta directamente al negocio.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-900 text-white p-2.5 max-w-xs rounded-lg shadow-xl">
+                          <p className="text-xs leading-relaxed">
+                            No puedes cancelar esta cita porque faltan menos de {appointment.business.cancellation_policy_hours} horas.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="relative overflow-hidden rounded-xl border-2 border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100/50 p-4 opacity-70 cursor-not-allowed">
+                          <div className="flex items-start gap-3">
+                            <div className="w-11 h-11 bg-gray-400 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                              <Ban className="w-5 h-5 text-gray-100" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-base font-bold text-gray-600 mb-1">Cancelar Cita</h3>
+                              <p className="text-xs text-gray-500 leading-snug mb-2">No permitido por el negocio</p>
+                              <div className="inline-flex items-center gap-1 text-xs text-gray-600 font-semibold">
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>Contacta al negocio</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-gray-900 text-white p-2.5 max-w-xs rounded-lg shadow-xl">
+                        <p className="text-xs leading-relaxed">
+                          El negocio no permite que los clientes cancelen citas. Contacta directamente al negocio.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </CardContent>
+            </Card>
           </>
         )}
 
@@ -1357,7 +1514,14 @@ export default function ManageAppointmentPage() {
                   onClick={handleSaveChanges}
                   disabled={saving || !selectedEmployee || !selectedDate || !selectedTime}
                 >
-                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Guardar Cambios'
+                  )}
                 </Button>
               </div>
             </CardContent>

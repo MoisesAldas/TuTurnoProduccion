@@ -7,7 +7,8 @@
       "Bash(for file in complete-profile/route.ts create-user/route.ts)",
       "Bash(do echo \"Fixing: $file\")",
       "Bash(done)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

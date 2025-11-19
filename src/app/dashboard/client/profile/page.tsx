@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Edit, Save, X, Camera, User, Mail, Phone,
   Calendar, Shield, Loader2, CheckCircle
@@ -16,6 +17,7 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
+import { typography, patterns, colors } from '@/lib/design-tokens'
 import ClientImageCropper from '@/components/ClientImageCropper'
 import Link from 'next/link'
 
@@ -46,6 +48,12 @@ export default function ClientProfilePage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    phone: ''
+  })
+
+  const [errors, setErrors] = useState({
     first_name: '',
     last_name: '',
     phone: ''
@@ -117,8 +125,55 @@ export default function ClientProfilePage() {
     }
   }
 
+  const validateForm = () => {
+    const newErrors = { first_name: '', last_name: '', phone: '' }
+    let isValid = true
+
+    // Validar nombre (requerido, mínimo 2 caracteres)
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = 'El nombre es requerido'
+      isValid = false
+    } else if (formData.first_name.trim().length < 2) {
+      newErrors.first_name = 'El nombre debe tener al menos 2 caracteres'
+      isValid = false
+    }
+
+    // Validar apellido (requerido, mínimo 2 caracteres)
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = 'El apellido es requerido'
+      isValid = false
+    } else if (formData.last_name.trim().length < 2) {
+      newErrors.last_name = 'El apellido debe tener al menos 2 caracteres'
+      isValid = false
+    }
+
+    // Validar teléfono (opcional, pero si tiene valor debe ser válido)
+    if (formData.phone.trim()) {
+      // Formato ecuatoriano: +593 o 09, seguido de 8-9 dígitos
+      const phoneRegex = /^(\+593|593|0)?[0-9]{9,10}$/
+      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
+        newErrors.phone = 'Ingresa un número de teléfono válido (ej: 0999999999)'
+        isValid = false
+      }
+    }
+
+    setErrors(newErrors)
+    return isValid
+  }
+
   const handleSave = async () => {
     if (!authState.user || !profile) return
+
+    // Validar antes de guardar
+    if (!validateForm()) {
+      toast({
+        variant: 'destructive',
+        title: 'Errores en el formulario',
+        description: 'Por favor corrige los errores antes de guardar.',
+      })
+      return
+    }
+
     try {
       setSaving(true)
       const { error } = await supabase
@@ -127,16 +182,25 @@ export default function ClientProfilePage() {
         .eq('id', authState.user.id)
       if (error) {
         console.error('Error updating profile:', error)
-        alert('Error al actualizar el perfil')
+        toast({
+          variant: 'destructive',
+          title: 'Error al actualizar',
+          description: 'No pudimos guardar los cambios. Por favor intenta nuevamente.',
+        })
         return
       }
       setProfile(prev => prev ? { ...prev, first_name: formData.first_name, last_name: formData.last_name, phone: formData.phone, updated_at: new Date().toISOString() } : null)
       setIsEditing(false)
+      setErrors({ first_name: '', last_name: '', phone: '' })
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (error) {
       console.error('Error updating profile:', error)
-      alert('Error al actualizar el perfil')
+      toast({
+        variant: 'destructive',
+        title: 'Error inesperado',
+        description: 'Ocurrió un error al actualizar tu perfil. Por favor intenta nuevamente.',
+      })
     } finally {
       setSaving(false)
     }
@@ -145,6 +209,7 @@ export default function ClientProfilePage() {
   const handleCancel = () => {
     if (!profile) return
     setFormData({ first_name: profile.first_name || '', last_name: profile.last_name || '', phone: profile.phone || '' })
+    setErrors({ first_name: '', last_name: '', phone: '' })
     setIsEditing(false)
   }
 
@@ -270,10 +335,42 @@ export default function ClientProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando perfil...</p>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Profile Header Skeleton */}
+          <Card className="mb-8">
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
+                <Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full" />
+                <div className="flex-grow space-y-3">
+                  <Skeleton className="h-8 w-64 mx-auto sm:mx-0" />
+                  <Skeleton className="h-5 w-48 mx-auto sm:mx-0" />
+                  <div className="flex gap-4 justify-center sm:justify-start">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+                <Skeleton className="h-12 w-40" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profile Info Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-7 w-48" />
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     )
@@ -313,6 +410,7 @@ export default function ClientProfilePage() {
                   size="sm"
                   onClick={handleAvatarClick}
                   className="absolute bottom-0 right-0 rounded-full h-10 w-10 p-0 bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+                  aria-label="Cambiar foto de perfil"
                 >
                   <Camera className="h-4 w-4" />
                 </Button>
@@ -325,11 +423,11 @@ export default function ClientProfilePage() {
                 />
               </div>
               <div className="flex-grow">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                <h2 className={`${typography.h1} mb-2`}>
                   {profile.first_name && profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.first_name ? profile.first_name : 'Mi Perfil'}
                 </h2>
-                <p className="text-gray-500 mb-4">{profile.email}</p>
-                <div className="flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-2 text-sm text-gray-500">
+                <p className={typography.bodySmall + ' mb-4'}>{profile.email}</p>
+                <div className={`flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-2 ${typography.bodySmall}`}>
                   <div className="flex items-center"><Calendar className="w-4 h-4 mr-1.5" />Miembro desde {formatDate(profile.created_at)}</div>
                   <div className="flex items-center"><Shield className="w-4 h-4 mr-1.5" />Cuenta verificada</div>
                 </div>
@@ -348,7 +446,7 @@ export default function ClientProfilePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">Información Personal</CardTitle>
+              <CardTitle className={typography.h3}>Información Personal</CardTitle>
               {isEditing && (
                 <div className="flex space-x-2">
                   <Button variant="outline" onClick={handleCancel} disabled={saving}><X className="w-4 h-4 mr-2" />Cancelar</Button>
@@ -362,29 +460,77 @@ export default function ClientProfilePage() {
           <CardContent className="space-y-6 pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="font-medium">Nombre</Label>
+                <Label className={typography.label}>Nombre</Label>
                 {isEditing ? (
-                  <Input value={formData.first_name} onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))} placeholder="Tu nombre" />
+                  <>
+                    <Input
+                      className={errors.first_name ? patterns.input.error : patterns.input.DEFAULT}
+                      value={formData.first_name}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, first_name: e.target.value }))
+                        if (errors.first_name) setErrors(prev => ({ ...prev, first_name: '' }))
+                      }}
+                      placeholder="Tu nombre"
+                    />
+                    {errors.first_name && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <XCircle className="w-4 h-4" />
+                        {errors.first_name}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <p className="p-3 bg-slate-50 rounded-md border text-gray-800">{profile.first_name || 'No especificado'}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="font-medium">Apellido</Label>
+                <Label className={typography.label}>Apellido</Label>
                 {isEditing ? (
-                  <Input value={formData.last_name} onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))} placeholder="Tu apellido" />
+                  <>
+                    <Input
+                      className={errors.last_name ? patterns.input.error : patterns.input.DEFAULT}
+                      value={formData.last_name}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, last_name: e.target.value }))
+                        if (errors.last_name) setErrors(prev => ({ ...prev, last_name: '' }))
+                      }}
+                      placeholder="Tu apellido"
+                    />
+                    {errors.last_name && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <XCircle className="w-4 h-4" />
+                        {errors.last_name}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <p className="p-3 bg-slate-50 rounded-md border text-gray-800">{profile.last_name || 'No especificado'}</p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="font-medium">Email</Label>
+                <Label className={typography.label}>Email</Label>
                 <p className="p-3 bg-slate-100 rounded-md border text-gray-500 cursor-not-allowed">{profile.email}</p>
               </div>
               <div className="space-y-2">
-                <Label className="font-medium">Teléfono</Label>
+                <Label className={typography.label}>Teléfono</Label>
                 {isEditing ? (
-                  <Input value={formData.phone} onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} placeholder="+593 99 999 9999" />
+                  <>
+                    <Input
+                      className={errors.phone ? patterns.input.error : patterns.input.DEFAULT}
+                      value={formData.phone}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, phone: e.target.value }))
+                        if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }))
+                      }}
+                      placeholder="+593 99 999 9999"
+                    />
+                    {errors.phone && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <XCircle className="w-4 h-4" />
+                        {errors.phone}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <p className="p-3 bg-slate-50 rounded-md border text-gray-800">{profile.phone || 'No especificado'}</p>
                 )}

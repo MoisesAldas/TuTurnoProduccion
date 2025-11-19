@@ -64,6 +64,15 @@ export default function MarketplacePage() {
   const [clickedBusinessId, setClickedBusinessId] = useState<string | null>(null)
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
+  // Memoize callbacks to prevent unnecessary re-renders
+  const handleSetHoveredBusinessId = useCallback((id: string | null) => {
+    setHoveredBusinessId(id)
+  }, [])
+
+  const handleMarkerClick = useCallback((id: string) => {
+    setClickedBusinessId(id)
+  }, [])
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -294,11 +303,11 @@ export default function MarketplacePage() {
             </div>
 
             <div className="hidden lg:block lg:col-span-3 relative">
-                <MarketplaceMap 
-                    businesses={filteredBusinesses} 
+                <MarketplaceMap
+                    businesses={filteredBusinesses}
                     hoveredBusinessId={hoveredBusinessId}
-                    setHoveredBusinessId={setHoveredBusinessId}
-                    onMarkerClick={setClickedBusinessId}
+                    setHoveredBusinessId={handleSetHoveredBusinessId}
+                    onMarkerClick={handleMarkerClick}
                 />
             </div>
         </div>
@@ -328,8 +337,8 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
 
     return (
       <Link href={`/business/${business.id}`}>
-        <Card 
-            className={`group transition-all duration-300 cursor-pointer overflow-hidden h-full flex flex-col ${isHovered ? 'shadow-2xl border-emerald-500 scale-[1.02]' : 'hover:shadow-xl hover:border-emerald-300'}`}
+        <Card
+            className={`group transition-all duration-200 cursor-pointer overflow-hidden h-full flex flex-col ${isHovered ? 'shadow-2xl border-emerald-500 scale-[1.02]' : 'hover:shadow-xl hover:border-emerald-300'}`}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >

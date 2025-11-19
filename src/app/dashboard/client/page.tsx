@@ -6,12 +6,15 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Calendar, Clock, MapPin, User, Star,
   Plus, CheckCircle, XCircle, AlertCircle, History, Edit, MoreVertical
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
 
@@ -64,6 +67,7 @@ export default function ClientDashboard() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
   const { authState } = useAuth()
+  const { toast } = useToast()
   const supabase = createClient()
 
   useEffect(() => {
@@ -146,133 +150,440 @@ export default function ClientDashboard() {
     .filter(apt => new Date(`${apt.appointment_date}T${apt.start_time}`) > new Date() && ['pending', 'confirmed'].includes(apt.status))
     .sort((a, b) => new Date(`${a.appointment_date}T${a.start_time}`).getTime() - new Date(`${b.appointment_date}T${b.start_time}`).getTime())[0]
 
-  const recentActivity = appointments.slice(0, 3)
+  const upcomingAppointments = appointments
+    .filter(apt => new Date(`${apt.appointment_date}T${apt.start_time}`) > new Date() && ['pending', 'confirmed'].includes(apt.status))
+    .sort((a, b) => new Date(`${a.appointment_date}T${a.start_time}`).getTime() - new Date(`${b.appointment_date}T${b.start_time}`).getTime())
+    .slice(0, 3)
+
+  const recentActivity = appointments.slice(0, 5)
+
+  const handleReviewSubmitted = () => {
+    fetchAppointments()
+    toast({
+      title: 'Reseña enviada',
+      description: 'Gracias por compartir tu experiencia.',
+    })
+  }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando tu dashboard...</p>
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+        {/* Header Skeleton */}
+        <div>
+          <Skeleton className="h-10 w-64 mb-2" />
+          <Skeleton className="h-6 w-96" />
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-12 rounded-lg" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Main Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-48 w-full" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-8">
+            <Skeleton className="h-64 w-full rounded-lg" />
+            <Skeleton className="h-32 w-full rounded-lg" />
+          </div>
         </div>
       </div>
     )
   }
 
-  function handleReviewSubmitted(): void {
-    throw new Error('Function not implemented.')
-  }
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">¡Hola, {authState.user?.first_name || 'Cliente'}! 👋</h1>
+        <h1 className="text-3xl font-bold text-gray-900">¡Hola, {authState.user?.first_name || 'Cliente'}!</h1>
         <p className="text-lg text-gray-600 mt-1">Aquí tienes un resumen de tu actividad en TuTurno.</p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard icon={Calendar} title="Próximas Citas" value={stats.upcoming} color="blue" />
-        <StatCard icon={CheckCircle} title="Citas Completadas" value={stats.completed} color="green" />
-        <StatCard icon={History} title="Total Gastado" value={formatPrice(stats.totalSpent)} color="purple" />
-      </div>
+      {/* Tabs for Progressive Disclosure */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            Vista General
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            Estadísticas
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            Actividad
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Next Appointment */}
-          {nextAppointment ? (
-            <Card className="border-t-4 border-t-emerald-500 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Tu Próxima Cita</span>
-                  <Badge className={getStatusInfo(nextAppointment.status).color}>{getStatusInfo(nextAppointment.status).label}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 bg-slate-50 rounded-lg">
-                  <h3 className="text-xl font-bold text-emerald-700">{nextAppointment.business?.name}</h3>
-                  <p className="text-md text-gray-600">{nextAppointment.appointment_services.map(s => s.service?.name).join(', ')}</p>
+        {/* Tab 1: Overview - Dashboard Rico */}
+        <TabsContent value="overview" className="space-y-6 mt-6">
+          {/* Quick Stats Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-all duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-blue-600 font-medium">Próximas</p>
+                    <p className="text-3xl font-bold text-blue-700">{stats.upcoming}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-white" />
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center"><Calendar className="w-4 h-4 mr-2 text-gray-400" /> {formatDate(nextAppointment.appointment_date)}</div>
-                  <div className="flex items-center"><Clock className="w-4 h-4 mr-2 text-gray-400" /> {nextAppointment.start_time.slice(0,5)}</div>
-                  <div className="flex items-center"><User className="w-4 h-4 mr-2 text-gray-400" /> {nextAppointment.employee?.first_name} {nextAppointment.employee?.last_name}</div>
-                  <div className="flex items-center"><MapPin className="w-4 h-4 mr-2 text-gray-400" /> {nextAppointment.business?.address}</div>
-                </div>
-                <Button asChild variant="outline" className="w-full md:w-auto">
-                  <Link href={`/dashboard/client/appointments/${nextAppointment.id}`}><Edit className="w-4 h-4 mr-2"/>Gestionar Cita</Link>
-                </Button>
               </CardContent>
             </Card>
-          ) : (
-             <Card className="border-t-4 border-t-emerald-500 shadow-lg">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-8 h-8 text-green-600" />
+
+            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-all duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-green-600 font-medium">Completadas</p>
+                    <p className="text-3xl font-bold text-green-700">{stats.completed}</p>
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes citas próximas</h3>
-                  <p className="text-gray-500 mb-6">Es un buen momento para reservar tu próximo servicio.</p>
-                  <Button asChild><Link href="/marketplace"><Plus className="w-4 h-4 mr-2" />Reservar una Cita</Link></Button>
+                  <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:shadow-lg transition-all duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-purple-600 font-medium">Gastado</p>
+                    <p className="text-2xl font-bold text-purple-700">{formatPrice(stats.totalSpent)}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                    <History className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Próximas Citas */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Próximas Citas */}
+              <Card className="border-t-4 border-t-emerald-500 shadow-md">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl">Tus Próximas Citas</CardTitle>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href="/dashboard/client/appointments" className="text-emerald-600 hover:text-emerald-700">
+                        Ver todas
+                      </Link>
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {upcomingAppointments.length > 0 ? (
+                    <div className="space-y-4">
+                      {upcomingAppointments.map((apt, index) => (
+                        <Link
+                          key={apt.id}
+                          href={`/dashboard/client/appointments/${apt.id}`}
+                          className="block"
+                        >
+                          <div className={`p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
+                            index === 0
+                              ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300'
+                              : 'bg-white border-gray-200 hover:border-emerald-200'
+                          }`}>
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-bold text-lg text-gray-900">{apt.business?.name}</h4>
+                                  {index === 0 && (
+                                    <Badge className="bg-emerald-600 text-white">Próxima</Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600">{apt.appointment_services.map(s => s.service?.name).join(', ')}</p>
+                              </div>
+                              <Badge className={getStatusInfo(apt.status).color}>
+                                {getStatusInfo(apt.status).label}
+                              </Badge>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="flex items-center text-gray-600">
+                                <Calendar className="w-4 h-4 mr-2 text-emerald-600" />
+                                {formatDate(apt.appointment_date)}
+                              </div>
+                              <div className="flex items-center text-gray-600">
+                                <Clock className="w-4 h-4 mr-2 text-emerald-600" />
+                                {apt.start_time.slice(0,5)}
+                              </div>
+                              {apt.employee && (
+                                <div className="flex items-center text-gray-600">
+                                  <User className="w-4 h-4 mr-2 text-emerald-600" />
+                                  {apt.employee.first_name} {apt.employee.last_name}
+                                </div>
+                              )}
+                              {apt.business?.address && (
+                                <div className="flex items-center text-gray-600">
+                                  <MapPin className="w-4 h-4 mr-2 text-emerald-600" />
+                                  <span className="truncate">{apt.business.address}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
+                              <span className="text-xl font-bold text-emerald-600">{formatPrice(apt.total_price)}</span>
+                              <Edit className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="w-10 h-10 text-emerald-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Tu agenda está libre</h3>
+                      <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                        Explora miles de servicios y encuentra el perfecto para ti.
+                      </p>
+                      <Button asChild size="lg" className="bg-gradient-to-r from-emerald-600 to-teal-500">
+                        <Link href="/marketplace">
+                          <Plus className="w-5 h-5 mr-2" />
+                          Explorar Servicios
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-          )}
 
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Actividad Reciente</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivity.length > 0 ? recentActivity.map(apt => (
-                  <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getStatusInfo(apt.status).color}`}>
-                        {React.createElement(getStatusInfo(apt.status).icon, { className: 'w-5 h-5' })}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">{apt.business?.name}</p>
-                        <p className="text-sm text-gray-500">{formatDate(apt.appointment_date)} - {apt.start_time.slice(0,5)}</p>
-                      </div>
+              {/* Actividad Reciente Preview */}
+              {recentActivity.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">Actividad Reciente</CardTitle>
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href="#" onClick={() => {
+                          const tabs = document.querySelector('[value="activity"]') as HTMLButtonElement
+                          tabs?.click()
+                        }} className="text-emerald-600 hover:text-emerald-700">
+                          Ver más
+                        </Link>
+                      </Button>
                     </div>
-                    <div className="text-right">
-                        <p className="font-semibold text-gray-800">{formatPrice(apt.total_price)}</p>
-                        <Badge variant="secondary" className={getStatusInfo(apt.status).color}>{getStatusInfo(apt.status).label}</Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {recentActivity.slice(0, 3).map(apt => (
+                        <div key={apt.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getStatusInfo(apt.status).color}`}>
+                              {React.createElement(getStatusInfo(apt.status).icon, { className: 'w-5 h-5' })}
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">{apt.business?.name}</p>
+                              <p className="text-sm text-gray-500">{formatDate(apt.appointment_date)}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-emerald-600">{formatPrice(apt.total_price)}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Right Column - Quick Actions + CTA */}
+            <div className="space-y-6">
+              {/* CTA Principal */}
+              <Card className="bg-gradient-to-br from-emerald-600 to-teal-500 text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                <CardContent className="p-6 relative z-10">
+                  <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mb-4">
+                    <Plus className="w-7 h-7" />
                   </div>
-                )) : <p className="text-gray-500 text-center py-4">No hay actividad reciente.</p>}
+                  <h3 className="text-xl font-bold mb-2">Nueva Reserva</h3>
+                  <p className="opacity-90 mb-4 text-sm">
+                    Descubre y reserva servicios increíbles en tu zona
+                  </p>
+                  <Button asChild size="lg" variant="secondary" className="w-full bg-white text-emerald-700 hover:bg-emerald-50">
+                    <Link href="/marketplace">Explorar Marketplace</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Acciones Rápidas</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button asChild variant="outline" className="w-full justify-start hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors">
+                    <Link href="/dashboard/client/appointments">
+                      <Calendar className="w-4 h-4 mr-3" />
+                      Ver todas mis citas
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-start hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors">
+                    <Link href="/dashboard/client/profile">
+                      <User className="w-4 h-4 mr-3" />
+                      Editar mi perfil
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full justify-start hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-700 transition-colors">
+                    <Link href="/marketplace">
+                      <MapPin className="w-4 h-4 mr-3" />
+                      Explorar negocios
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Info Card */}
+              {stats.completed > 0 && (
+                <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                  <CardContent className="p-6">
+                    <div className="text-center">
+                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Star className="w-6 h-6 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">¡Buen trabajo!</h4>
+                      <p className="text-sm text-gray-600">
+                        Has completado <span className="font-bold text-blue-600">{stats.completed}</span> cita{stats.completed !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Tab 2: Estadísticas */}
+        <TabsContent value="stats" className="space-y-6 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatCard icon={Calendar} title="Próximas Citas" value={stats.upcoming} color="blue" />
+            <StatCard icon={CheckCircle} title="Citas Completadas" value={stats.completed} color="green" />
+            <StatCard icon={History} title="Total Gastado" value={formatPrice(stats.totalSpent)} color="purple" />
+          </div>
+
+          {/* Quick summary */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-4">
+                  Has completado <span className="font-bold text-emerald-600">{stats.completed}</span> citas
+                  {stats.totalSpent > 0 && <> con un gasto total de <span className="font-bold text-emerald-600">{formatPrice(stats.totalSpent)}</span></>}
+                </p>
+                <Button asChild variant="outline">
+                  <Link href="/dashboard/client/appointments">Ver todas las citas</Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
-        </div>
+        </TabsContent>
 
-        {/* Right Column */}
-        <div className="space-y-8">
-          <Card className="bg-gradient-to-br from-emerald-600 to-teal-500 text-white">
-            <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Plus className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-2">¿Listo para tu próxima cita?</h3>
-                <p className="opacity-90 mb-6">Explora miles de servicios y reserva en tu lugar favorito.</p>
-                <Button asChild size="lg" variant="secondary" className="bg-white text-emerald-700 hover:bg-gray-100">
-                    <Link href="/marketplace">Explorar Marketplace</Link>
-                </Button>
-            </CardContent>
-          </Card>
+        {/* Tab 3: Actividad Reciente */}
+        <TabsContent value="activity" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
-                <CardTitle>Mis Reseñas</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Actividad Reciente</CardTitle>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/dashboard/client/appointments" className="text-emerald-600 hover:text-emerald-700">
+                    Ver historial completo
+                  </Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-                <Button variant="outline" className="w-full" onClick={() => alert('Próximamente')}><Star className="w-4 h-4 mr-2"/>Ver mis reseñas</Button>
+              <div className="space-y-3">
+                {recentActivity.length > 0 ? recentActivity.map(apt => (
+                  <Link
+                    key={apt.id}
+                    href={`/dashboard/client/appointments/${apt.id}`}
+                    className="block"
+                  >
+                    <div className="flex items-center justify-between p-4 rounded-lg hover:bg-emerald-50 transition-all duration-200 border border-transparent hover:border-emerald-200 hover:shadow-md">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getStatusInfo(apt.status).color} transition-transform duration-200 hover:scale-110`}>
+                          {React.createElement(getStatusInfo(apt.status).icon, { className: 'w-6 h-6' })}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-semibold text-gray-900 truncate">{apt.business?.name}</p>
+                            <Badge variant="secondary" className={`${getStatusInfo(apt.status).color} flex-shrink-0`}>
+                              {getStatusInfo(apt.status).label}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600 truncate">
+                            {apt.appointment_services.map(s => s.service?.name).join(', ')}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatDate(apt.appointment_date)} • {apt.start_time.slice(0,5)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right ml-4 flex-shrink-0">
+                        <p className="font-bold text-lg text-emerald-600">{formatPrice(apt.total_price)}</p>
+                      </div>
+                    </div>
+                  </Link>
+                )) : (
+                  <div className="text-center py-16">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <History className="w-10 h-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay actividad aún</h3>
+                    <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                      Reserva tu primera cita y comienza a disfrutar de nuestros servicios
+                    </p>
+                    <Button asChild size="lg" className="bg-gradient-to-r from-emerald-600 to-teal-500">
+                      <Link href="/marketplace">
+                        <Plus className="w-5 h-5 mr-2" />
+                        Explorar Servicios
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {selectedAppointment && (
         <ReviewModal
@@ -296,14 +607,14 @@ const StatCard = ({ icon: Icon, title, value, color }: { icon: React.ElementType
     purple: 'bg-purple-100 text-purple-600',
   }
   return (
-    <Card className="hover:shadow-lg transition-shadow transform hover:-translate-y-1">
+    <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-l-4 border-transparent hover:border-l-emerald-500">
       <CardContent className="p-6">
         <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-lg ${colors[color]}`}>
+          <div className={`p-3 rounded-lg ${colors[color]} transition-transform duration-300 hover:scale-110`}>
             <Icon className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className="text-2xl font-bold text-gray-900 transition-colors">{value}</p>
             <p className="text-sm text-gray-600">{title}</p>
           </div>
         </div>

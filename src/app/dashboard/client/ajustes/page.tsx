@@ -20,9 +20,10 @@ import {
 import {
   Bell, MessageSquare, Mail, Trash2,
   Shield, CheckCircle, Save, Smartphone, Globe,
-  AlertTriangle, UserX
+  AlertTriangle, UserX, Loader2
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabaseClient'
 
 // NOTE: All data fetching and state logic from the original file is preserved.
@@ -52,6 +53,7 @@ export default function AjustesPage() {
   const [deleting, setDeleting] = useState(false)
 
   const { authState, signOut } = useAuth()
+  const { toast } = useToast()
   const supabase = createClient()
 
   useEffect(() => {
@@ -81,11 +83,18 @@ export default function AjustesPage() {
     setDeleting(true)
     try {
       await new Promise(resolve => setTimeout(resolve, 2000))
-      alert('Cuenta eliminada exitosamente')
+      toast({
+        title: 'Cuenta eliminada',
+        description: 'Tu cuenta ha sido eliminada exitosamente.',
+      })
       await signOut()
     } catch (error) {
       console.error('Error deleting account:', error)
-      alert('Error al eliminar la cuenta')
+      toast({
+        variant: 'destructive',
+        title: 'Error al eliminar',
+        description: 'No pudimos eliminar tu cuenta. Por favor intenta nuevamente.',
+      })
     } finally {
       setDeleting(false)
     }
@@ -164,7 +173,17 @@ export default function AjustesPage() {
 
               <div className="mt-8 flex justify-end">
                 <Button onClick={handleSaveSettings} disabled={loading} size="lg" className="bg-emerald-600 hover:bg-emerald-700">
-                  {loading ? 'Guardando...' : <><Save className="w-4 h-4 mr-2" /> Guardar Cambios</>}
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Cambios
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -190,7 +209,17 @@ export default function AjustesPage() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" disabled={deleting}>
-                          {deleting ? 'Eliminando...' : <><Trash2 className="w-4 h-4 mr-2" /> Eliminar Mi Cuenta</>}
+                          {deleting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Eliminando...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar Mi Cuenta
+                            </>
+                          )}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
