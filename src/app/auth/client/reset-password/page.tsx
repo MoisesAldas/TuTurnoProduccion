@@ -13,8 +13,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CalendarDays, ArrowLeft, Lock, Eye, EyeOff, CheckCircle, Key } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import Logo from '@/components/logo'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const resetPasswordSchema = z.object({
   password: z
@@ -40,6 +42,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [sessionValid, setSessionValid] = useState<boolean | null>(null)
+  const { theme } = useTheme()
   const router = useRouter()
   const supabase = createClient()
   const { authState } = useAuth()
@@ -146,10 +149,10 @@ export default function ResetPasswordPage() {
   // Mostrar loading mientras se verifica la sesión
   if (sessionValid === null) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando enlace de recuperación...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-emerald-200 dark:border-emerald-700 border-t-emerald-600 dark:border-t-emerald-500 rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Verificando enlace de recuperación...</p>
         </div>
       </div>
     )
@@ -157,42 +160,42 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
+      <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}>
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-teal-400/10 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 right-10 w-72 h-72 bg-cyan-400/10 rounded-full filter blur-3xl animate-pulse delay-500"></div>
+          <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-400/10 dark:bg-emerald-400/5 rounded-full filter blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-teal-400/10 dark:bg-teal-400/5 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 right-10 w-72 h-72 bg-cyan-400/10 dark:bg-cyan-400/5 rounded-full filter blur-3xl animate-pulse delay-500"></div>
         </div>
 
         <div className="w-full max-w-md space-y-6 relative z-10">
           {/* Success Card */}
-          <Card className="bg-white/95 backdrop-blur-md border border-white/40 shadow-xl">
+          <Card className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-white/40 dark:border-gray-700/40 shadow-xl">
             <CardHeader className="text-center pb-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <CheckCircle className="w-8 h-8 text-white" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900">¡Contraseña Actualizada!</CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">¡Contraseña Actualizada!</CardTitle>
+              <CardDescription className="text-gray-600 dark:text-gray-400">
                 Tu contraseña se ha cambiado exitosamente
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6 text-center">
-              <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
-                <p className="text-emerald-800 font-medium">
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-800">
+                <p className="text-emerald-800 dark:text-emerald-300 font-medium">
                   Ya puedes iniciar sesión con tu nueva contraseña
                 </p>
               </div>
 
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 <p>Serás redirigido al login en unos segundos...</p>
               </div>
 
               {/* Actions */}
-              <div className="space-y-3 pt-4 border-t border-gray-100">
+              <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-gray-700">
                 <Link href="/auth/client/login">
                   <Button className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-700 hover:via-teal-700 hover:to-cyan-700 text-white">
                     Ir al Login
@@ -207,38 +210,39 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
+    <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
       isVisible ? 'opacity-100' : 'opacity-0'
     }`}>
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-teal-400/10 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 right-10 w-72 h-72 bg-cyan-400/10 rounded-full filter blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-400/10 dark:bg-emerald-400/5 rounded-full filter blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-teal-400/10 dark:bg-teal-400/5 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 right-10 w-72 h-72 bg-cyan-400/10 dark:bg-cyan-400/5 rounded-full filter blur-3xl animate-pulse delay-500"></div>
 
         {/* Floating dots */}
         <div className="absolute top-1/4 left-10 animate-bounce delay-1000">
-          <div className="w-4 h-4 bg-emerald-400 rounded-full opacity-60"></div>
+          <div className="w-4 h-4 bg-emerald-400 dark:bg-emerald-500 rounded-full opacity-60"></div>
         </div>
         <div className="absolute top-1/3 right-20 animate-bounce delay-[1500ms]">
-          <div className="w-6 h-6 bg-teal-400 rounded-full opacity-40"></div>
+          <div className="w-6 h-6 bg-teal-400 dark:bg-teal-500 rounded-full opacity-40"></div>
         </div>
         <div className="absolute bottom-1/3 left-1/4 animate-bounce delay-[2000ms]">
-          <div className="w-5 h-5 bg-cyan-400 rounded-full opacity-50"></div>
+          <div className="w-5 h-5 bg-cyan-400 dark:bg-cyan-500 rounded-full opacity-50"></div>
         </div>
       </div>
 
       <div className="w-full max-w-md space-y-6 relative z-10">
-        {/* Back Button */}
-        <div className={`flex justify-start transition-all duration-700 ${
+        {/* Back Button + Theme Toggle */}
+        <div className={`flex justify-between items-center transition-all duration-700 ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`}>
           <Link href="/auth/client/login">
-            <Button variant="ghost" className="text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200">
+            <Button variant="ghost" className="text-gray-600 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-200">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver al Login
             </Button>
           </Link>
+          <ThemeToggle />
         </div>
 
         {/* Header */}
@@ -246,41 +250,41 @@ export default function ResetPasswordPage() {
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`} style={{ transitionDelay: '200ms' }}>
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
               <CalendarDays className="w-7 h-7 text-white" />
             </div>
-            <Logo color="black" size="lg" />
+            <Logo color={theme === 'dark' ? 'white' : 'black'} size="lg" />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Nueva Contraseña
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Crea una contraseña segura para tu cuenta
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <Alert variant="destructive" className={`border-red-200 bg-red-50/90 backdrop-blur-sm transition-all duration-500 ${
+          <Alert variant="destructive" className={`border-red-200 dark:border-red-800 bg-red-50/90 dark:bg-red-900/20 backdrop-blur-sm transition-all duration-500 ${
             isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
           }`} style={{ transitionDelay: '400ms' }}>
-            <AlertDescription className="text-red-700">
+            <AlertDescription className="text-red-700 dark:text-red-400">
               {error}
             </AlertDescription>
           </Alert>
         )}
 
         {/* Reset Password Form */}
-        <Card className={`bg-white/95 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-500 ${
+        <Card className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-white/40 dark:border-gray-700/40 shadow-xl hover:shadow-2xl transition-all duration-500 ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
         }`} style={{ transitionDelay: '600ms' }}>
           <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Key className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900">Cambiar Contraseña</CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">Cambiar Contraseña</CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               Ingresa tu nueva contraseña segura
             </CardDescription>
           </CardHeader>
@@ -289,22 +293,22 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Nueva Contraseña *
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Tu nueva contraseña"
-                    className="pl-10 pr-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300 transition-all"
+                    className="pl-10 pr-10 h-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-emerald-500 dark:focus:border-emerald-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all text-gray-900 dark:text-gray-100"
                     {...register('password')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -314,15 +318,15 @@ export default function ResetPasswordPage() {
                 {password && (
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Seguridad:</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Seguridad:</span>
                       <span className={`text-xs font-medium ${
-                        passwordStrength.score <= 2 ? 'text-red-600' :
-                        passwordStrength.score <= 3 ? 'text-yellow-600' : 'text-emerald-600'
+                        passwordStrength.score <= 2 ? 'text-red-600 dark:text-red-400' :
+                        passwordStrength.score <= 3 ? 'text-yellow-600 dark:text-yellow-400' : 'text-emerald-600 dark:text-emerald-400'
                       }`}>
                         {passwordStrength.label}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`}
                         style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
@@ -332,8 +336,8 @@ export default function ResetPasswordPage() {
                 )}
 
                 {errors.password && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full mt-1.5 flex-shrink-0"></span>
                     {errors.password.message}
                   </p>
                 )}
@@ -341,29 +345,29 @@ export default function ResetPasswordPage() {
 
               {/* Confirm Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Confirmar Contraseña *
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirma tu contraseña"
-                    className="pl-10 pr-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300 transition-all"
+                    className="pl-10 pr-10 h-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:border-emerald-500 dark:focus:border-emerald-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all text-gray-900 dark:text-gray-100"
                     {...register('confirmPassword')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full mt-1.5 flex-shrink-0"></span>
                     {errors.confirmPassword.message}
                   </p>
                 )}
@@ -390,11 +394,11 @@ export default function ResetPasswordPage() {
             </form>
 
             {/* Security Tips */}
-            <div className="text-center pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500 mb-2">
+            <div className="text-center pt-4 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                 Tips para una contraseña segura:
               </p>
-              <div className="text-xs text-gray-400 space-y-1">
+              <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1">
                 <p>• Mínimo 8 caracteres</p>
                 <p>• Incluye mayúsculas y minúsculas</p>
                 <p>• Agrega números y símbolos</p>

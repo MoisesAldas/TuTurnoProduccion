@@ -12,8 +12,10 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CalendarDays, Building, CheckCircle, Phone, ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import Logo from '@/components/logo'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const setupSchema = z.object({
   firstName: z
@@ -38,6 +40,7 @@ export default function BusinessSetupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
+  const { theme } = useTheme()
   const { authState, handleProfileCompleted } = useAuth()
   const router = useRouter()
 
@@ -120,48 +123,49 @@ export default function BusinessSetupPage() {
   // Mostrar loading mientras se verifica la autenticación
   if (authState.loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Verificando autenticación...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-orange-200 dark:border-orange-700 border-t-orange-600 dark:border-t-orange-500 rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Verificando autenticación...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
+    <div className={`min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
       isVisible ? 'opacity-100' : 'opacity-0'
     }`}>
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-orange-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-amber-400/10 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 right-10 w-72 h-72 bg-yellow-400/10 rounded-full filter blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-orange-400/10 dark:bg-orange-400/5 rounded-full filter blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-amber-400/10 dark:bg-amber-400/5 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 right-10 w-72 h-72 bg-yellow-400/10 dark:bg-yellow-400/5 rounded-full filter blur-3xl animate-pulse delay-500"></div>
 
         {/* Floating dots */}
         <div className="absolute top-1/4 left-10 animate-bounce delay-1000">
-          <div className="w-4 h-4 bg-orange-400 rounded-full opacity-60"></div>
+          <div className="w-4 h-4 bg-orange-400 dark:bg-orange-500 rounded-full opacity-60"></div>
         </div>
         <div className="absolute top-1/3 right-20 animate-bounce delay-[1500ms]">
-          <div className="w-6 h-6 bg-amber-400 rounded-full opacity-40"></div>
+          <div className="w-6 h-6 bg-amber-400 dark:bg-amber-500 rounded-full opacity-40"></div>
         </div>
         <div className="absolute bottom-1/3 left-1/4 animate-bounce delay-[2000ms]">
-          <div className="w-5 h-5 bg-yellow-400 rounded-full opacity-50"></div>
+          <div className="w-5 h-5 bg-yellow-400 dark:bg-yellow-500 rounded-full opacity-50"></div>
         </div>
       </div>
 
       <div className="w-full max-w-md space-y-6 relative z-10">
-        {/* Back Button */}
-        <div className={`flex justify-start transition-all duration-700 ${
+        {/* Back Button + Theme Toggle */}
+        <div className={`flex justify-between items-center transition-all duration-700 ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`}>
           <Link href="/auth/business">
-            <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+            <Button variant="ghost" className="text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all duration-200">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
             </Button>
           </Link>
+          <ThemeToggle />
         </div>
 
         {/* Header */}
@@ -169,41 +173,41 @@ export default function BusinessSetupPage() {
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`} style={{ transitionDelay: '200ms' }}>
           <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-orange-600 dark:bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
               <CalendarDays className="w-7 h-7 text-white" />
             </div>
-            <Logo color="black" size="lg" />
+            <Logo color={theme === 'dark' ? 'white' : 'black'} size="lg" />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             ¡Completa tu Perfil!
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Solo necesitamos algunos datos más para configurar tu negocio
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <Alert variant="destructive" className={`border-red-200 bg-red-50/90 backdrop-blur-sm transition-all duration-500 ${
+          <Alert variant="destructive" className={`border-red-200 dark:border-red-800 bg-red-50/90 dark:bg-red-900/20 backdrop-blur-sm transition-all duration-500 ${
             isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
           }`} style={{ transitionDelay: '400ms' }}>
-            <AlertDescription className="text-red-700">
+            <AlertDescription className="text-red-700 dark:text-red-400">
               {error}
             </AlertDescription>
           </Alert>
         )}
 
         {/* Setup Form */}
-        <Card className={`bg-white/95 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-500 ${
+        <Card className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-white/40 dark:border-gray-700/40 shadow-xl hover:shadow-2xl transition-all duration-500 ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
         }`} style={{ transitionDelay: '600ms' }}>
           <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-600 dark:from-orange-600 dark:to-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Building className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900">Información del Propietario</CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">Información del Propietario</CardTitle>
+            <CardDescription className="text-gray-600 dark:text-gray-400">
               Completa tu perfil para empezar a configurar tu negocio
             </CardDescription>
           </CardHeader>
@@ -212,22 +216,22 @@ export default function BusinessSetupPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* First Name Field */}
               <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Nombre *
                 </Label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="firstName"
                     type="text"
                     placeholder="Tu nombre"
-                    className="pl-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
+                    className="pl-10 h-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-600 focus:border-orange-500 dark:focus:border-orange-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all text-gray-900 dark:text-gray-100"
                     {...register('firstName')}
                   />
                 </div>
                 {errors.firstName && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full mt-1.5 flex-shrink-0"></span>
                     {errors.firstName.message}
                   </p>
                 )}
@@ -235,22 +239,22 @@ export default function BusinessSetupPage() {
 
               {/* Last Name Field */}
               <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Apellido *
                 </Label>
                 <div className="relative">
-                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="lastName"
                     type="text"
                     placeholder="Tu apellido"
-                    className="pl-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
+                    className="pl-10 h-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-600 focus:border-orange-500 dark:focus:border-orange-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all text-gray-900 dark:text-gray-100"
                     {...register('lastName')}
                   />
                 </div>
                 {errors.lastName && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full mt-1.5 flex-shrink-0"></span>
                     {errors.lastName.message}
                   </p>
                 )}
@@ -258,30 +262,30 @@ export default function BusinessSetupPage() {
 
               {/* Phone Field (Optional) */}
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Teléfono (opcional)
                 </Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="+593 99 123 4567"
-                    className="pl-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
+                    className="pl-10 h-12 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-600 focus:border-orange-500 dark:focus:border-orange-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all text-gray-900 dark:text-gray-100"
                     {...register('phone')}
                   />
                 </div>
                 {errors.phone && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-red-600 dark:bg-red-400 rounded-full mt-1.5 flex-shrink-0"></span>
                     {errors.phone.message}
                   </p>
                 )}
               </div>
 
               {/* User Info Display */}
-              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                <div className="text-sm text-orange-800">
+              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+                <div className="text-sm text-orange-800 dark:text-orange-300">
                   <p><strong>Email:</strong> {authState.session?.user?.email}</p>
                   <p><strong>Tipo de cuenta:</strong> Propietario de Negocio</p>
                 </div>
@@ -308,8 +312,8 @@ export default function BusinessSetupPage() {
             </form>
 
             {/* Help Text */}
-            <div className="text-center pt-4 border-t border-gray-100">
-              <p className="text-xs text-gray-500">
+            <div className="text-center pt-4 border-t border-gray-100 dark:border-gray-700">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Después de completar tu perfil podrás configurar tu negocio y empezar a recibir reservas
               </p>
             </div>
@@ -317,7 +321,7 @@ export default function BusinessSetupPage() {
         </Card>
 
         {/* Footer */}
-        <div className={`text-center text-sm text-gray-500 space-y-2 transition-all duration-700 ${
+        <div className={`text-center text-sm text-gray-500 dark:text-gray-400 space-y-2 transition-all duration-700 ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`} style={{ transitionDelay: '800ms' }}>
           <p>✓ Información segura y encriptada</p>
