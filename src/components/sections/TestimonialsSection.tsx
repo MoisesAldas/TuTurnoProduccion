@@ -39,20 +39,20 @@ export default function TestimonialsSection() {
   }, [])
 
   return (
-    <section id="testimonials" className="py-16 lg:py-24 bg-slate-50 overflow-hidden">
+    <section id="testimonials" className="py-16 lg:py-24 bg-slate-50 dark:bg-gray-900 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div
             className={`text-center mb-12 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Badge variant="outline" className="mb-4 border-orange-300 text-orange-600">
+            <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
               VOCES DE NUESTROS CLIENTES
             </Badge>
 
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
               No confíes en nuestra palabra. Confía en la de ellos.
             </h2>
 
-            <p className="text-lg text-gray-600 text-balance max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-600 dark:text-gray-400 text-balance max-w-3xl mx-auto leading-relaxed">
               Miles de negocios en Ecuador ya están creciendo y optimizando su día a día con TuTurno.
             </p>
           </div>
@@ -63,17 +63,17 @@ export default function TestimonialsSection() {
                 key={index}
                 className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                 style={{ transitionDelay: `${100 * (index + 1)}ms` }}>
-                <Card className="bg-white border-gray-200 shadow-sm flex flex-col h-full">
+                <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm flex flex-col h-full">
                   <CardContent className="p-6 flex flex-col flex-grow">
                     <div className="flex mb-4">
                       {[...Array(testimonial.rating)].map((_, i) => (
                         <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />
                       ))}
                     </div>
-                    <blockquote className="text-gray-700 italic text-lg flex-grow">
+                    <blockquote className="text-gray-700 dark:text-gray-300 italic text-lg flex-grow">
                       <p>"{testimonial.quote}"</p>
                     </blockquote>
-                    <div className="mt-6 pt-6 border-t border-gray-200 flex items-center">
+                    <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center">
                       <Image
                         src={testimonial.avatar}
                         alt={testimonial.name}
@@ -81,8 +81,8 @@ export default function TestimonialsSection() {
                         height={48}
                         className="w-12 h-12 rounded-full object-cover mr-4" />
                       <div>
-                        <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                        <p className="text-sm text-gray-500">{testimonial.role}</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">{testimonial.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{testimonial.role}</p>
                       </div>
                     </div>
                   </CardContent>

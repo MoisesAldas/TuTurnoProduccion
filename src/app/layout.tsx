@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth'
+import { ThemeProvider } from "@/components/theme-provider"
 import "@fontsource/poppins/900.css"; // Black weight for Logo component (extra bold)
 import StickyCTA from "@/components/StickyCTA";
 import { Toaster } from "@/components/ui/toaster";
@@ -28,15 +29,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen overflow-y-auto`}
       >
-        <AuthProvider>
-          {children}
-          <StickyCTA />
-          <Toaster />
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange={false}
+        >
+          <AuthProvider>
+            {children}
+            <StickyCTA />
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

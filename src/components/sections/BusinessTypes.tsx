@@ -70,20 +70,20 @@ export default function BusinessTypes() {
   }, [])
 
   return (
-    <section id="business-types" className="py-16 lg:py-24 bg-white overflow-hidden">
+    <section id="business-types" className="py-16 lg:py-24 bg-white dark:bg-gray-950 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div
             className={`text-center mb-12 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Badge variant="outline" className="mb-4 border-orange-300 text-orange-600">
+            <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
               PARA TODO TIPO DE NEGOCIO
             </Badge>
 
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
               Adaptable a tu industria
             </h2>
 
-            <p className="text-lg text-gray-600 text-balance max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-600 dark:text-gray-400 text-balance max-w-3xl mx-auto leading-relaxed">
               Si tu negocio depende de la gestión de citas, TuTurno es para ti. Simplificamos la operación de cientos de industrias.
             </p>
           </div>
