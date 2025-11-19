@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,9 +12,21 @@ import { createClient } from '@/lib/supabaseClient'
 import { getCategoryIcon } from '@/lib/categoryIcons'
 import Link from 'next/link'
 import Image from 'next/image'
-import MarketplaceMap from '@/components/MarketplaceMap'
 import Logo from '@/components/logo'
 import FilterSheet from '@/components/FilterSheet'
+
+// Lazy load Mapbox to save 500KB on initial bundle
+const MarketplaceMap = dynamic(() => import('@/components/MarketplaceMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-slate-100">
+      <div className="text-center">
+        <div className="animate-spin w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-2"></div>
+        <p className="text-sm text-gray-500">Cargando mapa...</p>
+      </div>
+    </div>
+  )
+})
 
 interface BusinessCategory {
   id: string
@@ -143,20 +156,25 @@ export default function MarketplacePage() {
     }
   }
 
-  const filteredBusinesses = businesses.filter(business => {
-    const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         business.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         business.business_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = !selectedCategory || business.business_category_id === selectedCategory
-    const matchesRating = ratingFilter === 0 || (business.average_rating || 0) >= ratingFilter
-    return matchesSearch && matchesCategory && matchesRating
-  })
+  // Memoize filtered businesses to avoid recalculating on every render
+  const filteredBusinesses = useMemo(() => {
+    return businesses.filter(business => {
+      const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           business.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           business.business_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = !selectedCategory || business.business_category_id === selectedCategory
+      const matchesRating = ratingFilter === 0 || (business.average_rating || 0) >= ratingFilter
+      return matchesSearch && matchesCategory && matchesRating
+    })
+  }, [businesses, searchQuery, selectedCategory, ratingFilter])
 
-  // Contar filtros activos
-  const activeFiltersCount = [
-    selectedCategory ? 1 : 0,
-    ratingFilter > 0 ? 1 : 0
-  ].reduce((sum, val) => sum + val, 0)
+  // Memoize filter count
+  const activeFiltersCount = useMemo(() => {
+    return [
+      selectedCategory ? 1 : 0,
+      ratingFilter > 0 ? 1 : 0
+    ].reduce((sum, val) => sum + val, 0)
+  }, [selectedCategory, ratingFilter])
 
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-50">
@@ -302,8 +320,11 @@ export default function MarketplacePage() {
   )
 }
 
-const BusinessCard = ({ business, isHovered, onMouseEnter, onMouseLeave }: { business: Business, isHovered: boolean, onMouseEnter: () => void, onMouseLeave: () => void }) => {
-    const CategoryIcon = getCategoryIcon(business.business_categories?.name)
+const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLeave }: { business: Business, isHovered: boolean, onMouseEnter: () => void, onMouseLeave: () => void }) => {
+    const CategoryIcon = useMemo(
+        () => getCategoryIcon(business.business_categories?.name),
+        [business.business_categories?.name]
+    )
 
     return (
       <Link href={`/business/${business.id}`}>
@@ -346,9 +367,11 @@ const BusinessCard = ({ business, isHovered, onMouseEnter, onMouseLeave }: { bus
         </Card>
       </Link>
     )
-}
+})
 
-const BusinessCardSkeleton = () => (
+BusinessCard.displayName = 'BusinessCard'
+
+const BusinessCardSkeleton = React.memo(() => (
     <Card className="overflow-hidden h-full flex flex-col">
         <AspectRatio ratio={16 / 10}>
             <div className="w-full h-full bg-slate-200 animate-pulse"></div>
@@ -360,4 +383,6 @@ const BusinessCardSkeleton = () => (
             <div className="h-8 w-2/5 bg-slate-200 rounded-full animate-pulse mt-2"></div>
         </CardContent>
     </Card>
-)
+))
+
+BusinessCardSkeleton.displayName = 'BusinessCardSkeleton'

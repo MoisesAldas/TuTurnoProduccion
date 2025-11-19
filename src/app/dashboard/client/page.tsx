@@ -76,6 +76,7 @@ export default function ClientDashboard() {
     if (!authState.user) return
     try {
       setLoading(true)
+      // Fetch appointments with reviews in a single query (optimized - no N+1 problem)
       const { data, error } = await supabase
         .from('appointments')
         .select(`
@@ -85,7 +86,8 @@ export default function ClientDashboard() {
           appointment_services(
             service:services(id, name, description),
             price
-          )
+          ),
+          reviews(id)
         `)
         .eq('client_id', authState.user.id)
         .order('appointment_date', { ascending: false })
@@ -97,16 +99,11 @@ export default function ClientDashboard() {
       }
 
       const appointmentData = data || []
-      const appointmentsWithReviewStatus = await Promise.all(
-        appointmentData.map(async (appointment) => {
-          const { data: reviewData } = await supabase
-            .from('reviews')
-            .select('id')
-            .eq('appointment_id', appointment.id)
-            .maybeSingle()
-          return { ...appointment, has_review: !!reviewData }
-        })
-      )
+      // Map appointments with review status (no async needed)
+      const appointmentsWithReviewStatus = appointmentData.map((appointment) => ({
+        ...appointment,
+        has_review: !!appointment.reviews && appointment.reviews.length > 0
+      }))
 
       setAppointments(appointmentsWithReviewStatus)
 

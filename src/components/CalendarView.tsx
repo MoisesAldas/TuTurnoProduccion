@@ -1,13 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { parseDateString, toDateString } from '@/lib/dateUtils'
-import AppointmentModal from './AppointmentModal'
 
 import type { Employee, Appointment, AppointmentStatus } from '@/types/database'
+
+// Lazy load AppointmentModal
+const AppointmentModal = dynamic(() => import('./AppointmentModal'), {
+  loading: () => <div className="text-center p-4">Cargando...</div>
+})
 
 // Simplificamos la interfaz solo para las propiedades que necesitamos en esta vista
 type CalendarEmployee = Pick<Employee, 'id' | 'first_name' | 'last_name' | 'avatar_url' | 'is_active'>
@@ -43,6 +48,50 @@ const START_HOUR = 8 // 8:00 AM
 const END_HOUR = 20 // 8:00 PM
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
 
+// Helper functions moved outside component for better performance (pure functions)
+const getTimePosition = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number)
+  const totalMinutes = (hours - START_HOUR) * 60 + minutes
+  return (totalMinutes / 60) * HOUR_HEIGHT
+}
+
+const getAppointmentHeight = (startTime: string, endTime: string) => {
+  const start = getTimePosition(startTime)
+  const end = getTimePosition(endTime)
+  return end - start
+}
+
+const getStatusColor = (status: string) => {
+  const colors = {
+    pending: 'bg-yellow-100 border-yellow-400 text-yellow-800',
+    confirmed: 'bg-green-100 border-green-400 text-green-800',
+    in_progress: 'bg-blue-100 border-blue-400 text-blue-800',
+    completed: 'bg-gray-100 border-gray-400 text-gray-600',
+    cancelled: 'bg-red-100 border-red-400 text-red-800',
+    no_show: 'bg-orange-100 border-orange-400 text-orange-800'
+  }
+  return colors[status as keyof typeof colors] || colors.pending
+}
+
+const getInitials = (firstName: string, lastName: string) => {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+}
+
+const formatDuration = (startTime: string, endTime: string) => {
+  const [startHours, startMinutes] = startTime.split(':').map(Number)
+  const [endHours, endMinutes] = endTime.split(':').map(Number)
+  const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}min`
+  } else if (hours > 0) {
+    return `${hours}h`
+  } else {
+    return `${minutes}min`
+  }
+}
+
 export default function CalendarView({
   selectedDate,
   appointments,
@@ -70,8 +119,10 @@ export default function CalendarView({
   const supabase = createClient()
   const { toast } = useToast()
 
-  // Calculate week range for week view
-  const getWeekDates = () => {
+  // Calculate week range for week view - Memoized for performance
+  const weekDates = useMemo(() => {
+    if (viewType !== 'week') return []
+
     const dates: Date[] = []
     const current = new Date(selectedDate)
     // Get Monday of the week
@@ -86,9 +137,7 @@ export default function CalendarView({
       dates.push(date)
     }
     return dates
-  }
-
-  const weekDates = viewType === 'week' ? getWeekDates() : []
+  }, [selectedDate, viewType])
 
   useEffect(() => {
     fetchAbsences()
@@ -104,15 +153,15 @@ export default function CalendarView({
     }
   }, [])
 
-  const fetchAbsences = async () => {
+  // Memoized fetchAbsences to avoid recreating on every render
+  const fetchAbsences = useCallback(async () => {
     if (employees.length === 0) return
 
     try {
       if (viewType === 'week') {
         // Fetch absences for the entire week
-        const dates = getWeekDates()
-        const startDate = toDateString(dates[0])
-        const endDate = toDateString(dates[6])
+        const startDate = toDateString(weekDates[0])
+        const endDate = toDateString(weekDates[6])
 
         const { data, error } = await supabase
           .from('employee_absences')
@@ -127,7 +176,7 @@ export default function CalendarView({
         // Fetch absences for single day
         const dateStr = toDateString(selectedDate)
 
-        const { data, error } = await supabase
+        const { data, error} = await supabase
           .from('employee_absences')
           .select('*')
           .eq('absence_date', dateStr)
@@ -139,48 +188,22 @@ export default function CalendarView({
     } catch (error) {
       console.error('Error fetching absences:', error)
     }
-  }
+  }, [employees, viewType, weekDates, selectedDate, supabase])
 
-  const getTimePosition = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number)
-    const totalMinutes = (hours - START_HOUR) * 60 + minutes
-    return (totalMinutes / 60) * HOUR_HEIGHT
-  }
-
-  const getAppointmentHeight = (startTime: string, endTime: string) => {
-    const start = getTimePosition(startTime)
-    const end = getTimePosition(endTime)
-    return end - start
-  }
-
-  const getStatusColor = (status: string) => {
-    const colors = {
-      pending: 'bg-yellow-100 border-yellow-400 text-yellow-800',
-      confirmed: 'bg-green-100 border-green-400 text-green-800',
-      in_progress: 'bg-blue-100 border-blue-400 text-blue-800',
-      completed: 'bg-gray-100 border-gray-400 text-gray-600',
-      cancelled: 'bg-red-100 border-red-400 text-red-800',
-      no_show: 'bg-orange-100 border-orange-400 text-orange-800'
-    }
-    return colors[status as keyof typeof colors] || colors.pending
-  }
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
-
-  const getClientName = (appointment: CalendarAppointment) => {
+  // Helper functions that depend on appointment data
+  const getClientName = useCallback((appointment: CalendarAppointment) => {
     if (appointment.users) {
       return `${appointment.users.first_name} ${appointment.users.last_name}`
     }
     return appointment.walk_in_client_name || 'Cliente'
-  }
+  }, [])
 
-  const getClientPhone = (appointment: CalendarAppointment) => {
+  const getClientPhone = useCallback((appointment: CalendarAppointment) => {
     return appointment.users?.phone || appointment.walk_in_client_phone
-  }
+  }, [])
 
-  const handleAppointmentHover = (e: React.MouseEvent, appointment: Appointment) => {
+  // Event handlers - memoized to prevent unnecessary re-renders
+  const handleAppointmentHover = useCallback((e: React.MouseEvent, appointment: Appointment) => {
     const rect = e.currentTarget.getBoundingClientRect()
     setHoveredAppointment({
       appointment,
@@ -189,43 +212,28 @@ export default function CalendarView({
         y: rect.top
       }
     })
-  }
+  }, [])
 
-  const handleAppointmentLeave = () => {
+  const handleAppointmentLeave = useCallback(() => {
     setHoveredAppointment(null)
-  }
+  }, [])
 
-  const formatDuration = (startTime: string, endTime: string) => {
-    const [startHours, startMinutes] = startTime.split(':').map(Number)
-    const [endHours, endMinutes] = endTime.split(':').map(Number)
-    const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes)
-    const hours = Math.floor(totalMinutes / 60)
-    const minutes = totalMinutes % 60
-    if (hours > 0 && minutes > 0) {
-      return `${hours}h ${minutes}min`
-    } else if (hours > 0) {
-      return `${hours}h`
-    } else {
-      return `${minutes}min`
-    }
-  }
-
-  const handleAppointmentClick = (appointment: Appointment) => {
+  const handleAppointmentClick = useCallback((appointment: Appointment) => {
     setSelectedAppointment(appointment)
     setShowModal(true)
-  }
+  }, [])
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowModal(false)
     setSelectedAppointment(null)
-  }
+  }, [])
 
-  const handleAppointmentUpdate = () => {
+  const handleAppointmentUpdate = useCallback(() => {
     onRefresh()
     handleCloseModal()
-  }
+  }, [onRefresh, handleCloseModal])
 
-  const handleTimeSlotClick = (employeeId: string, clickY: number, containerTop: number) => {
+  const handleTimeSlotClick = useCallback((employeeId: string, clickY: number, containerTop: number) => {
     if (!onCreateAppointment) return
 
     // Calculate the time based on click position
@@ -237,7 +245,7 @@ export default function CalendarView({
     const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 
     onCreateAppointment(selectedDate, timeString, employeeId)
-  }
+  }, [selectedDate, onCreateAppointment])
 
   // Drag & Drop handlers
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {

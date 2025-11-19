@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -118,6 +118,16 @@ export default function BookingPage() {
     }
   }, [selectedDate])
 
+  // Memoize total duration calculation (used in multiple places)
+  const totalDuration = useMemo(() => {
+    return selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
+  }, [selectedServices])
+
+  // Memoize total price calculation (used in multiple places)
+  const totalPrice = useMemo(() => {
+    return selectedServices.reduce((sum, service) => sum + service.price, 0)
+  }, [selectedServices])
+
   useEffect(() => {
     if (selectedDate && selectedEmployee && selectedServices.length > 0) {
       generateTimeSlots()
@@ -226,11 +236,8 @@ export default function BookingPage() {
     }
   }
 
-  const generateTimeSlots = async () => {
+  const generateTimeSlots = useCallback(async () => {
     if (!selectedDate || !selectedEmployee || selectedServices.length === 0) return
-
-    // Calculate total duration of all selected services
-    const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
 
     // Check if business is closed on this date (special hours)
     if (specialHourForDate?.is_closed) {
@@ -381,7 +388,7 @@ export default function BookingPage() {
       }
       setAvailableSlots(fallbackSlots)
     }
-  }
+  }, [selectedDate, selectedEmployee, selectedServices, specialHourForDate, totalDuration, authState.user, businessId, minDate])
 
   const handleServiceSelect = (service: Service) => {
     // Toggle service selection
@@ -435,59 +442,24 @@ export default function BookingPage() {
   }
 
   const handleBookingSubmit = async () => {
-    console.log('🚀 [BOOKING] Starting booking submission process')
-    console.log('🚀 [BOOKING] Auth state:', {
-      user: authState.user,
-      userId: authState.user?.id,
-      isAuthenticated: !!authState.user
-    })
-    console.log('🚀 [BOOKING] Selected data:', {
-      services: selectedServices,
-      servicesCount: selectedServices.length,
-      employee: selectedEmployee,
-      date: selectedDate,
-      time: selectedTime,
-      business: business,
-      businessId: businessId
-    })
-
     if (!authState.user) {
-      console.log('❌ [BOOKING] No user authenticated, redirecting to login')
       router.push('/auth/client/login')
       return
     }
 
     if (selectedServices.length === 0 || !selectedEmployee || !selectedDate || !selectedTime || !business) {
-      console.log('❌ [BOOKING] Missing required data:', {
-        hasServices: selectedServices.length > 0,
-        serviceCount: selectedServices.length,
-        hasEmployee: !!selectedEmployee,
-        hasDate: !!selectedDate,
-        hasTime: !!selectedTime,
-        hasBusiness: !!business
-      })
       return
     }
 
     // ✅ VALIDATION: Check booking restrictions
-    console.log('🔍 [BOOKING] Starting validation checks')
     const now = new Date()
     const appointmentDateTime = new Date(selectedDate)
     const [hours, minutes] = selectedTime.split(':').map(Number)
     appointmentDateTime.setHours(hours, minutes, 0, 0)
 
-    console.log('🔍 [BOOKING] Time calculations:', {
-      now: now.toISOString(),
-      appointmentDateTime: appointmentDateTime.toISOString(),
-      businessMinHours: business.min_booking_hours,
-      businessMaxDays: business.max_booking_days
-    })
-
     // Check min_booking_hours
     const hoursUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
-    console.log('🔍 [BOOKING] Hours until appointment:', hoursUntilAppointment)
     if (hoursUntilAppointment < business.min_booking_hours) {
-      console.log('❌ [BOOKING] Failed min booking hours validation')
       toast({
         variant: 'destructive',
         title: 'No se puede reservar',
@@ -498,9 +470,7 @@ export default function BookingPage() {
 
     // Check max_booking_days
     const daysUntilAppointment = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    console.log('🔍 [BOOKING] Days until appointment:', daysUntilAppointment)
     if (daysUntilAppointment > business.max_booking_days) {
-      console.log('❌ [BOOKING] Failed max booking days validation')
       toast({
         variant: 'destructive',
         title: 'No se puede reservar',
@@ -508,33 +478,16 @@ export default function BookingPage() {
       })
       return
     }
-
-    // ✅ NOTE: Business hours validation is handled by get_available_time_slots function
-    // which already validates business hours, employee availability, and absences
-    console.log('✅ [BOOKING] Skipping business hours check - handled by get_available_time_slots function')
-
-    console.log('🔄 [BOOKING] About to start appointment creation process')
     
     try {
-      console.log('✅ [BOOKING] All validations passed, starting appointment creation')
       setSubmitting(true)
 
-      // Calculate total duration and price from all selected services
-      const totalDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
-      const totalPrice = selectedServices.reduce((sum, service) => sum + service.price, 0)
+      // Use memoized totalDuration and totalPrice
       const startTime = selectedTime
-
-      console.log('📅 [BOOKING] Services details:', {
-        servicesCount: selectedServices.length,
-        serviceNames: selectedServices.map(s => s.name).join(', '),
-        totalDuration: totalDuration,
-        totalPrice: totalPrice,
-        services: selectedServices
-      })
 
       // Validate total duration
       if (!totalDuration || isNaN(totalDuration) || totalDuration <= 0) {
-        console.error('❌ [BOOKING] Invalid total service duration:', totalDuration, selectedServices)
+        console.error('Invalid total service duration:', totalDuration, selectedServices)
         alert('Error: Duración total de servicios no válida. Por favor contacta al negocio.')
         return
       }
@@ -565,8 +518,6 @@ export default function BookingPage() {
         client_notes: clientNotes || null
       }
 
-      console.log('📝 [BOOKING] Creating appointment with data:', appointmentData)
-
       // Crear la cita
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
@@ -575,18 +526,10 @@ export default function BookingPage() {
         .single()
 
       if (appointmentError) {
-        console.error('❌ [BOOKING] Error creating appointment:', appointmentError)
-        console.error('❌ [BOOKING] Error details:', {
-          code: appointmentError.code,
-          message: appointmentError.message,
-          details: appointmentError.details,
-          hint: appointmentError.hint
-        })
+        console.error('Error creating appointment:', appointmentError)
         alert('Error al crear la cita. Por favor intenta de nuevo.')
         return
       }
-
-      console.log('✅ [BOOKING] Appointment created successfully:', appointment)
 
       // Create multiple appointment_services records (one for each selected service)
       const appointmentServicesData = selectedServices.map(service => ({
@@ -595,28 +538,17 @@ export default function BookingPage() {
         price: service.price
       }))
 
-      console.log('🔗 [BOOKING] Creating appointment services with data:', appointmentServicesData)
-
       const { error: servicesError } = await supabase
         .from('appointment_services')
         .insert(appointmentServicesData)
 
       if (servicesError) {
-        console.error('❌ [BOOKING] Error creating appointment services:', servicesError)
-        console.error('❌ [BOOKING] Services error details:', {
-          code: servicesError.code,
-          message: servicesError.message,
-          details: servicesError.details,
-          hint: servicesError.hint
-        })
+        console.error('Error creating appointment services:', servicesError)
         // Si falla, eliminar la cita creada
-        console.log('🗑️ [BOOKING] Cleaning up failed appointment:', appointment.id)
         await supabase.from('appointments').delete().eq('id', appointment.id)
         alert('Error al crear la cita. Por favor intenta de nuevo.')
         return
       }
-
-      console.log('✅ [BOOKING] All appointment services created successfully')
 
       // Intentar confirmar la cita (esto puede fallar por las notificaciones pero no es crítico)
       try {
@@ -631,8 +563,6 @@ export default function BookingPage() {
 
       // 🔥 ENVIAR EMAIL DE CONFIRMACIÓN DE CITA
       try {
-        console.log('📧 Sending appointment confirmation email for appointment:', appointment.id)
-
         const emailResponse = await fetch('/api/send-appointment-email', {
           method: 'POST',
           headers: {
@@ -643,28 +573,21 @@ export default function BookingPage() {
           })
         })
 
-        if (emailResponse.ok) {
-          const emailResult = await emailResponse.json()
-          console.log('✅ Appointment confirmation email sent:', emailResult)
-        } else {
-          const errorText = await emailResponse.text()
-          console.warn('⚠️ Failed to send appointment confirmation email:', errorText)
+        if (!emailResponse.ok) {
+          console.warn('Failed to send appointment confirmation email')
           // No bloqueamos el flujo si el email falla
         }
       } catch (emailError) {
-        console.warn('⚠️ Error sending appointment confirmation email:', emailError)
+        console.warn('Error sending appointment confirmation email:', emailError)
         // No bloqueamos el flujo si el email falla
       }
 
-      console.log('🎉 [BOOKING] Booking process completed successfully!')
       setCurrentStep('confirmation')
 
     } catch (error) {
-      console.error('❌ [BOOKING] Unexpected error in booking process:', error)
-      console.error('❌ [BOOKING] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+      console.error('Unexpected error in booking process:', error)
       alert('Error al crear la cita. Por favor intenta de nuevo.')
     } finally {
-      console.log('🏁 [BOOKING] Booking process finished, setting submitting to false')
       setSubmitting(false)
     }
   }
@@ -854,13 +777,13 @@ export default function BookingPage() {
                       <div>
                         <p className="text-sm text-green-700">Duración total</p>
                         <p className="font-semibold text-green-900">
-                          {formatDuration(selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0))}
+                          {formatDuration(totalDuration)}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-green-700">Precio total</p>
                         <p className="font-semibold text-green-900">
-                          {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                          {formatPrice(totalPrice)}
                         </p>
                       </div>
                     </div>
@@ -957,7 +880,7 @@ export default function BookingPage() {
                 <div className="mt-3 pt-3 border-t border-green-200 flex justify-between font-semibold">
                   <span className="text-green-900">Total:</span>
                   <span className="text-green-900">
-                    {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                    {formatPrice(totalPrice)}
                   </span>
                 </div>
               </div>
@@ -1037,7 +960,7 @@ export default function BookingPage() {
                 <div className="pt-3 border-t border-green-200 flex justify-between text-sm">
                   <span className="text-green-700">Precio total:</span>
                   <span className="text-green-900 font-semibold">
-                    {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                    {formatPrice(totalPrice)}
                   </span>
                 </div>
               </div>
@@ -1262,7 +1185,7 @@ export default function BookingPage() {
                     <div>
                       <Label className="text-sm font-medium text-gray-500">Duración Total</Label>
                       <p className="font-medium">
-                        {formatDuration(selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0))}
+                        {formatDuration(totalDuration)}
                       </p>
                     </div>
                     <div>
@@ -1280,7 +1203,7 @@ export default function BookingPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900">Precio Total:</span>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                        {formatPrice(totalPrice)}
                       </span>
                     </div>
                   </div>
@@ -1406,7 +1329,7 @@ export default function BookingPage() {
                   <div className="flex justify-between items-center text-lg font-semibold pt-4 border-t">
                     <span className="text-gray-900">Total:</span>
                     <span className="text-green-600">
-                      {formatPrice(selectedServices.reduce((sum, s) => sum + s.price, 0))}
+                      {formatPrice(totalPrice)}
                     </span>
                   </div>
                 </CardContent>

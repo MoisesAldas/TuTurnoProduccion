@@ -54,19 +54,19 @@ export default function FeaturesSection() {
   }, [])
 
   return (
-    <section id="features" className="py-16 lg:py-24 bg-white overflow-hidden">
+    <section id="features" className="py-16 lg:py-24 bg-white dark:bg-gray-950 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div className={`text-center mb-12 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Badge variant="outline" className="mb-4 border-orange-300 text-orange-600">
+            <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
               CARACTERÍSTICAS
             </Badge>
 
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
               Todo lo que necesitas, en un solo lugar.
             </h2>
 
-            <p className="text-lg text-gray-600 text-balance max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg text-gray-600 dark:text-gray-400 text-balance max-w-3xl mx-auto leading-relaxed">
               Desde la gestión de citas hasta el análisis de tus ingresos, TuTurno te proporciona las herramientas para llevar tu negocio al siguiente nivel.
             </p>
           </div>
@@ -82,18 +82,18 @@ export default function FeaturesSection() {
                   style={{ transitionDelay: `${100 * (index + 1)}ms` }}
                 >
                   <Card
-                    className="group bg-white border-gray-200 shadow-sm hover:shadow-xl hover:border-orange-400 transition-all duration-300 transform hover:-translate-y-2 h-full"
+                    className="group bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-xl hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 transform hover:-translate-y-2 h-full"
                   >
                     <CardHeader className="p-6">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 transition-colors duration-300">
-                        <IconComponent className="w-6 h-6 text-orange-600 group-hover:text-white transition-colors duration-300" />
+                      <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 dark:group-hover:bg-orange-600 transition-colors duration-300">
+                        <IconComponent className="w-6 h-6 text-orange-600 dark:text-orange-500 group-hover:text-white transition-colors duration-300" />
                       </div>
-                      <CardTitle className="text-xl font-bold text-gray-900 mb-2">
+                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                         {feature.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 pt-0">
-                      <p className="text-gray-600 leading-relaxed">
+                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                         {feature.description}
                       </p>
                     </CardContent>

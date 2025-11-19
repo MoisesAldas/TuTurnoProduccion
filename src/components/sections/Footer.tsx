@@ -24,13 +24,13 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="bg-gray-900 text-gray-400">
+    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-400 dark:text-gray-500">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-8">
           {/* Brand Column */}
           <div className="md:col-span-6 lg:col-span-5">
             <Logo color="white" size="md" className="mb-4" />
-            <p className="max-w-xs text-gray-400 leading-relaxed">
+            <p className="max-w-xs text-gray-400 dark:text-gray-500 leading-relaxed">
               Transformando la gestión de negocios de servicios, una cita a la vez.
             </p>
           </div>
@@ -67,15 +67,15 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center">
-          <p className="text-sm text-gray-500 order-2 sm:order-1 mt-4 sm:mt-0">
+        <div className="mt-12 pt-8 border-t border-gray-800 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center">
+          <p className="text-sm text-gray-500 dark:text-gray-600 order-2 sm:order-1 mt-4 sm:mt-0">
             © {new Date().getFullYear()} TuTurno. Todos los derechos reservados.
           </p>
           <div className="flex space-x-4 order-1 sm:order-2">
             {socialLinks.map((link) => {
               const Icon = link.icon
               return (
-                <a key={link.name} href={link.href} aria-label={link.name} className="text-gray-500 hover:text-white transition-colors">
+                <a key={link.name} href={link.href} aria-label={link.name} className="text-gray-500 dark:text-gray-600 hover:text-white transition-colors">
                   <Icon className="w-5 h-5" />
                 </a>
               )

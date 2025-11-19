@@ -6,10 +6,13 @@ import { Menu, X, LogIn, LogOut, User, Briefcase, ShoppingCart, LayoutDashboard 
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import Logo from '../logo'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { useTheme } from 'next-themes'
 
 export default function Header() {
   const router = useRouter()
   const { authState, signOut } = useAuth()
+  const { theme } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('')
@@ -84,8 +87,8 @@ export default function Header() {
         onClick={() => setIsMenuOpen(false)}
         className={`font-semibold transition-colors py-2 ${
           isActive
-            ? 'text-orange-600'
-            : 'text-gray-600 hover:text-orange-600'
+            ? 'text-orange-600 dark:text-orange-500'
+            : 'text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-500'
         }`}>
         {label}
       </a>
@@ -94,13 +97,13 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 w-full z-50 bg-white transition-shadow duration-300 ${
-        isScrolled ? 'shadow-md border-b border-gray-200' : ''
+      className={`fixed top-0 w-full z-50 bg-white dark:bg-gray-900 transition-all duration-300 ${
+        isScrolled ? 'shadow-md border-b border-gray-200 dark:border-gray-800' : ''
       }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => router.push('/')}>
-            <Logo color="black" size="md" />
+            <Logo color={theme === 'dark' ? 'white' : 'black'} size="md" />
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">
@@ -109,11 +112,11 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* === USER'S ORIGINAL LOGIC + NEW STYLES === */}
+          {/* === USER'S ORIGINAL LOGIC + NEW STYLES + THEME TOGGLE === */}
           <div className="hidden md:flex items-center space-x-2">
             {authState.user ? (
               <>
-                <Button variant="ghost" onClick={handleReserveClick}>
+                <Button variant="ghost" onClick={handleReserveClick} className="dark:text-gray-300 dark:hover:bg-gray-800">
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   Marketplace
                 </Button>
@@ -129,14 +132,15 @@ export default function Header() {
                     Mi Dashboard
                   </Button>
                 )}
-                <Button variant="ghost" onClick={signOut} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                <Button variant="ghost" onClick={signOut} className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
                   <LogOut className="w-4 h-4 mr-2" />
                   Salir
                 </Button>
+                <ThemeToggle />
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={handleReserveClick}>
+                <Button variant="ghost" onClick={handleReserveClick} className="dark:text-gray-300 dark:hover:bg-gray-800">
                   Reservar Cita
                 </Button>
                 <Button
@@ -145,32 +149,36 @@ export default function Header() {
                 >
                   Registra tu Negocio
                 </Button>
+                <ThemeToggle />
               </>
             )}
           </div>
 
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
+        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg">
           <div className="container mx-auto px-4 py-6">
             <nav className="flex flex-col space-y-4 mb-6">
               {navItems.map((item) => (
                 <NavLink key={item.href} {...item} />
               ))}
             </nav>
-            <div className="flex flex-col space-y-3 pt-6 border-t">
+            <div className="flex flex-col space-y-3 pt-6 border-t border-gray-200 dark:border-gray-800">
               {authState.user ? (
                  <>
-                  <Button size="lg" variant="outline" onClick={handleReserveClick}>
+                  <Button size="lg" variant="outline" onClick={handleReserveClick} className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
                     <ShoppingCart className="w-5 h-5 mr-2" />
                     Ir al Marketplace
                   </Button>
@@ -186,7 +194,7 @@ export default function Header() {
                       Mi Dashboard
                     </Button>
                   )}
-                  <Button size="lg" variant="ghost" onClick={signOut} className="text-red-600 hover:text-red-700 justify-start">
+                  <Button size="lg" variant="ghost" onClick={signOut} className="text-red-600 hover:text-red-700 justify-start dark:hover:bg-red-900/20">
                     <LogOut className="w-5 h-5 mr-2" />
                     Cerrar Sesión
                   </Button>
@@ -203,7 +211,7 @@ export default function Header() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full"
+                    className="w-full dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     onClick={handleReserveClick}
                   >
                     Reservar Cita

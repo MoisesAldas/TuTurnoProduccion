@@ -15,7 +15,7 @@ export default function CTASection() {
   }, [])
 
   return (
-    <section className="bg-gray-900 overflow-hidden">
+    <section className="bg-gray-900 dark:bg-gray-950 overflow-hidden">
       <div className="container mx-auto px-4 py-16 lg:py-24">
         <div
           className={`max-w-3xl mx-auto text-center transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
@@ -23,7 +23,7 @@ export default function CTASection() {
             ¿Listo para llevar tu negocio al siguiente nivel?
           </h2>
 
-          <p className="text-lg text-gray-300 mb-10 leading-relaxed">
+          <p className="text-lg text-gray-300 dark:text-gray-400 mb-10 leading-relaxed">
             Únete a cientos de negocios que ya gestionan su día a día de forma más inteligente. La configuración toma solo 2 minutos.
           </p>
 
@@ -38,7 +38,7 @@ export default function CTASection() {
             </Button>
           </div>
 
-          <p className="mt-6 text-sm text-gray-500">
+          <p className="mt-6 text-sm text-gray-500 dark:text-gray-600">
             No se requiere tarjeta de crédito.
           </p>
         </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,9 +15,14 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
-import LocationMapModal from '@/components/LocationMapModal'
 import StarRating from '@/components/StarRating'
 import Logo from '@/components/logo'
+
+// Lazy load map modal (includes Mapbox)
+const LocationMapModal = dynamic(() => import('@/components/LocationMapModal'), {
+  ssr: false,
+  loading: () => <div className="text-center p-4">Cargando mapa...</div>
+})
 
 interface BusinessCategory {
   id: string

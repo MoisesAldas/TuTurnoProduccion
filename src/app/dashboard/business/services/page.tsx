@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -104,11 +104,21 @@ const formatDuration = (minutes: number) => {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 };
 
+  // Memoize filtered services (prevents re-filtering on every render)
+  const filteredServices = useMemo(() => {
+    return services.filter(service =>
+      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [services, searchQuery])
 
-  const filteredServices = services.filter(service =>
-    service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Memoize statistics (prevents recalculation on every render)
+  const stats = useMemo(() => ({
+    total: services.length,
+    active: services.filter(s => s.is_active).length,
+    averagePrice: services.length > 0 ? services.reduce((sum, s) => sum + s.price, 0) / services.length : 0,
+    averageDuration: services.length > 0 ? services.reduce((sum, s) => sum + s.duration_minutes, 0) / services.length : 0
+  }), [services])
 
   if (loading) {
     return (
@@ -144,7 +154,7 @@ const formatDuration = (minutes: number) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Servicios</p>
-                <p className="text-3xl font-bold text-gray-900">{services.length}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-orange-600" />
@@ -159,7 +169,7 @@ const formatDuration = (minutes: number) => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Activos</p>
                 <p className="text-3xl font-bold text-green-600">
-                  {services.filter(s => s.is_active).length}
+                  {stats.active}
                 </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -175,9 +185,7 @@ const formatDuration = (minutes: number) => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Precio Promedio</p>
                 <p className="text-3xl font-bold text-blue-600">
-                  {formatPrice(
-                    services.reduce((sum, s) => sum + s.price, 0) / services.length || 0
-                  )}
+                  {formatPrice(stats.averagePrice)}
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -193,12 +201,7 @@ const formatDuration = (minutes: number) => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Duración Promedio</p>
                 <p className="text-3xl font-bold text-purple-600">
-                  {formatDuration(
-  parseFloat(
-    ((services.reduce((sum, s) => sum + s.duration_minutes, 0) / services.length) || 0).toFixed(2)
-  )
-)}
-
+                  {formatDuration(parseFloat(stats.averageDuration.toFixed(2)))}
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
