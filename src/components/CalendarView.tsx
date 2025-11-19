@@ -245,7 +245,7 @@ export default function CalendarView({
     const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 
     onCreateAppointment(selectedDate, timeString, employeeId)
-  }
+  }, [selectedDate, onCreateAppointment])
 
   // Drag & Drop handlers
   const handleDragStart = (e: React.DragEvent, appointment: Appointment) => {
