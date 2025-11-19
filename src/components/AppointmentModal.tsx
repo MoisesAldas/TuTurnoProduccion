@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { X, User, Phone, Mail, Clock, DollarSign, Calendar, FileText, AlertCircle, Edit, Check, MoreVertical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabaseClient'
 import { formatSpanishDate } from '@/lib/dateUtils'
-import CheckoutModal from './CheckoutModal'
+
+// Lazy load CheckoutModal
+const CheckoutModal = dynamic(() => import('./CheckoutModal'), {
+  loading: () => <div className="text-center p-4">Cargando...</div>
+})
 import {
   DropdownMenu,
   DropdownMenuContent,

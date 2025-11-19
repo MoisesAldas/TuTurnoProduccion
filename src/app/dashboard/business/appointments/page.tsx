@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments'
@@ -12,9 +13,23 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Calendar, ChevronLeft, ChevronRight, Plus, Settings, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import CalendarView from '@/components/CalendarView'
-import CreateAppointmentModal from '@/components/CreateAppointmentModal'
 import type { Business, Employee, Appointment } from '@/types/database'
+
+// Lazy load modals and calendar view for better performance
+const CalendarView = dynamic(() => import('@/components/CalendarView'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
+        <p className="text-gray-600">Cargando calendario...</p>
+      </div>
+    </div>
+  )
+})
+
+const CreateAppointmentModal = dynamic(() => import('@/components/CreateAppointmentModal'), {
+  loading: () => <div className="text-center p-4">Cargando...</div>
+})
 
 // Tipo simplificado para los empleados en la vista del calendario
 type CalendarEmployee = Pick<Employee, 'id' | 'first_name' | 'last_name' | 'avatar_url' | 'is_active'>;
@@ -76,32 +91,10 @@ export default function AppointmentsPage() {
     }
   }, [business, selectedDate, selectedEmployees, viewType])
 
-  // Debug: Log appointments state changes
-  useEffect(() => {
-    console.log('═══════════════════════════════════════════════')
-    console.log('📊 [APPOINTMENTS STATE CHANGED]')
-    console.log('═══════════════════════════════════════════════')
-    console.log('Total appointments in state:', appointments.length)
-    if (appointments.length > 0) {
-      console.table(appointments.map(apt => ({
-        id: apt.id.substring(0, 8),
-        date: apt.appointment_date,
-        time: `${apt.start_time} - ${apt.end_time}`,
-        status: apt.status,
-        employee: apt.employee_id.substring(0, 8),
-        client: apt.client_id ? 'registered' : apt.walk_in_client_name || 'business_client'
-      })))
-    } else {
-      console.log('⚠️ No appointments in current state')
-    }
-    console.log('═══════════════════════════════════════════════\n')
-  }, [appointments])
-
   const fetchBusinessData = async () => {
     if (!authState.user) return
 
     try {
-      console.log('🏢 [BUSINESS] Starting to fetch business data for user:', authState.user.id)
       setLoading(true)
 
       // Obtener negocio
@@ -113,7 +106,6 @@ export default function AppointmentsPage() {
 
       if (businessError) throw businessError
 
-      console.log('🏢 [BUSINESS] Business data fetched successfully:', businessData)
       setBusiness(businessData)
       setAllowOverlapping(businessData.allow_overlapping_appointments || false)
 
@@ -142,7 +134,6 @@ export default function AppointmentsPage() {
     } catch (error) {
       console.error('❌ [BUSINESS] Error fetching business data:', error)
     } finally {
-      console.log('🏢 [BUSINESS] Business data fetch completed, setting loading to false')
       setLoading(false)
     }
   }
@@ -221,7 +212,6 @@ export default function AppointmentsPage() {
   // REALTIME: Fetch individual appointment
   // ========================================
   const fetchSingleAppointment = async (appointmentId: string) => {
-    console.log('[fetchSingleAppointment] 🔍 Fetching appointment:', appointmentId)
     try {
       const { data, error } = await supabase
         .from('appointments')
@@ -239,40 +229,33 @@ export default function AppointmentsPage() {
         .single()
 
       if (error) {
-        console.error('[fetchSingleAppointment] ❌ Error fetching:', error)
+        console.error('[fetchSingleAppointment] Error:', error)
         throw error
       }
 
-      console.log('[fetchSingleAppointment] ✅ Appointment fetched successfully:', data)
-
       if (data) {
         setAppointments(prev => {
-          console.log('[fetchSingleAppointment] 📊 Current appointments count:', prev.length)
           const index = prev.findIndex(apt => apt.id === data.id)
-          console.log('[fetchSingleAppointment] 🔍 Appointment index in array:', index)
 
           if (index >= 0) {
             // Actualizar existente
-            console.log('[fetchSingleAppointment] ✏️ UPDATING existing appointment')
             const newArr = [...prev]
             newArr[index] = data as any
             return newArr
           } else {
             // Agregar nueva
-            console.log('[fetchSingleAppointment] ➕ ADDING new appointment')
             const newArray = [...prev, data as any].sort((a, b) => {
               // Ordenar por fecha y hora
               const dateCompare = a.appointment_date.localeCompare(b.appointment_date)
               if (dateCompare !== 0) return dateCompare
               return a.start_time.localeCompare(b.start_time)
             })
-            console.log('[fetchSingleAppointment] 📊 New appointments count:', newArray.length)
             return newArray
           }
         })
       }
     } catch (error) {
-      console.error('[fetchSingleAppointment] ❌ Error:', error)
+      console.error('[fetchSingleAppointment] Error:', error)
     }
   }
 
@@ -294,46 +277,15 @@ export default function AppointmentsPage() {
   // ========================================
   // REALTIME: Suscripción a cambios en appointments
   // ========================================
-  // Debug: Log business state
-  console.log('[AppointmentsPage] Business state:', { 
-    business: business, 
-    businessId: business?.id, 
-    hasBusiness: !!business 
-  })
-
   // Solo usar realtime si business está disponible
   const shouldUseRealtime = business?.id && business.id.trim() !== ''
-  console.log('[AppointmentsPage] Should use realtime:', shouldUseRealtime)
-
-  // Usar useEffect para controlar cuándo se ejecuta el hook
-  useEffect(() => {
-    if (shouldUseRealtime) {
-      console.log('[AppointmentsPage] 🚀 Business loaded, realtime should work now')
-    }
-  }, [shouldUseRealtime])
 
   // Siempre ejecutar el hook, pero con businessId condicional
   // El hook maneja internamente el caso cuando businessId es undefined
   useRealtimeAppointments({
     businessId: shouldUseRealtime ? business.id : undefined,
-    debug: true, // ← Mantener para ver logs de suscripción
     onInsert: (newAppointment) => {
-      console.log('═══════════════════════════════════════════════')
-      console.log('🆕 [REALTIME INSERT] Nueva cita recibida')
-      console.log('═══════════════════════════════════════════════')
-      console.log('[INSERT] Appointment ID:', newAppointment.id)
-      console.log('[INSERT] Business ID:', newAppointment.business_id)
-      console.log('[INSERT] Employee ID:', newAppointment.employee_id)
-      console.log('[INSERT] Date:', newAppointment.appointment_date)
-      console.log('[INSERT] Time:', newAppointment.start_time, '-', newAppointment.end_time)
-      console.log('[INSERT] Status:', newAppointment.status)
-
       // Verificar si la cita es de la fecha actual (usando refs para evitar stale closures)
-      console.log('\n[INSERT] 🔍 Verificando filtros...')
-      console.log('[INSERT] View Type (ref):', viewTypeRef.current)
-      console.log('[INSERT] Selected Date (ref):', toDateString(selectedDateRef.current))
-      console.log('[INSERT] Selected Employees (ref):', selectedEmployeesRef.current)
-
       const matchesDate = viewTypeRef.current === 'day'
         ? newAppointment.appointment_date === toDateString(selectedDateRef.current)
         : isWithinWeekRange(newAppointment.appointment_date)
@@ -341,87 +293,30 @@ export default function AppointmentsPage() {
       // Verificar si es del empleado seleccionado
       const matchesEmployee = selectedEmployeesRef.current.includes(newAppointment.employee_id)
 
-      console.log('[INSERT] ✅ Filtros resultado:', {
-        matchesDate,
-        matchesEmployee,
-        appointmentDate: newAppointment.appointment_date,
-        selectedDateStr: toDateString(selectedDateRef.current),
-        employeeId: newAppointment.employee_id,
-        selectedEmployees: selectedEmployeesRef.current
-      })
-
       if (matchesDate && matchesEmployee) {
-        console.log('[INSERT] ✅ PASÓ FILTROS - Fetching appointment completo...')
         // Fetch completo para traer relaciones (users, services, etc.)
         fetchSingleAppointment(newAppointment.id)
-      } else {
-        console.log('[INSERT] ❌ NO PASÓ FILTROS - Cita ignorada')
-        if (!matchesDate) console.log('[INSERT] ❌ Razón: fecha no coincide')
-        if (!matchesEmployee) console.log('[INSERT] ❌ Razón: empleado no está seleccionado')
       }
-      console.log('═══════════════════════════════════════════════\n')
     },
     onUpdate: (updatedAppointment) => {
-      console.log('═══════════════════════════════════════════════')
-      console.log('✏️ [REALTIME UPDATE] Cita actualizada')
-      console.log('═══════════════════════════════════════════════')
-      console.log('[UPDATE] Appointment ID:', updatedAppointment.id)
-      console.log('[UPDATE] Business ID:', updatedAppointment.business_id)
-      console.log('[UPDATE] Employee ID:', updatedAppointment.employee_id)
-      console.log('[UPDATE] Date:', updatedAppointment.appointment_date)
-      console.log('[UPDATE] Time:', updatedAppointment.start_time, '-', updatedAppointment.end_time)
-      console.log('[UPDATE] Status:', updatedAppointment.status)
-
       // Verificar si la cita sigue en el rango visible (usando refs para evitar stale closures)
-      console.log('\n[UPDATE] 🔍 Verificando filtros...')
-      console.log('[UPDATE] View Type (ref):', viewTypeRef.current)
-      console.log('[UPDATE] Selected Date (ref):', toDateString(selectedDateRef.current))
-      console.log('[UPDATE] Selected Employees (ref):', selectedEmployeesRef.current)
-
       const matchesDate = viewTypeRef.current === 'day'
         ? updatedAppointment.appointment_date === toDateString(selectedDateRef.current)
         : isWithinWeekRange(updatedAppointment.appointment_date)
 
       const matchesEmployee = selectedEmployeesRef.current.includes(updatedAppointment.employee_id)
 
-      console.log('[UPDATE] ✅ Filtros resultado:', {
-        matchesDate,
-        matchesEmployee,
-        appointmentDate: updatedAppointment.appointment_date,
-        selectedDateStr: toDateString(selectedDateRef.current),
-        employeeId: updatedAppointment.employee_id,
-        selectedEmployees: selectedEmployeesRef.current
-      })
-
       if (matchesDate && matchesEmployee) {
-        console.log('[UPDATE] ✅ PASÓ FILTROS - Fetching appointment actualizado...')
         // Fetch completo para asegurar datos frescos con relaciones
         fetchSingleAppointment(updatedAppointment.id)
       } else {
-        console.log('[UPDATE] ❌ NO PASÓ FILTROS - Removiendo cita del estado local')
         // Si ya no coincide con filtros, removerla
-        setAppointments(prev => {
-          const filtered = prev.filter(apt => apt.id !== updatedAppointment.id)
-          console.log('[UPDATE] 🗑️ Appointments count after removal:', filtered.length)
-          return filtered
-        })
+        setAppointments(prev => prev.filter(apt => apt.id !== updatedAppointment.id))
       }
-      console.log('═══════════════════════════════════════════════\n')
     },
     onDelete: (appointmentId) => {
-      console.log('═══════════════════════════════════════════════')
-      console.log('🗑️ [REALTIME DELETE] Cita eliminada')
-      console.log('═══════════════════════════════════════════════')
-      console.log('[DELETE] Appointment ID:', appointmentId)
-
       // Remover del estado local
-      setAppointments(prev => {
-        const filtered = prev.filter(apt => apt.id !== appointmentId)
-        console.log('[DELETE] 📊 Appointments before:', prev.length)
-        console.log('[DELETE] 📊 Appointments after:', filtered.length)
-        return filtered
-      })
-      console.log('═══════════════════════════════════════════════\n')
+      setAppointments(prev => prev.filter(apt => apt.id !== appointmentId))
     }
   })
 

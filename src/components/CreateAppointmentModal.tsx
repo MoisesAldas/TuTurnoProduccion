@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
 import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -74,6 +75,24 @@ export default function CreateAppointmentModal({
   const totalSteps = 4
   const supabase = createClient()
   const { toast } = useToast()
+
+  // Debounced search for business clients
+  const debouncedSearch = useDebouncedCallback(
+    async (searchValue: string) => {
+      const term = searchValue.trim()
+      const { data } = await supabase.rpc('list_business_clients', {
+        p_business_id: businessId,
+        p_search: term || null,
+        p_only_active: true,
+        p_limit: 50,
+        p_offset: 0,
+        p_sort_by: 'first_name',
+        p_sort_dir: 'asc',
+      })
+      setBusinessClients((data as any) || [])
+    },
+    300 // 300ms delay
+  )
 
   useEffect(() => {
     fetchData()
@@ -196,7 +215,8 @@ export default function CreateAppointmentModal({
     }
   }
 
-  const calculateEndTime = () => {
+  // Memoized calculations to avoid recalculating on every render
+  const endTime = useMemo(() => {
     if (!startTime || selectedServiceIds.length === 0) return ''
 
     const totalDuration = selectedServiceIds.reduce((total, serviceId) => {
@@ -210,14 +230,14 @@ export default function CreateAppointmentModal({
     startDate.setMinutes(startDate.getMinutes() + totalDuration)
 
     return startDate.toTimeString().substring(0, 5)
-  }
+  }, [startTime, selectedServiceIds, services])
 
-  const calculateTotalPrice = () => {
+  const totalPrice = useMemo(() => {
     return selectedServiceIds.reduce((total, serviceId) => {
       const service = services.find(s => s.id === serviceId)
       return total + (service?.price || 0)
     }, 0)
-  }
+  }, [selectedServiceIds, services])
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -239,9 +259,6 @@ export default function CreateAppointmentModal({
 
     try {
       setSubmitting(true)
-
-      const endTime = calculateEndTime()
-      const totalPrice = calculateTotalPrice()
 
       const appointmentData: any = {
         business_id: businessId,
@@ -632,19 +649,10 @@ export default function CreateAppointmentModal({
                     type="text"
                     placeholder="Buscar por nombre, teléfono o email..."
                     value={searchTerm}
-                    onChange={async (e) => {
-                      setSearchTerm(e.target.value)
-                      const term = e.target.value.trim()
-                      const { data } = await supabase.rpc('list_business_clients', {
-                        p_business_id: businessId,
-                        p_search: term || null,
-                        p_only_active: true,
-                        p_limit: 50,
-                        p_offset: 0,
-                        p_sort_by: 'first_name',
-                        p_sort_dir: 'asc',
-                      })
-                      setBusinessClients((data as any) || [])
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setSearchTerm(value)
+                      debouncedSearch(value)
                     }}
                     className="mb-2"
                   />
@@ -775,7 +783,7 @@ export default function CreateAppointmentModal({
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Hora de fin:</span>
-                      <span className="font-medium text-gray-900">{calculateEndTime()}</span>
+                      <span className="font-medium text-gray-900">{endTime}</span>
                     </div>
                   </div>
                 </div>
@@ -852,7 +860,7 @@ export default function CreateAppointmentModal({
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-gray-900">Total:</span>
                       <span className="text-2xl font-bold text-orange-600">
-                        ${calculateTotalPrice().toFixed(2)}
+                        ${totalPrice.toFixed(2)}
                       </span>
                     </div>
                   </div>
