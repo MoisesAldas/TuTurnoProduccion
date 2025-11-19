@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -106,12 +106,23 @@ export default function EmployeesPage() {
     }
   }
 
-  const filteredEmployees = employees.filter(employee =>
-    employee.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    employee.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    employee.position?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    employee.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Memoize filtered employees (prevents re-filtering on every render)
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(employee =>
+      employee.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employee.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employee.position?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employee.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [employees, searchQuery])
+
+  // Memoize statistics (prevents recalculation on every render)
+  const stats = useMemo(() => ({
+    total: employees.length,
+    active: employees.filter(e => e.is_active).length,
+    inactive: employees.filter(e => !e.is_active).length,
+    withPosition: employees.filter(e => e.position).length
+  }), [employees])
 
   if (loading) {
     return (
@@ -155,7 +166,7 @@ export default function EmployeesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Empleados</p>
-                <p className="text-3xl font-bold text-gray-900">{employees.length}</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <Users className="w-6 h-6 text-orange-600" />
@@ -170,7 +181,7 @@ export default function EmployeesPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Activos</p>
                 <p className="text-3xl font-bold text-green-600">
-                  {employees.filter(e => e.is_active).length}
+                  {stats.active}
                 </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -186,7 +197,7 @@ export default function EmployeesPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Inactivos</p>
                 <p className="text-3xl font-bold text-gray-500">
-                  {employees.filter(e => !e.is_active).length}
+                  {stats.inactive}
                 </p>
               </div>
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
@@ -202,7 +213,7 @@ export default function EmployeesPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Con Posición</p>
                 <p className="text-3xl font-bold text-blue-600">
-                  {employees.filter(e => e.position).length}
+                  {stats.withPosition}
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
