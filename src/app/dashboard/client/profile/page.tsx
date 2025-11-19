@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Edit, Save, X, Camera, User, Mail, Phone,
-  Calendar, Shield, Loader2, CheckCircle
+  Calendar, Shield, Loader2, CheckCircle, XCircle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
