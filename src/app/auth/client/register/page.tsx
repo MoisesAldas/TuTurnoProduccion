@@ -14,6 +14,7 @@ import { CalendarDays, UserPlus, ArrowLeft, Eye, EyeOff, Mail, Lock, User, Check
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import Logo from '@/components/logo'
+import AuthProgressSteps from '@/components/AuthProgressSteps'
 
 const registerSchema = z.object({
   firstName: z
@@ -166,323 +167,287 @@ export default function ClientRegisterPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
-      isVisible ? 'opacity-100' : 'opacity-0'
-    }`}>
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-emerald-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-teal-400/10 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 right-10 w-72 h-72 bg-cyan-400/10 rounded-full filter blur-3xl animate-pulse delay-500"></div>
+    <div className="min-h-screen flex">
+      {/* Left Panel - Visual */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-12 flex-col justify-between relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
 
-        {/* Floating dots */}
-        <div className="absolute top-1/4 left-10 animate-bounce delay-1000">
-          <div className="w-4 h-4 bg-emerald-400 rounded-full opacity-60"></div>
-        </div>
-        <div className="absolute top-1/3 right-20 animate-bounce delay-[1500ms]">
-          <div className="w-6 h-6 bg-teal-400 rounded-full opacity-40"></div>
-        </div>
-        <div className="absolute bottom-1/3 left-1/4 animate-bounce delay-[2000ms]">
-          <div className="w-5 h-5 bg-cyan-400 rounded-full opacity-50"></div>
-        </div>
-      </div>
-
-      <div className="w-full max-w-md space-y-6 relative z-10">
-        {/* Back Button */}
-        <div className={`flex justify-start transition-all duration-700 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`}>
+        {/* Back button */}
+        <div className="relative z-10">
           <Link href="/auth/client">
-            <Button variant="ghost" className="text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200">
+            <Button variant="ghost" className="text-white hover:bg-white/20">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
             </Button>
           </Link>
         </div>
 
-        {/* Header */}
-        <div className={`text-center transition-all duration-700 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`} style={{ transitionDelay: '200ms' }}>
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <CalendarDays className="w-7 h-7 text-white" />
-            </div>
-            <Logo color="black" size="lg" />
+        {/* Content */}
+        <div className="relative z-10 space-y-6">
+          <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
+            <UserPlus className="w-5 h-5 text-white" />
+            <span className="text-white font-medium">Únete a TuTurno</span>
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Crear Cuenta
+          <h1 className="text-5xl font-bold text-white leading-tight">
+            Empieza tu<br />experiencia
           </h1>
-          <p className="text-gray-600">
-            Únete a miles de usuarios satisfechos
+
+          <p className="text-xl text-white/80 max-w-md">
+            Accede a cientos de servicios y reserva tus citas en segundos
           </p>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className={`border-red-200 bg-red-50/90 backdrop-blur-sm transition-all duration-500 ${
-            isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-          }`} style={{ transitionDelay: '400ms' }}>
-            <AlertDescription className="text-red-700">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Logo */}
+        <div className="relative z-10">
+          <Logo color="white" size="lg" />
+        </div>
+      </div>
 
-        {/* Register Form */}
-        <Card className={`bg-white/95 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-500 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-        }`} style={{ transitionDelay: '600ms' }}>
-          <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <UserPlus className="w-8 h-8 text-white" />
+      {/* Right Panel - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto">
+        <div className="w-full max-w-md space-y-4 py-2">
+          {/* Mobile back button */}
+          <div className="lg:hidden">
+            <Link href="/auth/client">
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-emerald-600 hover:bg-emerald-50">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
+            </Link>
+          </div>
+
+          {/* Header */}
+          <div className="text-center space-y-1">
+            <div className="lg:hidden mb-2">
+              <Logo color="black" size="lg" />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900">¡Bienvenido a TuTurno!</CardTitle>
-            <CardDescription className="text-gray-600">
-              Completa tus datos para crear tu cuenta
-            </CardDescription>
-          </CardHeader>
+            <h2 className="text-2xl font-bold text-gray-900">Crear Cuenta</h2>
+            <p className="text-sm text-gray-600">Únete a miles de usuarios satisfechos</p>
+          </div>
 
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Name Fields */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                    Nombre *
-                  </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      id="firstName"
-                      placeholder="Juan"
-                      className="pl-9 h-11 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300 transition-all"
-                      {...register('firstName')}
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement
-                        target.value = target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '')
-                      }}
-                    />
-                  </div>
-                  {errors.firstName && (
-                    <p className="text-xs text-red-600">{errors.firstName.message}</p>
-                  )}
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <AlertDescription className="text-red-700">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Register Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+            {/* Name Fields */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                  Nombre *
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="firstName"
+                    placeholder="Juan"
+                    className="pl-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                    {...register('firstName')}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement
+                      target.value = target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '')
+                    }}
+                  />
                 </div>
+                {errors.firstName && (
+                  <p className="text-xs text-red-600">{errors.firstName.message}</p>
+                )}
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                    Apellido *
-                  </Label>
+              <div className="space-y-1">
+                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                  Apellido *
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
                     id="lastName"
                     placeholder="Pérez"
-                    className="h-11 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300 transition-all"
+                    className="pl-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
                     {...register('lastName')}
                     onInput={(e) => {
                       const target = e.target as HTMLInputElement
                       target.value = target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '')
                     }}
                   />
-                  {errors.lastName && (
-                    <p className="text-xs text-red-600">{errors.lastName.message}</p>
-                  )}
                 </div>
-              </div>
-
-              {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email *
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="tu@email.com"
-                    className="pl-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300 transition-all"
-                    {...register('email')}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                    {errors.email.message}
-                  </p>
+                {errors.lastName && (
+                  <p className="text-xs text-red-600">{errors.lastName.message}</p>
                 )}
               </div>
+            </div>
 
-              {/* Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Contraseña *
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Crea una contraseña segura"
-                    className="pl-10 pr-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300 transition-all"
-                    {...register('password')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
+            {/* Email Field */}
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email *
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  className="pl-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  {...register('email')}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-xs text-red-600">{errors.email.message}</p>
+              )}
+            </div>
 
-                {/* Password Strength Indicator */}
-                {password && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                        <div
-                          className={`h-1.5 rounded-full transition-all duration-300 ${passwordStrength.color}`}
-                          style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-600">{passwordStrength.text}</span>
-                    </div>
+            {/* Password Field */}
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Contraseña *
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Crea una contraseña segura"
+                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  {...register('password')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Password Strength Indicator */}
+              {password && (
+                <div className="flex items-center gap-1">
+                  <div className="flex-1 bg-gray-200 rounded-full h-1">
+                    <div
+                      className={`h-1 rounded-full transition-all duration-300 ${passwordStrength.color}`}
+                      style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
+                    />
                   </div>
-                )}
-
-                {errors.password && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Confirm Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                  Confirmar Contraseña *
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirma tu contraseña"
-                    className="pl-10 pr-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 hover:border-gray-300 transition-all"
-                    {...register('confirmPassword')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
+                  <span className="text-xs text-gray-600">{passwordStrength.text}</span>
                 </div>
-                {errors.confirmPassword && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                    {errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
+              )}
 
-              {/* Terms and Conditions */}
-              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
-                Al crear una cuenta, aceptas nuestros{' '}
-                <Link href="/terms" className="text-emerald-600 hover:text-emerald-700">
-                  Términos y Condiciones
-                </Link>
-                {' '}y{' '}
-                <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700">
-                  Política de Privacidad
-                </Link>
-              </div>
+              {errors.password && (
+                <p className="text-xs text-red-600">{errors.password.message}</p>
+              )}
+            </div>
 
+            {/* Confirm Password Field */}
+            <div className="space-y-1">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                Confirmar Contraseña *
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirma tu contraseña"
+                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  {...register('confirmPassword')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-xs text-red-600">{errors.confirmPassword.message}</p>
+              )}
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="bg-gray-50 rounded-lg p-2.5 text-xs text-gray-600">
+              Al crear una cuenta, aceptas nuestros{' '}
+              <Link href="/terms" className="text-emerald-600 hover:text-emerald-700 underline">
+                Términos
+              </Link>
+              {' '}y{' '}
+              <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700 underline">
+                Privacidad
+              </Link>
+            </div>
+
+            {/* Action Buttons - Two Columns */}
+            <div className="grid grid-cols-2 gap-3">
               {/* Submit Button */}
               <Button
                 type="submit"
                 disabled={loading || !isValid}
-                className="w-full bg-gradient-to-r from-teal-600 via-cyan-600 to-emerald-600 hover:from-teal-700 hover:via-cyan-700 hover:to-emerald-700 text-white font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:transform-none disabled:shadow-lg h-12"
+                className="h-10 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold"
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
-                    Creando cuenta...
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
                   </>
                 ) : (
                   <>
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Crear Cuenta
+                    <UserPlus className="w-4 h-4" />
                   </>
                 )}
               </Button>
-            </form>
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">O también</span>
-              </div>
+              {/* Google OAuth Button */}
+              <Button
+                onClick={handleGoogleSignIn}
+                disabled={googleLoading}
+                variant="outline"
+                type="button"
+                className="h-10 border-2 border-gray-300 hover:bg-gray-50"
+              >
+                {googleLoading ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full"></div>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  </>
+                )}
+              </Button>
             </div>
+          </form>
 
-            {/* Google OAuth Button */}
-            <Button
-              onClick={handleGoogleSignIn}
-              disabled={googleLoading}
-              variant="outline"
-              className="w-full border-2 border-gray-200 hover:bg-gray-50 transition-all duration-200 h-12"
-            >
-              {googleLoading ? (
-                <>
-                  <div className="animate-spin w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full mr-3"></div>
-                  Conectando...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Registrarse con Google
-                </>
-              )}
-            </Button>
-
+          {/* Footer Links - Two Columns */}
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200">
             {/* Login Link */}
-            <div className="text-center pt-4 border-t border-gray-100">
-              <p className="text-sm text-gray-600 mb-3">
-                ¿Ya tienes cuenta?
-              </p>
-              <Link href="/auth/client/login">
-                <Button variant="outline" className="border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-all duration-200">
-                  Iniciar sesión
-                </Button>
+            <div className="text-center">
+              <p className="text-xs text-gray-600 mb-1">¿Ya tienes cuenta?</p>
+              <Link href="/auth/client/login" className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold">
+                Iniciar sesión
               </Link>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Business Link */}
-        <div className={`text-center transition-all duration-700 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`} style={{ transitionDelay: '800ms' }}>
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
-            <p className="text-sm text-gray-600 mb-3">
-              ¿Tienes un negocio?
-            </p>
-            <Link href="/auth/business">
-              <Button variant="outline" className="border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-all duration-200">
-                Registrar mi negocio
-              </Button>
-            </Link>
+            {/* Business Link */}
+            <div className="text-center">
+              <p className="text-xs text-gray-600 mb-1">¿Tienes negocio?</p>
+              <Link href="/auth/business" className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold">
+                Registrar negocio
+              </Link>
+            </div>
           </div>
         </div>
       </div>

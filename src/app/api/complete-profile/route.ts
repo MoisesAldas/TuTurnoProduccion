@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     if (sessionError || !session?.user) {
       console.error('No session found:', sessionError)
       return NextResponse.json({ error: 'No hay sesión activa' }, { status: 401 })
-    }
+    }
 
     // Verificar si el usuario ya existía en la tabla users (para saber si es nuevo)
     const { data: existingUserInDb } = await supabase
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       avatar_url: googleAvatar,
       is_business_owner: user_type === 'business_owner',
       is_client: user_type === 'client',
-    }
+    }
 
     const { data: user, error } = await supabase
       .from('users')
@@ -82,14 +82,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         error: 'Error al crear el perfil: ' + error.message
       }, { status: 500 })
-    }
+    }
 
-    // 🔥 ENVIAR EMAIL DE BIENVENIDA si es usuario de Google
-    const isGoogleUser = session.user.app_metadata?.provider === 'google'
+    // 🔥 ENVIAR EMAIL DE BIENVENIDA a todos los usuarios nuevos
     const isNewUser = !existingUserInDb // Es nuevo si no existía antes en la tabla users
 
-    if (isGoogleUser && isNewUser) {
-      try {
+    if (isNewUser) {
+      try {
+        console.log('📧 Sending welcome email to:', user.email, 'Type:', user_type)
 
         const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-email`, {
           method: 'POST',
@@ -108,14 +108,19 @@ export async function POST(request: NextRequest) {
           })
         })
 
-        if (emailResponse.ok) {
+        if (emailResponse.ok) {
+          const result = await emailResponse.json()
+          console.log('✅ Welcome email sent successfully:', result)
         } else {
           const errorText = await emailResponse.text()
-          console.error('⚠️ Failed to send welcome email:', errorText)
+          console.error('⚠️ Failed to send welcome email. Status:', emailResponse.status)
+          console.error('⚠️ Error:', errorText)
+          console.error('⚠️ Check Edge Function logs in Supabase Dashboard → Edge Functions → send-email')
           // No bloqueamos el registro si el email falla
         }
       } catch (emailError) {
         console.error('⚠️ Error sending welcome email:', emailError)
+        console.error('⚠️ Verify NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set')
         // No bloqueamos el registro si el email falla
       }
     }
@@ -133,7 +138,7 @@ export async function POST(request: NextRequest) {
       redirectUrl = business ? '/dashboard/business' : '/business/setup'
     } else {
       redirectUrl = '/dashboard/client'
-    }
+    }
 
     return NextResponse.json({
       user,

@@ -23,7 +23,7 @@ export default function Header() {
     if (authState.user) {
       router.push('/marketplace')
     } else {
-      router.push('/auth/client/login')
+      router.push('/auth/client') // Ir a página de selección (Login o Registro)
     }
   }
 
@@ -34,7 +34,7 @@ export default function Header() {
     } else if (authState.user && authState.user.is_client) {
       router.push('/auth/business/setup')
     } else {
-      router.push('/auth/business/login')
+      router.push('/auth/business') // Ir a página de selección (Login o Registro)
     }
   }
 

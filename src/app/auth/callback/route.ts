@@ -24,19 +24,12 @@ export async function GET(request: NextRequest) {
     return res
   }
 
-  if (!type || !['client', 'business_owner'].includes(type)) {
-    console.error('Invalid or missing user type')
-    const res = NextResponse.redirect(`${origin}/auth/client/login?error=invalid_type`)
-    res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
-    return res
-  }
-
   try {
     const supabase = createServerClient()
-    
+
     // Intercambiar código por sesión
     const { data: { session }, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
-    
+
     if (sessionError) {
       console.error('Error exchanging code for session:', sessionError)
       const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
@@ -54,6 +47,22 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('✅ Session created for user:', session.user.id, session.user.email)
+
+    // Si no hay tipo en URL/cookie, intentar recuperar desde metadatos del usuario
+    if (!type || !['client', 'business_owner'].includes(type)) {
+      console.log('🔍 No user type in URL/cookie, checking user metadata...')
+      const userMetadataType = session.user.user_metadata?.user_type as 'client' | 'business_owner' | undefined
+
+      if (userMetadataType && ['client', 'business_owner'].includes(userMetadataType)) {
+        console.log('✅ Found user_type in metadata:', userMetadataType)
+        type = userMetadataType
+      } else {
+        console.error('❌ Invalid or missing user type in metadata')
+        const res = NextResponse.redirect(`${origin}/auth/client/login?error=invalid_type`)
+        res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+        return res
+      }
+    }
 
     // Si es una acción de reset password, redirigir a la página de reset
     if (action === 'reset-password') {
