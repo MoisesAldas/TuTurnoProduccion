@@ -14,6 +14,7 @@ interface LocationMapModalProps {
   longitude: number
   businessName: string
   address: string
+  theme?: string
 }
 
 export default function LocationMapModal({
@@ -22,7 +23,8 @@ export default function LocationMapModal({
   latitude,
   longitude,
   businessName,
-  address
+  address,
+  theme
 }: LocationMapModalProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
