@@ -43,10 +43,13 @@ export default function AnalyticsPage() {
         const { data: business, error: err } = await supabase
           .from('businesses')
           .select('id, name')
-          .eq('owner_id', authState.user.id)
+           .eq('owner_id', authState.user?.id)
           .single()
 
-        if (err) {
+         if (!authState.user) {
+           throw new Error('Usuario no autenticado')
+         }
+         if (err) {
           console.error('Error fetching business:', err)
           setBusinessLoading(false)
           return
