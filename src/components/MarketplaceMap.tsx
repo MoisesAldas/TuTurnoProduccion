@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
@@ -27,6 +27,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({})
   const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasInitializedBoundsRef = useRef(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Use refs to store latest callback functions to avoid recreating markers
   const setHoveredBusinessIdRef = useRef(setHoveredBusinessId);
@@ -61,6 +62,12 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
       zoom: 12,
     });
 
+    // Wait for map to be fully loaded before adding markers
+    map.current.on('load', () => {
+      console.log('🗺️ MarketplaceMap: Map loaded, ready for markers');
+      setMapLoaded(true);
+    });
+
     return () => {
       if (map.current) {
         map.current.remove();
@@ -69,12 +76,13 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
       if (closeTimerRef.current) {
         clearTimeout(closeTimerRef.current);
       }
+      setMapLoaded(false);
     };
   }, []);
 
   // Effect for adding/updating markers when businesses change
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !mapLoaded) return;
 
     // Get current marker IDs and create a hash to detect real changes
     const currentMarkerIds = Object.keys(markersRef.current);
@@ -237,7 +245,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
         duration: 1000
       });
     }
-  }, [businesses]); // Only depend on businesses, not on callback functions
+  }, [businesses, mapLoaded]); // Depend on businesses and mapLoaded
 
   // Effect for highlighting marker based on hover state
   useEffect(() => {

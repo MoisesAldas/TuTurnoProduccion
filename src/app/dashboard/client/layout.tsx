@@ -205,7 +205,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </h1>
           </div>
           <div className="flex items-center space-x-4">
-            <Button onClick={() => router.push('/marketplace')} className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-md hover:shadow-lg">
+            <Button onClick={() => router.push('/marketplace')} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg">
               <PlusSquare className="w-4 h-4 mr-2" />
               Nueva Reserva
             </Button>

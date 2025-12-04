@@ -119,6 +119,8 @@ export default function BusinessProfilePage() {
   const [businessHours, setBusinessHours] = useState<BusinessHours[]>([])
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showPhotoGallery, setShowPhotoGallery] = useState(false)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [loading, setLoading] = useState(true)
@@ -378,6 +380,34 @@ export default function BusinessProfilePage() {
     return time.substring(0, 5)
   }
 
+  // Check if business is currently open based on business hours
+  const getBusinessStatus = () => {
+    if (businessHours.length === 0) return null
+
+    const now = new Date()
+    const currentDay = now.getDay() // 0 = Sunday, 1 = Monday, etc.
+    const currentTime = now.toTimeString().substring(0, 5) // "HH:MM"
+
+    const todayHours = businessHours.find(h => h.day_of_week === currentDay)
+
+    if (!todayHours || todayHours.is_closed) {
+      return { isOpen: false, message: 'Cerrado' }
+    }
+
+    const openTime = todayHours.open_time.substring(0, 5)
+    const closeTime = todayHours.close_time.substring(0, 5)
+
+    if (currentTime >= openTime && currentTime < closeTime) {
+      return { isOpen: true, message: `Abierto · Cierra ${closeTime}` }
+    } else if (currentTime < openTime) {
+      return { isOpen: false, message: `Cerrado · Abre ${openTime}` }
+    } else {
+      return { isOpen: false, message: 'Cerrado' }
+    }
+  }
+
+  const businessStatus = getBusinessStatus()
+
   const handleBookAppointment = (serviceId?: string) => {
     if (!authState?.user) {
       // Usuario no autenticado, redirigir a login con parámetro de retorno
@@ -543,8 +573,8 @@ export default function BusinessProfilePage() {
                 {business.name}
               </h1>
 
-              {/* Metadata Row - Stack on mobile, inline on desktop */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm mb-2">
+              {/* Metadata Row */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm mb-2">
                 {business.rating && (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
@@ -566,17 +596,32 @@ export default function BusinessProfilePage() {
                     <span className="hidden sm:inline text-gray-400">•</span>
                   </div>
                 )}
-                <Badge className="bg-gray-100 text-gray-800 flex items-center gap-1.5 w-fit">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
                   <CategoryIcon className="w-3.5 h-3.5" />
                   {categoryName}
-                </Badge>
+                </span>
+                {businessStatus && (
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${
+                      businessStatus.isOpen
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${businessStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+                    {businessStatus.message}
+                  </span>
+                )}
               </div>
 
               {business.address && (
-                <p className="text-gray-600 flex items-center gap-2 text-sm sm:text-base">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
+                <button
+                  onClick={() => business.latitude && business.longitude && setShowLocationModal(true)}
+                  className="text-gray-600 hover:text-emerald-600 flex items-center gap-2 text-sm sm:text-base group transition-colors text-left"
+                >
+                  <MapPin className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="line-clamp-1">{business.address}</span>
-                </p>
+                </button>
               )}
             </div>
 
@@ -606,7 +651,7 @@ export default function BusinessProfilePage() {
                     {/* Mobile: Single photo with swipe indicator */}
                     <div className="block sm:hidden">
                       <div
-                        className="relative cursor-pointer aspect-[4/3] bg-gray-100"
+                        className="relative cursor-pointer aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse"
                         onClick={() => {
                           setSelectedPhotoIndex(0)
                           setShowPhotoGallery(true)
@@ -615,7 +660,15 @@ export default function BusinessProfilePage() {
                         <img
                           src={allPhotos[0].photo_url}
                           alt={business.name}
+                          loading="lazy"
                           className="w-full h-full object-cover hover:opacity-95 transition-opacity"
+                          onLoad={(e) => {
+                            const parent = e.currentTarget.parentElement
+                            if (parent) {
+                              parent.classList.remove('animate-pulse', 'bg-gradient-to-br', 'from-gray-100', 'to-gray-200')
+                              parent.classList.add('bg-gray-100')
+                            }
+                          }}
                         />
                         {/* Photo counter overlay */}
                         {allPhotos.length > 1 && (
@@ -631,7 +684,7 @@ export default function BusinessProfilePage() {
                     <div className="hidden sm:grid sm:grid-cols-4 gap-2 h-[400px] lg:h-[500px]">
                       {/* Large Photo - Left side (2 rows, 2 columns) */}
                       <div
-                        className="col-span-2 row-span-2 relative rounded-l-xl overflow-hidden cursor-pointer bg-gray-100 group"
+                        className="col-span-2 row-span-2 relative rounded-l-xl overflow-hidden cursor-pointer bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse group"
                         onClick={() => {
                           setSelectedPhotoIndex(0)
                           setShowPhotoGallery(true)
@@ -640,7 +693,15 @@ export default function BusinessProfilePage() {
                         <img
                           src={allPhotos[0].photo_url}
                           alt={`${business.name} - Foto principal`}
+                          loading="eager"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onLoad={(e) => {
+                            const parent = e.currentTarget.parentElement
+                            if (parent) {
+                              parent.classList.remove('animate-pulse', 'bg-gradient-to-br', 'from-gray-100', 'to-gray-200')
+                              parent.classList.add('bg-gray-100')
+                            }
+                          }}
                         />
                         {/* Subtle overlay on hover */}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
@@ -661,7 +722,7 @@ export default function BusinessProfilePage() {
                         return (
                           <div
                             key={index}
-                            className={`relative overflow-hidden cursor-pointer bg-gray-100 group ${roundedClass}`}
+                            className={`relative overflow-hidden cursor-pointer bg-gradient-to-br from-gray-100 to-gray-200 ${photo ? 'animate-pulse' : ''} group ${roundedClass}`}
                             onClick={() => {
                               setSelectedPhotoIndex(photo ? index : 0)
                               setShowPhotoGallery(true)
@@ -672,7 +733,16 @@ export default function BusinessProfilePage() {
                                 <img
                                   src={photo.photo_url}
                                   alt={`${business.name} - Foto ${index + 1}`}
+                                  loading="lazy"
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  onLoad={(e) => {
+                                    // The parent is the <> fragment's parent div (the grid cell)
+                                    const container = e.currentTarget.closest('.group')
+                                    if (container) {
+                                      container.classList.remove('animate-pulse', 'bg-gradient-to-br', 'from-gray-100', 'to-gray-200')
+                                      container.classList.add('bg-gray-100')
+                                    }
+                                  }}
                                 />
                                 {/* Subtle overlay on hover */}
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
@@ -704,7 +774,7 @@ export default function BusinessProfilePage() {
                           setSelectedPhotoIndex(0)
                           setShowPhotoGallery(true)
                         }}
-                        className="hidden sm:flex absolute bottom-6 right-6 bg-white hover:bg-gray-50 text-gray-900 px-4 py-2.5 rounded-lg font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 items-center gap-2 border border-gray-200"
+                        className="hidden sm:flex absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-900 px-4 py-2.5 rounded-lg font-medium text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-100 transition-all duration-200 items-center gap-2 border border-gray-200/80"
                       >
                         <Sparkles className="w-4 h-4" />
                         Ver todas las fotos ({allPhotos.length})
@@ -764,7 +834,7 @@ export default function BusinessProfilePage() {
                       {filteredServices.map((service) => (
                         <div
                           key={service.id}
-                          className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-4 sm:p-5 bg-white border border-gray-200 rounded-lg sm:rounded-xl hover:shadow-lg hover:border-gray-300 transition-all duration-200"
+                          className="group flex flex-col sm:flex-row sm:items-start sm:justify-between p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-emerald-200 active:scale-[0.995] transition-all duration-200"
                         >
                           {/* Service Info */}
                           <div className="flex-1 mb-4 sm:mb-0 sm:mr-4">
@@ -777,7 +847,7 @@ export default function BusinessProfilePage() {
                               </p>
                             )}
                             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                              <span className="text-lg sm:text-xl font-bold text-gray-900">
+                              <span className="text-lg sm:text-xl font-bold text-emerald-700">
                                 {formatPrice(service.price)}
                               </span>
                               <div className="flex items-center gap-1.5 text-sm text-gray-500">
@@ -789,7 +859,7 @@ export default function BusinessProfilePage() {
 
                           {/* Reservar Button - Full width on mobile, auto on desktop */}
                           <Button
-                            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto sm:px-6 py-3 sm:py-2.5 h-auto rounded-lg sm:rounded-xl text-base sm:text-sm"
+                            className="bg-black hover:bg-neutral-800 text-white font-medium shadow-sm hover:shadow-md transition-all duration-150 w-full sm:w-auto sm:px-6 py-3 sm:py-2.5 h-auto rounded-xl text-base sm:text-sm"
                             onClick={() => handleBookAppointment(service.id)}
                             style={{ minHeight: '44px' }} // Touch target size
                           >
@@ -827,20 +897,21 @@ export default function BusinessProfilePage() {
                 ) : (
                   <>
                     {/* Horizontal scroll with snap points on mobile */}
-                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-hide">
+                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pt-2 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-hide overflow-y-visible">
                       {employees.map((employee) => (
                         <div
                           key={employee.id}
-                          className="flex flex-col items-center flex-shrink-0 snap-start"
+                          className="group flex flex-col items-center flex-shrink-0 snap-start cursor-pointer"
                           style={{ minWidth: '100px' }} // Consistent card width
                         >
                           {/* Avatar with gradient border */}
                           <div className="relative mb-3">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-100 ring-2 ring-emerald-100">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 ring-2 ring-emerald-100 group-hover:ring-emerald-400 group-hover:scale-105 transition-all duration-200">
                               {employee.avatar_url ? (
                                 <img
                                   src={employee.avatar_url}
                                   alt={`${employee.first_name} ${employee.last_name}`}
+                                  loading="lazy"
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
@@ -852,7 +923,7 @@ export default function BusinessProfilePage() {
                           </div>
 
                           {/* Name and Position */}
-                          <p className="font-medium text-gray-900 text-sm sm:text-base text-center max-w-[100px]">
+                          <p className="font-medium text-gray-900 text-sm sm:text-base text-center max-w-[100px] group-hover:text-emerald-700 transition-colors">
                             {employee.first_name}
                           </p>
                           {employee.position && (
@@ -879,7 +950,7 @@ export default function BusinessProfilePage() {
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Reseñas</h2>
                 {/* Reviews Summary Card */}
                 {reviews.length > 0 && (
-                  <Card className="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+                  <Card className="mb-6 bg-gray-50 border-gray-200">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
@@ -887,7 +958,7 @@ export default function BusinessProfilePage() {
                             Calificación General
                           </h3>
                           <div className="flex items-center gap-3">
-                            <div className="text-4xl font-bold text-amber-600">
+                            <div className="text-4xl font-bold text-gray-900">
                               {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
                             </div>
                             <div>
@@ -956,7 +1027,7 @@ export default function BusinessProfilePage() {
                       if (!review.client) return null
 
                       return (
-                        <Card key={review.id} className="hover:shadow-md transition-shadow">
+                        <Card key={review.id} className="hover:shadow-md hover:border-gray-300 transition-all duration-200">
                           <CardContent className="p-6">
                             <div className="flex items-start gap-4">
                               {/* Client Avatar */}
@@ -1257,11 +1328,11 @@ export default function BusinessProfilePage() {
             <div className="lg:col-span-1">
               <div className="lg:sticky lg:top-24 space-y-4 sm:space-y-6">
                 {/* CTA Card */}
-                <Card className="border-2 border-emerald-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
                   <CardContent className="p-4 sm:p-6">
                     <Button
                       size="lg"
-                      className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 h-12 sm:h-auto py-3 text-base sm:text-sm"
+                      className="w-full bg-black hover:bg-neutral-800 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 h-12 sm:h-auto py-3 text-base sm:text-sm"
                       onClick={() => handleBookAppointment()}
                       style={{ minHeight: '44px' }} // Touch target size
                     >
@@ -1353,15 +1424,15 @@ export default function BusinessProfilePage() {
       </main>
 
       {/* Mobile Sticky CTA Bar - Fixed at bottom */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 safe-area-inset-bottom">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-lg border-t border-gray-100 shadow-[0_-4px_20px_-5px_rgb(0,0,0,0.1)] z-40 safe-area-inset-bottom">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             {/* Price Range or Rating */}
             <div className="flex-1 min-w-0">
               {services.length > 0 && (
                 <div className="flex flex-col">
-                  <span className="text-xs text-gray-500">Desde</span>
-                  <span className="text-base font-bold text-gray-900">
+                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">Desde</span>
+                  <span className="text-lg font-bold text-gray-900">
                     {formatPrice(Math.min(...services.map(s => s.price)))}
                   </span>
                 </div>
@@ -1378,7 +1449,7 @@ export default function BusinessProfilePage() {
             {/* CTA Button */}
             <Button
               size="lg"
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg px-8 flex-shrink-0"
+              className="bg-black hover:bg-neutral-800 active:bg-neutral-900 active:scale-95 text-white font-semibold shadow-lg hover:shadow-xl px-8 flex-shrink-0 transition-all duration-150"
               onClick={() => handleBookAppointment()}
               style={{ minHeight: '48px' }} // Larger touch target
             >
@@ -1443,24 +1514,50 @@ export default function BusinessProfilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Photo Gallery Modal */}
+      {/* Photo Gallery Modal - Premium Design */}
       <Dialog open={showPhotoGallery} onOpenChange={setShowPhotoGallery}>
-        <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0 overflow-hidden bg-black/95 backdrop-blur-xl border-none">
-          {/* Close Button */}
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] sm:max-w-[95vw] sm:w-[95vw] sm:h-[95vh] p-0 gap-0 overflow-hidden bg-black/95 backdrop-blur-2xl border-none sm:rounded-2xl">
+          {/* Close Button - Frosted glass style */}
           <button
             onClick={() => setShowPhotoGallery(false)}
-            className="absolute top-4 right-4 z-50 text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center bg-black/40 hover:bg-black/60 active:bg-black/80 backdrop-blur-md border border-white/10 hover:border-white/20 rounded-full text-white/80 hover:text-white transition-all duration-200 ease-out hover:scale-105 active:scale-95"
+            aria-label="Cerrar galería"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
 
-          {/* Photo Counter */}
-          <div className="absolute top-4 left-4 z-50 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium">
-            {selectedPhotoIndex + 1} / {(business.cover_image_url ? 1 : 0) + businessPhotos.length}
+          {/* Photo Counter - Centered pill style */}
+          <div className="absolute top-4 sm:top-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-full text-sm font-medium select-none">
+            <span className="text-white">{selectedPhotoIndex + 1}</span>
+            <span className="text-white/50 mx-1.5">/</span>
+            <span className="text-white/70">{(business.cover_image_url ? 1 : 0) + businessPhotos.length}</span>
           </div>
 
-          {/* Main Photo */}
-          <div className="relative w-full h-full flex items-center justify-center p-4 md:p-12">
+          {/* Main Photo Container */}
+          <div
+            className="relative w-full h-full flex items-center justify-center px-2 pt-16 pb-28 sm:px-16 sm:pt-16 sm:pb-32"
+            onTouchStart={(e) => {
+              setTouchEnd(null)
+              setTouchStart(e.targetTouches[0].clientX)
+            }}
+            onTouchMove={(e) => {
+              setTouchEnd(e.targetTouches[0].clientX)
+            }}
+            onTouchEnd={() => {
+              if (!touchStart || !touchEnd) return
+              const distance = touchStart - touchEnd
+              const minSwipeDistance = 50
+              const totalPhotos = (business.cover_image_url ? 1 : 0) + businessPhotos.length
+
+              if (distance > minSwipeDistance) {
+                // Swipe left - next photo
+                setSelectedPhotoIndex((prev) => (prev === totalPhotos - 1 ? 0 : prev + 1))
+              } else if (distance < -minSwipeDistance) {
+                // Swipe right - prev photo
+                setSelectedPhotoIndex((prev) => (prev === 0 ? totalPhotos - 1 : prev - 1))
+              }
+            }}
+          >
             {(() => {
               const allPhotos = [
                 ...(business.cover_image_url ? [{ id: 'cover', photo_url: business.cover_image_url }] : []),
@@ -1470,14 +1567,17 @@ export default function BusinessProfilePage() {
 
               return currentPhoto ? (
                 <img
+                  key={`photo-${selectedPhotoIndex}`}
                   src={currentPhoto.photo_url}
                   alt={`${business.name} - Foto ${selectedPhotoIndex + 1}`}
-                  className="max-w-full max-h-full object-contain rounded-lg"
+                  loading="eager"
+                  className="max-w-full max-h-full sm:max-h-[70vh] object-contain rounded-xl shadow-2xl shadow-black/50 select-none transition-opacity duration-300"
+                  draggable={false}
                 />
               ) : null
             })()}
 
-            {/* Navigation Arrows */}
+            {/* Navigation Arrows - Subtle style, hidden on mobile */}
             {((business.cover_image_url ? 1 : 0) + businessPhotos.length) > 1 && (
               <>
                 <button
@@ -1485,50 +1585,56 @@ export default function BusinessProfilePage() {
                     const totalPhotos = (business.cover_image_url ? 1 : 0) + businessPhotos.length
                     setSelectedPhotoIndex((prev) => (prev === 0 ? totalPhotos - 1 : prev - 1))
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 md:p-4 shadow-xl hover:shadow-2xl transition-all hover:scale-110 z-10"
+                  className="hidden sm:flex absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 items-center justify-center bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-full border border-white/10 text-white/80 hover:text-white transition-all duration-200 ease-out hover:scale-105 active:scale-95"
+                  aria-label="Foto anterior"
                 >
-                  <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                  <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button
                   onClick={() => {
                     const totalPhotos = (business.cover_image_url ? 1 : 0) + businessPhotos.length
                     setSelectedPhotoIndex((prev) => (prev === totalPhotos - 1 ? 0 : prev + 1))
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 md:p-4 shadow-xl hover:shadow-2xl transition-all hover:scale-110 z-10"
+                  className="hidden sm:flex absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 items-center justify-center bg-white/10 hover:bg-white/20 active:bg-white/30 rounded-full border border-white/10 text-white/80 hover:text-white transition-all duration-200 ease-out hover:scale-105 active:scale-95"
+                  aria-label="Siguiente foto"
                 >
-                  <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </>
             )}
           </div>
 
-          {/* Thumbnails */}
+          {/* Thumbnails - Frosted glass bottom bar */}
           {((business.cover_image_url ? 1 : 0) + businessPhotos.length) > 1 && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="flex gap-2 overflow-x-auto justify-center scrollbar-hide">
-                  {[
-                    ...(business.cover_image_url ? [{ id: 'cover', photo_url: business.cover_image_url }] : []),
-                    ...businessPhotos
-                  ].map((photo, index) => (
-                    <button
-                      key={photo.id}
-                      onClick={() => setSelectedPhotoIndex(index)}
-                      className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-3 transition-all duration-300 ${
-                        index === selectedPhotoIndex
-                          ? 'border-white shadow-xl scale-110'
-                          : 'border-white/30 hover:border-white/60 opacity-70 hover:opacity-100'
-                      }`}
-                    >
-                      <img
-                        src={photo.photo_url}
-                        alt={`Miniatura ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
+            <div className="absolute bottom-0 left-0 right-0 z-30 bg-black/60 backdrop-blur-xl px-4 py-4 sm:px-8 sm:py-5">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto justify-start sm:justify-center scrollbar-hide snap-x snap-mandatory">
+                {[
+                  ...(business.cover_image_url ? [{ id: 'cover', photo_url: business.cover_image_url }] : []),
+                  ...businessPhotos
+                ].map((photo, index) => (
+                  <button
+                    key={photo.id}
+                    onClick={() => setSelectedPhotoIndex(index)}
+                    className={`flex-shrink-0 snap-center w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl overflow-hidden transition-all duration-300 ease-out focus:outline-none ${
+                      index === selectedPhotoIndex
+                        ? 'ring-2 ring-white ring-offset-2 ring-offset-black/80 scale-110 opacity-100 shadow-lg shadow-black/30'
+                        : 'ring-1 ring-white/20 opacity-50 hover:opacity-80 hover:ring-white/40 hover:scale-105 active:scale-100'
+                    }`}
+                  >
+                    <img
+                      src={photo.photo_url}
+                      alt={`Miniatura ${index + 1}`}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
               </div>
+
+              {/* Mobile swipe hint */}
+              <p className="sm:hidden text-center text-white/40 text-xs mt-3">
+                Desliza en la imagen para navegar
+              </p>
             </div>
           )}
         </DialogContent>

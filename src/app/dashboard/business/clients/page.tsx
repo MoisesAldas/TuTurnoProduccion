@@ -7,6 +7,16 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -27,7 +37,13 @@ import {
   RotateCcw,
   Loader2,
   FileSpreadsheet,
-  FileBarChart
+  FileBarChart,
+  LayoutGrid,
+  Table as TableIcon,
+  Building,
+  CheckCircle2,
+  Clock,
+  Trash2
 } from 'lucide-react'
 import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
@@ -40,6 +56,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { DataTable } from '@/components/ui/data-table'
+import { ColumnDef } from '@tanstack/react-table'
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 
 interface BusinessClient {
   id: string
@@ -60,6 +79,7 @@ export default function ClientsPage() {
   const { toast } = useToast()
 
   const [businessId, setBusinessId] = useState<string>('')
+  const [businessName, setBusinessName] = useState<string>('')
 
   const [rows, setRows] = useState<BusinessClient[]>([])
   const totalCount = rows?.[0]?.total_count ?? 0
@@ -68,6 +88,7 @@ export default function ClientsPage() {
   const [onlyActive, setOnlyActive] = useState<'true' | 'false'>('true')
   const [sortBy, setSortBy] = useState('first_name')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
 
   const [limit, setLimit] = useState(25)
   const [page, setPage] = useState(1)
@@ -79,6 +100,10 @@ export default function ClientsPage() {
   // Dialog state
   const [openDialog, setOpenDialog] = useState(false)
   const [editing, setEditing] = useState<BusinessClient | null>(null)
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null)
 
   // Form
   const [firstName, setFirstName] = useState('')
@@ -103,11 +128,12 @@ export default function ClientsPage() {
       setLoading(true)
       const { data, error } = await supabase
         .from('businesses')
-        .select('id')
+        .select('id, name')
         .eq('owner_id', authState.user!.id)
         .single()
       if (error) throw error
       setBusinessId(data!.id)
+      setBusinessName(data!.name || '')
     } catch (e) {
       toast({
         title: 'Error',
@@ -225,27 +251,53 @@ export default function ClientsPage() {
     }
   }
 
-  const deactivateClient = async (row: BusinessClient) => {
+  const handleDeleteClient = async () => {
+    if (!clientToDelete) return
+
     try {
-      const { error } = await supabase.rpc('deactivate_business_client', {
-        p_business_id: businessId,
-        p_client_id: row.id,
-      })
+      const { error } = await supabase
+        .from('business_clients')
+        .delete()
+        .eq('id', clientToDelete)
+        .eq('business_id', businessId)
+
       if (error) throw error
 
+      // Close dialog and reset state
+      setDeleteDialogOpen(false)
+      setClientToDelete(null)
+
       toast({
-        title: 'Cliente desactivado',
-        description: 'El cliente fue desactivado correctamente'
+        title: 'Cliente eliminado',
+        description: 'El cliente fue eliminado permanentemente'
       })
 
-      fetchList()
+      // Small delay to ensure DB has processed the deletion
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Check if we need to go back to page 1
+      const remainingOnPage = rows.length - 1
+      if (remainingOnPage === 0 && page > 1) {
+        // If this was the last item on a page that's not page 1, go back one page
+        setPage(page - 1)
+      } else {
+        // Otherwise just refresh the current page
+        await fetchList()
+      }
     } catch (e) {
       toast({
         title: 'Error',
-        description: 'No se pudo desactivar el cliente',
+        description: 'No se pudo eliminar el cliente',
         variant: 'destructive'
       })
+      setDeleteDialogOpen(false)
+      setClientToDelete(null)
     }
+  }
+
+  const confirmDeleteClient = (clientId: string) => {
+    setClientToDelete(clientId)
+    setDeleteDialogOpen(true)
   }
 
   const exportCSV = () => {
@@ -549,6 +601,126 @@ export default function ClientsPage() {
     })
   }
 
+  // Memoize statistics (must be before any early returns)
+  const stats = useMemo(() => ({
+    total: totalCount,
+    active: rows.filter(r => r.is_active).length,
+    withPhone: rows.filter(r => r.phone).length,
+    withEmail: rows.filter(r => r.email).length
+  }), [rows, totalCount])
+
+  // Define columns for DataTable (must be before any early returns)
+  const columns: ColumnDef<BusinessClient>[] = useMemo(() => [
+    {
+      accessorKey: 'first_name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Cliente" />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="w-5 h-5 text-orange-600" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-medium text-gray-900">
+                {row.getValue('first_name')} {row.original.last_name || ''}
+              </div>
+              {row.original.notes && (
+                <div className="text-xs text-gray-500 truncate max-w-xs">
+                  {row.original.notes}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'phone',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Teléfono" />
+      ),
+      cell: ({ row }) => {
+        const phone = row.getValue('phone') as string | null
+        return phone ? (
+          <div className="flex items-center gap-2">
+            <Phone className="w-4 h-4 text-gray-400" />
+            <span className="text-sm">{phone}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      },
+    },
+    {
+      accessorKey: 'email',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Email" />
+      ),
+      cell: ({ row }) => {
+        const email = row.getValue('email') as string | null
+        return email ? (
+          <div className="flex items-center gap-2">
+            <Mail className="w-4 h-4 text-gray-400" />
+            <span className="text-sm truncate max-w-xs">{email}</span>
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">-</span>
+        )
+      },
+    },
+    {
+      accessorKey: 'is_active',
+      header: 'Estado',
+      cell: ({ row }) => {
+        const isActive = row.getValue('is_active') as boolean
+        return (
+          <Badge
+            variant={isActive ? 'default' : 'secondary'}
+            className={isActive
+              ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+              : 'bg-gray-200 text-gray-600 border-gray-300'
+            }
+          >
+            {isActive ? 'Activo' : 'Inactivo'}
+          </Badge>
+        )
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Acciones',
+      cell: ({ row }) => {
+        const client = row.original
+
+        return (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => openEdit(client)}
+              className="h-8 w-8 p-0 hover:bg-orange-50 hover:text-orange-700"
+            >
+              <span className="sr-only">Editar</span>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => confirmDeleteClient(client.id)}
+              className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-700"
+            >
+              <span className="sr-only">Eliminar</span>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )
+      },
+    },
+  ], [openEdit, confirmDeleteClient])
+
+  // Loading state check (after hooks to comply with Rules of Hooks)
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -561,513 +733,484 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50/20 to-amber-50/30">
-      <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-              Clientes del Negocio
-            </h1>
-            <p className="text-sm text-gray-600 mt-1.5">Gestiona tu base de datos de clientes</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-all duration-300 hover:scale-105 hover:shadow-md"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-2 duration-200">
-                <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
-                  Formato de Exportación
-                </DropdownMenuLabel>
-
-                <DropdownMenuSeparator />
-
-                {/* CSV Option */}
-                <DropdownMenuItem onClick={exportCSV} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
-                  <FileText className="w-4 h-4 mr-3 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="font-medium">CSV</p>
-                    <p className="text-xs text-gray-500">Valores separados por comas</p>
-                  </div>
-                </DropdownMenuItem>
-
-                {/* Excel Option */}
-                <DropdownMenuItem onClick={exportExcel} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
-                  <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
-                  <div className="flex-1">
-                    <p className="font-medium">Excel</p>
-                    <p className="text-xs text-gray-500">Hoja de cálculo con múltiples pestañas</p>
-                  </div>
-                </DropdownMenuItem>
-
-                {/* PDF Option */}
-                <DropdownMenuItem onClick={exportPDF} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
-                  <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
-                  <div className="flex-1">
-                    <p className="font-medium">PDF</p>
-                    <p className="text-xs text-gray-500">Reporte profesional con tablas</p>
-                  </div>
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <div className="px-2 py-1.5 text-xs text-gray-400 text-center">
-                  Los datos se descargarán automáticamente
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-              <DialogTrigger asChild>
-                <Button
-                  className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  onClick={openCreate}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Cliente
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                    {editing ? 'Editar cliente' : 'Nuevo cliente'}
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-orange-600" />
-                      Nombre *
-                    </label>
-                    <Input
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Ej: Juan"
-                      className="focus:border-orange-500 focus:ring-orange-500"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Apellido</label>
-                    <Input
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Ej: Pérez"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <Phone className="w-4 h-4 text-orange-600" />
-                      Teléfono
-                    </label>
-                    <Input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Ej: 0991234567"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <Mail className="w-4 h-4 text-orange-600" />
-                      Email
-                    </label>
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Ej: juan@email.com"
-                    />
-                  </div>
-                  <div className="sm:col-span-2 space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-orange-600" />
-                      Notas
-                    </label>
-                    <Input
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Notas adicionales..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Estado</label>
-                    <Select value={isActive ? 'true' : 'false'} onValueChange={(v: any) => setIsActive(v === 'true')}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">Activo</SelectItem>
-                        <SelectItem value="false">Inactivo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <DialogFooter className="gap-2">
+    <div className="min-h-screen bg-gray-50">
+      {/* Sticky Header */}
+      <div className="bg-white border-b sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Clientes</h1>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                Gestiona tu base de datos de clientes
+              </p>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              {businessName && (
+                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200">
+                  <Building className="w-4 h-4 mr-2" />
+                  {businessName}
+                </Badge>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    onClick={() => setOpenDialog(false)}
-                    className="hover:bg-gray-100"
+                    className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
                   >
-                    Cancelar
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar
                   </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-2 duration-200">
+                  <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                    Formato de Exportación
+                  </DropdownMenuLabel>
+
+                  <DropdownMenuSeparator />
+
+                  {/* CSV Option */}
+                  <DropdownMenuItem onClick={exportCSV} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                    <FileText className="w-4 h-4 mr-3 text-blue-600" />
+                    <div className="flex-1">
+                      <p className="font-medium">CSV</p>
+                      <p className="text-xs text-gray-500">Valores separados por comas</p>
+                    </div>
+                  </DropdownMenuItem>
+
+                  {/* Excel Option */}
+                  <DropdownMenuItem onClick={exportExcel} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                    <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
+                    <div className="flex-1">
+                      <p className="font-medium">Excel</p>
+                      <p className="text-xs text-gray-500">Hoja de cálculo con múltiples pestañas</p>
+                    </div>
+                  </DropdownMenuItem>
+
+                  {/* PDF Option */}
+                  <DropdownMenuItem onClick={exportPDF} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                    <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
+                    <div className="flex-1">
+                      <p className="font-medium">PDF</p>
+                      <p className="text-xs text-gray-500">Reporte profesional con tablas</p>
+                    </div>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <div className="px-2 py-1.5 text-xs text-gray-400 text-center">
+                    Los datos se descargarán automáticamente
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                <DialogTrigger asChild>
                   <Button
-                    onClick={saveClient}
-                    className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+                    className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-md hover:shadow-lg transition-all"
+                    onClick={openCreate}
                   >
-                    Guardar
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nuevo Cliente
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                      {editing ? 'Editar cliente' : 'Nuevo cliente'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-orange-600" />
+                        Nombre *
+                      </label>
+                      <Input
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Ej: Juan"
+                        className="focus:border-orange-500 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Apellido</label>
+                      <Input
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Ej: Pérez"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <Phone className="w-4 h-4 text-orange-600" />
+                        Teléfono
+                      </label>
+                      <Input
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Ej: 0991234567"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <Mail className="w-4 h-4 text-orange-600" />
+                        Email
+                      </label>
+                      <Input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Ej: juan@email.com"
+                      />
+                    </div>
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-orange-600" />
+                        Notas
+                      </label>
+                      <Input
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Notas adicionales..."
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Estado</label>
+                      <Select value={isActive ? 'true' : 'false'} onValueChange={(v: any) => setIsActive(v === 'true')}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Activo</SelectItem>
+                          <SelectItem value="false">Inactivo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter className="gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setOpenDialog(false)}
+                      className="hover:bg-gray-100"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={saveClient}
+                      className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+                    >
+                      Guardar
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Clients */}
+          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Total Clientes</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-amber-100 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-orange-600" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+              <p className="text-xs text-gray-500 mt-1">Todos los registros</p>
+            </CardContent>
+          </Card>
+
+          {/* Active Clients */}
+          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Activos</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-gray-900">{stats.active}</div>
+              <p className="text-xs text-gray-500 mt-1">Clientes habilitados</p>
+            </CardContent>
+          </Card>
+
+          {/* Clients with Phone */}
+          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Con Teléfono</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center">
+                  <Phone className="w-4 h-4 text-blue-600" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-gray-900">{stats.withPhone}</div>
+              <p className="text-xs text-gray-500 mt-1">Contacto telefónico</p>
+            </CardContent>
+          </Card>
+
+          {/* Clients with Email */}
+          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-gray-600">Con Email</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                  <Mail className="w-4 h-4 text-purple-600" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-gray-900">{stats.withEmail}</div>
+              <p className="text-xs text-gray-500 mt-1">Contacto por email</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search Bar with Filters and Toggle */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por nombre, teléfono o email..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={onlyActive} onValueChange={(v: any) => { setOnlyActive(v); setPage(1) }}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">Solo Activos</SelectItem>
+                <SelectItem value="false">Todos</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg p-1 shadow-sm">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className={viewMode === 'grid'
+                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700'
+                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                }
+              >
+                <LayoutGrid className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Cuadrícula</span>
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className={viewMode === 'table'
+                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700'
+                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                }
+              >
+                <TableIcon className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Tabla</span>
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Filtros */}
-        <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center shadow-md">
-                <SearchIcon className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Filtros de Búsqueda</CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-gray-600">Encuentra clientes rápidamente</CardDescription>
+        {/* Conditional Grid/Table View */}
+        {fetching && rows.length === 0 ? (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-16 text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando clientes...</p>
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-16 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Users className="w-10 h-10 text-orange-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay clientes</h3>
+            <p className="text-gray-600 max-w-sm mx-auto">
+              No se encontraron clientes. Intenta ajustar los criterios de búsqueda.
+            </p>
+          </div>
+        ) : viewMode === 'table' ? (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden lg:block">
+              <DataTable
+                columns={columns}
+                data={rows}
+              />
+            </div>
+
+            {/* Tablet Horizontal Scroll */}
+            <div className="hidden md:block lg:hidden">
+              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="min-w-[800px]">
+                  <DataTable
+                    columns={columns}
+                    data={rows}
+                  />
+                </div>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Búsqueda */}
-              <div className="sm:col-span-2 space-y-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                  <SearchIcon className="w-4 h-4 text-orange-600" />
-                  Buscar Cliente
-                </label>
-                <Input
-                  placeholder="Nombre, teléfono o email..."
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                  className="w-full"
-                />
-              </div>
 
-              {/* Estado */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Estado</label>
-                <Select value={onlyActive} onValueChange={(v: any) => { setOnlyActive(v); setPage(1) }}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Solo Activos</SelectItem>
-                    <SelectItem value="false">Todos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Ordenar por */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Ordenar por</label>
-                <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="first_name">Nombre</SelectItem>
-                    <SelectItem value="last_name">Apellido</SelectItem>
-                    <SelectItem value="phone">Teléfono</SelectItem>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="created_at">Fecha de creación</SelectItem>
-                    <SelectItem value="updated_at">Última actualización</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Dirección */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Dirección</label>
-                <Select value={sortDir} onValueChange={(v: any) => { setSortDir(v); setPage(1) }}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="asc">Ascendente</SelectItem>
-                    <SelectItem value="desc">Descendente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Limpiar filtros */}
-              <div className="sm:col-span-2 flex items-end">
-                <Button
-                  variant="outline"
-                  className="w-full hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
-                  onClick={() => {
-                    setSearch('')
-                    setOnlyActive('true')
-                    setSortBy('first_name')
-                    setSortDir('asc')
-                    setPage(1)
-                  }}
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {rows.map((row) => (
+                <Card
+                  key={row.id}
+                  className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Limpiar Filtros
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Resultados */}
-        <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center shadow-md">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Resultados</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm text-gray-600">
-                    {totalCount} {totalCount === 1 ? 'cliente encontrado' : 'clientes encontrados'}
-                  </CardDescription>
-                </div>
-              </div>
-              {fetching && (
-                <Loader2 className="w-5 h-5 text-orange-600 animate-spin" />
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {fetching && rows.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-600">Cargando clientes...</p>
-              </div>
-            ) : rows.length === 0 ? (
-              <div className="text-center py-16 bg-gradient-to-b from-gray-50 to-white">
-                <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Users className="w-10 h-10 text-orange-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay clientes</h3>
-                <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                  No se encontraron clientes con los filtros seleccionados. Intenta ajustar los criterios de búsqueda.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Desktop Table */}
-                <div className="hidden lg:block overflow-hidden rounded-lg border border-gray-200">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                          <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {rows.map((row) => (
-                          <tr
-                            key={row.id}
-                            className="hover:bg-gray-50 transition-colors group"
+                  <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent border-b border-gray-100">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <User className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-gray-900 truncate">
+                            {row.first_name} {row.last_name || ''}
+                          </h3>
+                          <Badge
+                            className={row.is_active
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1'
+                              : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1'
+                            }
                           >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center">
-                                <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mr-3">
-                                  <User className="w-5 h-5 text-orange-600" />
-                                </div>
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {row.first_name} {row.last_name}
-                                  </div>
-                                  {row.notes && (
-                                    <div className="text-xs text-gray-500 truncate max-w-xs" title={row.notes}>
-                                      {row.notes}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm text-gray-900">{row.phone || '-'}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-gray-900 truncate max-w-xs" title={row.email || undefined}>
-                                {row.email || '-'}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {row.is_active ? (
-                                <Badge className="bg-green-100 text-green-800 border-green-200 border">Activo</Badge>
-                              ) : (
-                                <Badge className="bg-gray-100 text-gray-800 border-gray-200 border">Inactivo</Badge>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
-                                    Acciones
-                                  </DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-
-                                  {/* Editar */}
-                                  <DropdownMenuItem
-                                    onClick={() => openEdit(row)}
-                                    className="cursor-pointer"
-                                  >
-                                    <Edit className="w-4 h-4 mr-2 text-orange-600" />
-                                    <span>Editar</span>
-                                  </DropdownMenuItem>
-
-                                  {/* Desactivar */}
-                                  {row.is_active && (
-                                    <>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        onClick={() => deactivateClient(row)}
-                                        className="cursor-pointer text-red-600"
-                                      >
-                                        <XCircle className="w-4 h-4 mr-2" />
-                                        <span>Desactivar</span>
-                                      </DropdownMenuItem>
-                                    </>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="lg:hidden space-y-3 p-3">
-                  {rows.map((row) => (
-                    <div
-                      key={row.id}
-                      className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
-                    >
-                      {/* Card Header */}
-                      <div className="p-4 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent border-b border-gray-100">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <User className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                              <h3 className="font-semibold text-gray-900 truncate">
-                                {row.first_name} {row.last_name}
-                              </h3>
-                            </div>
-                            {row.notes && (
-                              <p className="text-xs text-gray-500 line-clamp-1">
-                                {row.notes}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {row.is_active ? (
-                              <Badge className="bg-green-100 text-green-800 border-green-200 border text-[10px] px-1.5 py-0">
-                                Activo
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-gray-100 text-gray-800 border-gray-200 border text-[10px] px-1.5 py-0">
-                                Inactivo
-                              </Badge>
-                            )}
-
-                            {/* Mobile Actions Menu */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 rounded-lg"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
-                                  Acciones
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-
-                                {/* Editar */}
-                                <DropdownMenuItem
-                                  onClick={() => openEdit(row)}
-                                  className="cursor-pointer"
-                                >
-                                  <Edit className="w-4 h-4 mr-2 text-orange-600" />
-                                  <span>Editar</span>
-                                </DropdownMenuItem>
-
-                                {/* Desactivar */}
-                                {row.is_active && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onClick={() => deactivateClient(row)}
-                                      className="cursor-pointer text-red-600"
-                                    >
-                                      <XCircle className="w-4 h-4 mr-2" />
-                                      <span>Desactivar</span>
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                            {row.is_active ? 'Activo' : 'Inactivo'}
+                          </Badge>
                         </div>
                       </div>
-
-                      {/* Card Body */}
-                      <div className="p-4 space-y-3">
-                        {/* Phone & Email Row */}
-                        {(row.phone || row.email) && (
-                          <div className="space-y-2">
-                            {row.phone && (
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg">
-                                <Phone className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                <span className="text-sm font-medium text-gray-900">{row.phone}</span>
-                              </div>
-                            )}
-                            {row.email && (
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-lg">
-                                <Mail className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                                <span className="text-sm font-medium text-gray-900 truncate">{row.email}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4 space-y-3">
+                    {row.phone && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
+                        <Phone className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900">{row.phone}</span>
+                      </div>
+                    )}
+                    {row.email && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg">
+                        <Mail className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 truncate max-w-full">{row.email}</span>
+                      </div>
+                    )}
+                    {row.notes && (
+                      <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 rounded-lg">
+                        <FileText className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-600 line-clamp-2">{row.notes}</span>
+                      </div>
+                    )}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEdit(row)}
+                        className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => confirmDeleteClient(row.id)}
+                        className="hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {rows.map((row) => (
+              <Card
+                key={row.id}
+                className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group"
+              >
+                <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent border-b border-gray-100">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">
+                          {row.first_name} {row.last_name || ''}
+                        </h3>
+                        <Badge
+                          className={row.is_active
+                            ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1'
+                            : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1'
+                          }
+                        >
+                          {row.is_active ? 'Activo' : 'Inactivo'}
+                        </Badge>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-3">
+                  {row.phone && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
+                      <Phone className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 break-all">{row.phone}</span>
+                    </div>
+                  )}
+                  {row.email && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg">
+                      <Mail className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 truncate max-w-full" title={row.email}>{row.email}</span>
+                    </div>
+                  )}
+                  {row.notes && (
+                    <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 rounded-lg">
+                      <FileText className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600 line-clamp-2">{row.notes}</span>
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEdit(row)}
+                      className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => confirmDeleteClient(row.id)}
+                      className="hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Paginación */}
         {totalCount > 0 && (
@@ -1122,6 +1265,32 @@ export default function ClientsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará permanentemente este cliente. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteDialogOpen(false)
+              setClientToDelete(null)
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

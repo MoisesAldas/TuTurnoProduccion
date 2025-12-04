@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments'
@@ -35,6 +36,7 @@ const CreateAppointmentModal = dynamic(() => import('@/components/CreateAppointm
 type CalendarEmployee = Pick<Employee, 'id' | 'first_name' | 'last_name' | 'avatar_url' | 'is_active'>;
 
 export default function AppointmentsPage() {
+  const searchParams = useSearchParams()
   const [business, setBusiness] = useState<Business | null>(null)
   const [employees, setEmployees] = useState<CalendarEmployee[]>([])
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
@@ -58,6 +60,22 @@ export default function AppointmentsPage() {
   const { authState } = useAuth()
   const supabase = createClient()
   const { toast } = useToast()
+
+  // ✅ Manejar parámetro 'date' de la URL (desde notificaciones)
+  useEffect(() => {
+    const dateParam = searchParams.get('date')
+    if (dateParam) {
+      try {
+        const [year, month, day] = dateParam.split('-').map(Number)
+        const dateFromUrl = new Date(year, month - 1, day)
+        if (!isNaN(dateFromUrl.getTime())) {
+          setSelectedDate(dateFromUrl)
+        }
+      } catch (error) {
+        console.error('Error parsing date from URL:', error)
+      }
+    }
+  }, [searchParams])
 
   // ========================================
   // FIX: useRef para evitar stale closures

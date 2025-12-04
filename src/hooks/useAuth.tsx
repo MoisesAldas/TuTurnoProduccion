@@ -346,6 +346,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           throw new Error(`Esta cuenta no es de tipo ${userType === 'client' ? 'cliente' : 'negocio'}`)
         }
 
+        // IMPORTANTE: Actualizar el estado de autenticación con el usuario y sesión
+        setAuthState({
+          user: user,
+          session: data.session,
+          loading: false,
+        })
+
+        // Pequeño delay para asegurar que el estado se actualice antes de redirigir
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         // Verificar si hay un returnUrl guardado en localStorage
         const savedReturnUrl = localStorage.getItem('authReturnUrl')
         if (savedReturnUrl) {

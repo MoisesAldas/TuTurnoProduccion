@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useState, useEffect, Suspense } from 'react'
 import NProgress from 'nprogress'
 import NavigationProgress from '@/components/NavigationProgress'
+import NotificationBell from '@/components/NotificationBell'
 import '@/app/nprogress.css'
 import {
   Home,
@@ -17,7 +18,6 @@ import {
   Briefcase,
   Settings,
   LogOut,
-  Bell,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -49,7 +49,6 @@ const navigation: NavItem[] = [
   { name: 'Horarios', href: '/dashboard/business/hours', icon: Clock },
   { name: 'Análisis', href: '/dashboard/business/analytics', icon: BarChart3 },
   { name: 'Listar', href: '/dashboard/business/listar', icon: List },
-  { name: 'Ajustes Avanzados', href: '/dashboard/business/settings/advanced', icon: Sliders },
   { name: 'Configuración', href: '/dashboard/business/settings', icon: Settings },
 ]
 
@@ -194,10 +193,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               // Inicio: solo activo si es exactamente /dashboard/business
               isActive = pathname === '/dashboard/business'
             } else if (item.href === '/dashboard/business/settings') {
-              // Configuración: solo activo si es exactamente /dashboard/business/settings
-              isActive = pathname === '/dashboard/business/settings'
-            } else if (item.href === '/dashboard/business/settings/advanced') {
-              // Ajustes Avanzados: activo si está en esa ruta o subrutas
+              // Configuración: activo para settings y todas sus subrutas
               isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
             } else {
               // Para las demás rutas, usar lógica normal (exacta o subrutas)
@@ -325,10 +321,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </button>
 
             {/* Notifications */}
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-              <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
-            </button>
+            <NotificationBell userId={authState.user?.id} />
 
             {/* User Avatar */}
             <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">

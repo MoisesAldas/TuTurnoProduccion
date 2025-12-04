@@ -98,6 +98,7 @@ export default function ReviewModal({
         }
       } else {
         // Success
+        console.log('✅ Review created successfully:', data)
         toast({
           title: '¡Gracias por tu reseña!',
           description: 'Tu opinión ha sido registrada exitosamente.',
@@ -110,6 +111,7 @@ export default function ReviewModal({
 
         // Call callback if provided
         if (onReviewSubmitted) {
+          console.log('📞 Calling onReviewSubmitted callback...')
           onReviewSubmitted()
         }
 

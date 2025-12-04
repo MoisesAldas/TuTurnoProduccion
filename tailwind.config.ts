@@ -76,6 +76,51 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // Custom scrollbar plugin
+    function ({ addUtilities }: any) {
+      addUtilities({
+        '.scrollbar-thin': {
+          'scrollbar-width': 'thin',
+          '&::-webkit-scrollbar': {
+            height: '6px',
+            width: '6px',
+          },
+        },
+        '.scrollbar-thumb-orange-200': {
+          '&::-webkit-scrollbar-thumb': {
+            'background-color': '#fed7aa',
+            'border-radius': '3px',
+          },
+        },
+        '.scrollbar-thumb-orange-300': {
+          '&::-webkit-scrollbar-thumb': {
+            'background-color': '#fdba74',
+            'border-radius': '3px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            'background-color': '#fb923c',
+          },
+        },
+        '.scrollbar-track-transparent': {
+          '&::-webkit-scrollbar-track': {
+            'background-color': 'transparent',
+          },
+        },
+        '.scrollbar-track-gray-100': {
+          '&::-webkit-scrollbar-track': {
+            'background-color': '#f3f4f6',
+            'border-radius': '3px',
+          },
+        },
+        '.hover\\:scrollbar-thumb-orange-300:hover': {
+          '&::-webkit-scrollbar-thumb': {
+            'background-color': '#fdba74',
+          },
+        },
+      })
+    },
+  ],
 };
 export default config;

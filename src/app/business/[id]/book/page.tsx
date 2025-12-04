@@ -258,6 +258,8 @@ export default function BookingPage() {
     // ✅ CHECK: Verify if business is closed on this day of week (regular hours)
     const dayOfWeek = selectedDate.getDay() // 0 = Sunday, 1 = Monday, etc.
 
+    let regularHours: { open_time: string; close_time: string } | null = null
+
     try {
       const { data: businessHours, error: hoursError } = await supabase
         .from('business_hours')
@@ -275,22 +277,38 @@ export default function BookingPage() {
         setAvailableSlots([])
         return
       }
+
+      // ✅ SAVE: Store regular business hours for later use
+      if (businessHours?.open_time && businessHours?.close_time) {
+        regularHours = {
+          open_time: businessHours.open_time,
+          close_time: businessHours.close_time
+        }
+      }
     } catch (error) {
       console.error('Error checking business hours:', error)
     }
 
     const slots: TimeSlot[] = []
 
-    // Use special hours if available, otherwise use default hours
+    // ✅ PRIORITY: 1) Special hours, 2) Regular hours, 3) Default fallback
     let startHour = 9
     let endHour = 18
 
     if (specialHourForDate && !specialHourForDate.is_closed && specialHourForDate.open_time && specialHourForDate.close_time) {
+      // Priority 1: Use special hours if available for this date
       const openTime = specialHourForDate.open_time.split(':')
       const closeTime = specialHourForDate.close_time.split(':')
       startHour = parseInt(openTime[0])
       endHour = parseInt(closeTime[0])
+    } else if (regularHours) {
+      // Priority 2: Use regular business hours from business_hours table
+      const openTime = regularHours.open_time.split(':')
+      const closeTime = regularHours.close_time.split(':')
+      startHour = parseInt(openTime[0])
+      endHour = parseInt(closeTime[0])
     }
+    // Priority 3: Default fallback (9 AM - 6 PM) already set above
 
     const slotDuration = 30 // minutes
 

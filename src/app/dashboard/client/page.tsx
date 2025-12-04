@@ -520,10 +520,10 @@ export default function ClientDashboard() {
         <TabsContent value="activity" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <CardTitle>Actividad Reciente</CardTitle>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/dashboard/client/appointments" className="text-emerald-600 hover:text-emerald-700">
+                <Button asChild variant="ghost" size="sm" className="hover:bg-emerald-50">
+                  <Link href="/dashboard/client/appointments" className="text-emerald-600 hover:text-emerald-700 transition-colors">
                     Ver historial completo
                   </Link>
                 </Button>
@@ -537,15 +537,15 @@ export default function ClientDashboard() {
                     href={`/dashboard/client/appointments/${apt.id}`}
                     className="block"
                   >
-                    <div className="flex items-center justify-between p-4 rounded-lg hover:bg-emerald-50 transition-all duration-200 border border-transparent hover:border-emerald-200 hover:shadow-md">
-                      <div className="flex items-center gap-4 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-lg hover:bg-emerald-50 transition-all duration-200 border border-transparent hover:border-emerald-200 hover:shadow-md">
+                      <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getStatusInfo(apt.status).color} transition-transform duration-200 hover:scale-110`}>
                           {React.createElement(getStatusInfo(apt.status).icon, { className: 'w-6 h-6' })}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
                             <p className="font-semibold text-gray-900 truncate">{apt.business?.name}</p>
-                            <Badge variant="secondary" className={`${getStatusInfo(apt.status).color} flex-shrink-0`}>
+                            <Badge variant="secondary" className={`${getStatusInfo(apt.status).color} flex-shrink-0 text-xs`}>
                               {getStatusInfo(apt.status).label}
                             </Badge>
                           </div>
@@ -557,7 +557,7 @@ export default function ClientDashboard() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right ml-4 flex-shrink-0">
+                      <div className="text-left sm:text-right sm:ml-4 flex-shrink-0">
                         <p className="font-bold text-lg text-emerald-600">{formatPrice(apt.total_price)}</p>
                       </div>
                     </div>

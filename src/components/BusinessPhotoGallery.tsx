@@ -18,11 +18,12 @@ interface BusinessPhoto {
 
 interface BusinessPhotoGalleryProps {
   businessId: string
+  compact?: boolean
 }
 
 const MAX_PHOTOS = 5
 
-export default function BusinessPhotoGallery({ businessId }: BusinessPhotoGalleryProps) {
+export default function BusinessPhotoGallery({ businessId, compact = false }: BusinessPhotoGalleryProps) {
   const [photos, setPhotos] = useState<BusinessPhoto[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -286,7 +287,12 @@ export default function BusinessPhotoGallery({ businessId }: BusinessPhotoGaller
   }
 
   if (loading) {
-    return (
+    return compact ? (
+      <div className="py-6 text-center">
+        <div className="animate-spin w-6 h-6 border-3 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2"></div>
+        <p className="text-xs text-gray-500">Cargando...</p>
+      </div>
+    ) : (
       <Card>
         <CardContent className="p-12 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
@@ -296,6 +302,115 @@ export default function BusinessPhotoGallery({ businessId }: BusinessPhotoGaller
     )
   }
 
+  // Compact Mode - Grid 3x2 (6 slots total)
+  if (compact) {
+    // Create array of 6 slots
+    const TOTAL_SLOTS = 6
+    const slots = []
+
+    // Add existing photos
+    for (let i = 0; i < photos.length && i < MAX_PHOTOS; i++) {
+      slots.push({ type: 'photo', data: photos[i] })
+    }
+
+    // Add upload button if space available
+    if (photos.length < MAX_PHOTOS) {
+      slots.push({ type: 'upload', data: null })
+    }
+
+    // Fill remaining slots with empty placeholders
+    while (slots.length < TOTAL_SLOTS) {
+      slots.push({ type: 'empty', data: null })
+    }
+
+    return (
+      <div className="space-y-3 h-full flex flex-col">
+        {/* Grid 3x2 Gallery */}
+        <div className="grid grid-cols-3 gap-2">
+          {slots.map((slot, index) => {
+            if (slot.type === 'photo' && slot.data) {
+              return (
+                <div
+                  key={slot.data.id}
+                  className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-orange-300 transition-all"
+                >
+                  <img
+                    src={slot.data.photo_url}
+                    alt="Foto del negocio"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Overlay on hover */}
+                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => deletePhoto(slot.data.id, slot.data.photo_url)}
+                      className="p-1 bg-red-500 hover:bg-red-600 rounded text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              )
+            }
+
+            if (slot.type === 'upload') {
+              return (
+                <button
+                  key={`upload-${index}`}
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 transition-all flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin text-orange-600" />
+                      <span className="text-xs font-semibold text-gray-900">Subiendo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5" />
+                      <span className="text-xs font-semibold text-gray-900">Agregar</span>
+                    </>
+                  )}
+                </button>
+              )
+            }
+
+            // Empty placeholder
+            return (
+              <div
+                key={`empty-${index}`}
+                className="aspect-square rounded-lg border-2 border-dashed border-gray-200 bg-gray-50"
+              />
+            )
+          })}
+        </div>
+
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        {/* Info Text - Compact */}
+        <p className="text-xs text-gray-700 text-center font-medium mt-3 px-2">
+          {photos.length >= MAX_PHOTOS ? (
+            <span className="text-orange-600 font-semibold">
+              Límite alcanzado ({MAX_PHOTOS}/{MAX_PHOTOS})
+            </span>
+          ) : (
+            <span className="text-gray-900">{photos.length}/{MAX_PHOTOS} fotos • JPG, PNG (máx. 5MB)</span>
+          )}
+        </p>
+      </div>
+    )
+  }
+
+  // Full Mode - Grid View
   return (
     <>
       <Card>

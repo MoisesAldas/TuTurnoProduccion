@@ -1,4 +1,4 @@
-import { Building2, Sparkles, Scissors, Heart, Dumbbell, Activity, type LucideIcon } from 'lucide-react'
+import { Building2, Sparkles, Scissors, Heart, Dumbbell, Activity, Paintbrush, type LucideIcon } from 'lucide-react'
 
 /**
  * Mapeo de categorías de negocios a sus iconos correspondientes
@@ -19,6 +19,7 @@ export function getCategoryIcon(categoryName?: string): LucideIcon {
     'gimnasio': Dumbbell,
     'clínica': Activity,
     'clinica': Activity,
+    'estudio de tatuajes': Paintbrush,
   }
 
   return iconMap[categoryName.toLowerCase()] || Building2
@@ -43,6 +44,7 @@ export function getCategoryColor(categoryName?: string): string {
     'gimnasio': 'text-orange-500',
     'clínica': 'text-teal-500',
     'clinica': 'text-teal-500',
+    'estudio de tatuajes': 'text-slate-700',
   }
 
   return colorMap[categoryName.toLowerCase()] || 'text-gray-500'

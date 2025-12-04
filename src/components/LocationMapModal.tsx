@@ -29,6 +29,17 @@ export default function LocationMapModal({
   const marker = useRef<mapboxgl.Marker | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Theme colors - Using emerald for client-facing views
+  const colors = {
+    markerBg: '#059669', // emerald-600
+    headerBg: 'from-emerald-50 to-teal-50',
+    iconBg: 'from-emerald-500 to-teal-600',
+    buttonBg: 'bg-emerald-600 hover:bg-emerald-700',
+    loadingBorder: 'border-emerald-200',
+    loadingBorderTop: 'border-t-emerald-600',
+    popupColor: '#059669'
+  }
+
   useEffect(() => {
     console.log('🗺️ LocationMapModal useEffect triggered', {
       isOpen,
@@ -89,7 +100,7 @@ export default function LocationMapModal({
         el.style.width = '40px'
         el.style.height = '40px'
         el.style.borderRadius = '50% 50% 50% 0'
-        el.style.background = '#ea580c'
+        el.style.background = colors.markerBg
         el.style.border = '3px solid white'
         el.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.3)'
         el.style.transform = 'rotate(-45deg)'
@@ -100,7 +111,7 @@ export default function LocationMapModal({
           .setPopup(
             new mapboxgl.Popup({ offset: 25 }).setHTML(
               `<div style="padding: 8px;">
-                <h3 style="font-weight: bold; margin-bottom: 4px; color: #ea580c;">${businessName}</h3>
+                <h3 style="font-weight: bold; margin-bottom: 4px; color: ${colors.popupColor};">${businessName}</h3>
                 <p style="font-size: 14px; color: #6b7280;">${address}</p>
               </div>`
             )
@@ -178,9 +189,9 @@ export default function LocationMapModal({
         </DialogHeader>
 
         {/* Header Visual */}
-        <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+        <div className={`flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r ${colors.headerBg}`}>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${colors.iconBg} rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}>
               <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -200,7 +211,7 @@ export default function LocationMapModal({
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 z-10">
               <div className="text-center px-4">
-                <div className="animate-spin w-10 h-10 sm:w-12 sm:h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-3 sm:mb-4 shadow-lg"></div>
+                <div className={`animate-spin w-10 h-10 sm:w-12 sm:h-12 border-4 ${colors.loadingBorder} ${colors.loadingBorderTop} rounded-full mx-auto mb-3 sm:mb-4 shadow-lg`}></div>
                 <p className="text-sm sm:text-base font-medium text-gray-700">Cargando mapa...</p>
                 <p className="text-xs sm:text-sm text-gray-500 mt-1">Preparando la ubicación</p>
               </div>
@@ -214,7 +225,7 @@ export default function LocationMapModal({
             <Button
               onClick={getDirections}
               size="lg"
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
             >
               <Navigation className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               <span className="text-sm sm:text-base">Cómo Llegar</span>
@@ -223,7 +234,7 @@ export default function LocationMapModal({
               onClick={openInGoogleMaps}
               size="lg"
               variant="outline"
-              className="w-full border-2 hover:bg-gray-50 hover:border-gray-400 transition-all"
+              className="w-full border-2 border-gray-300 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-all duration-200"
             >
               <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               <span className="text-sm sm:text-base">Google Maps</span>
@@ -232,7 +243,7 @@ export default function LocationMapModal({
               onClick={openInWaze}
               size="lg"
               variant="outline"
-              className="w-full border-2 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-400 transition-all"
+              className="w-full border-2 border-gray-300 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-300 transition-all duration-200"
             >
               <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2c-4.962 0-9 4.038-9 9 0 1.549.396 3.069 1.158 4.437L12 23l7.842-7.563C20.604 14.069 21 12.549 21 11c0-4.962-4.038-9-9-9zm0 12.5c-1.933 0-3.5-1.567-3.5-3.5s1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5-1.567 3.5-3.5 3.5z"/>

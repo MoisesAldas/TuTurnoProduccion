@@ -107,3 +107,15 @@
     transform: translate(-50%, -100%);
   }
 }
+
+/* Custom Scrollbar Styles for Firefox */
+@supports (scrollbar-color: auto) {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #fed7aa transparent;
+  }
+
+  .scrollbar-thin:hover {
+    scrollbar-color: #fdba74 transparent;
+  }
+}

@@ -1,0 +1,109 @@
+CREATE OR REPLACE FUNCTION public.create_appointment_notification()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+  AS $$
+  DECLARE
+      v_business_owner_id UUID;
+      v_client_name TEXT;
+  BEGIN
+      -- Obtener owner del negocio
+      SELECT owner_id INTO v_business_owner_id
+      FROM businesses
+      WHERE id = NEW.business_id;
+
+      -- Obtener nombre del cliente (puede ser walk-in o registered)
+      IF NEW.client_id IS NOT NULL THEN
+          SELECT first_name || ' ' || last_name INTO v_client_name
+          FROM users
+          WHERE id = NEW.client_id;
+      ELSE
+          v_client_name := COALESCE(NEW.walk_in_client_name, 'Cliente');
+      END IF;
+
+      -- ========================================
+      -- NOTIFICACIONES PARA BUSINESS OWNER
+      -- ========================================
+
+      -- NUEVA CITA (INSERT con status pending)
+      IF TG_OP = 'INSERT' AND NEW.status = 'pending' THEN
+          INSERT INTO public.notifications (user_id, appointment_id, type, title, message)
+          VALUES (
+              v_business_owner_id,
+              NEW.id,
+              'new_appointment',
+              'Nueva Reserva',
+              v_client_name || ' ha reservado para el ' ||
+              TO_CHAR(NEW.appointment_date, 'DD/MM/YYYY') || ' a las ' ||
+              TO_CHAR(NEW.start_time, 'HH24:MI')
+          );
+      END IF;
+
+      -- CANCELACIÓN POR CLIENTE (UPDATE a cancelled)
+      IF TG_OP = 'UPDATE' AND
+         NEW.status = 'cancelled' AND
+         OLD.status != 'cancelled' AND
+         NEW.client_id IS NOT NULL THEN
+          INSERT INTO public.notifications (user_id, appointment_id, type, title, message)
+          VALUES (
+              v_business_owner_id,
+              NEW.id,
+              'appointment_cancelled_by_client',
+              'Cita Cancelada',
+              v_client_name || ' canceló su cita del ' ||
+              TO_CHAR(NEW.appointment_date, 'DD/MM/YYYY') || ' a las ' ||
+              TO_CHAR(NEW.start_time, 'HH24:MI')
+          );
+      END IF;
+
+      -- MODIFICACIÓN POR CLIENTE (UPDATE en fecha/hora/empleado)
+      IF TG_OP = 'UPDATE' AND
+         (OLD.appointment_date != NEW.appointment_date OR
+          OLD.start_time != NEW.start_time OR
+          OLD.employee_id != NEW.employee_id) AND
+         NEW.client_id IS NOT NULL THEN
+          INSERT INTO public.notifications (user_id, appointment_id, type, title, message)
+          VALUES (
+              v_business_owner_id,
+              NEW.id,
+              'appointment_modified_by_client',
+              'Cita Modificada',
+              v_client_name || ' modificó su cita. Nueva fecha: ' ||
+              TO_CHAR(NEW.appointment_date, 'DD/MM/YYYY') || ' a las ' ||
+              TO_CHAR(NEW.start_time, 'HH24:MI')
+          );
+      END IF;
+
+      -- ========================================
+      -- NOTIFICACIONES PARA CLIENTE (código original)
+      -- ========================================
+
+      -- Solo crear notificaciones para clientes REGISTRADOS (no walk-ins)
+      IF NEW.client_id IS NOT NULL THEN
+          IF NEW.status = 'confirmed' AND (OLD IS NULL OR OLD.status != 'confirmed') THEN
+              INSERT INTO public.notifications (user_id, appointment_id, type, title, message)       
+              VALUES (
+                  NEW.client_id,
+                  NEW.id,
+                  'appointment_confirmed',
+                  'Cita Confirmada',
+                  'Tu cita ha sido confirmada para el ' || TO_CHAR(NEW.appointment_date,
+  'DD/MM/YYYY') || ' a las ' || TO_CHAR(NEW.start_time, 'HH24:MI')
+              );
+          END IF;
+
+          IF NEW.status = 'cancelled' AND (OLD IS NULL OR OLD.status != 'cancelled') THEN
+              INSERT INTO public.notifications (user_id, appointment_id, type, title, message)       
+              VALUES (
+                  NEW.client_id,
+                  NEW.id,
+                  'appointment_cancelled',
+                  'Cita Cancelada',
+                  'Tu cita del ' || TO_CHAR(NEW.appointment_date, 'DD/MM/YYYY') || ' a las ' ||      
+  TO_CHAR(NEW.start_time, 'HH24:MI') || ' ha sido cancelada'
+              );
+          END IF;
+      END IF;
+
+      RETURN NEW;
+  END;
+  $$;

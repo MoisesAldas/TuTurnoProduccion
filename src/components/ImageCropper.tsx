@@ -292,8 +292,14 @@ export default function ImageCropper({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
-      <Card className="w-full max-w-5xl my-auto border-t-4 border-t-orange-500 shadow-2xl bg-white">
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-2 sm:p-4 overflow-y-auto"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Card
+        className="w-full max-w-3xl my-auto shadow-lg bg-white"
+        onClick={(e) => e.stopPropagation()}
+      >
         <CardHeader className="border-b border-gray-200 bg-white pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-gray-900">
@@ -303,23 +309,23 @@ export default function ImageCropper({
               <span>Recortar Imagen</span>
             </CardTitle>
             <div className="flex gap-2">
-              <Badge variant="outline" className="border-orange-300 text-orange-700 bg-orange-50">
+              <Badge className="bg-orange-100 text-orange-700 border-orange-200">
                 {aspectRatio === 1 ? 'Cuadrado' : aspectRatio ? `${aspectRatio}:1` : 'Libre'}
               </Badge>
-              <Badge variant="outline" className="border-orange-300 text-orange-700 bg-orange-50 hidden sm:inline-flex">
+              <Badge className="bg-orange-100 text-orange-700 border-orange-200 hidden sm:inline-flex">
                 {maxWidth}x{maxHeight}px
               </Badge>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+        <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
           {/* Editor de imagen */}
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
             {/* Vista previa */}
             <div className="flex-1">
               <div
-                className="crop-container relative w-full aspect-square max-w-[400px] mx-auto border-2 border-gray-300 overflow-hidden bg-gray-100 rounded-xl shadow-lg"
+                className="crop-container relative w-full aspect-square max-w-[400px] mx-auto border-2 border-gray-300 overflow-hidden bg-gray-100 rounded-xl shadow-md"
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
@@ -341,7 +347,7 @@ export default function ImageCropper({
 
                 {/* Indicador de arrastre de imagen */}
                 {isDraggingImage && (
-                  <div className="absolute top-2 right-2 bg-white border border-orange-300 text-orange-700 text-xs px-2 py-1 rounded-md shadow-lg">
+                  <div className="absolute top-2 right-2 bg-white border border-orange-300 text-orange-700 text-xs px-2 py-1 rounded-md shadow-sm">
                     <Move className="w-3 h-3 inline mr-1" />
                     <span className="hidden sm:inline">Moviendo imagen...</span>
                     <span className="sm:hidden">Moviendo...</span>
@@ -351,7 +357,7 @@ export default function ImageCropper({
                 {/* Área de crop */}
                 {imageLoaded && (
                   <div
-                    className="absolute border-2 border-orange-500 bg-orange-500/20 cursor-move hover:bg-orange-500/30 transition-all shadow-lg"
+                    className="absolute border-2 border-orange-500 bg-orange-500/20 cursor-move hover:bg-orange-500/30 transition-all shadow-md"
                     style={{
                       left: cropArea.x,
                       top: cropArea.y,
@@ -361,7 +367,7 @@ export default function ImageCropper({
                     onMouseDown={handleCropMouseDown}
                   >
                     <div className="absolute inset-0 border-2 border-white border-dashed"></div>
-                    <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-white border border-orange-300 text-orange-700 text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md shadow-lg">
+                    <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-white border border-orange-300 text-orange-700 text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md shadow-sm">
                       <Move className="w-3 h-3 inline mr-1" />
                       <span className="hidden sm:inline">Recorte</span>
                     </div>
@@ -540,7 +546,7 @@ export default function ImageCropper({
                     onClick={() => {
                       setCropArea(prev => ({ ...prev, height: prev.width }))
                     }}
-                    className={aspectRatio === 1 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+                    className={aspectRatio === 1 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
                   >
                     <Square className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     1:1
@@ -551,7 +557,7 @@ export default function ImageCropper({
                     onClick={() => {
                       setCropArea(prev => ({ ...prev, height: prev.width / 2 }))
                     }}
-                    className={aspectRatio === 2 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+                    className={aspectRatio === 2 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
                   >
                     <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     2:1
@@ -562,7 +568,7 @@ export default function ImageCropper({
                     onClick={() => {
                       setCropArea(prev => ({ ...prev, height: prev.width * 9/16 }))
                     }}
-                    className={aspectRatio === 16/9 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+                    className={aspectRatio === 16/9 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
                   >
                     <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     16:9
@@ -612,7 +618,7 @@ export default function ImageCropper({
             <Button
               onClick={handleSave}
               disabled={!imageLoaded}
-              className="w-full sm:w-auto bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-md hover:shadow-lg transition-all"
             >
               <Check className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Aplicar Recorte</span>

@@ -151,7 +151,7 @@ export default function ClientLoginPage() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto">
         <div className="w-full max-w-md space-y-4">
           {/* Mobile back button */}
           <div className="lg:hidden">
