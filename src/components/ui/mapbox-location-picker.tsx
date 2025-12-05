@@ -211,8 +211,8 @@ export default function MapboxLocationPicker({
       {/* Geocoder y controles */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-orange-600" />
+          <Label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-orange-600 dark:text-orange-400" />
             Ubicación del Negocio *
           </Label>
           {!mapError && (
@@ -222,7 +222,7 @@ export default function MapboxLocationPicker({
               size="sm"
               onClick={getCurrentLocation}
               disabled={isLoading}
-              className="text-orange-600 border-orange-200 hover:bg-orange-50"
+              className="text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20"
             >
               <Target className="w-4 h-4 mr-2" />
               Mi ubicación
@@ -241,16 +241,16 @@ export default function MapboxLocationPicker({
                 setCurrentLocation(newLocation)
                 onLocationSelect(newLocation)
               }}
-              className="h-12 text-base bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
+              className="h-12 text-base bg-white/50 backdrop-blur-sm border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
             />
-            <p className="text-sm text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+            <p className="text-sm text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 p-2 rounded border border-amber-200 dark:border-amber-700">
               ⚠️ El mapa no está disponible. Ingresa tu dirección manualmente.
             </p>
           </div>
         ) : (
           /* Campo de búsqueda personalizado */
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <div
               id="geocoder-container"
               className="geocoder-container"
@@ -269,14 +269,14 @@ export default function MapboxLocationPicker({
         <div className="relative">
           <div
             ref={mapContainer}
-            className="w-full h-64 md:h-80 rounded-lg border border-gray-200 shadow-sm"
+            className="w-full h-64 md:h-80 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm"
           />
 
           {isLoading && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+            <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin w-6 h-6 border-2 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2"></div>
-                <p className="text-sm text-gray-600">Cargando mapa...</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Cargando mapa...</p>
               </div>
             </div>
           )}
@@ -284,26 +284,26 @@ export default function MapboxLocationPicker({
       )}
 
       {/* Información de ubicación seleccionada */}
-      <div className="bg-gray-50/50 rounded-lg p-4 border border-gray-200">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Ubicación seleccionada:</h4>
-        <p className="text-sm text-gray-600 mb-2">{currentLocation.address}</p>
-        <div className="flex gap-4 text-xs text-gray-500">
+      <div className="bg-gray-50/50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ubicación seleccionada:</h4>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{currentLocation.address}</p>
+        <div className="flex gap-4 text-xs text-gray-500 dark:text-gray-400">
           <span>Lat: {currentLocation.latitude.toFixed(6)}</span>
           <span>Lng: {currentLocation.longitude.toFixed(6)}</span>
         </div>
       </div>
 
       {/* Instrucciones */}
-      <div className="text-sm text-gray-500 bg-orange-50/50 rounded-lg p-3 border border-orange-200">
-        <p className="font-medium text-orange-700 mb-1">💡 Instrucciones:</p>
+      <div className="text-sm text-gray-500 dark:text-gray-400 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg p-3 border border-orange-200 dark:border-orange-800">
+        <p className="font-medium text-orange-700 dark:text-orange-400 mb-1">💡 Instrucciones:</p>
         {mapError ? (
-          <ul className="space-y-1 text-orange-600">
+          <ul className="space-y-1 text-orange-600 dark:text-orange-400">
             <li>• Ingresa la dirección completa de tu negocio</li>
             <li>• Incluye ciudad, provincia y referencias si es necesario</li>
             <li>• Puedes editar la dirección más tarde desde el dashboard</li>
           </ul>
         ) : (
-          <ul className="space-y-1 text-orange-600">
+          <ul className="space-y-1 text-orange-600 dark:text-orange-400">
             <li>• Busca tu dirección en el campo de arriba</li>
             <li>• Haz clic en el mapa para ubicar tu negocio</li>
             <li>• Arrastra el pin naranja para ajustar la posición exacta</li>
@@ -329,6 +329,10 @@ export default function MapboxLocationPicker({
           border: none !important;
         }
 
+        [data-theme='dark'] .mapboxgl-ctrl-geocoder input {
+          background-color: rgba(55, 65, 81, 0.5) !important; /* gray-700 with opacity */
+        }
+
         .mapboxgl-ctrl-geocoder input:focus {
           border: 2px solid #ea580c !important;
           box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1) !important;
@@ -338,6 +342,22 @@ export default function MapboxLocationPicker({
           border-radius: 0.5rem !important;
           border: 1px solid #e5e7eb !important;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        [data-theme='dark'] .mapboxgl-ctrl-geocoder .suggestions {
+          border: 1px solid #374151 !important; /* gray-700 */
+          background-color: #1f2937 !important; /* gray-800 */
+        }
+        
+        [data-theme='dark'] .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--suggestion {
+          background-color: #1f2937 !important; /* gray-800 */
+          color: #e5e7eb !important; /* gray-200 */
+        }
+
+        [data-theme='dark'] .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--suggestion-active,
+        [data-theme='dark'] .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--suggestion:hover {
+          background-color: #374151 !important; /* gray-700 */
+          color: #f9fafb !important; /* gray-50 */
         }
 
         .geocoder-container {

@@ -557,25 +557,25 @@ export default function UnifiedSettingsPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando configuración...</p>
+          <p className="text-gray-600 dark:text-gray-400">Cargando configuración...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Configuración</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Gestiona todos los aspectos de tu negocio
               </p>
             </div>
-            <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+            <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
               <Settings className="w-4 h-4 mr-2" />
               {business?.name}
             </Badge>
@@ -590,7 +590,7 @@ export default function UnifiedSettingsPage() {
           <select
             value={activeSection}
             onChange={(e) => setActiveSection(e.target.value as Section)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-800 dark:text-gray-50"
           >
             {navigationItems.map((item) => (
               <option key={item.id} value={item.id}>
@@ -617,11 +617,11 @@ export default function UnifiedSettingsPage() {
                       transition-all duration-200
                       ${isActive
                         ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                       }
                     `}
                   >
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
                     <span>{item.label}</span>
                   </button>
                 )
@@ -634,13 +634,13 @@ export default function UnifiedSettingsPage() {
             {/* Profile Section */}
             {activeSection === 'profile' && (
               <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-6">
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Building className="w-5 h-5 text-orange-600" />
                       Información del Negocio
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="dark:text-gray-400">
                       Información básica que se mostrará en tu perfil público
                     </CardDescription>
                   </CardHeader>
@@ -648,20 +648,20 @@ export default function UnifiedSettingsPage() {
                     {/* Logo Upload with UPFRONT REQUIREMENTS */}
                     <div className="space-y-2">
                       <Label>Logo del Negocio</Label>
-                      <Alert className="mb-4">
+                      <Alert className="mb-4 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
                         <Info className="w-4 h-4" />
-                        <AlertDescription className="text-sm">
+                        <AlertDescription className="text-sm dark:text-gray-200">
                           <strong>Requisitos:</strong> JPG, PNG o WebP • Tamaño recomendado: 500x500px • Máximo 10MB
                           <br/>
                           Tu logo aparecerá en tu perfil público y en confirmaciones de citas.
                         </AlertDescription>
                       </Alert>
                       <div className="flex items-start gap-4">
-                        <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <div className="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
                           {logoPreview ? (
                             <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
                           ) : (
-                            <div className="text-center text-gray-400">
+                            <div className="text-center text-gray-400 dark:text-gray-500">
                               <Camera className="w-8 h-8 mx-auto mb-1" />
                               <p className="text-xs">Sin logo</p>
                             </div>
@@ -677,7 +677,7 @@ export default function UnifiedSettingsPage() {
                             >
                               {uploadingLogo ? (
                                 <>
-                                  <div className="w-4 h-4 border-2 border-gray-300 border-t-orange-600 rounded-full animate-spin mr-2" />
+                                  <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-orange-600 rounded-full animate-spin mr-2" />
                                   Procesando...
                                 </>
                               ) : (
@@ -692,7 +692,7 @@ export default function UnifiedSettingsPage() {
                                 type="button"
                                 variant="outline"
                                 onClick={removeLogo}
-                                className="text-red-600 hover:bg-red-50"
+                                className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50"
                               >
                                 <X className="w-4 h-4" />
                               </Button>
@@ -711,7 +711,7 @@ export default function UnifiedSettingsPage() {
 
                     {/* Name */}
                     <div className="space-y-2">
-                      <Label htmlFor="name">
+                      <Label htmlFor="name" className="dark:text-gray-50">
                         Nombre del Negocio *
                       </Label>
                       <div className="relative">
@@ -730,13 +730,13 @@ export default function UnifiedSettingsPage() {
                         )}
                       </div>
                       {errorsInfo.name && (
-                        <p className="text-sm text-red-600">{errorsInfo.name.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.name.message}</p>
                       )}
                     </div>
 
                     {/* Phone */}
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Teléfono</Label>
+                      <Label htmlFor="phone" className="dark:text-gray-50">Teléfono</Label>
                       <div className="relative">
                         <Input
                           id="phone"
@@ -753,13 +753,13 @@ export default function UnifiedSettingsPage() {
                         )}
                       </div>
                       {errorsInfo.phone && (
-                        <p className="text-sm text-red-600">{errorsInfo.phone.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.phone.message}</p>
                       )}
                     </div>
 
                     {/* Email */}
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email de Contacto</Label>
+                      <Label htmlFor="email" className="dark:text-gray-50">Email de Contacto</Label>
                       <div className="relative">
                         <Input
                           id="email"
@@ -777,13 +777,13 @@ export default function UnifiedSettingsPage() {
                         )}
                       </div>
                       {errorsInfo.email && (
-                        <p className="text-sm text-red-600">{errorsInfo.email.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.email.message}</p>
                       )}
                     </div>
 
                     {/* Website */}
                     <div className="space-y-2">
-                      <Label htmlFor="website">Sitio Web</Label>
+                      <Label htmlFor="website" className="dark:text-gray-50">Sitio Web</Label>
                       <div className="relative">
                         <Input
                           id="website"
@@ -800,13 +800,13 @@ export default function UnifiedSettingsPage() {
                         )}
                       </div>
                       {errorsInfo.website && (
-                        <p className="text-sm text-red-600">{errorsInfo.website.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.website.message}</p>
                       )}
                     </div>
 
                     {/* Description */}
                     <div className="space-y-2">
-                      <Label htmlFor="description">Descripción</Label>
+                      <Label htmlFor="description" className="dark:text-gray-50">Descripción</Label>
                       <Textarea
                         id="description"
                         {...registerInfo('description')}
@@ -819,15 +819,15 @@ export default function UnifiedSettingsPage() {
                         }`}
                       />
                       {errorsInfo.description && (
-                        <p className="text-sm text-red-600">{errorsInfo.description.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.description.message}</p>
                       )}
-                      <p className="text-xs text-gray-500">Máximo 500 caracteres</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Máximo 500 caracteres</p>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Save Button */}
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -852,31 +852,31 @@ export default function UnifiedSettingsPage() {
             {/* Visual Identity Section */}
             {activeSection === 'visual' && (
               <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-6">
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <ImageIcon className="w-5 h-5 text-orange-600" />
                       Imagen de Portada
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="dark:text-gray-400">
                       Imagen principal que se mostrará en tu perfil
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Alert>
+                    <Alert className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
                       <Info className="w-4 h-4" />
-                      <AlertDescription className="text-sm">
+                      <AlertDescription className="text-sm dark:text-gray-200">
                         <strong>Requisitos:</strong> JPG, PNG o WebP • Tamaño recomendado: 2000x1000px (2:1) • Máximo 10MB
                         <br/>
                         Tu portada aparecerá en la parte superior de tu perfil público.
                       </AlertDescription>
                     </Alert>
                     <div className="space-y-4">
-                      <div className="w-full border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50 min-h-[200px] flex items-center justify-center">
+                      <div className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 min-h-[200px] flex items-center justify-center">
                         {coverPreview ? (
                           <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="text-center text-gray-400">
+                          <div className="text-center text-gray-400 dark:text-gray-500">
                             <ImageIcon className="w-12 h-12 mx-auto mb-2" />
                             <p className="text-sm">Sin imagen de portada</p>
                           </div>
@@ -906,7 +906,7 @@ export default function UnifiedSettingsPage() {
                             type="button"
                             variant="outline"
                             onClick={removeCover}
-                            className="text-red-600 hover:bg-red-50"
+                            className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50"
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -925,13 +925,13 @@ export default function UnifiedSettingsPage() {
 
                 {/* Photo Gallery */}
                 {business && (
-                  <Card>
+                  <Card className="dark:border-gray-700">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <ImageIcon className="w-5 h-5 text-orange-600" />
                         Galería de Fotos
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="dark:text-gray-400">
                         Muestra fotos de tu trabajo y espacio
                       </CardDescription>
                     </CardHeader>
@@ -941,7 +941,7 @@ export default function UnifiedSettingsPage() {
                   </Card>
                 )}
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -966,21 +966,21 @@ export default function UnifiedSettingsPage() {
             {/* Location Section */}
             {activeSection === 'location' && (
               <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-6">
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-orange-600" />
                       Ubicación del Negocio
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="dark:text-gray-400">
                       Ayuda a tus clientes a encontrarte fácilmente
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {locationData.address && (
-                      <Alert className="mb-4">
+                      <Alert className="mb-4 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
                         <MapPin className="w-4 h-4" />
-                        <AlertDescription>
+                        <AlertDescription className="dark:text-gray-200">
                           <strong>Ubicación seleccionada:</strong> {locationData.address}
                         </AlertDescription>
                       </Alert>
@@ -998,7 +998,7 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -1023,19 +1023,19 @@ export default function UnifiedSettingsPage() {
             {/* Policies Section */}
             {activeSection === 'policies' && (
               <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-6">
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Shield className="w-5 h-5 text-orange-600" />
                       Políticas de Cancelación
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="dark:text-gray-400">
                       Define las reglas para cancelar y reagendar citas
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="cancellation_policy_hours">
+                      <Label htmlFor="cancellation_policy_hours" className="dark:text-gray-50">
                         Horas de anticipación requeridas
                       </Label>
                       <Input
@@ -1045,16 +1045,16 @@ export default function UnifiedSettingsPage() {
                         max="168"
                         {...registerAdvanced('cancellation_policy_hours', { valueAsNumber: true })}
                       />
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Tiempo mínimo antes de la cita para poder cancelar (máximo 7 días / 168 horas)
                       </p>
                       {errorsAdvanced.cancellation_policy_hours && (
-                        <p className="text-sm text-red-600">{errorsAdvanced.cancellation_policy_hours.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_hours.message}</p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="cancellation_policy_text">
+                      <Label htmlFor="cancellation_policy_text" className="dark:text-gray-50">
                         Texto de la política de cancelación
                       </Label>
                       <Textarea
@@ -1063,15 +1063,15 @@ export default function UnifiedSettingsPage() {
                         rows={3}
                         placeholder="Describe tu política de cancelación..."
                       />
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Este texto se mostrará a los clientes cuando reserven
                       </p>
                       {errorsAdvanced.cancellation_policy_text && (
-                        <p className="text-sm text-red-600">{errorsAdvanced.cancellation_policy_text.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_text.message}</p>
                       )}
                     </div>
 
-                    <div className="space-y-4 border-t pt-6">
+                    <div className="space-y-4 border-t pt-6 dark:border-gray-800">
                       <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
@@ -1080,10 +1080,10 @@ export default function UnifiedSettingsPage() {
                           className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                         />
                         <div className="flex-1">
-                          <Label htmlFor="allow_client_cancellation" className="cursor-pointer font-medium">
+                          <Label htmlFor="allow_client_cancellation" className="cursor-pointer font-medium dark:text-gray-50">
                             Permitir que clientes cancelen sus citas
                           </Label>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             Los clientes podrán cancelar desde su perfil
                           </p>
                         </div>
@@ -1097,10 +1097,10 @@ export default function UnifiedSettingsPage() {
                           className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                         />
                         <div className="flex-1">
-                          <Label htmlFor="allow_client_reschedule" className="cursor-pointer font-medium">
+                          <Label htmlFor="allow_client_reschedule" className="cursor-pointer font-medium dark:text-gray-50">
                             Permitir que clientes reagenden sus citas
                           </Label>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             Los clientes podrán modificar fecha/hora de sus citas
                           </p>
                         </div>
@@ -1110,7 +1110,7 @@ export default function UnifiedSettingsPage() {
                 </Card>
 
                 {/* Additional Settings */}
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Settings className="w-5 h-5 text-orange-600" />
@@ -1120,22 +1120,22 @@ export default function UnifiedSettingsPage() {
                   <CardContent className="space-y-4">
                     <div className="flex items-start gap-3">
                       <input
-                        type="checkbox"
+                        type="checkbox" 
                         id="auto_confirm_appointments"
                         {...registerAdvanced('auto_confirm_appointments')}
                         className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                       />
                       <div className="flex-1">
-                        <Label htmlFor="auto_confirm_appointments" className="cursor-pointer font-medium">
+                        <Label htmlFor="auto_confirm_appointments" className="cursor-pointer font-medium dark:text-gray-50">
                           Auto-confirmar citas
                         </Label>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Las reservas se confirmarán automáticamente sin requerir aprobación manual
                         </p>
                       </div>
                     </div>
 
-                    <div className="space-y-4 border-t pt-6">
+                    <div className="space-y-4 border-t pt-6 dark:border-gray-800">
                       <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
@@ -1144,10 +1144,10 @@ export default function UnifiedSettingsPage() {
                           className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                         />
                         <div className="flex-1">
-                          <Label htmlFor="require_deposit" className="cursor-pointer font-medium">
+                          <Label htmlFor="require_deposit" className="cursor-pointer font-medium dark:text-gray-50">
                             Requerir depósito
                           </Label>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             Solicitar un depósito para confirmar la reserva
                           </p>
                         </div>
@@ -1155,7 +1155,7 @@ export default function UnifiedSettingsPage() {
 
                       {requireDeposit && (
                         <div className="ml-7 space-y-2">
-                          <Label htmlFor="deposit_percentage">
+                          <Label htmlFor="deposit_percentage" className="dark:text-gray-50">
                             Porcentaje de depósito (%)
                           </Label>
                           <Input
@@ -1166,11 +1166,11 @@ export default function UnifiedSettingsPage() {
                             {...registerAdvanced('deposit_percentage', { valueAsNumber: true })}
                             className="max-w-xs"
                           />
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             Porcentaje del precio total del servicio
                           </p>
                           {errorsAdvanced.deposit_percentage && (
-                            <p className="text-sm text-red-600">{errorsAdvanced.deposit_percentage.message}</p>
+                            <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.deposit_percentage.message}</p>
                           )}
                         </div>
                       )}
@@ -1178,7 +1178,7 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -1203,19 +1203,19 @@ export default function UnifiedSettingsPage() {
             {/* Booking Section */}
             {activeSection === 'booking' && (
               <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-6">
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Clock className="w-5 h-5 text-orange-600" />
                       Restricciones de Reserva
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="dark:text-gray-400">
                       Define cuándo pueden reservar tus clientes
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="min_booking_hours">
+                      <Label htmlFor="min_booking_hours" className="dark:text-gray-50">
                         Anticipación mínima (horas)
                       </Label>
                       <Input
@@ -1226,16 +1226,16 @@ export default function UnifiedSettingsPage() {
                         {...registerAdvanced('min_booking_hours', { valueAsNumber: true })}
                         className="max-w-xs"
                       />
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Tiempo mínimo antes de la cita para poder reservar (máximo 72 horas / 3 días)
                       </p>
                       {errorsAdvanced.min_booking_hours && (
-                        <p className="text-sm text-red-600">{errorsAdvanced.min_booking_hours.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.min_booking_hours.message}</p>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="max_booking_days">
+                      <Label htmlFor="max_booking_days" className="dark:text-gray-50">
                         Días máximos hacia el futuro
                       </Label>
                       <Input
@@ -1246,17 +1246,17 @@ export default function UnifiedSettingsPage() {
                         {...registerAdvanced('max_booking_days', { valueAsNumber: true })}
                         className="max-w-xs"
                       />
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Cuántos días hacia el futuro pueden reservar los clientes (máximo 365 días / 1 año)
                       </p>
                       {errorsAdvanced.max_booking_days && (
-                        <p className="text-sm text-red-600">{errorsAdvanced.max_booking_days.message}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.max_booking_days.message}</p>
                       )}
                     </div>
 
-                    <Alert>
+                    <Alert className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
                       <AlertCircle className="w-4 h-4" />
-                      <AlertDescription>
+                      <AlertDescription className="dark:text-gray-200">
                         <strong>Ejemplo de configuración actual:</strong>
                         <br/>
                         Los clientes podrán reservar con al menos{' '}
@@ -1267,7 +1267,7 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -1292,20 +1292,20 @@ export default function UnifiedSettingsPage() {
             {/* Special Hours Section */}
             {activeSection === 'special-hours' && (
               <div className="space-y-6">
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-orange-600" />
                       Horarios Especiales y Feriados
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="dark:text-gray-400">
                       Gestiona días cerrados, feriados y horarios especiales
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Alert className="mb-6">
+                    <Alert className="mb-6 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
                       <Info className="w-4 h-4" />
-                      <AlertDescription>
+                      <AlertDescription className="dark:text-gray-200">
                         Configura días especiales donde tu negocio tendrá horarios diferentes o estará cerrado.
                         Estos horarios tienen prioridad sobre los horarios regulares.
                       </AlertDescription>
@@ -1314,7 +1314,7 @@ export default function UnifiedSettingsPage() {
                     {loadingSpecialHours ? (
                       <div className="text-center py-8">
                         <div className="animate-spin w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-                        <p className="text-gray-600">Cargando horarios especiales...</p>
+                        <p className="text-gray-600 dark:text-gray-400">Cargando horarios especiales...</p>
                       </div>
                     ) : business ? (
                       <SpecialHoursManager
@@ -1331,18 +1331,18 @@ export default function UnifiedSettingsPage() {
             {/* Reminders Section */}
             {activeSection === 'reminders' && (
               <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-6">
-                <Card>
+                <Card className="dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Bell className="w-5 h-5 text-orange-600" />
                       Recordatorios Automáticos
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="dark:text-gray-400">
                       Configura recordatorios para tus clientes
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3 border-b pb-6">
+                    <div className="flex items-start gap-3 border-b pb-6 dark:border-gray-800">
                       <input
                         type="checkbox"
                         id="enable_reminders"
@@ -1350,10 +1350,10 @@ export default function UnifiedSettingsPage() {
                         className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                       />
                       <div className="flex-1">
-                        <Label htmlFor="enable_reminders" className="cursor-pointer font-medium text-base">
+                        <Label htmlFor="enable_reminders" className="cursor-pointer font-medium text-base dark:text-gray-50">
                           Activar recordatorios automáticos
                         </Label>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           Los clientes recibirán recordatorios antes de sus citas
                         </p>
                       </div>
@@ -1362,7 +1362,7 @@ export default function UnifiedSettingsPage() {
                     {enableReminders && (
                       <div className="space-y-6">
                         <div className="space-y-2">
-                          <Label htmlFor="reminder_hours_before">
+                          <Label htmlFor="reminder_hours_before" className="dark:text-gray-50">
                             Horas antes de la cita
                           </Label>
                           <Input
@@ -1373,16 +1373,16 @@ export default function UnifiedSettingsPage() {
                             {...registerAdvanced('reminder_hours_before', { valueAsNumber: true })}
                             className="max-w-xs"
                           />
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
                             Cuándo enviar el recordatorio (máximo 7 días / 168 horas)
                           </p>
                           {errorsAdvanced.reminder_hours_before && (
-                            <p className="text-sm text-red-600">{errorsAdvanced.reminder_hours_before.message}</p>
+                            <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.reminder_hours_before.message}</p>
                           )}
                         </div>
 
-                        <div className="space-y-4 border-t pt-6">
-                          <h4 className="font-medium text-gray-900">Canales de notificación</h4>
+                        <div className="space-y-4 border-t pt-6 dark:border-gray-800">
+                          <h4 className="font-medium text-gray-900 dark:text-gray-50">Canales de notificación</h4>
 
                           <div className="flex items-start gap-3">
                             <input
@@ -1392,10 +1392,10 @@ export default function UnifiedSettingsPage() {
                               className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                             />
                             <div className="flex-1">
-                              <Label htmlFor="reminder_email_enabled" className="cursor-pointer font-medium">
+                              <Label htmlFor="reminder_email_enabled" className="cursor-pointer font-medium dark:text-gray-50">
                                 Recordatorio por Email
                               </Label>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
                                 Enviar recordatorios por correo electrónico
                               </p>
                             </div>
@@ -1412,15 +1412,15 @@ export default function UnifiedSettingsPage() {
                                 className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                               />
                               <div className="flex-1">
-                                <Label htmlFor="reminder_sms_enabled" className="cursor-pointer font-medium">
+                                <Label htmlFor="reminder_sms_enabled" className="cursor-pointer font-medium dark:text-gray-50">
                                   Recordatorio por SMS
                                 </Label>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                   Enviar recordatorios por mensaje de texto
                                 </p>
                               </div>
                             </div>
-                            <Badge variant="secondary" className="absolute top-0 right-0 bg-yellow-100 text-yellow-800">
+                            <Badge variant="secondary" className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
                               Próximamente
                             </Badge>
                           </div>
@@ -1435,23 +1435,23 @@ export default function UnifiedSettingsPage() {
                                 className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                               />
                               <div className="flex-1">
-                                <Label htmlFor="reminder_push_enabled" className="cursor-pointer font-medium">
+                                <Label htmlFor="reminder_push_enabled" className="cursor-pointer font-medium dark:text-gray-50">
                                   Notificación Push
                                 </Label>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                   Enviar notificaciones push en la aplicación
                                 </p>
                               </div>
                             </div>
-                            <Badge variant="secondary" className="absolute top-0 right-0 bg-yellow-100 text-yellow-800">
+                            <Badge variant="secondary" className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
                               Próximamente
                             </Badge>
                           </div>
                         </div>
 
-                        <Alert>
+                        <Alert className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
                           <Bell className="w-4 h-4" />
-                          <AlertDescription>
+                          <AlertDescription className="dark:text-gray-200">
                             <strong>Vista previa de recordatorio:</strong>
                             <br/>
                             Los clientes recibirán un recordatorio{' '}
@@ -1468,7 +1468,7 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}

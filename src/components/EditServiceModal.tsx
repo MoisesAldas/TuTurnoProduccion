@@ -193,7 +193,7 @@ export default function EditServiceModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">Editar Servicio</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-50">Editar Servicio</DialogTitle>
           <DialogDescription className="text-sm">
             Modifica la información de {service.name}
           </DialogDescription>
@@ -202,7 +202,7 @@ export default function EditServiceModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 mt-4">
           {/* Nombre del servicio */}
           <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
+            <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Nombre del Servicio <span className="text-orange-600">*</span>
             </Label>
             <Input
@@ -212,16 +212,16 @@ export default function EditServiceModal({
               className="h-10 focus:border-orange-500 focus:ring-orange-500"
             />
             {errors.name && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700">{errors.name.message}</p>
+              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-red-700 dark:text-red-400">{errors.name.message}</p>
               </div>
             )}
           </div>
 
           {/* Descripción */}
           <div className="space-y-1.5">
-            <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
+            <Label htmlFor="description" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Descripción
             </Label>
             <Textarea
@@ -237,11 +237,11 @@ export default function EditServiceModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Precio */}
             <div className="space-y-1.5">
-              <Label htmlFor="price" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="price" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Precio <span className="text-orange-600">*</span>
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                 <Input
                   id="price"
                   type="number"
@@ -254,16 +254,16 @@ export default function EditServiceModal({
                 />
               </div>
               {errors.price && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.price.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.price.message}</p>
                 </div>
               )}
             </div>
 
             {/* Duración */}
             <div className="space-y-1.5">
-              <Label htmlFor="duration_minutes" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="duration_minutes" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Duración <span className="text-orange-600">*</span>
               </Label>
               <Select
@@ -272,7 +272,7 @@ export default function EditServiceModal({
               >
                 <SelectTrigger className="w-full h-10 focus:border-orange-500 focus:ring-orange-500">
                   <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                    <Clock className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                     <SelectValue placeholder="Selecciona" />
                   </div>
                 </SelectTrigger>
@@ -285,21 +285,21 @@ export default function EditServiceModal({
                 </SelectContent>
               </Select>
               {errors.duration_minutes && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.duration_minutes.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.duration_minutes.message}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Estado del servicio */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 border border-orange-200 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
             <div>
-              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900">
+              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900 dark:text-gray-50">
                 Estado del Servicio
               </Label>
-              <p className="text-xs text-gray-600 mt-0.5">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                 {isActive ? 'Disponible para reservas' : 'Oculto para clientes'}
               </p>
             </div>
@@ -312,9 +312,9 @@ export default function EditServiceModal({
           </div>
 
           {/* Service Info */}
-          <div className="border-t pt-3">
-            <h3 className="text-xs font-semibold text-gray-900 mb-1">Información del Servicio</h3>
-            <div className="text-xs text-gray-600 space-y-0.5">
+          <div className="border-t pt-3 border-gray-100 dark:border-gray-800">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-50 mb-1">Información del Servicio</h3>
+            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
               <p>Creado: {new Date(service.created_at).toLocaleDateString('es-ES')}</p>
               {service.updated_at !== service.created_at && (
                 <p>Última actualización: {new Date(service.updated_at).toLocaleDateString('es-ES')}</p>
@@ -329,7 +329,7 @@ export default function EditServiceModal({
               variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
               disabled={deleting || submitting}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 order-3 sm:order-1"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 order-3 sm:order-1 dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
             >
               <Trash2 className="w-3.5 h-3.5 mr-2" />
               Eliminar

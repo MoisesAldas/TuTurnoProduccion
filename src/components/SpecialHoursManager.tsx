@@ -227,32 +227,39 @@ export default function SpecialHoursManager({
           {specialHours.map((hour) => {
             const date = new Date(hour.special_date + 'T00:00:00')
 
+            const currentReasonColors = reasonColors[hour.reason].split(' ').map(cls => {
+                if (cls.startsWith('bg-')) return cls.replace('bg-', 'dark:bg-') + '/20'
+                if (cls.startsWith('text-')) return cls.replace('text-', 'dark:text-') + '/400'
+                if (cls.startsWith('border-')) return cls.replace('border-', 'dark:border-') + '-700'
+                return cls
+            }).join(' ')
+
             return (
               <div
                 key={hour.id}
-                className="border rounded-lg p-4 flex items-start justify-between hover:bg-gray-50 transition-colors"
+                className="border dark:border-gray-700 rounded-lg p-4 flex items-start justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 dark:text-gray-50">
                       {format(date, 'PPP', { locale: es })}
                     </p>
-                    <Badge className={reasonColors[hour.reason]}>
+                    <Badge className={currentReasonColors}>
                       {reasonLabels[hour.reason]}
                     </Badge>
                     {hour.is_closed && (
-                      <Badge variant="secondary" className="bg-red-100 text-red-700">
+                      <Badge variant="secondary" className="bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400">
                         Cerrado
                       </Badge>
                     )}
                   </div>
                   {!hour.is_closed && hour.open_time && hour.close_time && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Horario: {hour.open_time.substring(0, 5)} - {hour.close_time.substring(0, 5)}
                     </p>
                   )}
                   {hour.description && (
-                    <p className="text-sm text-gray-500 mt-1">{hour.description}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{hour.description}</p>
                   )}
                 </div>
 
@@ -262,7 +269,7 @@ export default function SpecialHoursManager({
                     variant="outline"
                     size="sm"
                     onClick={() => openDialog(hour)}
-                    className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
+                    className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -271,7 +278,7 @@ export default function SpecialHoursManager({
                     variant="outline"
                     size="sm"
                     onClick={() => deleteSpecialHour(hour.id, format(date, 'PPP', { locale: es }))}
-                    className="hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                    className="hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:hover:bg-red-900/50 dark:hover:text-red-400 dark:hover:border-red-700"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -295,13 +302,13 @@ export default function SpecialHoursManager({
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] dark:bg-gray-900">
           <form onSubmit={handleSubmit(onSubmit)}>
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="dark:text-gray-50">
                 {editingId ? 'Editar Horario Especial' : 'Nuevo Horario Especial'}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="dark:text-gray-400">
                 Configura horarios especiales, feriados o días cerrados
               </DialogDescription>
             </DialogHeader>
@@ -309,7 +316,7 @@ export default function SpecialHoursManager({
             <div className="space-y-4 py-4">
               {/* Fecha */}
               <div className="space-y-2">
-                <Label htmlFor="special_date">Fecha *</Label>
+                <Label htmlFor="special_date" className="dark:text-gray-300">Fecha *</Label>
                 <Input
                   id="special_date"
                   type="date"
@@ -317,13 +324,13 @@ export default function SpecialHoursManager({
                   min={new Date().toISOString().split('T')[0]}
                 />
                 {errors.special_date && (
-                  <p className="text-sm text-red-600">{errors.special_date.message}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{errors.special_date.message}</p>
                 )}
               </div>
 
               {/* Tipo de razón */}
               <div className="space-y-2">
-                <Label htmlFor="reason">Tipo *</Label>
+                <Label htmlFor="reason" className="dark:text-gray-300">Tipo *</Label>
                 <Select
                   value={selectedReason}
                   onValueChange={(value) => setValue('reason', value as any)}
@@ -342,7 +349,7 @@ export default function SpecialHoursManager({
 
               {/* Estado: Cerrado o con horario */}
               <div className="space-y-2">
-                <Label>Estado</Label>
+                <Label className="dark:text-gray-300">Estado</Label>
                 <div className="flex gap-3">
                   <button
                     type="button"
@@ -352,12 +359,12 @@ export default function SpecialHoursManager({
                     }}
                     className={`flex-1 px-4 py-3 border-2 rounded-lg transition-all ${
                       isClosedDay
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:border-orange-500 dark:bg-orange-900/20 dark:text-orange-400'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:bg-gray-800'
                     }`}
                   >
                     <X className="w-4 h-4 mx-auto mb-1" />
-                    <p className="text-sm font-medium">Cerrado</p>
+                    <p className="text-sm font-medium dark:text-gray-50">Cerrado</p>
                   </button>
                   <button
                     type="button"
@@ -367,12 +374,12 @@ export default function SpecialHoursManager({
                     }}
                     className={`flex-1 px-4 py-3 border-2 rounded-lg transition-all ${
                       !isClosedDay
-                        ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:border-orange-500 dark:bg-orange-900/20 dark:text-orange-400'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:bg-gray-800'
                     }`}
                   >
                     <Calendar className="w-4 h-4 mx-auto mb-1" />
-                    <p className="text-sm font-medium">Horario Especial</p>
+                    <p className="text-sm font-medium dark:text-gray-50">Horario Especial</p>
                   </button>
                 </div>
               </div>
@@ -381,25 +388,25 @@ export default function SpecialHoursManager({
               {!isClosedDay && (
                 <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="space-y-2">
-                    <Label htmlFor="open_time">Hora de apertura *</Label>
+                    <Label htmlFor="open_time" className="dark:text-gray-300">Hora de apertura *</Label>
                     <Input
                       id="open_time"
                       type="time"
                       {...register('open_time')}
                     />
                     {errors.open_time && (
-                      <p className="text-sm text-red-600">{errors.open_time.message}</p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{errors.open_time.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="close_time">Hora de cierre *</Label>
+                    <Label htmlFor="close_time" className="dark:text-gray-300">Hora de cierre *</Label>
                     <Input
                       id="close_time"
                       type="time"
                       {...register('close_time')}
                     />
                     {errors.close_time && (
-                      <p className="text-sm text-red-600">{errors.close_time.message}</p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{errors.close_time.message}</p>
                     )}
                   </div>
                 </div>
@@ -407,7 +414,7 @@ export default function SpecialHoursManager({
 
               {/* Descripción */}
               <div className="space-y-2">
-                <Label htmlFor="description">Descripción (opcional)</Label>
+                <Label htmlFor="description" className="dark:text-gray-300">Descripción (opcional)</Label>
                 <Textarea
                   id="description"
                   {...register('description')}
@@ -423,6 +430,7 @@ export default function SpecialHoursManager({
                 variant="outline"
                 onClick={closeDialog}
                 disabled={submitting}
+                className="hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 Cancelar
               </Button>

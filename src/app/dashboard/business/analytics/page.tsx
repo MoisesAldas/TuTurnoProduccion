@@ -360,7 +360,7 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Cargando analytics...</p>
+          <p className="text-gray-600 dark:text-gray-400">Cargando analytics...</p>
         </div>
       </div>
     )
@@ -375,8 +375,8 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-in slide-in-from-top-4 duration-700">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Analytics Dashboard</h1>
-          <p className="text-sm text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 tracking-tight">Analytics Dashboard</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {format(dateRange.from, 'dd MMM', { locale: es })} - {format(dateRange.to, 'dd MMM yyyy', { locale: es })}
           </p>
         </div>
@@ -386,7 +386,7 @@ export default function AnalyticsPage() {
             variant="outline"
             size="sm"
             onClick={() => setQuickRange(7)}
-            className="transition-all duration-300 hover:scale-105 hover:shadow-md"
+            className="transition-all duration-300 hover:scale-105 hover:shadow-md dark:hover:bg-gray-800"
           >
             7 días
           </Button>
@@ -394,7 +394,7 @@ export default function AnalyticsPage() {
             variant="outline"
             size="sm"
             onClick={() => setQuickRange(30)}
-            className="transition-all duration-300 hover:scale-105 hover:shadow-md"
+            className="transition-all duration-300 hover:scale-105 hover:shadow-md dark:hover:bg-gray-800"
           >
             30 días
           </Button>
@@ -407,14 +407,14 @@ export default function AnalyticsPage() {
                 to: endOfMonth(new Date()),
               })
             }
-            className="transition-all duration-300 hover:scale-105 hover:shadow-md"
+            className="transition-all duration-300 hover:scale-105 hover:shadow-md dark:hover:bg-gray-800"
           >
             Este mes
           </Button>
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="transition-all duration-300 hover:scale-105 hover:shadow-md">
+              <Button variant="outline" size="sm" className="transition-all duration-300 hover:scale-105 hover:shadow-md dark:hover:bg-gray-800">
                 <CalendarIcon className="w-4 h-4 mr-2" />
                 Personalizado
               </Button>
@@ -447,18 +447,18 @@ export default function AnalyticsPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Revenue Card */}
-        <Card className="relative overflow-hidden border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-100 group">
+        <Card className="relative overflow-hidden border dark:border-gray-700 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-100 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150" />
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 dark:from-green-700 dark:to-emerald-800 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
                 <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               {salesComparison && (
                 <Badge className={`transition-all duration-300 group-hover:scale-110 ${
                   salesComparison.revenue_change_percentage >= 0
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                 }`}>
                   {salesComparison.revenue_change_percentage >= 0 ? (
                     <ArrowUpRight className="w-3 h-3 mr-1" />
@@ -469,14 +469,14 @@ export default function AnalyticsPage() {
                 </Badge>
               )}
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 transition-all duration-300 group-hover:text-green-600">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 mb-1 transition-all duration-300 group-hover:text-green-600">
               {formatCurrency(salesReport?.total_revenue || 0)}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {salesReport?.total_paid_invoices || 0} facturas pagadas
             </p>
             {salesComparison && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 vs {formatCurrency(salesComparison.previous_revenue)} período anterior
               </p>
             )}
@@ -484,18 +484,18 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Appointments Card */}
-        <Card className="relative overflow-hidden border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200 group">
+        <Card className="relative overflow-hidden border dark:border-gray-700 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150" />
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-700 dark:to-cyan-800 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
                 <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               {salesComparison && (
                 <Badge className={`transition-all duration-300 group-hover:scale-110 ${
                   salesComparison.appointments_change_percentage >= 0
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'bg-red-100 text-red-700'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                 }`}>
                   {salesComparison.appointments_change_percentage >= 0 ? (
                     <ArrowUpRight className="w-3 h-3 mr-1" />
@@ -506,17 +506,17 @@ export default function AnalyticsPage() {
                 </Badge>
               )}
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 transition-all duration-300 group-hover:text-blue-600">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 mb-1 transition-all duration-300 group-hover:text-blue-600">
               {salesReport?.total_appointments || 0}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {salesReport?.completed_appointments || 0} completadas · {salesReport?.cancelled_appointments || 0} canceladas
             </p>
             <div className="flex items-center gap-2 mt-2">
               <div className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs ${
-                cancellationRate < 10 ? 'bg-green-100 text-green-700' :
-                cancellationRate < 20 ? 'bg-yellow-100 text-yellow-700' :
-                'bg-red-100 text-red-700'
+                cancellationRate < 10 ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                cancellationRate < 20 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
               }`}>
                 {cancellationRate < 20 ? (
                   <TrendingUp className="w-3 h-3" />
@@ -530,18 +530,18 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Average Ticket Card */}
-        <Card className="relative overflow-hidden border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-300 group">
+        <Card className="relative overflow-hidden border dark:border-gray-700 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-300 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-amber-500/10 rounded-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150" />
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-600 to-amber-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-600 to-amber-600 dark:from-orange-700 dark:to-amber-800 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
                 <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               {salesComparison && (
                 <Badge className={`transition-all duration-300 group-hover:scale-110 ${
                   salesComparison.avg_ticket_change_percentage >= 0
-                    ? 'bg-orange-100 text-orange-700'
-                    : 'bg-red-100 text-red-700'
+                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                 }`}>
                   {salesComparison.avg_ticket_change_percentage >= 0 ? (
                     <ArrowUpRight className="w-3 h-3 mr-1" />
@@ -552,14 +552,14 @@ export default function AnalyticsPage() {
                 </Badge>
               )}
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 transition-all duration-300 group-hover:text-orange-600">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 mb-1 transition-all duration-300 group-hover:text-orange-600">
               {formatCurrency(salesReport?.average_ticket || 0)}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Ticket promedio por cita
             </p>
             {salesComparison && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 vs {formatCurrency(salesComparison.previous_avg_ticket)} período anterior
               </p>
             )}
@@ -567,21 +567,21 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Clients Card */}
-        <Card className="relative overflow-hidden border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-400 group">
+        <Card className="relative overflow-hidden border dark:border-gray-700 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-400 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-full -mr-16 -mt-16 transition-all duration-500 group-hover:scale-150" />
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 dark:from-purple-700 dark:to-pink-800 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 transition-all duration-300 group-hover:scale-110">
+              <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 transition-all duration-300 group-hover:scale-110 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/30">
                 Únicos
               </Badge>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 transition-all duration-300 group-hover:text-purple-600">
+            <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 mb-1 transition-all duration-300 group-hover:text-purple-600">
               {clientMetrics?.total_unique_clients || 0}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {clientMetrics?.new_clients || 0} nuevos este período
             </p>
           </CardContent>
@@ -591,14 +591,14 @@ export default function AnalyticsPage() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Revenue Trend */}
-        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-left-8 fade-in duration-700 delay-500 group">
+        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-left-8 fade-in duration-700 delay-500 group dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600">Tendencia de Ingresos</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Evolución diaria en el período</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600 dark:text-gray-50">Tendencia de Ingresos</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Evolución diaria en el período</CardDescription>
             </div>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110">
-              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-300 hover:scale-110">
+              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500" />
             </button>
           </CardHeader>
           <CardContent className="px-2 sm:px-6 pb-6">
@@ -612,9 +612,9 @@ export default function AnalyticsPage() {
                   }))}
                   margin={{ top: 5, right: 5, left: -20, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="fecha" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" className="dark:stroke-gray-700" />
+                    <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="#9ca3af" className="dark:fill-gray-400 dark:stroke-gray-400" />
+                    <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} stroke="#9ca3af" className="dark:fill-gray-400 dark:stroke-gray-400" />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'white',
@@ -623,12 +623,13 @@ export default function AnalyticsPage() {
                         fontSize: '13px',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }}
+                      wrapperClassName="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-50"
                       formatter={(value: any, name: string) => {
                         if (name === 'Ingresos') return formatCurrency(Number(value))
                         return value
                       }}
                     />
-                    <Legend wrapperStyle={{ fontSize: '13px' }} />
+                    <Legend wrapperStyle={{ fontSize: '13px', color: '#6b7280' }} className="dark:text-gray-400" />
                     <Line
                       type="monotone"
                       dataKey="Ingresos"
@@ -654,22 +655,22 @@ export default function AnalyticsPage() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-400">No hay datos de ingresos</p>
+              <div className="h-[300px] flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-sm text-gray-400 dark:text-gray-500">No hay datos de ingresos</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Payment Methods */}
-        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-right-8 fade-in duration-700 delay-500 group">
+        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-right-8 fade-in duration-700 delay-500 group dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600">Métodos de Pago</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Distribución de ingresos</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600 dark:text-gray-50">Métodos de Pago</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Distribución de ingresos</CardDescription>
             </div>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110">
-              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-300 hover:scale-110">
+              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500" />
             </button>
           </CardHeader>
           <CardContent className="px-2 sm:px-6 pb-6">
@@ -710,6 +711,7 @@ export default function AnalyticsPage() {
                         fontSize: '13px',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }}
+                      wrapperClassName="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-50"
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -718,31 +720,31 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-center gap-4 sm:gap-6 mt-4">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-orange-600"></div>
-                    <span className="text-xs sm:text-sm text-gray-700 font-medium">Efectivo</span>
+                    <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">Efectivo</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                    <span className="text-xs sm:text-sm text-gray-700 font-medium">Transferencia</span>
+                    <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">Transferencia</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="h-[300px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-400">No hay datos de pagos</p>
+              <div className="h-[300px] flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-sm text-gray-400 dark:text-gray-500">No hay datos de pagos</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Top Employees */}
-        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-left-8 fade-in duration-700 delay-600 group">
+        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-left-8 fade-in duration-700 delay-600 group dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600">Top Empleados</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Ranking por ingresos generados</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600 dark:text-gray-50">Top Empleados</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Ranking por ingresos generados</CardDescription>
             </div>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110">
-              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-300 hover:scale-110">
+              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500" />
             </button>
           </CardHeader>
           <CardContent>
@@ -751,55 +753,58 @@ export default function AnalyticsPage() {
                 {employeePerformance.slice(0, 5).map((emp, index) => (
                   <div
                     key={emp.employee_id}
-                    className="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-all duration-300 hover:scale-105 animate-in slide-in-from-left-4 fade-in duration-500"
+                    className="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 hover:scale-105 animate-in slide-in-from-left-4 fade-in duration-500"
                     style={{ animationDelay: `${800 + index * 100}ms` }}
                   >
                     <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                        index === 0 ? 'bg-yellow-100 hover:bg-yellow-200' : index === 1 ? 'bg-gray-100 hover:bg-gray-200' : index === 2 ? 'bg-orange-100 hover:bg-orange-200' : 'bg-gray-50 hover:bg-gray-100'
+                        index === 0 ? 'bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30' : 
+                        index === 1 ? 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600' : 
+                        index === 2 ? 'bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/20 dark:hover:bg-orange-900/30' : 
+                        'bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
                       }`}>
                         {index === 0 ? (
                           <Trophy className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600" />
                         ) : (
-                          <span className="text-xs font-bold text-gray-600">#{index + 1}</span>
+                          <span className="text-xs font-bold text-gray-600 dark:text-gray-400">#{index + 1}</span>
                         )}
                       </div>
                       <Avatar className="w-8 h-8 sm:w-10 sm:h-10 transition-all duration-300 hover:scale-110">
-                        <AvatarFallback className="bg-orange-100 text-orange-700 text-xs sm:text-sm font-medium">
+                        <AvatarFallback className="bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 text-xs sm:text-sm font-medium">
                           {getInitials(emp.employee_name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-xs sm:text-sm text-gray-900 truncate">{emp.employee_name}</p>
-                        <p className="text-[10px] sm:text-xs text-gray-500 truncate">
+                        <p className="font-medium text-xs sm:text-sm text-gray-900 dark:text-gray-50 truncate">{emp.employee_name}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
                           {emp.completed_appointments} citas · {emp.completion_rate.toFixed(1)}% completadas
                         </p>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="font-semibold text-xs sm:text-sm text-gray-900">{formatCurrency(emp.total_revenue)}</p>
-                      <p className="text-[10px] sm:text-xs text-gray-500">{formatCurrency(emp.average_ticket)} prom.</p>
+                      <p className="font-semibold text-xs sm:text-sm text-gray-900 dark:text-gray-50">{formatCurrency(emp.total_revenue)}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{formatCurrency(emp.average_ticket)} prom.</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="h-[200px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-400">No hay datos de empleados</p>
+              <div className="h-[200px] flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-sm text-gray-400 dark:text-gray-500">No hay datos de empleados</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Top Services */}
-        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-right-8 fade-in duration-700 delay-600 group">
+        <Card className="hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 animate-in slide-in-from-right-8 fade-in duration-700 delay-600 group dark:border-gray-700">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600">Servicios Estrella</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">Más vendidos del período</CardDescription>
+              <CardTitle className="text-base sm:text-lg font-semibold transition-colors duration-300 group-hover:text-orange-600 dark:text-gray-50">Servicios Estrella</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Más vendidos del período</CardDescription>
             </div>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 hover:scale-110">
-              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-300 hover:scale-110">
+              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500" />
             </button>
           </CardHeader>
           <CardContent>
@@ -808,35 +813,35 @@ export default function AnalyticsPage() {
                 {topServices.map((service, index) => (
                   <div
                     key={service.service_id}
-                    className="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-all duration-300 hover:scale-105 animate-in slide-in-from-right-4 fade-in duration-500"
+                    className="flex items-center gap-2 sm:gap-4 p-2 sm:p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-300 hover:scale-105 animate-in slide-in-from-right-4 fade-in duration-500"
                     style={{ animationDelay: `${800 + index * 100}ms` }}
                   >
                     <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                       <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                        index === 0 ? 'bg-orange-100 hover:bg-orange-200' : 'bg-gray-50 hover:bg-gray-100'
+                        index === 0 ? 'bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/20 dark:hover:bg-orange-900/30' : 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700'
                       }`}>
                         {index === 0 ? (
                           <Star className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600" />
                         ) : (
-                          <span className="text-xs font-bold text-gray-600">#{index + 1}</span>
+                          <span className="text-xs font-bold text-gray-600 dark:text-gray-400">#{index + 1}</span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-xs sm:text-sm text-gray-900 truncate">{service.service_name}</p>
-                        <p className="text-[10px] sm:text-xs text-gray-500 truncate">
+                        <p className="font-medium text-xs sm:text-sm text-gray-900 dark:text-gray-50 truncate">{service.service_name}</p>
+                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
                           {service.times_sold} veces · {formatCurrency(service.average_price)} promedio
                         </p>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="font-semibold text-xs sm:text-sm text-gray-900">{formatCurrency(service.total_revenue)}</p>
+                      <p className="font-semibold text-xs sm:text-sm text-gray-900 dark:text-gray-50">{formatCurrency(service.total_revenue)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="h-[200px] flex items-center justify-center bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-400">No hay datos de servicios</p>
+              <div className="h-[200px] flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <p className="text-sm text-gray-400 dark:text-gray-500">No hay datos de servicios</p>
               </div>
             )}
           </CardContent>

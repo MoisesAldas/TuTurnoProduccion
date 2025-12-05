@@ -623,8 +623,59 @@ export default function ListarPage() {
     })
   }
 
+  // Memoize statistics (must be before early returns)
+  const stats = useMemo(() => {
+    const total = totalCount
+    const completed = rows.filter(r => r.status === 'completed').length
+    const pending = rows.filter(r => ['pending', 'confirmed', 'in_progress'].includes(r.status)).length
+    const totalRevenue = rows
+      .filter(r => r.status === 'completed')
+      .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
+
+    return { total, completed, pending, totalRevenue }
+  }, [rows, totalCount])
+
+  // Early return for loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const statusOptions = ['pending','confirmed','in_progress','completed','cancelled','no_show']
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pendiente' },
+      confirmed: { className: 'bg-green-100 text-green-800 border-green-200', label: 'Confirmada' },
+      in_progress: { className: 'bg-blue-100 text-blue-800 border-blue-200', label: 'En Progreso' },
+      completed: { className: 'bg-gray-100 text-gray-800 border-gray-200', label: 'Completada' },
+      cancelled: { className: 'bg-red-100 text-red-800 border-red-200', label: 'Cancelada' },
+      no_show: { className: 'bg-orange-100 text-orange-800 border-orange-200', label: 'No Asistió' },
+    }
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
+    return <Badge className={`${config.className} border`}>{config.label}</Badge>
+  }
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(price)
+  }
+
+  const formatDate = (date: string) => {
+    return new Date(date + 'T00:00:00').toLocaleDateString('es-EC', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    })
+  }
+
   // ============================================
-  // CALLBACKS FOR TABLE ACTIONS (BEFORE EARLY RETURNS!)
+  // CALLBACKS FOR TABLE ACTIONS
   // ============================================
 
   const handleView = useCallback(async (id: string) => {
@@ -786,58 +837,6 @@ export default function ListarPage() {
 
   // Memoize columns with callbacks
   const columns = useMemo(() => createColumns(callbacks), [callbacks])
-
-  // Memoize statistics (must be before early returns)
-  const stats = useMemo(() => {
-    const total = totalCount
-    const completed = rows.filter(r => r.status === 'completed').length
-    const pending = rows.filter(r => ['pending', 'confirmed', 'in_progress'].includes(r.status)).length
-    const totalRevenue = rows
-      .filter(r => r.status === 'completed')
-      .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
-
-    return { total, completed, pending, totalRevenue }
-  }, [rows, totalCount])
-
-  // Early return for loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const statusOptions = ['pending','confirmed','in_progress','completed','cancelled','no_show']
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pendiente' },
-      confirmed: { className: 'bg-green-100 text-green-800 border-green-200', label: 'Confirmada' },
-      in_progress: { className: 'bg-blue-100 text-blue-800 border-blue-200', label: 'En Progreso' },
-      completed: { className: 'bg-gray-100 text-gray-800 border-gray-200', label: 'Completada' },
-      cancelled: { className: 'bg-red-100 text-red-800 border-red-200', label: 'Cancelada' },
-      no_show: { className: 'bg-orange-100 text-orange-800 border-orange-200', label: 'No Asistió' },
-    }
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
-    return <Badge className={`${config.className} border`}>{config.label}</Badge>
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(price)
-  }
-
-  const formatDate = (date: string) => {
-    return new Date(date + 'T00:00:00').toLocaleDateString('es-EC', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short'
-    })
-  }
-
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -1271,6 +1270,257 @@ export default function ListarPage() {
                 />
               </div>
 
+              {/* OLD HTML TABLE - REMOVED
+              <div className="hidden lg:block overflow-hidden rounded-lg border border-gray-200">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hora</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empleado</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Servicios</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {rows.map((row, index) => (
+                        <tr
+                          key={row.id}
+                          className="hover:bg-gray-50 transition-colors group"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{formatDate(row.appointment_date)}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{row.start_time?.substring(0,5)}</div>
+                            <div className="text-xs text-gray-500">{row.end_time?.substring(0,5)}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{row.client_name}</div>
+                                <div className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                                  {row.client_phone}
+                                  {row.is_walk_in && (
+                                    <Badge className="bg-orange-50 text-orange-700 border-orange-200 border text-[10px] px-1.5 py-0">Walk-in</Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{row.employee_name}</div>
+                          </td>
+                          <td className="px-6 py-4 max-w-xs">
+                            <div className="text-sm text-gray-900 truncate" title={(row.service_names || []).join(', ')}>
+                              {(row.service_names || []).join(', ')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(row.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {formatPrice(Number(row.total_price || 0))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                                  Acciones
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+
+                                {/* Ver detalles */}
+                                <DropdownMenuItem
+                                  onClick={() => handleRowClick(row.id)}
+                                  className="cursor-pointer"
+                                >
+                                  <Eye className="w-4 h-4 mr-2 text-blue-600" />
+                                  <span>Ver detalles</span>
+                                </DropdownMenuItem>
+
+                                {/* Editar */}
+                                {row.status !== 'completed' && row.status !== 'cancelled' && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      const apt = await fetchFullAppointment(row.id)
+                                      if (apt) setEditingAppointment(apt)
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Edit className="w-4 h-4 mr-2 text-orange-600" />
+                                    <span>Editar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                <DropdownMenuSeparator />
+
+                                {/* Finalizar y Cobrar */}
+                                {['confirmed', 'in_progress'].includes(row.status) && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      const apt = await fetchFullAppointment(row.id)
+                                      if (apt) {
+                                        setSelectedAppointment(apt)
+                                        // Trigger checkout immediately
+                                        setTimeout(() => {
+                                          const checkoutBtn = document.querySelector('[data-checkout-trigger]') as HTMLButtonElement
+                                          checkoutBtn?.click()
+                                        }, 100)
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <CreditCard className="w-4 h-4 mr-2 text-green-600" />
+                                    <span>Finalizar y Cobrar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* Confirmar */}
+                                {row.status === 'pending' && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        await supabase
+                                          .from('appointments')
+                                          .update({ status: 'confirmed' })
+                                          .eq('id', row.id)
+
+                                        toast({ title: 'Cita confirmada', description: 'El estado se actualizó correctamente' })
+                                        fetchData()
+                                      } catch (error) {
+                                        toast({ title: 'Error', description: 'No se pudo confirmar la cita', variant: 'destructive' })
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Check className="w-4 h-4 mr-2 text-green-600" />
+                                    <span>Confirmar</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* En Progreso */}
+                                {row.status === 'confirmed' && (
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        await supabase
+                                          .from('appointments')
+                                          .update({ status: 'in_progress' })
+                                          .eq('id', row.id)
+                                        toast({ title: 'Estado actualizado', description: 'La cita está en progreso' })
+                                        fetchData()
+                                      } catch (error) {
+                                        toast({ title: 'Error', description: 'No se pudo actualizar el estado', variant: 'destructive' })
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                                    <span>En Progreso</span>
+                                  </DropdownMenuItem>
+                                )}
+
+                                {/* No Asistió */}
+                                {['confirmed', 'pending'].includes(row.status) && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={async () => {
+                                        try {
+                                          await supabase
+                                            .from('appointments')
+                                            .update({ status: 'no_show' })
+                                            .eq('id', row.id)
+
+                                          // Send no-show email
+                                          try {
+                                            await fetch('/api/send-no-show-notification', {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ appointmentId: row.id })
+                                            })
+                                          } catch (e) {
+                                            console.warn('Failed to send no-show email')
+                                          }
+
+                                          toast({ title: 'Marcado como no asistió', description: 'El cliente no se presentó' })
+                                          fetchData()
+                                        } catch (error) {
+                                          toast({ title: 'Error', description: 'No se pudo actualizar el estado', variant: 'destructive' })
+                                        }
+                                      }}
+                                      className="cursor-pointer"
+                                    >
+                                      <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
+                                      <span>No Asistió</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+
+                                {/* Cancelar */}
+                                {row.status !== 'cancelled' && row.status !== 'completed' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={async () => {
+                                        try {
+                                          await supabase
+                                            .from('appointments')
+                                            .update({ status: 'cancelled' })
+                                            .eq('id', row.id)
+
+                                          // Send cancellation email
+                                          try {
+                                            await fetch('/api/send-cancellation-notification', {
+                                              method: 'POST',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({
+                                                appointmentId: row.id,
+                                                cancellationReason: 'Cancelada por el negocio'
+                                              })
+                                            })
+                                          } catch (e) {
+                                            console.warn('Failed to send cancellation email')
+                                          }
+
+                                          toast({ title: 'Cita cancelada', description: 'La cita fue cancelada correctamente' })
+                                          fetchData()
+                                        } catch (error) {
+                                          toast({ title: 'Error', description: 'No se pudo cancelar la cita', variant: 'destructive' })
+                                        }
+                                      }}
+                                      className="cursor-pointer text-red-600"
+                                    >
+                                      <XCircle className="w-4 h-4 mr-2" />
+                                      <span>Cancelar cita</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
               {/* Mobile Cards */}
               <div className="lg:hidden space-y-3 p-3">
@@ -1523,16 +1773,16 @@ export default function ListarPage() {
 
       {/* Paginación */}
       {totalCount > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Mostrando <span className="font-semibold text-gray-900 dark:text-gray-50">{(page-1)*limit+1}</span> a{' '}
-            <span className="font-semibold text-gray-900 dark:text-gray-50">{Math.min(page*limit, totalCount)}</span> de{' '}
-            <span className="font-semibold text-gray-900 dark:text-gray-50">{totalCount}</span> resultados
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="text-sm text-gray-600">
+            Mostrando <span className="font-semibold text-gray-900">{(page-1)*limit+1}</span> a{' '}
+            <span className="font-semibold text-gray-900">{Math.min(page*limit, totalCount)}</span> de{' '}
+            <span className="font-semibold text-gray-900">{totalCount}</span> resultados
           </div>
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Por página:</span>
+              <span className="text-sm text-gray-600">Por página:</span>
               <Select value={String(limit)} onValueChange={(v) => { setLimit(Number(v)); setPage(1) }}>
                 <SelectTrigger className="w-[80px]">
                   <SelectValue />
@@ -1551,12 +1801,12 @@ export default function ListarPage() {
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
+                className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
 
-              <div className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-50">
+              <div className="px-4 py-1.5 text-sm font-medium text-gray-700">
                 {page} / {totalPages}
               </div>
 
@@ -1565,7 +1815,7 @@ export default function ListarPage() {
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
+                className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>

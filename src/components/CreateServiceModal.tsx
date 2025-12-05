@@ -138,7 +138,7 @@ export default function CreateServiceModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">Nuevo Servicio</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-50">Nuevo Servicio</DialogTitle>
           <DialogDescription className="text-sm">
             Crea un nuevo servicio para tu negocio
           </DialogDescription>
@@ -147,7 +147,7 @@ export default function CreateServiceModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 mt-4">
           {/* Nombre del servicio */}
           <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
+            <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Nombre del Servicio <span className="text-orange-600">*</span>
             </Label>
             <Input
@@ -157,16 +157,16 @@ export default function CreateServiceModal({
               className="h-10 focus:border-orange-500 focus:ring-orange-500"
             />
             {errors.name && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700">{errors.name.message}</p>
+              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-red-700 dark:text-red-400">{errors.name.message}</p>
               </div>
             )}
           </div>
 
           {/* Descripción */}
           <div className="space-y-1.5">
-            <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
+            <Label htmlFor="description" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Descripción
             </Label>
             <Textarea
@@ -182,11 +182,11 @@ export default function CreateServiceModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Precio */}
             <div className="space-y-1.5">
-              <Label htmlFor="price" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="price" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Precio <span className="text-orange-600">*</span>
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                 <Input
                   id="price"
                   type="number"
@@ -199,16 +199,16 @@ export default function CreateServiceModal({
                 />
               </div>
               {errors.price && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.price.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.price.message}</p>
                 </div>
               )}
             </div>
 
             {/* Duración */}
             <div className="space-y-1.5">
-              <Label htmlFor="duration_minutes" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="duration_minutes" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Duración <span className="text-orange-600">*</span>
               </Label>
               <Select
@@ -217,7 +217,7 @@ export default function CreateServiceModal({
               >
                 <SelectTrigger className="w-full h-10 focus:border-orange-500 focus:ring-orange-500">
                   <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                    <Clock className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                     <SelectValue placeholder="Selecciona" />
                   </div>
                 </SelectTrigger>
@@ -230,21 +230,21 @@ export default function CreateServiceModal({
                 </SelectContent>
               </Select>
               {errors.duration_minutes && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.duration_minutes.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.duration_minutes.message}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Estado del servicio */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 border border-orange-200 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
             <div>
-              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900">
+              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900 dark:text-gray-50">
                 Estado del Servicio
               </Label>
-              <p className="text-xs text-gray-600 mt-0.5">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                 {isActive ? 'Disponible para reservas' : 'Oculto para clientes'}
               </p>
             </div>

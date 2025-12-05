@@ -40,6 +40,7 @@
 
 ### 4. **shadcn/ui Siempre**
 - ✅ Usar componentes de shadcn/ui
+- ✅Solo usar componentes de shadcn/ui solo esos con dark mode
 - ❌ Evitar `alert()`, `confirm()` nativos
 - ❌ Evitar estilos inline o custom sin justificación
 

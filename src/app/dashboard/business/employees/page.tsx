@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X, CheckCircle2, Phone, Mail, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation'
 import type { Business } from '@/types/database'
 import CreateEmployeeModal from '@/components/CreateEmployeeModal'
 import EditEmployeeModal from '@/components/EditEmployeeModal'
+import { StatsCard } from '@/components/StatsCard'
 
 // Tipo para empleados
 interface Employee {
@@ -157,28 +158,28 @@ export default function EmployeesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-6">
             <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando empleados</h3>
-          <p className="text-sm text-gray-600">Preparando la información...</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando empleados</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Preparando la información...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Sticky Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Empleados</h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">Empleados</h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Gestiona el equipo de tu negocio
               </p>
             </div>
@@ -206,82 +207,55 @@ export default function EmployeesPage() {
 
       {/* Tarjetas de estadísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Empleados</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Total Empleados"
+          value={stats.total}
+          description="Todos los empleados"
+          icon={Users}
+          variant="orange"
+        />
 
-        <Card className="border-l-4 border-l-emerald-500 hover:shadow-md transition-shadow">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Activos</p>
-                <p className="text-3xl font-bold text-emerald-600">{stats.active}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {stats.total > 0 ? `${Math.round((stats.active / stats.total) * 100)}% activos` : ''}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-green-100 rounded-xl flex items-center justify-center">
-                <User className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Activos"
+          value={stats.active}
+          description={stats.total > 0 ? `${Math.round((stats.active / stats.total) * 100)}% activos` : 'Sin empleados'}
+          icon={CheckCircle2}
+          variant="green"
+        />
 
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Inactivos</p>
-                <p className="text-3xl font-bold text-gray-500">{stats.inactive}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-slate-100 rounded-xl flex items-center justify-center">
-                <User className="w-6 h-6 text-gray-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Inactivos"
+          value={stats.inactive}
+          description="Empleados inactivos"
+          icon={User}
+          variant="gray"
+        />
 
-        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Con Posición</p>
-                <p className="text-3xl font-bold text-purple-600">{stats.withPosition}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-violet-100 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatsCard
+          title="Con Posición"
+          value={stats.withPosition}
+          description="Empleados con posición definida"
+          icon={BarChart3}
+          variant="purple"
+        />
       </div>
 
       {/* Barra de búsqueda */}
       <div className="relative">
         <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-          <Search className="w-5 h-5 text-gray-400" />
+          <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
         </div>
         <Input
           type="text"
           placeholder="Buscar empleados por nombre, email o posición..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 h-12 bg-white border-gray-300 focus:border-orange-500 focus:ring-orange-500 shadow-sm"
+          className="pl-12 h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:border-orange-500 focus:ring-orange-500 shadow-sm"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
             <X className="w-5 h-5" />
           </button>
@@ -290,15 +264,15 @@ export default function EmployeesPage() {
 
       {/* Lista de empleados */}
       {filteredEmployees.length === 0 ? (
-        <Card className="border-2 border-dashed border-gray-200">
+        <Card className="border-2 border-dashed border-gray-200 dark:border-gray-800">
           <CardContent className="text-center py-16">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Users className="w-10 h-10 text-orange-600" />
+            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Users className="w-10 h-10 text-orange-600 dark:text-orange-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">
               {employees.length === 0 ? 'No tienes empleados registrados' : 'No se encontraron empleados'}
             </h3>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
               {employees.length === 0
                 ? 'Los empleados son la base de tu negocio. Comienza agregando tu primer empleado para que puedan gestionar las citas y servicios.'
                 : `No encontramos empleados que coincidan con "${searchQuery}". Intenta con una búsqueda diferente.`
@@ -321,14 +295,14 @@ export default function EmployeesPage() {
             <Card
               key={employee.id}
               className={`
-                hover:shadow-lg transition-all duration-200 group
-                ${!employee.is_active ? 'bg-gray-50 opacity-75' : ''}
+                hover:shadow-lg transition-all duration-200 group flex flex-col
+                ${!employee.is_active ? 'bg-gray-50 dark:bg-gray-900/50 opacity-75' : ''}
               `}
             >
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center overflow-hidden border-2 border-orange-200 flex-shrink-0">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center overflow-hidden border-2 border-orange-200 dark:border-orange-800 flex-shrink-0">
                       {employee.avatar_url ? (
                         <img
                           src={employee.avatar_url}
@@ -336,56 +310,53 @@ export default function EmployeesPage() {
                           className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
-                        <User className="w-6 h-6 text-orange-600" />
+                        <User className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-1">
+                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-50 line-clamp-1">
                         {employee.first_name} {employee.last_name}
                       </CardTitle>
                       {employee.position && (
-                        <p className="text-sm text-orange-600 font-medium">{employee.position}</p>
+                        <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">{employee.position}</p>
                       )}
                     </div>
                   </div>
                   <Badge
                     variant={employee.is_active ? "default" : "secondary"}
                     className={employee.is_active
-                      ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 flex-shrink-0'
-                      : 'bg-gray-200 text-gray-600 border border-gray-300 flex-shrink-0'
+                      ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800 flex-shrink-0'
+                      : 'bg-gray-200 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 flex-shrink-0'
                     }
                   >
                     {employee.is_active ? 'Activo' : 'Inactivo'}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0 space-y-4">
-                {/* Información de contacto */}
-                {(employee.email || employee.phone) && (
-                  <div className="space-y-2">
-                    {employee.email && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Email</span>
-                        <span className="font-medium text-gray-900 truncate ml-2">{employee.email}</span>
-                      </div>
-                    )}
-                    {employee.phone && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Teléfono</span>
-                        <span className="font-medium text-gray-900">{employee.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {employee.bio && (
-                  <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                    {employee.bio}
-                  </p>
-                )}
+              <CardContent className="pt-4 flex-1 flex flex-col">
+                <div className="space-y-3">
+                  {employee.phone && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg min-w-0">
+                      <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{employee.phone}</span>
+                    </div>
+                  )}
+                  {employee.email && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg min-w-0">
+                      <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate" title={employee.email}>{employee.email}</span>
+                    </div>
+                  )}
+                  {employee.bio && (
+                    <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/20 rounded-lg min-w-0">
+                      <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{employee.bio}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2 pt-4 border-t border-gray-100">
+                <div className="flex gap-2 pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
                   <Button
                     variant="outline"
                     size="sm"
@@ -393,7 +364,7 @@ export default function EmployeesPage() {
                       setSelectedEmployee(employee)
                       setEditModalOpen(true)
                     }}
-                    className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md"
+                    className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800 shadow-sm hover:shadow-md"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Editar
@@ -405,7 +376,7 @@ export default function EmployeesPage() {
                       setEmployeeToDelete(employee.id)
                       setDeleteDialogOpen(true)
                     }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

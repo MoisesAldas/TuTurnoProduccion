@@ -353,7 +353,7 @@ export default function EditEmployeeModal({
       <DialogContent className="max-w-[95vw] sm:max-w-2xl p-0 gap-0">
         <div className="max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent hover:scrollbar-thumb-orange-300 px-4 sm:px-6 py-4 sm:py-6">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900">Editar Empleado</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-50">Editar Empleado</DialogTitle>
             <DialogDescription className="text-sm">
               Modifica la información de {employee.first_name} {employee.last_name}
             </DialogDescription>
@@ -361,14 +361,14 @@ export default function EditEmployeeModal({
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 mt-4">
           {/* Avatar Upload */}
-          <div className="flex flex-col items-center space-y-3 p-4 sm:p-6 border-2 border-dashed border-orange-200 bg-orange-50/50 rounded-lg">
+          <div className="flex flex-col items-center space-y-3 p-4 sm:p-6 border-2 border-dashed border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg">
             <div className="relative">
               {avatarPreview ? (
                 <div className="relative group">
                   <img
                     src={avatarPreview}
                     alt="Preview"
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-orange-200"
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg ring-2 ring-orange-200 dark:ring-orange-800"
                   />
                   <button
                     type="button"
@@ -383,7 +383,7 @@ export default function EditEmployeeModal({
                   <img
                     src={currentAvatarUrl}
                     alt={`${employee.first_name} ${employee.last_name}`}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-lg ring-2 ring-orange-200"
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg ring-2 ring-orange-200 dark:ring-orange-800"
                   />
                   <button
                     type="button"
@@ -394,17 +394,17 @@ export default function EditEmployeeModal({
                   </button>
                 </div>
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center ring-2 ring-orange-200">
-                  <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500" />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center ring-2 ring-orange-200 dark:ring-orange-800">
+                  <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500 dark:text-orange-400" />
                 </div>
               )}
             </div>
 
             <div className="text-center space-y-1">
-              <Label className="text-sm sm:text-base font-semibold text-gray-800 block">
+              <Label className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-200 block">
                 Foto de Perfil
               </Label>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
                 JPG, PNG o GIF (máximo 5MB)
               </p>
             </div>
@@ -415,7 +415,7 @@ export default function EditEmployeeModal({
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                className="flex items-center justify-center gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-all w-full sm:w-auto"
+                className="flex items-center justify-center gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-all w-full sm:w-auto dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/50 dark:hover:text-orange-300 dark:hover:border-orange-600"
               >
                 {uploadingAvatar ? (
                   <>
@@ -439,7 +439,7 @@ export default function EditEmployeeModal({
                   type="button"
                   variant="ghost"
                   onClick={avatarPreview ? removeAvatar : removeCurrentAvatar}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-all w-full sm:w-auto"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-all w-full sm:w-auto dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50"
                 >
                   <X className="w-3.5 h-3.5 mr-1 sm:mr-2" />
                   Quitar
@@ -459,11 +459,11 @@ export default function EditEmployeeModal({
           {/* Nombre y Apellido */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="first_name" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="first_name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Nombre <span className="text-orange-600">*</span>
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                 <Input
                   id="first_name"
                   {...register('first_name')}
@@ -472,15 +472,15 @@ export default function EditEmployeeModal({
                 />
               </div>
               {errors.first_name && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.first_name.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.first_name.message}</p>
                 </div>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="last_name" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="last_name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Apellido <span className="text-orange-600">*</span>
               </Label>
               <Input
@@ -490,9 +490,9 @@ export default function EditEmployeeModal({
                 placeholder="Ej: Pérez"
               />
               {errors.last_name && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.last_name.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.last_name.message}</p>
                 </div>
               )}
             </div>
@@ -501,11 +501,11 @@ export default function EditEmployeeModal({
           {/* Email y Teléfono */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Email
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                 <Input
                   id="email"
                   type="email"
@@ -515,19 +515,19 @@ export default function EditEmployeeModal({
                 />
               </div>
               {errors.email && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.email.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.email.message}</p>
                 </div>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">
+              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Teléfono
               </Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                 <Input
                   id="phone"
                   type="tel"
@@ -537,9 +537,9 @@ export default function EditEmployeeModal({
                 />
               </div>
               {errors.phone && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700">{errors.phone.message}</p>
+                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 dark:text-red-400">{errors.phone.message}</p>
                 </div>
               )}
             </div>
@@ -547,11 +547,11 @@ export default function EditEmployeeModal({
 
           {/* Posición */}
           <div className="space-y-1.5">
-            <Label htmlFor="position" className="text-sm font-semibold text-gray-700">
+            <Label htmlFor="position" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Posición / Cargo
             </Label>
             <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <Input
                 id="position"
                 {...register('position')}
@@ -560,16 +560,16 @@ export default function EditEmployeeModal({
               />
             </div>
             {errors.position && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700">{errors.position.message}</p>
+              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-red-700 dark:text-red-400">{errors.position.message}</p>
               </div>
             )}
           </div>
 
           {/* Biografía */}
           <div className="space-y-1.5">
-            <Label htmlFor="bio" className="text-sm font-semibold text-gray-700">
+            <Label htmlFor="bio" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Biografía / Descripción
             </Label>
             <Textarea
@@ -580,20 +580,20 @@ export default function EditEmployeeModal({
               className="focus:border-orange-500 focus:ring-orange-500 text-sm"
             />
             {errors.bio && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 border border-red-200 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700">{errors.bio.message}</p>
+              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-red-700 dark:text-red-400">{errors.bio.message}</p>
               </div>
             )}
           </div>
 
           {/* Estado del empleado */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 border border-orange-200 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
             <div>
-              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900">
+              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900 dark:text-gray-50">
                 Estado del Empleado
               </Label>
-              <p className="text-xs text-gray-600 mt-0.5">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                 {isActive ? 'Disponible para asignar citas' : 'No aparecerá en opciones de reserva'}
               </p>
             </div>
@@ -607,8 +607,8 @@ export default function EditEmployeeModal({
 
           {/* Employee Info */}
           <div className="border-t pt-3">
-            <h3 className="text-xs font-semibold text-gray-900 mb-1">Información del Empleado</h3>
-            <div className="text-xs text-gray-600 space-y-0.5">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-50 mb-1">Información del Empleado</h3>
+            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
               <p>Creado: {new Date(employee.created_at).toLocaleDateString('es-ES')}</p>
               {employee.updated_at !== employee.created_at && (
                 <p>Última actualización: {new Date(employee.updated_at).toLocaleDateString('es-ES')}</p>
@@ -623,7 +623,7 @@ export default function EditEmployeeModal({
               variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
               disabled={deleting || submitting}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 order-3 sm:order-1"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 order-3 sm:order-1 dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
             >
               <Trash2 className="w-3.5 h-3.5 mr-2" />
               Eliminar
@@ -713,8 +713,8 @@ export default function EditEmployeeModal({
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <Loader2 className="w-12 h-12 animate-spin text-orange-600 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-2">Procesando imagen...</p>
-              <p className="text-sm text-gray-600">Por favor espera un momento</p>
+              <p className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Procesando imagen...</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Por favor espera un momento</p>
             </div>
           </div>
         )}

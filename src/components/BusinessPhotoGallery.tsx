@@ -290,13 +290,13 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
     return compact ? (
       <div className="py-6 text-center">
         <div className="animate-spin w-6 h-6 border-3 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2"></div>
-        <p className="text-xs text-gray-500">Cargando...</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Cargando...</p>
       </div>
     ) : (
       <Card>
-        <CardContent className="p-12 text-center">
+        <CardContent className="p-12 text-center bg-white dark:bg-gray-900">
           <div className="animate-spin w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando galería...</p>
+          <p className="text-gray-600 dark:text-gray-400">Cargando galería...</p>
         </CardContent>
       </Card>
     )
@@ -332,7 +332,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
               return (
                 <div
                   key={slot.data.id}
-                  className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-orange-300 transition-all"
+                  className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700 transition-all"
                 >
                   <img
                     src={slot.data.photo_url}
@@ -360,17 +360,17 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 transition-all flex flex-col items-center justify-center gap-1 text-gray-600 hover:text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-orange-400 dark:hover:border-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all flex flex-col items-center justify-center gap-1 text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin text-orange-600" />
-                      <span className="text-xs font-semibold text-gray-900">Subiendo...</span>
+                      <span className="text-xs font-semibold text-gray-900 dark:text-gray-50">Subiendo...</span>
                     </>
                   ) : (
                     <>
                       <Upload className="w-5 h-5" />
-                      <span className="text-xs font-semibold text-gray-900">Agregar</span>
+                      <span className="text-xs font-semibold text-gray-900 dark:text-gray-50">Agregar</span>
                     </>
                   )}
                 </button>
@@ -381,7 +381,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
             return (
               <div
                 key={`empty-${index}`}
-                className="aspect-square rounded-lg border-2 border-dashed border-gray-200 bg-gray-50"
+                className="aspect-square rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
               />
             )
           })}
@@ -397,13 +397,13 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
         />
 
         {/* Info Text - Compact */}
-        <p className="text-xs text-gray-700 text-center font-medium mt-3 px-2">
+        <p className="text-xs text-gray-700 dark:text-gray-300 text-center font-medium mt-3 px-2">
           {photos.length >= MAX_PHOTOS ? (
             <span className="text-orange-600 font-semibold">
               Límite alcanzado ({MAX_PHOTOS}/{MAX_PHOTOS})
             </span>
           ) : (
-            <span className="text-gray-900">{photos.length}/{MAX_PHOTOS} fotos • JPG, PNG (máx. 5MB)</span>
+            <span className="text-gray-900 dark:text-gray-50">{photos.length}/{MAX_PHOTOS} fotos • JPG, PNG (máx. 5MB)</span>
           )}
         </p>
       </div>
@@ -414,14 +414,14 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
   return (
     <>
       <Card>
-        <CardHeader className="border-b bg-white">
+        <CardHeader className="border-b dark:border-gray-800 bg-white dark:bg-gray-900">
           <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <ImageIcon className="w-5 h-5 text-orange-600" />
+            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
+              <ImageIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div className="flex-1">
               <span>Galería de Fotos</span>
-              <p className="text-sm font-normal text-gray-600 mt-1">
+              <p className="text-sm font-normal text-gray-600 dark:text-gray-400 mt-1">
                 Muestra las instalaciones y ambiente de tu negocio ({photos.length}/{MAX_PHOTOS})
               </p>
             </div>
@@ -429,9 +429,9 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
         </CardHeader>
         <CardContent className="pt-6">
           {/* Info Alert */}
-          <Alert className="mb-6 bg-blue-50 border-blue-200">
-            <Camera className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-700">
+          <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
+            <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-700 dark:text-blue-200">
               Las fotos de tu galería se mostrarán en un carrusel en tu perfil público.
               Recomendamos fotos de alta calidad de tus instalaciones, equipo y ambiente.
             </AlertDescription>
@@ -442,7 +442,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative group aspect-video rounded-lg overflow-hidden border-2 border-gray-200 hover:border-orange-300 transition-all"
+                className="relative group aspect-video rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700 transition-all"
               >
                 <img
                   src={photo.photo_url}
@@ -470,18 +470,18 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="aspect-video rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 hover:bg-orange-50 transition-all flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="aspect-video rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-orange-400 dark:hover:border-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all flex flex-col items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {uploading ? (
                   <>
                     <Loader2 className="w-8 h-8 animate-spin" />
-                    <span className="text-sm font-medium">Subiendo...</span>
+                    <span className="text-sm font-medium dark:text-gray-50">Subiendo...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="w-8 h-8" />
-                    <span className="text-sm font-medium">Subir Foto</span>
-                    <span className="text-xs text-gray-400">JPG, PNG (máx. 5MB)</span>
+                    <span className="text-sm font-medium dark:text-gray-50">Subir Foto</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">JPG, PNG (máx. 5MB)</span>
                   </>
                 )}
               </button>
@@ -498,7 +498,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
           />
 
           {/* Info Text */}
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             {photos.length >= MAX_PHOTOS ? (
               <span className="text-orange-600 font-medium">
                 Has alcanzado el límite de {MAX_PHOTOS} fotos. Elimina alguna para subir más.

@@ -297,22 +297,22 @@ export default function ImageCropper({
       onClick={(e) => e.stopPropagation()}
     >
       <Card
-        className="w-full max-w-3xl my-auto shadow-lg bg-white"
+        className="w-full max-w-3xl my-auto shadow-lg bg-white dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
-        <CardHeader className="border-b border-gray-200 bg-white pb-4">
+        <CardHeader className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-gray-900">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl text-gray-900 dark:text-gray-50">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
+                <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <span>Recortar Imagen</span>
             </CardTitle>
             <div className="flex gap-2">
-              <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+              <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
                 {aspectRatio === 1 ? 'Cuadrado' : aspectRatio ? `${aspectRatio}:1` : 'Libre'}
               </Badge>
-              <Badge className="bg-orange-100 text-orange-700 border-orange-200 hidden sm:inline-flex">
+              <Badge className="bg-orange-100 text-orange-700 border-orange-200 hidden sm:inline-flex dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
                 {maxWidth}x{maxHeight}px
               </Badge>
             </div>
@@ -325,7 +325,7 @@ export default function ImageCropper({
             {/* Vista previa */}
             <div className="flex-1">
               <div
-                className="crop-container relative w-full aspect-square max-w-[400px] mx-auto border-2 border-gray-300 overflow-hidden bg-gray-100 rounded-xl shadow-md"
+                className="crop-container relative w-full aspect-square max-w-[400px] mx-auto border-2 border-gray-300 dark:border-gray-700 overflow-hidden bg-gray-100 dark:bg-gray-800 rounded-xl shadow-md"
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
@@ -347,7 +347,7 @@ export default function ImageCropper({
 
                 {/* Indicador de arrastre de imagen */}
                 {isDraggingImage && (
-                  <div className="absolute top-2 right-2 bg-white border border-orange-300 text-orange-700 text-xs px-2 py-1 rounded-md shadow-sm">
+                  <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 border border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 text-xs px-2 py-1 rounded-md shadow-sm">
                     <Move className="w-3 h-3 inline mr-1" />
                     <span className="hidden sm:inline">Moviendo imagen...</span>
                     <span className="sm:hidden">Moviendo...</span>
@@ -366,8 +366,8 @@ export default function ImageCropper({
                     }}
                     onMouseDown={handleCropMouseDown}
                   >
-                    <div className="absolute inset-0 border-2 border-white border-dashed"></div>
-                    <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-white border border-orange-300 text-orange-700 text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md shadow-sm">
+                    <div className="absolute inset-0 border-2 border-white dark:border-gray-800 border-dashed"></div>
+                    <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-white dark:bg-gray-800 border border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md shadow-sm">
                       <Move className="w-3 h-3 inline mr-1" />
                       <span className="hidden sm:inline">Recorte</span>
                     </div>
@@ -417,9 +417,9 @@ export default function ImageCropper({
             {/* Controles */}
             <div className="w-full lg:w-80 space-y-3 sm:space-y-4">
               {/* Tamaño del crop */}
-              <div className="space-y-2 bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
-                <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Maximize2 className="w-4 h-4 text-orange-600" />
+              <div className="space-y-2 bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Maximize2 className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                   <span className="hidden sm:inline">Tamaño del recorte</span>
                   <span className="sm:hidden">Tamaño</span>
                 </Label>
@@ -431,15 +431,15 @@ export default function ImageCropper({
                   step={10}
                   className="w-full [&_[role=slider]]:bg-orange-600 [&_[role=slider]]:border-orange-600"
                 />
-                <div className="text-xs sm:text-sm text-orange-600 font-medium">
+                <div className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium">
                   {Math.round(cropArea.width)} x {Math.round(cropArea.height)}px
                 </div>
               </div>
 
               {/* Zoom */}
-              <div className="space-y-2 bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
-                <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <ZoomIn className="w-4 h-4 text-orange-600" />
+              <div className="space-y-2 bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <ZoomIn className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                   Zoom
                 </Label>
                 <div className="flex items-center gap-2">
@@ -447,7 +447,7 @@ export default function ImageCropper({
                     variant="outline"
                     size="sm"
                     onClick={() => handleZoom(-0.1)}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <ZoomOut className="w-4 h-4" />
                   </Button>
@@ -463,20 +463,20 @@ export default function ImageCropper({
                     variant="outline"
                     size="sm"
                     onClick={() => handleZoom(0.1)}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <ZoomIn className="w-4 h-4" />
                   </Button>
                 </div>
-                <div className="text-xs sm:text-sm text-orange-600 font-medium">
+                <div className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium">
                   {Math.round(scale * 100)}%
                 </div>
               </div>
 
               {/* Rotación */}
-              <div className="space-y-2 bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
-                <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <RotateCw className="w-4 h-4 text-orange-600" />
+              <div className="space-y-2 bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <RotateCw className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                   Rotación
                 </Label>
                 <div className="flex items-center gap-2">
@@ -484,7 +484,7 @@ export default function ImageCropper({
                     variant="outline"
                     size="sm"
                     onClick={() => handleRotate(-90)}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </Button>
@@ -500,20 +500,20 @@ export default function ImageCropper({
                     variant="outline"
                     size="sm"
                     onClick={() => handleRotate(90)}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className="border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <RotateCw className="w-4 h-4" />
                   </Button>
                 </div>
-                <div className="text-xs sm:text-sm text-orange-600 font-medium">
+                <div className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium">
                   {rotation}°
                 </div>
               </div>
 
               {/* Posición de la imagen */}
-              <div className="space-y-2 bg-orange-50 p-3 sm:p-4 rounded-lg border border-orange-200">
-                <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Move className="w-4 h-4 text-orange-600" />
+              <div className="space-y-2 bg-orange-50 dark:bg-orange-900/20 p-3 sm:p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+                <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Move className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                   <span className="hidden sm:inline">Posición de la imagen</span>
                   <span className="sm:hidden">Posición</span>
                 </Label>
@@ -522,23 +522,23 @@ export default function ImageCropper({
                     variant="outline"
                     size="sm"
                     onClick={() => setImagePosition({ x: 0, y: 0 })}
-                    className="w-full border-orange-300 text-orange-700 hover:bg-orange-100"
+                    className="w-full border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/50"
                   >
                     Centrar Imagen
                   </Button>
-                  <div className="text-xs text-orange-800 bg-white p-2 rounded-md border border-orange-200">
+                  <div className="text-xs text-orange-800 dark:text-orange-300 bg-white dark:bg-gray-900 p-2 rounded-md border border-orange-200 dark:border-orange-800">
                     💡 <span className="hidden sm:inline"><strong>Tip:</strong> Arrastra la imagen para posicionarla. Arrastra el área naranja para mover el recorte.</span>
                     <span className="sm:hidden"><strong>Tip:</strong> Arrastra elementos</span>
                   </div>
-                  <div className="text-xs text-gray-600 hidden sm:block">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 hidden sm:block">
                     X: {Math.round(imagePosition.x)}px, Y: {Math.round(imagePosition.y)}px
                   </div>
                 </div>
               </div>
 
               {/* Presets de aspect ratio */}
-              <div className="space-y-2 bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
-                <Label className="text-sm font-semibold text-gray-700">Formato</Label>
+              <div className="space-y-2 bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Formato</Label>
                 <div className="grid grid-cols-3 gap-2">
                   <Button
                     variant={aspectRatio === 1 ? "default" : "outline"}
@@ -546,7 +546,7 @@ export default function ImageCropper({
                     onClick={() => {
                       setCropArea(prev => ({ ...prev, height: prev.width }))
                     }}
-                    className={aspectRatio === 1 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+                    className={aspectRatio === 1 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
                   >
                     <Square className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     1:1
@@ -557,7 +557,7 @@ export default function ImageCropper({
                     onClick={() => {
                       setCropArea(prev => ({ ...prev, height: prev.width / 2 }))
                     }}
-                    className={aspectRatio === 2 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+                    className={aspectRatio === 2 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
                   >
                     <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     2:1
@@ -568,7 +568,7 @@ export default function ImageCropper({
                     onClick={() => {
                       setCropArea(prev => ({ ...prev, height: prev.width * 9/16 }))
                     }}
-                    className={aspectRatio === 16/9 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+                    className={aspectRatio === 16/9 ? "bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm" : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"}
                   >
                     <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                     16:9
@@ -579,38 +579,38 @@ export default function ImageCropper({
           </div>
 
           {/* Vista previa final */}
-          <div className="border-t border-gray-200 pt-4">
-            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3">
-              <Circle className="w-4 h-4 text-orange-600" />
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
+            <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-3">
+              <Circle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
               <span className="hidden sm:inline">Vista previa final</span>
               <span className="sm:hidden">Preview</span>
             </Label>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-200">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-300 rounded-lg overflow-hidden bg-white shadow-inner">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900 shadow-inner">
                 <canvas
                   ref={canvasRef}
                   className="w-full h-full object-cover"
                   style={{ display: 'none' }}
                 />
                 {imageLoaded && (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-xs text-gray-600 font-medium">
+                  <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-900 flex items-center justify-center text-xs text-gray-600 dark:text-gray-400 font-medium">
                     {maxWidth}x{maxHeight}
                   </div>
                 )}
               </div>
-              <div className="text-xs sm:text-sm text-gray-700">
-                <p className="font-medium">Tamaño final: <span className="text-orange-600">{maxWidth} x {maxHeight}px</span></p>
-                <p className="text-gray-600 hidden sm:block">Formato: {imageFile.type}</p>
+              <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                <p className="font-medium">Tamaño final: <span className="text-orange-600 dark:text-orange-400">{maxWidth} x {maxHeight}px</span></p>
+                <p className="text-gray-600 dark:text-gray-400 hidden sm:block">Formato: {imageFile.type}</p>
               </div>
             </div>
           </div>
 
           {/* Botones de acción */}
-          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
             <Button
               variant="outline"
               onClick={onCancel}
-              className="w-full sm:w-auto border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              className="w-full sm:w-auto border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-50"
             >
               <X className="w-4 h-4 mr-2" />
               Cancelar

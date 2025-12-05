@@ -726,27 +726,27 @@ export default function ClientsPage() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
+          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Sticky Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Clientes</h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">Clientes</h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Gestiona tu base de datos de clientes
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               {businessName && (
-                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200">
+                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
                   <Building className="w-4 h-4 mr-2" />
                   {businessName}
                 </Badge>
@@ -755,49 +755,49 @@ export default function ClientsPage() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
+                    className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Exportar
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-2 duration-200">
-                  <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+                  <DropdownMenuLabel className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                     Formato de Exportación
                   </DropdownMenuLabel>
 
                   <DropdownMenuSeparator />
 
                   {/* CSV Option */}
-                  <DropdownMenuItem onClick={exportCSV} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                  <DropdownMenuItem onClick={exportCSV} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors dark:focus:bg-orange-900/50 dark:focus:text-orange-400">
                     <FileText className="w-4 h-4 mr-3 text-blue-600" />
                     <div className="flex-1">
                       <p className="font-medium">CSV</p>
-                      <p className="text-xs text-gray-500">Valores separados por comas</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Valores separados por comas</p>
                     </div>
                   </DropdownMenuItem>
 
                   {/* Excel Option */}
-                  <DropdownMenuItem onClick={exportExcel} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                  <DropdownMenuItem onClick={exportExcel} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors dark:focus:bg-orange-900/50 dark:focus:text-orange-400">
                     <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
                     <div className="flex-1">
                       <p className="font-medium">Excel</p>
-                      <p className="text-xs text-gray-500">Hoja de cálculo con múltiples pestañas</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Hoja de cálculo con múltiples pestañas</p>
                     </div>
                   </DropdownMenuItem>
 
                   {/* PDF Option */}
-                  <DropdownMenuItem onClick={exportPDF} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
+                  <DropdownMenuItem onClick={exportPDF} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors dark:focus:bg-orange-900/50 dark:focus:text-orange-400">
                     <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
                     <div className="flex-1">
                       <p className="font-medium">PDF</p>
-                      <p className="text-xs text-gray-500">Reporte profesional con tablas</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Reporte profesional con tablas</p>
                     </div>
                   </DropdownMenuItem>
 
                   <DropdownMenuSeparator />
 
-                  <div className="px-2 py-1.5 text-xs text-gray-400 text-center">
+                  <div className="px-2 py-1.5 text-xs text-gray-400 dark:text-gray-500 text-center">
                     Los datos se descargarán automáticamente
                   </div>
                 </DropdownMenuContent>
@@ -814,14 +814,14 @@ export default function ClientsPage() {
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                    <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-50">
                       {editing ? 'Editar cliente' : 'Nuevo cliente'}
                     </DialogTitle>
                   </DialogHeader>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-orange-600" />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                         Nombre *
                       </label>
                       <Input
@@ -832,7 +832,7 @@ export default function ClientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Apellido</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Apellido</label>
                       <Input
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
@@ -840,8 +840,8 @@ export default function ClientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <Phone className="w-4 h-4 text-orange-600" />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                        <Phone className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                         Teléfono
                       </label>
                       <Input
@@ -851,8 +851,8 @@ export default function ClientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <Mail className="w-4 h-4 text-orange-600" />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                        <Mail className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                         Email
                       </label>
                       <Input
@@ -863,8 +863,8 @@ export default function ClientsPage() {
                       />
                     </div>
                     <div className="sm:col-span-2 space-y-2">
-                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-orange-600" />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                         Notas
                       </label>
                       <Input
@@ -874,7 +874,7 @@ export default function ClientsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Estado</label>
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
                       <Select value={isActive ? 'true' : 'false'} onValueChange={(v: any) => setIsActive(v === 'true')}>
                         <SelectTrigger className="w-full">
                           <SelectValue />
@@ -890,7 +890,7 @@ export default function ClientsPage() {
                     <Button
                       variant="outline"
                       onClick={() => setOpenDialog(false)}
-                      className="hover:bg-gray-100"
+                      className="hover:bg-gray-100 dark:hover:bg-gray-800"
                     >
                       Cancelar
                     </Button>
@@ -913,66 +913,66 @@ export default function ClientsPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Clients */}
-          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Clientes</CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-amber-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-4 h-4 text-orange-600" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clientes</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-lg flex items-center justify-center">
+                  <Users className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-              <p className="text-xs text-gray-500 mt-1">Todos los registros</p>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">{stats.total}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Todos los registros</p>
             </CardContent>
           </Card>
 
           {/* Active Clients */}
-          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Activos</CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Activos</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900 dark:to-green-900 rounded-lg flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900">{stats.active}</div>
-              <p className="text-xs text-gray-500 mt-1">Clientes habilitados</p>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">{stats.active}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Clientes habilitados</p>
             </CardContent>
           </Card>
 
           {/* Clients with Phone */}
-          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Con Teléfono</CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center">
-                  <Phone className="w-4 h-4 text-blue-600" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Con Teléfono</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 rounded-lg flex items-center justify-center">
+                  <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900">{stats.withPhone}</div>
-              <p className="text-xs text-gray-500 mt-1">Contacto telefónico</p>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">{stats.withPhone}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Contacto telefónico</p>
             </CardContent>
           </Card>
 
           {/* Clients with Email */}
-          <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Con Email</CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
-                  <Mail className="w-4 h-4 text-purple-600" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Con Email</CardTitle>
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 rounded-lg flex items-center justify-center">
+                  <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900">{stats.withEmail}</div>
-              <p className="text-xs text-gray-500 mt-1">Contacto por email</p>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">{stats.withEmail}</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Contacto por email</p>
             </CardContent>
           </Card>
         </div>
@@ -980,7 +980,7 @@ export default function ClientsPage() {
         {/* Search Bar with Filters and Toggle */}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <Input
               placeholder="Buscar por nombre, teléfono o email..."
               value={search}
@@ -998,14 +998,14 @@ export default function ClientsPage() {
                 <SelectItem value="false">Todos</SelectItem>
               </SelectContent>
             </Select>
-            <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg p-1 shadow-sm">
+            <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-1 shadow-sm">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('grid')}
                 className={viewMode === 'grid'
                   ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700'
-                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
                 }
               >
                 <LayoutGrid className="w-4 h-4 mr-2" />
@@ -1017,7 +1017,7 @@ export default function ClientsPage() {
                 onClick={() => setViewMode('table')}
                 className={viewMode === 'table'
                   ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700'
-                  : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
                 }
               >
                 <TableIcon className="w-4 h-4 mr-2" />
@@ -1029,17 +1029,17 @@ export default function ClientsPage() {
 
         {/* Conditional Grid/Table View */}
         {fetching && rows.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-16 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-16 text-center">
             <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando clientes...</p>
+            <p className="text-gray-600 dark:text-gray-400">Cargando clientes...</p>
           </div>
         ) : rows.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-16 text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Users className="w-10 h-10 text-orange-600" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-16 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Users className="w-10 h-10 text-orange-600 dark:text-orange-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay clientes</h3>
-            <p className="text-gray-600 max-w-sm mx-auto">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-2">No hay clientes</h3>
+            <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
               No se encontraron clientes. Intenta ajustar los criterios de búsqueda.
             </p>
           </div>
@@ -1055,7 +1055,7 @@ export default function ClientsPage() {
 
             {/* Tablet Horizontal Scroll */}
             <div className="hidden md:block lg:hidden">
-              <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
                 <div className="min-w-[800px]">
                   <DataTable
                     columns={columns}
@@ -1070,22 +1070,22 @@ export default function ClientsPage() {
               {rows.map((row) => (
                 <Card
                   key={row.id}
-                  className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                  className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow flex flex-col"
                 >
-                  <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent border-b border-gray-100">
+                  <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent dark:from-orange-900/10 dark:via-amber-900/10 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <User className="w-5 h-5 text-orange-600" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center flex-shrink-0">
+                          <User className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 truncate">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-50 truncate">
                             {row.first_name} {row.last_name || ''}
                           </h3>
                           <Badge
                             className={row.is_active
-                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1'
-                              : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1'
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800'
+                              : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
                             }
                           >
                             {row.is_active ? 'Activo' : 'Inactivo'}
@@ -1094,31 +1094,33 @@ export default function ClientsPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-4 space-y-3">
-                    {row.phone && (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
-                        <Phone className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-900">{row.phone}</span>
-                      </div>
-                    )}
-                    {row.email && (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg">
-                        <Mail className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-900 truncate max-w-full">{row.email}</span>
-                      </div>
-                    )}
-                    {row.notes && (
-                      <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 rounded-lg">
-                        <FileText className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-600 line-clamp-2">{row.notes}</span>
-                      </div>
-                    )}
-                    <div className="flex gap-2 pt-2">
+                  <CardContent className="pt-4 flex-1 flex flex-col">
+                    <div className="space-y-3">
+                      {row.phone && (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg min-w-0">
+                          <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{row.phone}</span>
+                        </div>
+                      )}
+                      {row.email && (
+                        <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg min-w-0">
+                          <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate" title={row.email}>{row.email}</span>
+                        </div>
+                      )}
+                      {row.notes && (
+                        <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/20 rounded-lg min-w-0">
+                          <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{row.notes}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2 pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => openEdit(row)}
-                        className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
+                        className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800"
                       >
                         <Edit className="w-4 h-4 mr-2" />
                         Editar
@@ -1127,10 +1129,9 @@ export default function ClientsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => confirmDeleteClient(row.id)}
-                        className="hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
                       >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Eliminar
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </CardContent>
@@ -1143,22 +1144,22 @@ export default function ClientsPage() {
             {rows.map((row) => (
               <Card
                 key={row.id}
-                className="overflow-hidden border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 group"
+                className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col"
               >
-                <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent border-b border-gray-100">
+                <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent dark:from-orange-900/10 dark:via-amber-900/10 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-sm sm:text-base text-gray-900 truncate">
+                        <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-50 truncate">
                           {row.first_name} {row.last_name || ''}
                         </h3>
                         <Badge
                           className={row.is_active
-                            ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1'
-                            : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1'
+                            ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800'
+                            : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
                           }
                         >
                           {row.is_active ? 'Activo' : 'Inactivo'}
@@ -1167,31 +1168,33 @@ export default function ClientsPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4 space-y-3">
-                  {row.phone && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
-                      <Phone className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-900 break-all">{row.phone}</span>
-                    </div>
-                  )}
-                  {row.email && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg">
-                      <Mail className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-900 truncate max-w-full" title={row.email}>{row.email}</span>
-                    </div>
-                  )}
-                  {row.notes && (
-                    <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 rounded-lg">
-                      <FileText className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600 line-clamp-2">{row.notes}</span>
-                    </div>
-                  )}
-                  <div className="flex gap-2 pt-2">
+                <CardContent className="pt-4 flex-1 flex flex-col">
+                  <div className="space-y-3">
+                    {row.phone && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg min-w-0">
+                        <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{row.phone}</span>
+                      </div>
+                    )}
+                    {row.email && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg min-w-0">
+                        <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate" title={row.email}>{row.email}</span>
+                      </div>
+                    )}
+                    {row.notes && (
+                      <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/20 rounded-lg min-w-0">
+                        <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{row.notes}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2 pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => openEdit(row)}
-                      className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
+                      className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Editar
@@ -1200,10 +1203,9 @@ export default function ClientsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => confirmDeleteClient(row.id)}
-                      className="hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Eliminar
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </CardContent>
@@ -1214,16 +1216,16 @@ export default function ClientsPage() {
 
         {/* Paginación */}
         {totalCount > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="text-sm text-gray-600">
-              Mostrando <span className="font-semibold text-gray-900">{(page-1)*limit+1}</span> a{' '}
-              <span className="font-semibold text-gray-900">{Math.min(page*limit, totalCount)}</span> de{' '}
-              <span className="font-semibold text-gray-900">{totalCount}</span> resultados
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-gray-200 dark:bg-gray-800/80 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Mostrando <span className="font-semibold text-gray-900 dark:text-gray-50">{(page-1)*limit+1}</span> a{' '}
+              <span className="font-semibold text-gray-900 dark:text-gray-50">{Math.min(page*limit, totalCount)}</span> de{' '}
+              <span className="font-semibold text-gray-900 dark:text-gray-50">{totalCount}</span> resultados
             </div>
 
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Por página:</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Por página:</span>
                 <Select value={String(limit)} onValueChange={(v) => { setLimit(Number(v)); setPage(1) }}>
                   <SelectTrigger className="w-[80px]">
                     <SelectValue />
@@ -1242,12 +1244,12 @@ export default function ClientsPage() {
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
+                  className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
 
-                <div className="px-4 py-1.5 text-sm font-medium text-gray-700">
+                <div className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-50">
                   {page} / {totalPages}
                 </div>
 
@@ -1256,7 +1258,7 @@ export default function ClientsPage() {
                   size="sm"
                   disabled={page >= totalPages}
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
+                  className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>

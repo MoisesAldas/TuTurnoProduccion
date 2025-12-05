@@ -187,34 +187,34 @@ export default function BusinessHoursPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-6">
             <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando horarios</h3>
-          <p className="text-sm text-gray-600">Obteniendo configuración de tu negocio...</p>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando horarios</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Obteniendo configuración de tu negocio...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Sticky Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Horarios de Atención</h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">Horarios de Atención</h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Configura los horarios de atención de tu negocio
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               {businessName && (
-                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200">
+                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
                   <Building className="w-4 h-4 mr-2" />
                   {businessName}
                 </Badge>
@@ -243,31 +243,30 @@ export default function BusinessHoursPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Info Alert */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm text-blue-900">
-              Estos horarios se mostrarán a tus clientes y determinarán la disponibilidad para reservas.
-              Los horarios especiales (feriados, eventos) se configuran en <Link href="/dashboard/business/settings/advanced" className="underline font-medium">Ajustes Avanzados</Link>.
-            </p>
-          </div>
-        </div>
-        {/* Días de la semana - Vista Compacta */}
-        <Card className="overflow-hidden shadow-md border-gray-200">
+              {/* Info Alert */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex items-start gap-3">
+                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-blue-900 dark:text-blue-200">
+                    Estos horarios se mostrarán a tus clientes y determinarán la disponibilidad para reservas.
+                    Los horarios especiales (feriados, eventos) se configuran en <Link href="/dashboard/business/settings/advanced" className="underline font-medium">Ajustes Avanzados</Link>.
+                  </p>
+                </div>
+              </div>        {/* Días de la semana - Vista Compacta */}
+        <Card className="overflow-hidden shadow-md border-gray-200 dark:border-gray-700">
           {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-orange-50 to-amber-50 border-b-2 border-orange-200">
+              <thead className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10 border-b-2 border-orange-200 dark:border-orange-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">Día</th>
-                  <th className="px-4 py-3 text-center text-sm font-bold text-gray-900">Estado</th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">Apertura</th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900">Cierre</th>
-                  <th className="px-4 py-3 text-center text-sm font-bold text-gray-900">Acciones</th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 dark:text-gray-50">Día</th>
+                  <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 dark:text-gray-50">Estado</th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 dark:text-gray-50">Apertura</th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 dark:text-gray-50">Cierre</th>
+                  <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 dark:text-gray-50">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {daysOfWeek.map(day => {
                   const schedule = schedules.find(s => s.day_of_week === day.value)
                   if (!schedule) return null
@@ -275,8 +274,8 @@ export default function BusinessHoursPage() {
                   return (
                     <tr
                       key={day.value}
-                      className={`hover:bg-gray-50 transition-colors ${
-                        schedule.is_closed ? 'bg-gray-50/50' : ''
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                        schedule.is_closed ? 'bg-gray-50/50 dark:bg-gray-900/50' : ''
                       }`}
                     >
                       {/* Día */}
@@ -285,23 +284,23 @@ export default function BusinessHoursPage() {
                           <div className={`
                             w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
                             ${schedule.is_closed
-                              ? 'bg-gray-100'
-                              : 'bg-gradient-to-br from-orange-100 to-amber-100'
+                              ? 'bg-gray-100 dark:bg-gray-700'
+                              : 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900'
                             }
                           `}>
                             <Clock className={`w-5 h-5 ${
-                              schedule.is_closed ? 'text-gray-600' : 'text-orange-600'
+                              schedule.is_closed ? 'text-gray-600 dark:text-gray-400' : 'text-orange-600 dark:text-orange-400'
                             }`} />
                           </div>
-                          <span className="font-semibold text-gray-900">{day.label}</span>
+                          <span className="font-semibold text-gray-900 dark:text-gray-50">{day.label}</span>
                         </div>
                       </td>
 
                       {/* Estado */}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center">
-                          <div className="flex items-center gap-2 bg-orange-50/50 border border-orange-200 rounded-lg px-3 py-1.5">
-                            <span className="text-xs font-semibold text-gray-700">
+                          <div className="flex items-center gap-2 bg-orange-50/50 border border-orange-200 dark:bg-orange-900/20 dark:border-orange-800 rounded-lg px-3 py-1.5">
+                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                               {schedule.is_closed ? 'Cerrado' : 'Abierto'}
                             </span>
                             <Switch
@@ -344,7 +343,7 @@ export default function BusinessHoursPage() {
                             size="sm"
                             onClick={() => copyToAllDays(day.value)}
                             disabled={schedule.is_closed}
-                            className="h-9 w-9 p-0 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-9 w-9 p-0 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
                             title="Copiar horarios a todos los días"
                           >
                             <Copy className="w-4 h-4" />
@@ -359,7 +358,7 @@ export default function BusinessHoursPage() {
           </div>
 
           {/* Mobile Compact View */}
-          <div className="lg:hidden divide-y divide-gray-200">
+          <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
             {daysOfWeek.map(day => {
               const schedule = schedules.find(s => s.day_of_week === day.value)
               if (!schedule) return null
@@ -367,7 +366,7 @@ export default function BusinessHoursPage() {
               return (
                 <div
                   key={day.value}
-                  className={`p-4 ${schedule.is_closed ? 'bg-gray-50/50' : ''}`}
+                  className={`p-4 ${schedule.is_closed ? 'bg-gray-50/50 dark:bg-gray-900/50' : ''}`}
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between mb-3">
@@ -375,20 +374,20 @@ export default function BusinessHoursPage() {
                       <div className={`
                         w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
                         ${schedule.is_closed
-                          ? 'bg-gray-100'
-                          : 'bg-gradient-to-br from-orange-100 to-amber-100'
+                          ? 'bg-gray-100 dark:bg-gray-700'
+                          : 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900'
                         }
                       `}>
                         <Clock className={`w-5 h-5 ${
-                          schedule.is_closed ? 'text-gray-600' : 'text-orange-600'
+                          schedule.is_closed ? 'text-gray-600 dark:text-gray-400' : 'text-orange-600 dark:text-orange-400'
                         }`} />
                       </div>
-                      <span className="font-semibold text-gray-900">{day.label}</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-50">{day.label}</span>
                     </div>
 
                     {/* Estado Toggle */}
-                    <div className="flex items-center gap-2 bg-orange-50/50 border border-orange-200 rounded-lg px-3 py-1.5">
-                      <span className="text-xs font-semibold text-gray-700">
+                    <div className="flex items-center gap-2 bg-orange-50/50 border border-orange-200 dark:bg-orange-900/20 dark:border-orange-800 rounded-lg px-3 py-1.5">
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                         {schedule.is_closed ? 'Cerrado' : 'Abierto'}
                       </span>
                       <Switch
@@ -404,7 +403,7 @@ export default function BusinessHoursPage() {
                     <div className="space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <Label htmlFor={`open-${day.value}`} className="text-xs font-semibold text-gray-700 mb-1 block">
+                          <Label htmlFor={`open-${day.value}`} className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 block">
                             Apertura
                           </Label>
                           <Input
@@ -416,7 +415,7 @@ export default function BusinessHoursPage() {
                           />
                         </div>
                         <div>
-                          <Label htmlFor={`close-${day.value}`} className="text-xs font-semibold text-gray-700 mb-1 block">
+                          <Label htmlFor={`close-${day.value}`} className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 block">
                             Cierre
                           </Label>
                           <Input
@@ -435,7 +434,7 @@ export default function BusinessHoursPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => copyToAllDays(day.value)}
-                        className="w-full h-9 text-xs hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
+                        className="w-full h-9 text-xs hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
                       >
                         <Copy className="w-3.5 h-3.5 mr-1.5" />
                         Copiar a todos los días
@@ -450,14 +449,14 @@ export default function BusinessHoursPage() {
 
         {/* Resumen visual de cambios pendientes */}
         {hasChanges && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-yellow-900">
+                <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-50">
                   Tienes cambios sin guardar
                 </p>
-                <p className="text-sm text-yellow-800 mt-1">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
                   Haz clic en "Guardar Horarios" en la parte superior para aplicar los cambios.
                 </p>
               </div>
