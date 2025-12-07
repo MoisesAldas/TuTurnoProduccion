@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast'
 import type { Business, Employee, Appointment } from '@/types/database'
 
 // Lazy load modals and calendar view for better performance
-const CalendarView = dynamic(() => import('@/components/CalendarView'), {
+const CalendarView = dynamic(() => import('@/components/CalendarViewRefactored'), {
   loading: () => (
     <div className="flex items-center justify-center h-full">
       <div className="text-center">

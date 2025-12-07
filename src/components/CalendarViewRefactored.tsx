@@ -188,7 +188,7 @@ export default function CalendarView({
     handleCloseModal()
   }, [onRefresh, handleCloseModal])
 
-  const handleTimeSlotClick = useCallback((date?: Date, time?: string, employeeId?: string) => {
+  const handleTimeSlotClick = useCallback((date?: Date, time?: string, employeeId?: string, clickY?: number, containerTop?: number) => {
     if (!onCreateAppointment) return
 
     // Para vista mensual, date viene del componente MonthView
@@ -412,7 +412,7 @@ export default function CalendarView({
             employees={employees}
             absences={absences}
             onTimeSlotClick={(employeeId: string, clickY: number, containerTop: number) => 
-              handleTimeSlotClick(employeeId, clickY, containerTop)}
+              handleTimeSlotClick(undefined, undefined, employeeId, clickY, containerTop)}
             onAppointmentClick={handleAppointmentClick}
             onAppointmentHover={handleAppointmentHover}
             onAppointmentLeave={handleAppointmentLeave}
