@@ -197,94 +197,59 @@ export default function InvoiceConfigSection() {
 
   return (
     <Card className="dark:border-gray-700">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 dark:from-orange-700 dark:to-amber-800 flex items-center justify-center">
-            <Receipt className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <CardTitle className="dark:text-gray-50">Configuración de Facturación</CardTitle>
-            <CardDescription className="mt-1 dark:text-gray-400">
-              Personaliza el formato de tus números de factura
-            </CardDescription>
-          </div>
-        </div>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg dark:text-gray-50">
+          <Receipt className="w-5 h-5 text-orange-600" />
+          Configuración de Facturación
+        </CardTitle>
+        <CardDescription className="dark:text-gray-400 text-sm">
+          Personaliza el formato de tus números de factura
+        </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        {/* Alert Informativo */}
-        <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
-          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertTitle className="text-blue-900 dark:text-blue-200">¿Qué es el prefijo de factura?</AlertTitle>
-          <AlertDescription className="text-blue-700 dark:text-blue-200 text-sm">
-            El prefijo es un identificador único que aparecerá en todas tus facturas.
-            Ejemplo: Si eliges "SALON", tus facturas serán: <strong>SALON-2025-0001</strong>, <strong>SALON-2025-0002</strong>, etc.
-          </AlertDescription>
-        </Alert>
-
-        {/* Estado del Prefijo */}
+      <CardContent className="space-y-3">
+        {/* Alert compacto cuando está bloqueado */}
         {prefixLocked && (
-          <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
-            <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <AlertTitle className="text-amber-900 dark:text-amber-200">Prefijo bloqueado</AlertTitle>
-            <AlertDescription className="text-amber-700 dark:text-amber-200 text-sm">
-              Has emitido <strong>{invoiceCount} factura{invoiceCount !== 1 ? 's' : ''}</strong>.
-              El prefijo se ha bloqueado automáticamente para mantener la consistencia de tus registros contables.
-            </AlertDescription>
-          </Alert>
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-sm text-amber-900 dark:text-amber-200">
+            <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span>
+              <strong>Prefijo bloqueado:</strong> Has emitido <strong>{invoiceCount} factura{invoiceCount !== 1 ? 's' : ''}</strong>. No se puede modificar para mantener consistencia contable.
+            </span>
+          </div>
         )}
 
-        {/* Configuración del Prefijo */}
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="invoice_prefix" className="text-base font-semibold dark:text-gray-50">
+        {/* Grid: Configuración */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+          {/* Prefijo */}
+          <div className="space-y-1.5">
+            <Label htmlFor="invoice_prefix" className="text-sm dark:text-gray-50">
               Prefijo de Factura *
             </Label>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-3">
-              Define el identificador que aparecerá en todas tus facturas
-            </p>
             <Input
               id="invoice_prefix"
               value={invoicePrefix}
               onChange={(e) => handlePrefixChange(e.target.value)}
               disabled={prefixLocked}
-              placeholder="Ej: SALON, BARBER, SPA"
-              className={`text-lg font-mono uppercase ${prefixError ? 'border-red-500' : ''}`}
+              placeholder="Ej: SALON"
+              className={`h-9 font-mono uppercase ${prefixError ? 'border-red-500' : ''}`}
               maxLength={10}
             />
             {prefixError && (
-              <p className="text-sm text-red-600 dark:text-red-400 mt-2 flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" />
+              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
                 {prefixError}
               </p>
             )}
-
-            {/* Ejemplos */}
-            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">💡 Ejemplos sugeridos:</p>
-              <div className="flex flex-wrap gap-2">
-                {['SALON', 'BARBER', 'SPA', 'ESTETICA', 'BELLEZA'].map((example) => (
-                  <Badge
-                    key={example}
-                    variant="outline"
-                    className="cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-colors dark:hover:bg-orange-900/20 dark:hover:border-orange-700"
-                    onClick={() => !prefixLocked && handlePrefixChange(example)}
-                  >
-                    {example}
-                  </Badge>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Solo letras y números (2-10 caracteres)
+            </p>
           </div>
 
-          {/* Número Inicial de Secuencia */}
-          <div>
-            <Label htmlFor="sequential_start" className="text-base font-semibold dark:text-gray-50">
-              Número Inicial de Secuencia
+          {/* Número Inicial */}
+          <div className="space-y-1.5">
+            <Label htmlFor="sequential_start" className="text-sm dark:text-gray-50">
+              Número Inicial
             </Label>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 mb-3">
-              Número desde el cual comenzará la numeración de tus facturas
-            </p>
             <Input
               id="sequential_start"
               type="number"
@@ -293,99 +258,78 @@ export default function InvoiceConfigSection() {
               value={sequentialStart}
               onChange={(e) => setSequentialStart(parseInt(e.target.value) || 1)}
               disabled={prefixLocked || invoiceCount > 0}
-              className="text-lg"
+              className="h-9"
             />
-            {invoiceCount > 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
-                <Info className="w-4 h-4" />
-                No se puede modificar porque ya tienes facturas emitidas
-              </p>
-            )}
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {invoiceCount > 0 ? 'Bloqueado (facturas emitidas)' : 'Primera factura iniciará en este número'}
+            </p>
+          </div>
+
+          {/* Ejemplos - Full Width */}
+          <div className="lg:col-span-2">
+            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">💡 Sugerencias:</p>
+            <div className="flex flex-wrap gap-2">
+              {['SALON', 'BARBER', 'SPA', 'ESTETICA', 'BELLEZA'].map((example) => (
+                <Badge
+                  key={example}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-colors dark:hover:bg-orange-900/20 dark:hover:border-orange-700"
+                  onClick={() => !prefixLocked && handlePrefixChange(example)}
+                >
+                  {example}
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Vista Previa */}
+        {/* Vista Previa Compacta */}
         {previewNumber && (
-          <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
-                <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-green-900 dark:text-green-50 mb-2">Vista Previa</h4>
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Tu primera factura será:</p>
-                    <p className="text-2xl font-bold font-mono text-green-900 dark:text-green-50">{previewNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-green-700 dark:text-green-300 mb-1">Próximas facturas:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {[1, 2, 3].map((num) => {
-                        const currentYear = new Date().getFullYear()
-                        const nextNum = `${invoicePrefix.toUpperCase()}-${currentYear}-${String(sequentialStart + num).padStart(4, '0')}`
-                        return (
-                          <Badge key={num} variant="outline" className="bg-white dark:bg-gray-800 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700 font-mono">
-                            {nextNum}
-                          </Badge>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <FileText className="w-4 h-4 text-green-600" />
+            <span>Primera factura:</span>
+            <Badge variant="secondary" className="font-mono text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20">
+              {previewNumber}
+            </Badge>
+            <span>→</span>
+            {[1, 2].map((num) => {
+              const currentYear = new Date().getFullYear()
+              const nextNum = `${invoicePrefix.toUpperCase()}-${currentYear}-${String(sequentialStart + num).padStart(4, '0')}`
+              return (
+                <Badge key={num} variant="outline" className="font-mono text-xs">
+                  {nextNum}
+                </Badge>
+              )
+            })}
           </div>
         )}
 
-        {/* Reglas de Validación */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-50 mb-3">📋 Reglas del Prefijo</h4>
-          <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-            <li className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-              <span>Solo letras mayúsculas y números (A-Z, 0-9)</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-              <span>Entre 2 y 10 caracteres de longitud</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-              <span>Sin espacios ni caracteres especiales (-, _, @, etc.)</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-              <span>Se recomienda usar el nombre de tu negocio (ej: SALON, BARBER)</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-              <span><strong>Importante:</strong> Una vez emitida la primera factura, el prefijo se bloqueará automáticamente</span>
-            </li>
-          </ul>
+        {/* Reglas Compactas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-1.5">
+            <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
+            <span>Solo A-Z y 0-9 (2-10 caracteres)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
+            <span>Sin espacios ni símbolos especiales</span>
+          </div>
+          <div className="flex items-center gap-1.5 lg:col-span-2">
+            <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <span><strong>Importante:</strong> Se bloquea tras emitir la primera factura</span>
+          </div>
         </div>
 
         {/* Estadísticas */}
         {invoiceCount > 0 && (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <div>
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
-                  Has emitido <strong>{invoiceCount}</strong> factura{invoiceCount !== 1 ? 's' : ''} con el prefijo <strong>{invoicePrefix}</strong>
-                </p>
-                {previewNumber && (
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                    Próxima factura: {previewNumber.replace(String(sequentialStart).padStart(4, '0'), String(sequentialStart + invoiceCount).padStart(4, '0'))}
-                  </p>
-                )}
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+            <FileText className="w-4 h-4" />
+            <span>Has emitido <strong>{invoiceCount}</strong> factura{invoiceCount !== 1 ? 's' : ''} con prefijo <strong>{invoicePrefix}</strong></span>
           </div>
         )}
 
         {/* Botones de Acción */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-3">
           <Button
             onClick={handleSave}
             disabled={saving || prefixLocked || !invoicePrefix || !!prefixError}

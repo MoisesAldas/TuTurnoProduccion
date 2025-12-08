@@ -37,9 +37,11 @@ const businessInfoSchema = z.object({
     .max(500, 'La descripción no puede exceder 500 caracteres')
     .optional(),
   phone: z.string()
-    .min(8, 'El teléfono debe tener al menos 8 dígitos')
-    .optional()
-    .or(z.literal('')),
+    .refine(
+      (val) => val === '' || /^09\d{8}$/.test(val),
+      'Ingrese un número celular válido que inicie con 09 (ej: 0987654321)'
+    )
+    .optional(),
   email: z.string()
     .email('Formato de email inválido')
     .optional()
@@ -633,68 +635,59 @@ export default function UnifiedSettingsPage() {
           <div className="flex-1 min-w-0 w-full lg:w-auto">
             {/* Profile Section */}
             {activeSection === 'profile' && (
-              <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-6">
+              <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-4">
                 <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                       <Building className="w-5 h-5 text-orange-600" />
                       Información del Negocio
                     </CardTitle>
-                    <CardDescription className="dark:text-gray-400">
+                    <CardDescription className="dark:text-gray-400 text-sm">
                       Información básica que se mostrará en tu perfil público
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Logo Upload with UPFRONT REQUIREMENTS */}
-                    <div className="space-y-2">
-                      <Label>Logo del Negocio</Label>
-                      <Alert className="mb-4 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-                        <Info className="w-4 h-4" />
-                        <AlertDescription className="text-sm dark:text-gray-200">
-                          <strong>Requisitos:</strong> JPG, PNG o WebP • Tamaño recomendado: 500x500px • Máximo 10MB
-                          <br/>
-                          Tu logo aparecerá en tu perfil público y en confirmaciones de citas.
-                        </AlertDescription>
-                      </Alert>
-                      <div className="flex items-start gap-4">
-                        <div className="w-32 h-32 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
-                          {logoPreview ? (
-                            <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="text-center text-gray-400 dark:text-gray-500">
-                              <Camera className="w-8 h-8 mx-auto mb-1" />
-                              <p className="text-xs">Sin logo</p>
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex gap-2">
+                  <CardContent>
+                    <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
+                      {/* Columna Izquierda: Logo */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Logo</Label>
+                        <div className="flex lg:flex-col items-start gap-2">
+                          <div className="w-24 h-24 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                            {logoPreview ? (
+                              <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                              <Camera className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                            )}
+                          </div>
+                          <div className="flex lg:flex-col gap-2">
                             <Button
                               type="button"
+                              size="sm"
                               variant="outline"
                               onClick={() => logoInputRef.current?.click()}
                               disabled={uploadingLogo}
                             >
                               {uploadingLogo ? (
                                 <>
-                                  <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-orange-600 rounded-full animate-spin mr-2" />
+                                  <div className="w-3 h-3 border-2 border-gray-300 dark:border-gray-600 border-t-orange-600 rounded-full animate-spin mr-2" />
                                   Procesando...
                                 </>
                               ) : (
                                 <>
-                                  <Upload className="w-4 h-4 mr-2" />
-                                  {logoPreview ? 'Cambiar Logo' : 'Subir Logo'}
+                                  <Upload className="w-3 h-3 mr-2" />
+                                  {logoPreview ? 'Cambiar' : 'Subir'}
                                 </>
                               )}
                             </Button>
                             {logoFile && (
                               <Button
                                 type="button"
+                                size="sm"
                                 variant="outline"
                                 onClick={removeLogo}
                                 className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50"
                               >
-                                <X className="w-4 h-4" />
+                                <X className="w-3 h-3" />
                               </Button>
                             )}
                           </div>
@@ -707,127 +700,144 @@ export default function UnifiedSettingsPage() {
                           className="hidden"
                         />
                       </div>
-                    </div>
 
-                    {/* Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="dark:text-gray-50">
-                        Nombre del Negocio *
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="name"
-                          {...registerInfo('name')}
-                          placeholder="Ej: Salón de Belleza María"
-                          className={`${
-                            touchedInfo.name && !errorsInfo.name ? 'border-green-500' : ''
-                          } ${
-                            errorsInfo.name ? 'border-red-500' : ''
-                          }`}
-                        />
-                        {touchedInfo.name && !errorsInfo.name && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-600" />
-                        )}
+                      {/* Columna Derecha: Campos + Descripción */}
+                      <div className="space-y-3">
+                        {/* Fila 1: Nombre + Teléfono */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* Nombre */}
+                          <div className="space-y-1.5">
+                            <Label htmlFor="name" className="text-sm dark:text-gray-50">
+                              Nombre del Negocio *
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="name"
+                                {...registerInfo('name')}
+                                placeholder="Ej: Salón de Belleza María"
+                                className={`h-9 ${
+                                  touchedInfo.name && !errorsInfo.name ? 'border-green-500' : ''
+                                } ${
+                                  errorsInfo.name ? 'border-red-500' : ''
+                                }`}
+                              />
+                              {touchedInfo.name && !errorsInfo.name && (
+                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                              )}
+                            </div>
+                            {errorsInfo.name && (
+                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.name.message}</p>
+                            )}
+                          </div>
+
+                          {/* Teléfono */}
+                          <div className="space-y-1.5">
+                            <Label htmlFor="phone" className="text-sm dark:text-gray-50">Teléfono</Label>
+                            <div className="relative">
+                              <Input
+                                id="phone"
+                                type="tel"
+                                {...registerInfo('phone', {
+                                  onChange: (e) => {
+                                    // Solo permite números
+                                    const value = e.target.value.replace(/\D/g, '')
+                                    e.target.value = value
+                                  }
+                                })}
+                                placeholder="0987654321"
+                                maxLength={10}
+                                className={`h-9 ${
+                                  touchedInfo.phone && !errorsInfo.phone ? 'border-green-500' : ''
+                                } ${
+                                  errorsInfo.phone ? 'border-red-500' : ''
+                                }`}
+                              />
+                              {touchedInfo.phone && !errorsInfo.phone && (
+                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                              )}
+                            </div>
+                            {errorsInfo.phone && (
+                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.phone.message}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Fila 2: Email + Website */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* Email */}
+                          <div className="space-y-1.5">
+                            <Label htmlFor="email" className="text-sm dark:text-gray-50">Email</Label>
+                            <div className="relative">
+                              <Input
+                                id="email"
+                                type="email"
+                                {...registerInfo('email')}
+                                placeholder="contacto@negocio.com"
+                                className={`h-9 ${
+                                  touchedInfo.email && !errorsInfo.email ? 'border-green-500' : ''
+                                } ${
+                                  errorsInfo.email ? 'border-red-500' : ''
+                                }`}
+                              />
+                              {touchedInfo.email && !errorsInfo.email && (
+                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                              )}
+                            </div>
+                            {errorsInfo.email && (
+                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.email.message}</p>
+                            )}
+                          </div>
+
+                          {/* Website */}
+                          <div className="space-y-1.5">
+                            <Label htmlFor="website" className="text-sm dark:text-gray-50">Sitio Web</Label>
+                            <div className="relative">
+                              <Input
+                                id="website"
+                                {...registerInfo('website')}
+                                placeholder="https://tunegocio.com"
+                                className={`h-9 ${
+                                  touchedInfo.website && !errorsInfo.website ? 'border-green-500' : ''
+                                } ${
+                                  errorsInfo.website ? 'border-red-500' : ''
+                                }`}
+                              />
+                              {touchedInfo.website && !errorsInfo.website && (
+                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                              )}
+                            </div>
+                            {errorsInfo.website && (
+                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.website.message}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Fila 3: Descripción - Full Width */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="description" className="text-sm dark:text-gray-50">Descripción</Label>
+                          <Textarea
+                            id="description"
+                            {...registerInfo('description')}
+                            placeholder="Describe tu negocio..."
+                            rows={2}
+                            className={`resize-none ${
+                              touchedInfo.description && !errorsInfo.description ? 'border-green-500' : ''
+                            } ${
+                              errorsInfo.description ? 'border-red-500' : ''
+                            }`}
+                          />
+                          {errorsInfo.description && (
+                            <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.description.message}</p>
+                          )}
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Máximo 500 caracteres</p>
+                        </div>
                       </div>
-                      {errorsInfo.name && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.name.message}</p>
-                      )}
-                    </div>
-
-                    {/* Phone */}
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="dark:text-gray-50">Teléfono</Label>
-                      <div className="relative">
-                        <Input
-                          id="phone"
-                          {...registerInfo('phone')}
-                          placeholder="+593987654321"
-                          className={`${
-                            touchedInfo.phone && !errorsInfo.phone ? 'border-green-500' : ''
-                          } ${
-                            errorsInfo.phone ? 'border-red-500' : ''
-                          }`}
-                        />
-                        {touchedInfo.phone && !errorsInfo.phone && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-600" />
-                        )}
-                      </div>
-                      {errorsInfo.phone && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.phone.message}</p>
-                      )}
-                    </div>
-
-                    {/* Email */}
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="dark:text-gray-50">Email de Contacto</Label>
-                      <div className="relative">
-                        <Input
-                          id="email"
-                          type="email"
-                          {...registerInfo('email')}
-                          placeholder="contacto@negocio.com"
-                          className={`${
-                            touchedInfo.email && !errorsInfo.email ? 'border-green-500' : ''
-                          } ${
-                            errorsInfo.email ? 'border-red-500' : ''
-                          }`}
-                        />
-                        {touchedInfo.email && !errorsInfo.email && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-600" />
-                        )}
-                      </div>
-                      {errorsInfo.email && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.email.message}</p>
-                      )}
-                    </div>
-
-                    {/* Website */}
-                    <div className="space-y-2">
-                      <Label htmlFor="website" className="dark:text-gray-50">Sitio Web</Label>
-                      <div className="relative">
-                        <Input
-                          id="website"
-                          {...registerInfo('website')}
-                          placeholder="https://tunegocio.com"
-                          className={`${
-                            touchedInfo.website && !errorsInfo.website ? 'border-green-500' : ''
-                          } ${
-                            errorsInfo.website ? 'border-red-500' : ''
-                          }`}
-                        />
-                        {touchedInfo.website && !errorsInfo.website && (
-                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-600" />
-                        )}
-                      </div>
-                      {errorsInfo.website && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.website.message}</p>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="dark:text-gray-50">Descripción</Label>
-                      <Textarea
-                        id="description"
-                        {...registerInfo('description')}
-                        placeholder="Describe tu negocio..."
-                        rows={4}
-                        className={`${
-                          touchedInfo.description && !errorsInfo.description ? 'border-green-500' : ''
-                        } ${
-                          errorsInfo.description ? 'border-red-500' : ''
-                        }`}
-                      />
-                      {errorsInfo.description && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsInfo.description.message}</p>
-                      )}
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Máximo 500 caracteres</p>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Save Button */}
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -965,25 +975,25 @@ export default function UnifiedSettingsPage() {
 
             {/* Location Section */}
             {activeSection === 'location' && (
-              <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-6">
+              <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-4">
                 <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                       <MapPin className="w-5 h-5 text-orange-600" />
                       Ubicación del Negocio
                     </CardTitle>
-                    <CardDescription className="dark:text-gray-400">
+                    <CardDescription className="dark:text-gray-400 text-sm">
                       Ayuda a tus clientes a encontrarte fácilmente
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-3">
                     {locationData.address && (
-                      <Alert className="mb-4 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-                        <MapPin className="w-4 h-4" />
-                        <AlertDescription className="dark:text-gray-200">
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-sm text-green-900 dark:text-green-200">
+                        <MapPin className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                        <span>
                           <strong>Ubicación seleccionada:</strong> {locationData.address}
-                        </AlertDescription>
-                      </Alert>
+                        </span>
+                      </div>
                     )}
                     <MapboxLocationPicker
                       onLocationSelect={(location) => {
@@ -998,7 +1008,7 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -1022,88 +1032,84 @@ export default function UnifiedSettingsPage() {
 
             {/* Policies Section */}
             {activeSection === 'policies' && (
-              <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-6">
+              <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-4">
                 <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                       <Shield className="w-5 h-5 text-orange-600" />
                       Políticas de Cancelación
                     </CardTitle>
-                    <CardDescription className="dark:text-gray-400">
+                    <CardDescription className="dark:text-gray-400 text-sm">
                       Define las reglas para cancelar y reagendar citas
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cancellation_policy_hours" className="dark:text-gray-50">
-                        Horas de anticipación requeridas
-                      </Label>
-                      <Input
-                        id="cancellation_policy_hours"
-                        type="number"
-                        min="0"
-                        max="168"
-                        {...registerAdvanced('cancellation_policy_hours', { valueAsNumber: true })}
-                      />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Tiempo mínimo antes de la cita para poder cancelar (máximo 7 días / 168 horas)
-                      </p>
-                      {errorsAdvanced.cancellation_policy_hours && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_hours.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cancellation_policy_text" className="dark:text-gray-50">
-                        Texto de la política de cancelación
-                      </Label>
-                      <Textarea
-                        id="cancellation_policy_text"
-                        {...registerAdvanced('cancellation_policy_text')}
-                        rows={3}
-                        placeholder="Describe tu política de cancelación..."
-                      />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Este texto se mostrará a los clientes cuando reserven
-                      </p>
-                      {errorsAdvanced.cancellation_policy_text && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_text.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-4 border-t pt-6 dark:border-gray-800">
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          id="allow_client_cancellation"
-                          {...registerAdvanced('allow_client_cancellation')}
-                          className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                  <CardContent>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+                      {/* Horas de anticipación */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="cancellation_policy_hours" className="text-sm dark:text-gray-50">
+                          Horas de anticipación
+                        </Label>
+                        <Input
+                          id="cancellation_policy_hours"
+                          type="number"
+                          min="0"
+                          max="168"
+                          className="h-9"
+                          {...registerAdvanced('cancellation_policy_hours', { valueAsNumber: true })}
                         />
-                        <div className="flex-1">
-                          <Label htmlFor="allow_client_cancellation" className="cursor-pointer font-medium dark:text-gray-50">
-                            Permitir que clientes cancelen sus citas
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Máximo 168 horas (7 días)
+                        </p>
+                        {errorsAdvanced.cancellation_policy_hours && (
+                          <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_hours.message}</p>
+                        )}
+                      </div>
+
+                      {/* Checkboxes en la segunda columna */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="allow_client_cancellation"
+                            {...registerAdvanced('allow_client_cancellation')}
+                            className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                          />
+                          <Label htmlFor="allow_client_cancellation" className="cursor-pointer text-sm font-medium dark:text-gray-50">
+                            Permitir cancelación por clientes
                           </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Los clientes podrán cancelar desde su perfil
-                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="allow_client_reschedule"
+                            {...registerAdvanced('allow_client_reschedule')}
+                            className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                          />
+                          <Label htmlFor="allow_client_reschedule" className="cursor-pointer text-sm font-medium dark:text-gray-50">
+                            Permitir reagendar por clientes
+                          </Label>
                         </div>
                       </div>
 
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          id="allow_client_reschedule"
-                          {...registerAdvanced('allow_client_reschedule')}
-                          className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                      {/* Texto de política - Full Width */}
+                      <div className="lg:col-span-2 space-y-1.5">
+                        <Label htmlFor="cancellation_policy_text" className="text-sm dark:text-gray-50">
+                          Texto de la política
+                        </Label>
+                        <Textarea
+                          id="cancellation_policy_text"
+                          {...registerAdvanced('cancellation_policy_text')}
+                          rows={2}
+                          className="resize-none"
+                          placeholder="Describe tu política de cancelación..."
                         />
-                        <div className="flex-1">
-                          <Label htmlFor="allow_client_reschedule" className="cursor-pointer font-medium dark:text-gray-50">
-                            Permitir que clientes reagenden sus citas
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Los clientes podrán modificar fecha/hora de sus citas
-                          </p>
-                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Este texto se mostrará a los clientes al reservar
+                        </p>
+                        {errorsAdvanced.cancellation_policy_text && (
+                          <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_text.message}</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -1111,51 +1117,44 @@ export default function UnifiedSettingsPage() {
 
                 {/* Additional Settings */}
                 <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                       <Settings className="w-5 h-5 text-orange-600" />
                       Configuraciones Adicionales
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox" 
-                        id="auto_confirm_appointments"
-                        {...registerAdvanced('auto_confirm_appointments')}
-                        className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                      />
-                      <div className="flex-1">
-                        <Label htmlFor="auto_confirm_appointments" className="cursor-pointer font-medium dark:text-gray-50">
+                  <CardContent>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+                      {/* Auto-confirmar */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="auto_confirm_appointments"
+                          {...registerAdvanced('auto_confirm_appointments')}
+                          className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                        />
+                        <Label htmlFor="auto_confirm_appointments" className="cursor-pointer text-sm font-medium dark:text-gray-50">
                           Auto-confirmar citas
                         </Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Las reservas se confirmarán automáticamente sin requerir aprobación manual
-                        </p>
                       </div>
-                    </div>
 
-                    <div className="space-y-4 border-t pt-6 dark:border-gray-800">
-                      <div className="flex items-start gap-3">
+                      {/* Requerir depósito */}
+                      <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           id="require_deposit"
                           {...registerAdvanced('require_deposit')}
-                          className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                          className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                         />
-                        <div className="flex-1">
-                          <Label htmlFor="require_deposit" className="cursor-pointer font-medium dark:text-gray-50">
-                            Requerir depósito
-                          </Label>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Solicitar un depósito para confirmar la reserva
-                          </p>
-                        </div>
+                        <Label htmlFor="require_deposit" className="cursor-pointer text-sm font-medium dark:text-gray-50">
+                          Requerir depósito
+                        </Label>
                       </div>
 
+                      {/* Porcentaje de depósito - Condicional */}
                       {requireDeposit && (
-                        <div className="ml-7 space-y-2">
-                          <Label htmlFor="deposit_percentage" className="dark:text-gray-50">
+                        <div className="lg:col-span-2 space-y-1.5">
+                          <Label htmlFor="deposit_percentage" className="text-sm dark:text-gray-50">
                             Porcentaje de depósito (%)
                           </Label>
                           <Input
@@ -1163,14 +1162,14 @@ export default function UnifiedSettingsPage() {
                             type="number"
                             min="0"
                             max="100"
+                            className="h-9 max-w-xs"
                             {...registerAdvanced('deposit_percentage', { valueAsNumber: true })}
-                            className="max-w-xs"
                           />
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             Porcentaje del precio total del servicio
                           </p>
                           {errorsAdvanced.deposit_percentage && (
-                            <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.deposit_percentage.message}</p>
+                            <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.deposit_percentage.message}</p>
                           )}
                         </div>
                       )}
@@ -1178,7 +1177,7 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -1202,72 +1201,81 @@ export default function UnifiedSettingsPage() {
 
             {/* Booking Section */}
             {activeSection === 'booking' && (
-              <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-6">
+              <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-4">
                 <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                       <Clock className="w-5 h-5 text-orange-600" />
                       Restricciones de Reserva
                     </CardTitle>
-                    <CardDescription className="dark:text-gray-400">
+                    <CardDescription className="dark:text-gray-400 text-sm">
                       Define cuándo pueden reservar tus clientes
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="min_booking_hours" className="dark:text-gray-50">
-                        Anticipación mínima (horas)
-                      </Label>
-                      <Input
-                        id="min_booking_hours"
-                        type="number"
-                        min="0"
-                        max="72"
-                        {...registerAdvanced('min_booking_hours', { valueAsNumber: true })}
-                        className="max-w-xs"
-                      />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Tiempo mínimo antes de la cita para poder reservar (máximo 72 horas / 3 días)
-                      </p>
-                      {errorsAdvanced.min_booking_hours && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.min_booking_hours.message}</p>
-                      )}
-                    </div>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+                        {/* Anticipación mínima */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="min_booking_hours" className="text-sm dark:text-gray-50">
+                            Anticipación mínima (horas)
+                          </Label>
+                          <Input
+                            id="min_booking_hours"
+                            type="number"
+                            min="0"
+                            max="72"
+                            className="h-9"
+                            {...registerAdvanced('min_booking_hours', { valueAsNumber: true })}
+                          />
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Máximo 72 horas (3 días)
+                          </p>
+                          {errorsAdvanced.min_booking_hours && (
+                            <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.min_booking_hours.message}</p>
+                          )}
+                        </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="max_booking_days" className="dark:text-gray-50">
-                        Días máximos hacia el futuro
-                      </Label>
-                      <Input
-                        id="max_booking_days"
-                        type="number"
-                        min="1"
-                        max="365"
-                        {...registerAdvanced('max_booking_days', { valueAsNumber: true })}
-                        className="max-w-xs"
-                      />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Cuántos días hacia el futuro pueden reservar los clientes (máximo 365 días / 1 año)
-                      </p>
-                      {errorsAdvanced.max_booking_days && (
-                        <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.max_booking_days.message}</p>
-                      )}
-                    </div>
+                        {/* Días máximos */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="max_booking_days" className="text-sm dark:text-gray-50">
+                            Días máximos al futuro
+                          </Label>
+                          <Input
+                            id="max_booking_days"
+                            type="number"
+                            min="1"
+                            max="365"
+                            className="h-9"
+                            {...registerAdvanced('max_booking_days', { valueAsNumber: true })}
+                          />
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Máximo 365 días (1 año)
+                          </p>
+                          {errorsAdvanced.max_booking_days && (
+                            <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.max_booking_days.message}</p>
+                          )}
+                        </div>
+                      </div>
 
-                    <Alert className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-                      <AlertCircle className="w-4 h-4" />
-                      <AlertDescription className="dark:text-gray-200">
-                        <strong>Ejemplo de configuración actual:</strong>
-                        <br/>
-                        Los clientes podrán reservar con al menos{' '}
-                        <strong>{watchAdvanced('min_booking_hours')} hora(s)</strong> de anticipación,
-                        hasta <strong>{watchAdvanced('max_booking_days')} días</strong> en el futuro.
-                      </AlertDescription>
-                    </Alert>
+                      {/* Vista previa con Badge */}
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Info className="w-4 h-4" />
+                        <span>Reservas desde</span>
+                        <Badge variant="secondary" className="font-mono">
+                          {watchAdvanced('min_booking_hours')}h
+                        </Badge>
+                        <span>de anticipación hasta</span>
+                        <Badge variant="secondary" className="font-mono">
+                          {watchAdvanced('max_booking_days')}d
+                        </Badge>
+                        <span>al futuro</span>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
@@ -1330,145 +1338,136 @@ export default function UnifiedSettingsPage() {
 
             {/* Reminders Section */}
             {activeSection === 'reminders' && (
-              <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-6">
+              <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-4">
                 <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
                       <Bell className="w-5 h-5 text-orange-600" />
                       Recordatorios Automáticos
                     </CardTitle>
-                    <CardDescription className="dark:text-gray-400">
+                    <CardDescription className="dark:text-gray-400 text-sm">
                       Configura recordatorios para tus clientes
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-start gap-3 border-b pb-6 dark:border-gray-800">
-                      <input
-                        type="checkbox"
-                        id="enable_reminders"
-                        {...registerAdvanced('enable_reminders')}
-                        className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                      />
-                      <div className="flex-1">
-                        <Label htmlFor="enable_reminders" className="cursor-pointer font-medium text-base dark:text-gray-50">
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Activar recordatorios */}
+                      <div className="flex items-center gap-2 pb-3 border-b dark:border-gray-800">
+                        <input
+                          type="checkbox"
+                          id="enable_reminders"
+                          {...registerAdvanced('enable_reminders')}
+                          className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                        />
+                        <Label htmlFor="enable_reminders" className="cursor-pointer text-sm font-medium dark:text-gray-50">
                           Activar recordatorios automáticos
                         </Label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Los clientes recibirán recordatorios antes de sus citas
-                        </p>
                       </div>
-                    </div>
 
-                    {enableReminders && (
-                      <div className="space-y-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="reminder_hours_before" className="dark:text-gray-50">
-                            Horas antes de la cita
-                          </Label>
-                          <Input
-                            id="reminder_hours_before"
-                            type="number"
-                            min="1"
-                            max="168"
-                            {...registerAdvanced('reminder_hours_before', { valueAsNumber: true })}
-                            className="max-w-xs"
-                          />
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Cuándo enviar el recordatorio (máximo 7 días / 168 horas)
-                          </p>
-                          {errorsAdvanced.reminder_hours_before && (
-                            <p className="text-sm text-red-600 dark:text-red-400">{errorsAdvanced.reminder_hours_before.message}</p>
-                          )}
-                        </div>
-
-                        <div className="space-y-4 border-t pt-6 dark:border-gray-800">
-                          <h4 className="font-medium text-gray-900 dark:text-gray-50">Canales de notificación</h4>
-
-                          <div className="flex items-start gap-3">
-                            <input
-                              type="checkbox"
-                              id="reminder_email_enabled"
-                              {...registerAdvanced('reminder_email_enabled')}
-                              className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                            />
-                            <div className="flex-1">
-                              <Label htmlFor="reminder_email_enabled" className="cursor-pointer font-medium dark:text-gray-50">
-                                Recordatorio por Email
+                      {enableReminders && (
+                        <div className="space-y-3">
+                          {/* Grid: Horas antes + Canales */}
+                          <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-x-6 gap-y-3">
+                            {/* Horas antes */}
+                            <div className="space-y-1.5">
+                              <Label htmlFor="reminder_hours_before" className="text-sm dark:text-gray-50">
+                                Horas antes
                               </Label>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Enviar recordatorios por correo electrónico
+                              <Input
+                                id="reminder_hours_before"
+                                type="number"
+                                min="1"
+                                max="168"
+                                className="h-9"
+                                {...registerAdvanced('reminder_hours_before', { valueAsNumber: true })}
+                              />
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Máximo 168h (7 días)
                               </p>
+                              {errorsAdvanced.reminder_hours_before && (
+                                <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.reminder_hours_before.message}</p>
+                              )}
                             </div>
-                            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                          </div>
 
-                          <div className="relative">
-                            <div className={`flex items-start gap-3 ${!true && 'opacity-50 pointer-events-none'}`}>
-                              <input
-                                type="checkbox"
-                                id="reminder_sms_enabled"
-                                {...registerAdvanced('reminder_sms_enabled')}
-                                disabled={true}
-                                className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                              />
-                              <div className="flex-1">
-                                <Label htmlFor="reminder_sms_enabled" className="cursor-pointer font-medium dark:text-gray-50">
-                                  Recordatorio por SMS
-                                </Label>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  Enviar recordatorios por mensaje de texto
-                                </p>
+                            {/* Canales */}
+                            <div className="space-y-2">
+                              <Label className="text-sm dark:text-gray-50">Canales de notificación</Label>
+
+                              <div className="flex items-center gap-6">
+                                {/* Email */}
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    id="reminder_email_enabled"
+                                    {...registerAdvanced('reminder_email_enabled')}
+                                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                                  />
+                                  <Label htmlFor="reminder_email_enabled" className="cursor-pointer text-sm font-medium dark:text-gray-50">
+                                    Email
+                                  </Label>
+                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                </div>
+
+                                {/* SMS */}
+                                <div className="flex items-center gap-2 opacity-50">
+                                  <input
+                                    type="checkbox"
+                                    id="reminder_sms_enabled"
+                                    {...registerAdvanced('reminder_sms_enabled')}
+                                    disabled={true}
+                                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                                  />
+                                  <Label htmlFor="reminder_sms_enabled" className="cursor-pointer text-sm font-medium dark:text-gray-50">
+                                    SMS
+                                  </Label>
+                                  <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                                    Próximamente
+                                  </Badge>
+                                </div>
+
+                                {/* Push */}
+                                <div className="flex items-center gap-2 opacity-50">
+                                  <input
+                                    type="checkbox"
+                                    id="reminder_push_enabled"
+                                    {...registerAdvanced('reminder_push_enabled')}
+                                    disabled={true}
+                                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
+                                  />
+                                  <Label htmlFor="reminder_push_enabled" className="cursor-pointer text-sm font-medium dark:text-gray-50">
+                                    Push
+                                  </Label>
+                                  <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                                    Próximamente
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
-                            <Badge variant="secondary" className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-                              Próximamente
+                          </div>
+
+                          {/* Vista previa con Badge */}
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 pt-2">
+                            <Bell className="w-4 h-4" />
+                            <span>Recordatorio</span>
+                            <Badge variant="secondary" className="font-mono">
+                              {watchAdvanced('reminder_hours_before')}h antes
                             </Badge>
-                          </div>
-
-                          <div className="relative">
-                            <div className={`flex items-start gap-3 ${!true && 'opacity-50 pointer-events-none'}`}>
-                              <input
-                                type="checkbox"
-                                id="reminder_push_enabled"
-                                {...registerAdvanced('reminder_push_enabled')}
-                                disabled={true}
-                                className="mt-1 w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                              />
-                              <div className="flex-1">
-                                <Label htmlFor="reminder_push_enabled" className="cursor-pointer font-medium dark:text-gray-50">
-                                  Notificación Push
-                                </Label>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  Enviar notificaciones push en la aplicación
-                                </p>
-                              </div>
-                            </div>
-                            <Badge variant="secondary" className="absolute top-0 right-0 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-                              Próximamente
+                            <span>vía</span>
+                            <Badge variant="secondary" className="font-mono">
+                              {[
+                                watchAdvanced('reminder_email_enabled') && 'Email',
+                                watchAdvanced('reminder_sms_enabled') && 'SMS',
+                                watchAdvanced('reminder_push_enabled') && 'Push'
+                              ].filter(Boolean).join(', ') || 'ninguno'}
                             </Badge>
                           </div>
                         </div>
-
-                        <Alert className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-                          <Bell className="w-4 h-4" />
-                          <AlertDescription className="dark:text-gray-200">
-                            <strong>Vista previa de recordatorio:</strong>
-                            <br/>
-                            Los clientes recibirán un recordatorio{' '}
-                            <strong>{watchAdvanced('reminder_hours_before')} hora(s)</strong> antes de su cita por{' '}
-                            {[
-                              watchAdvanced('reminder_email_enabled') && 'Email',
-                              watchAdvanced('reminder_sms_enabled') && 'SMS',
-                              watchAdvanced('reminder_push_enabled') && 'Push'
-                            ].filter(Boolean).join(', ') || 'ningún canal (selecciona al menos uno)'}
-                          </AlertDescription>
-                        </Alert>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button
                     type="submit"
                     disabled={submitting}
