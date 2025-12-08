@@ -161,9 +161,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
             {/* Desktop expanded logo - Full text with orange gradient */}
             <div className={`hidden lg:flex items-center justify-center transition-all duration-500 ${collapsed ? 'opacity-0 scale-75 w-0' : 'opacity-100 scale-100 w-auto'}`}>
-              <span className="text-2xl font-black font-[Poppins] tracking-tight bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300">
-                turnito
-              </span>
+                      <Logo color="white" size="lg" />
             </div>
 
             {/* Desktop collapsed logo - Icon "T" */}
@@ -299,39 +297,41 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
-          <div className="flex items-center space-x-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Menu className="w-6 h-6 text-gray-600" />
-            </button>
+        {pathname !== '/dashboard/business' && (
+          <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+            <div className="flex items-center space-x-4">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Menu className="w-6 h-6 text-gray-600" />
+              </button>
 
-            <h1 className="text-xl font-bold text-gray-900">
-              {businessName || 'Mi Negocio'}
-            </h1>
-          </div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {businessName || 'Mi Negocio'}
+              </h1>
+            </div>
 
-          <div className="flex items-center space-x-4">
-            {/* Search */}
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Search className="w-5 h-5 text-gray-600" />
-            </button>
+            <div className="flex items-center space-x-4">
+              {/* Search */}
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <Search className="w-5 h-5 text-gray-600" />
+              </button>
 
-            {/* Notifications */}
-            <NotificationBell userId={authState.user?.id} />
+              {/* Notifications */}
+              <NotificationBell userId={authState.user?.id} />
 
-            {/* User Avatar */}
-            <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
-              <AvatarImage src={authState.user?.avatar_url} />
-              <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
-                {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-        </header>
+              {/* User Avatar */}
+              <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
+                <AvatarImage src={authState.user?.avatar_url} />
+                <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
+                  {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </header>
+        )}
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto bg-gray-50">
