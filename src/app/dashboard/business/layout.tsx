@@ -47,7 +47,7 @@ const navigation: NavItem[] = [
   { name: 'Servicios', href: '/dashboard/business/services', icon: Briefcase },
   { name: 'Empleados', href: '/dashboard/business/employees', icon: Users },
   { name: 'Horarios', href: '/dashboard/business/hours', icon: Clock },
-  { name: 'Análisis', href: '/dashboard/business/analytics', icon: BarChart3 },
+  
   { name: 'Listar', href: '/dashboard/business/listar', icon: List },
   { name: 'Configuración', href: '/dashboard/business/settings', icon: Settings },
 ]
