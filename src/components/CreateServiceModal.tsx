@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   Dialog,
   DialogContent,
@@ -17,23 +16,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, DollarSign, Clock, AlertCircle } from 'lucide-react'
+import { Save, DollarSign, Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
+import { useToast } from '@/hooks/use-toast'
+import { serviceFormSchema, type ServiceFormData } from '@/lib/validation'
 import type { Business } from '@/types/database'
-
-const serviceFormSchema = z.object({
-  name: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'El nombre no puede exceder 100 caracteres'),
-  description: z.string(),
-  price: z.string()
-    .min(1, 'El precio es requerido'),
-  duration_minutes: z.string()
-    .min(1, 'La duración es requerida'),
-  is_active: z.boolean()
-})
-
-type ServiceFormData = z.infer<typeof serviceFormSchema>
 
 const durationOptions = [
   { value: '15', label: '15 minutos' },
@@ -64,6 +51,7 @@ export default function CreateServiceModal({
   onSuccess
 }: CreateServiceModalProps) {
   const [submitting, setSubmitting] = useState(false)
+  const { toast } = useToast()
   const supabase = createClient()
 
   const {
@@ -72,7 +60,7 @@ export default function CreateServiceModal({
     watch,
     setValue,
     reset,
-    formState: { errors }
+    formState: { errors, isValid, touchedFields }
   } = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: {
@@ -82,7 +70,8 @@ export default function CreateServiceModal({
       duration_minutes: '',
       is_active: true
     },
-    mode: 'onSubmit'
+    mode: 'onBlur',
+    reValidateMode: 'onChange'
   })
 
   const isActive = watch('is_active')
@@ -96,12 +85,20 @@ export default function CreateServiceModal({
       const duration = parseInt(formData.duration_minutes)
 
       if (isNaN(price) || price < 0) {
-        alert('El precio debe ser un número válido mayor o igual a 0')
+        toast({
+          title: 'Error',
+          description: 'El precio debe ser un número válido mayor o igual a 0',
+          variant: 'destructive'
+        })
         return
       }
 
       if (isNaN(duration) || duration < 15) {
-        alert('La duración debe ser un número válido mayor o igual a 15 minutos')
+        toast({
+          title: 'Error',
+          description: 'La duración debe ser un número válido mayor o igual a 15 minutos',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -120,15 +117,27 @@ export default function CreateServiceModal({
 
       if (error) {
         console.error('Error creating service:', error)
-        alert('Error al crear el servicio')
+        toast({
+          title: 'Error',
+          description: 'No se pudo crear el servicio',
+          variant: 'destructive'
+        })
       } else {
+        toast({
+          title: 'Servicio creado',
+          description: 'El servicio fue creado correctamente'
+        })
         reset()
         onOpenChange(false)
         onSuccess()
       }
     } catch (error) {
       console.error('Error creating service:', error)
-      alert('Error al crear el servicio')
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear el servicio',
+        variant: 'destructive'
+      })
     } finally {
       setSubmitting(false)
     }
@@ -150,12 +159,21 @@ export default function CreateServiceModal({
             <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Nombre del Servicio <span className="text-orange-600">*</span>
             </Label>
-            <Input
-              id="name"
-              {...register('name')}
-              placeholder="Ej: Corte de cabello, Manicura..."
-              className="h-10 focus:border-orange-500 focus:ring-orange-500"
-            />
+            <div className="relative">
+              <Input
+                id="name"
+                {...register('name')}
+                placeholder="Ej: Corte de cabello, Manicura..."
+                className={`h-10 focus:border-orange-500 focus:ring-orange-500 ${
+                  touchedFields.name && !errors.name ? 'border-green-500' : ''
+                } ${
+                  errors.name ? 'border-red-500' : ''
+                }`}
+              />
+              {touchedFields.name && !errors.name && (
+                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+              )}
+            </div>
             {errors.name && (
               <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
                 <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
@@ -194,9 +212,16 @@ export default function CreateServiceModal({
                   min="0"
                   max="99999.99"
                   {...register('price')}
-                  className="pl-10 h-10 focus:border-orange-500 focus:ring-orange-500"
+                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
+                    touchedFields.price && !errors.price ? 'border-green-500' : ''
+                  } ${
+                    errors.price ? 'border-red-500' : ''
+                  }`}
                   placeholder="0.00"
                 />
+                {touchedFields.price && !errors.price && (
+                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                )}
               </div>
               {errors.price && (
                 <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
@@ -269,8 +294,8 @@ export default function CreateServiceModal({
             </Button>
             <Button
               type="submit"
-              className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all"
-              disabled={submitting}
+              className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!isValid || submitting}
             >
               {submitting ? (
                 <>

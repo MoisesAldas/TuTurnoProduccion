@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   Dialog,
   DialogContent,
@@ -26,11 +25,12 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Save, User, Mail, Phone, Briefcase, Camera, Upload, X, AlertCircle, Trash2, Loader2 } from 'lucide-react'
+import { Save, User, Mail, Phone, Briefcase, Camera, Upload, X, AlertCircle, Trash2, Loader2, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { compressImage, validateImageFile, formatFileSize } from '@/lib/imageUtils'
 import BusinessImageCropper from '@/components/BusinessImageCropper'
+import { employeeFormSchema, type EmployeeFormData } from '@/lib/validation'
 
 interface Employee {
   id: string
@@ -46,32 +46,6 @@ interface Employee {
   created_at: string
   updated_at: string
 }
-
-const employeeFormSchema = z.object({
-  first_name: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(50, 'El nombre no puede exceder 50 caracteres'),
-  last_name: z.string()
-    .min(2, 'El apellido debe tener al menos 2 caracteres')
-    .max(50, 'El apellido no puede exceder 50 caracteres'),
-  email: z.string()
-    .email('Formato de email inválido')
-    .optional()
-    .or(z.literal('')),
-  phone: z.string()
-    .min(8, 'El teléfono debe tener al menos 8 dígitos')
-    .optional()
-    .or(z.literal('')),
-  position: z.string()
-    .max(100, 'La posición no puede exceder 100 caracteres')
-    .optional(),
-  bio: z.string()
-    .max(500, 'La biografía no puede exceder 500 caracteres')
-    .optional(),
-  is_active: z.boolean()
-})
-
-type EmployeeFormData = z.infer<typeof employeeFormSchema>
 
 interface EditEmployeeModalProps {
   open: boolean
@@ -105,7 +79,7 @@ export default function EditEmployeeModal({
     watch,
     setValue,
     reset,
-    formState: { errors }
+    formState: { errors, isValid, touchedFields }
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: {
@@ -117,7 +91,8 @@ export default function EditEmployeeModal({
       bio: '',
       is_active: true
     },
-    mode: 'onSubmit'
+    mode: 'onBlur', // ✅ Validación al salir del campo
+    reValidateMode: 'onChange'
   })
 
   const isActive = watch('is_active')
@@ -640,8 +615,8 @@ export default function EditEmployeeModal({
             </Button>
             <Button
               type="submit"
-              className="h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all order-1 sm:order-3"
-              disabled={submitting || deleting}
+              className="h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all order-1 sm:order-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!isValid || submitting || deleting}
             >
               {submitting ? (
                 <>

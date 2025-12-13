@@ -166,15 +166,13 @@ export default function BusinessLoginPage() {
           </div>
 
           {/* Progress Steps */}
-          <div className="flex justify-center">
-            <AuthProgressSteps currentStep={2} userType="business" variant="login" />
-          </div>
+      
 
           {/* Header */}
           <div className="text-center space-y-1">
-            <div className="lg:hidden mb-4">
-              <Logo color="black" size="lg" />
-            </div>
+        
+              
+        
             <h2 className="text-2xl font-bold text-gray-900">Iniciar Sesión</h2>
             <p className="text-sm text-gray-600">Accede a tu panel de negocio</p>
           </div>

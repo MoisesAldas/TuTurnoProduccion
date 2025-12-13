@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   Dialog,
   DialogContent,
@@ -16,38 +15,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Save, User, Mail, Phone, Briefcase, Camera, Upload, X, AlertCircle, Loader2 } from 'lucide-react'
+import { Save, User, Mail, Phone, Briefcase, Camera, Upload, X, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { compressImage, validateImageFile, formatFileSize } from '@/lib/imageUtils'
 import BusinessImageCropper from '@/components/BusinessImageCropper'
 import type { Business } from '@/types/database'
-
-const employeeFormSchema = z.object({
-  first_name: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(50, 'El nombre no puede exceder 50 caracteres'),
-  last_name: z.string()
-    .min(2, 'El apellido debe tener al menos 2 caracteres')
-    .max(50, 'El apellido no puede exceder 50 caracteres'),
-  email: z.string()
-    .email('Formato de email inválido')
-    .optional()
-    .or(z.literal('')),
-  phone: z.string()
-    .min(8, 'El teléfono debe tener al menos 8 dígitos')
-    .optional()
-    .or(z.literal('')),
-  position: z.string()
-    .max(100, 'La posición no puede exceder 100 caracteres')
-    .optional(),
-  bio: z.string()
-    .max(500, 'La biografía no puede exceder 500 caracteres')
-    .optional(),
-  is_active: z.boolean()
-})
-
-type EmployeeFormData = z.infer<typeof employeeFormSchema>
+import { employeeFormSchema, type EmployeeFormData } from '@/lib/validation'
 
 interface CreateEmployeeModalProps {
   open: boolean
@@ -78,7 +52,7 @@ export default function CreateEmployeeModal({
     watch,
     setValue,
     reset,
-    formState: { errors }
+    formState: { errors, isValid, touchedFields }
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeFormSchema),
     defaultValues: {
@@ -90,7 +64,8 @@ export default function CreateEmployeeModal({
       bio: '',
       is_active: true
     },
-    mode: 'onSubmit'
+    mode: 'onBlur', // ✅ Validación al salir del campo
+    reValidateMode: 'onChange'
   })
 
   const isActive = watch('is_active')
@@ -360,9 +335,16 @@ export default function CreateEmployeeModal({
                 <Input
                   id="first_name"
                   {...register('first_name')}
-                  className="pl-10 h-10 focus:border-orange-500 focus:ring-orange-500"
+                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
+                    touchedFields.first_name && !errors.first_name ? 'border-green-500' : ''
+                  } ${
+                    errors.first_name ? 'border-red-500' : ''
+                  }`}
                   placeholder="Ej: Juan"
                 />
+                {touchedFields.first_name && !errors.first_name && (
+                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                )}
               </div>
               {errors.first_name && (
                 <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
@@ -376,12 +358,21 @@ export default function CreateEmployeeModal({
               <Label htmlFor="last_name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Apellido <span className="text-orange-600">*</span>
               </Label>
-              <Input
-                id="last_name"
-                {...register('last_name')}
-                className="h-10 focus:border-orange-500 focus:ring-orange-500"
-                placeholder="Ej: Pérez"
-              />
+              <div className="relative">
+                <Input
+                  id="last_name"
+                  {...register('last_name')}
+                  className={`h-10 focus:border-orange-500 focus:ring-orange-500 ${
+                    touchedFields.last_name && !errors.last_name ? 'border-green-500' : ''
+                  } ${
+                    errors.last_name ? 'border-red-500' : ''
+                  }`}
+                  placeholder="Ej: Pérez"
+                />
+                {touchedFields.last_name && !errors.last_name && (
+                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                )}
+              </div>
               {errors.last_name && (
                 <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
                   <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
@@ -395,7 +386,7 @@ export default function CreateEmployeeModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Email
+                Email <span className="text-orange-600">*</span>
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
@@ -403,9 +394,16 @@ export default function CreateEmployeeModal({
                   id="email"
                   type="email"
                   {...register('email')}
-                  className="pl-10 h-10 focus:border-orange-500 focus:ring-orange-500"
+                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
+                    touchedFields.email && !errors.email ? 'border-green-500' : ''
+                  } ${
+                    errors.email ? 'border-red-500' : ''
+                  }`}
                   placeholder="juan@ejemplo.com"
                 />
+                {touchedFields.email && !errors.email && (
+                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                )}
               </div>
               {errors.email && (
                 <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
@@ -417,7 +415,7 @@ export default function CreateEmployeeModal({
 
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Teléfono
+                Teléfono <span className="text-orange-600">*</span>
               </Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
@@ -425,9 +423,16 @@ export default function CreateEmployeeModal({
                   id="phone"
                   type="tel"
                   {...register('phone')}
-                  className="pl-10 h-10 focus:border-orange-500 focus:ring-orange-500"
-                  placeholder="+593 99 123 4567"
+                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
+                    touchedFields.phone && !errors.phone ? 'border-green-500' : ''
+                  } ${
+                    errors.phone ? 'border-red-500' : ''
+                  }`}
+                  placeholder="0999123456"
                 />
+                {touchedFields.phone && !errors.phone && (
+                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                )}
               </div>
               {errors.phone && (
                 <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
@@ -441,16 +446,23 @@ export default function CreateEmployeeModal({
           {/* Posición */}
           <div className="space-y-1.5">
             <Label htmlFor="position" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Posición / Cargo
+              Posición / Cargo <span className="text-orange-600">*</span>
             </Label>
             <div className="relative">
               <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <Input
                 id="position"
                 {...register('position')}
-                className="pl-10 h-10 focus:border-orange-500 focus:ring-orange-500"
+                className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
+                  touchedFields.position && !errors.position ? 'border-green-500' : ''
+                } ${
+                  errors.position ? 'border-red-500' : ''
+                }`}
                 placeholder="Ej: Estilista, Barbero, Masajista..."
               />
+              {touchedFields.position && !errors.position && (
+                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+              )}
             </div>
             {errors.position && (
               <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
@@ -511,8 +523,8 @@ export default function CreateEmployeeModal({
             </Button>
             <Button
               type="submit"
-              className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all"
-              disabled={submitting || uploadingAvatar}
+              className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!isValid || submitting || uploadingAvatar}
             >
               {submitting ? (
                 <>

@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,52 +26,12 @@ import InvoiceConfigSection from '@/components/InvoiceConfigSection'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Business } from '@/types/database'
-
-// Schema de validación para información básica
-const businessInfoSchema = z.object({
-  name: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'El nombre no puede exceder 100 caracteres'),
-  description: z.string()
-    .max(500, 'La descripción no puede exceder 500 caracteres')
-    .optional(),
-  phone: z.string()
-    .refine(
-      (val) => val === '' || /^09\d{8}$/.test(val),
-      'Ingrese un número celular válido que inicie con 09 (ej: 0987654321)'
-    )
-    .optional(),
-  email: z.string()
-    .email('Formato de email inválido')
-    .optional()
-    .or(z.literal('')),
-  website: z.string()
-    .url('Formato de URL inválido')
-    .optional()
-    .or(z.literal('')),
-  address: z.string().optional()
-})
-
-// Schema para configuraciones avanzadas
-const advancedSettingsSchema = z.object({
-  cancellation_policy_hours: z.number().min(0).max(168),
-  cancellation_policy_text: z.string().max(500),
-  allow_client_cancellation: z.boolean(),
-  allow_client_reschedule: z.boolean(),
-  min_booking_hours: z.number().min(0).max(72),
-  max_booking_days: z.number().min(1).max(365),
-  enable_reminders: z.boolean(),
-  reminder_hours_before: z.number().min(1).max(168),
-  reminder_email_enabled: z.boolean(),
-  reminder_sms_enabled: z.boolean(),
-  reminder_push_enabled: z.boolean(),
-  require_deposit: z.boolean(),
-  deposit_percentage: z.number().min(0).max(100),
-  auto_confirm_appointments: z.boolean(),
-})
-
-type BusinessInfoData = z.infer<typeof businessInfoSchema>
-type AdvancedSettingsData = z.infer<typeof advancedSettingsSchema>
+import {
+  businessInfoSchema,
+  advancedSettingsSchema,
+  type BusinessInfoData,
+  type AdvancedSettingsData
+} from '@/lib/validation'
 
 interface SpecialHour {
   id: string
@@ -1050,14 +1009,23 @@ export default function UnifiedSettingsPage() {
                         <Label htmlFor="cancellation_policy_hours" className="text-sm dark:text-gray-50">
                           Horas de anticipación
                         </Label>
-                        <Input
-                          id="cancellation_policy_hours"
-                          type="number"
-                          min="0"
-                          max="168"
-                          className="h-9"
-                          {...registerAdvanced('cancellation_policy_hours', { valueAsNumber: true })}
-                        />
+                        <div className="relative">
+                          <Input
+                            id="cancellation_policy_hours"
+                            type="number"
+                            min="0"
+                            max="168"
+                            className={`h-9 ${
+                              touchedAdvanced.cancellation_policy_hours && !errorsAdvanced.cancellation_policy_hours ? 'border-green-500' : ''
+                            } ${
+                              errorsAdvanced.cancellation_policy_hours ? 'border-red-500' : ''
+                            }`}
+                            {...registerAdvanced('cancellation_policy_hours', { valueAsNumber: true })}
+                          />
+                          {touchedAdvanced.cancellation_policy_hours && !errorsAdvanced.cancellation_policy_hours && (
+                            <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Máximo 168 horas (7 días)
                         </p>
@@ -1101,7 +1069,11 @@ export default function UnifiedSettingsPage() {
                           id="cancellation_policy_text"
                           {...registerAdvanced('cancellation_policy_text')}
                           rows={2}
-                          className="resize-none"
+                          className={`resize-none ${
+                            touchedAdvanced.cancellation_policy_text && !errorsAdvanced.cancellation_policy_text ? 'border-green-500' : ''
+                          } ${
+                            errorsAdvanced.cancellation_policy_text ? 'border-red-500' : ''
+                          }`}
                           placeholder="Describe tu política de cancelación..."
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1157,14 +1129,23 @@ export default function UnifiedSettingsPage() {
                           <Label htmlFor="deposit_percentage" className="text-sm dark:text-gray-50">
                             Porcentaje de depósito (%)
                           </Label>
-                          <Input
-                            id="deposit_percentage"
-                            type="number"
-                            min="0"
-                            max="100"
-                            className="h-9 max-w-xs"
-                            {...registerAdvanced('deposit_percentage', { valueAsNumber: true })}
-                          />
+                          <div className="relative max-w-xs">
+                            <Input
+                              id="deposit_percentage"
+                              type="number"
+                              min="0"
+                              max="100"
+                              className={`h-9 ${
+                                touchedAdvanced.deposit_percentage && !errorsAdvanced.deposit_percentage ? 'border-green-500' : ''
+                              } ${
+                                errorsAdvanced.deposit_percentage ? 'border-red-500' : ''
+                              }`}
+                              {...registerAdvanced('deposit_percentage', { valueAsNumber: true })}
+                            />
+                            {touchedAdvanced.deposit_percentage && !errorsAdvanced.deposit_percentage && (
+                              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Porcentaje del precio total del servicio
                           </p>
@@ -1220,14 +1201,23 @@ export default function UnifiedSettingsPage() {
                           <Label htmlFor="min_booking_hours" className="text-sm dark:text-gray-50">
                             Anticipación mínima (horas)
                           </Label>
-                          <Input
-                            id="min_booking_hours"
-                            type="number"
-                            min="0"
-                            max="72"
-                            className="h-9"
-                            {...registerAdvanced('min_booking_hours', { valueAsNumber: true })}
-                          />
+                          <div className="relative">
+                            <Input
+                              id="min_booking_hours"
+                              type="number"
+                              min="0"
+                              max="72"
+                              className={`h-9 ${
+                                touchedAdvanced.min_booking_hours && !errorsAdvanced.min_booking_hours ? 'border-green-500' : ''
+                              } ${
+                                errorsAdvanced.min_booking_hours ? 'border-red-500' : ''
+                              }`}
+                              {...registerAdvanced('min_booking_hours', { valueAsNumber: true })}
+                            />
+                            {touchedAdvanced.min_booking_hours && !errorsAdvanced.min_booking_hours && (
+                              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Máximo 72 horas (3 días)
                           </p>
@@ -1241,14 +1231,23 @@ export default function UnifiedSettingsPage() {
                           <Label htmlFor="max_booking_days" className="text-sm dark:text-gray-50">
                             Días máximos al futuro
                           </Label>
-                          <Input
-                            id="max_booking_days"
-                            type="number"
-                            min="1"
-                            max="365"
-                            className="h-9"
-                            {...registerAdvanced('max_booking_days', { valueAsNumber: true })}
-                          />
+                          <div className="relative">
+                            <Input
+                              id="max_booking_days"
+                              type="number"
+                              min="1"
+                              max="365"
+                              className={`h-9 ${
+                                touchedAdvanced.max_booking_days && !errorsAdvanced.max_booking_days ? 'border-green-500' : ''
+                              } ${
+                                errorsAdvanced.max_booking_days ? 'border-red-500' : ''
+                              }`}
+                              {...registerAdvanced('max_booking_days', { valueAsNumber: true })}
+                            />
+                            {touchedAdvanced.max_booking_days && !errorsAdvanced.max_booking_days && (
+                              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Máximo 365 días (1 año)
                           </p>
@@ -1373,14 +1372,23 @@ export default function UnifiedSettingsPage() {
                               <Label htmlFor="reminder_hours_before" className="text-sm dark:text-gray-50">
                                 Horas antes
                               </Label>
-                              <Input
-                                id="reminder_hours_before"
-                                type="number"
-                                min="1"
-                                max="168"
-                                className="h-9"
-                                {...registerAdvanced('reminder_hours_before', { valueAsNumber: true })}
-                              />
+                              <div className="relative">
+                                <Input
+                                  id="reminder_hours_before"
+                                  type="number"
+                                  min="1"
+                                  max="168"
+                                  className={`h-9 ${
+                                    touchedAdvanced.reminder_hours_before && !errorsAdvanced.reminder_hours_before ? 'border-green-500' : ''
+                                  } ${
+                                    errorsAdvanced.reminder_hours_before ? 'border-red-500' : ''
+                                  }`}
+                                  {...registerAdvanced('reminder_hours_before', { valueAsNumber: true })}
+                                />
+                                {touchedAdvanced.reminder_hours_before && !errorsAdvanced.reminder_hours_before && (
+                                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                                )}
+                              </div>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Máximo 168h (7 días)
                               </p>

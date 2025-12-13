@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   Dialog,
   DialogContent,
@@ -29,21 +28,9 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Save, DollarSign, Clock, AlertCircle, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
+import { useToast } from '@/hooks/use-toast'
+import { serviceFormSchema, type ServiceFormData } from '@/lib/validation'
 import type { Service } from '@/types/database'
-
-const serviceFormSchema = z.object({
-  name: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'El nombre no puede exceder 100 caracteres'),
-  description: z.string(),
-  price: z.string()
-    .min(1, 'El precio es requerido'),
-  duration_minutes: z.string()
-    .min(1, 'La duración es requerida'),
-  is_active: z.boolean()
-})
-
-type ServiceFormData = z.infer<typeof serviceFormSchema>
 
 const durationOptions = [
   { value: '15', label: '15 minutos' },
@@ -76,6 +63,7 @@ export default function EditServiceModal({
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const { toast } = useToast()
   const supabase = createClient()
 
   const {
@@ -84,7 +72,7 @@ export default function EditServiceModal({
     watch,
     setValue,
     reset,
-    formState: { errors }
+    formState: { errors, isValid }
   } = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: {
@@ -94,7 +82,7 @@ export default function EditServiceModal({
       duration_minutes: '',
       is_active: true
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   })
 
   const isActive = watch('is_active')
@@ -123,12 +111,20 @@ export default function EditServiceModal({
       const duration = parseInt(formData.duration_minutes)
 
       if (isNaN(price) || price < 0) {
-        alert('El precio debe ser un número válido mayor o igual a 0')
+        toast({
+          title: 'Error',
+          description: 'El precio debe ser un número válido mayor o igual a 0',
+          variant: 'destructive'
+        })
         return
       }
 
       if (isNaN(duration) || duration < 15) {
-        alert('La duración debe ser un número válido mayor o igual a 15 minutos')
+        toast({
+          title: 'Error',
+          description: 'La duración debe ser un número válido mayor o igual a 15 minutos',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -146,14 +142,26 @@ export default function EditServiceModal({
 
       if (error) {
         console.error('Error updating service:', error)
-        alert('Error al actualizar el servicio')
+        toast({
+          title: 'Error',
+          description: 'No se pudo actualizar el servicio',
+          variant: 'destructive'
+        })
       } else {
+        toast({
+          title: 'Servicio actualizado',
+          description: 'El servicio fue actualizado correctamente'
+        })
         onOpenChange(false)
         onSuccess()
       }
     } catch (error) {
       console.error('Error updating service:', error)
-      alert('Error al actualizar el servicio')
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el servicio',
+        variant: 'destructive'
+      })
     } finally {
       setSubmitting(false)
     }
@@ -172,15 +180,27 @@ export default function EditServiceModal({
 
       if (error) {
         console.error('Error deleting service:', error)
-        alert('Error al eliminar el servicio')
+        toast({
+          title: 'Error',
+          description: 'No se pudo eliminar el servicio',
+          variant: 'destructive'
+        })
       } else {
+        toast({
+          title: 'Servicio eliminado',
+          description: 'El servicio fue eliminado correctamente'
+        })
         setDeleteDialogOpen(false)
         onOpenChange(false)
         onSuccess()
       }
     } catch (error) {
       console.error('Error deleting service:', error)
-      alert('Error al eliminar el servicio')
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar el servicio',
+        variant: 'destructive'
+      })
     } finally {
       setDeleting(false)
     }
@@ -346,8 +366,8 @@ export default function EditServiceModal({
             </Button>
             <Button
               type="submit"
-              className="h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all order-1 sm:order-3"
-              disabled={submitting || deleting}
+              className="h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-3"
+              disabled={!isValid || submitting || deleting}
             >
               {submitting ? (
                 <>

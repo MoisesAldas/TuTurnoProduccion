@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,29 +12,11 @@ import { Switch } from '@/components/ui/switch'
 import { ArrowLeft, Save, DollarSign, Clock, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
+import { serviceFormSchema, type ServiceFormData } from '@/lib/validation'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Business, Service } from '@/types/database'
-
-// Schema de validación
-const serviceSchema = z.object({
-  name: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'El nombre no puede exceder 100 caracteres'),
-  description: z.string()
-    .max(500, 'La descripción no puede exceder 500 caracteres')
-    .optional()
-    .or(z.literal('')),
-  price: z.coerce.number()
-    .min(0, 'El precio debe ser mayor o igual a 0')
-    .max(99999.99, 'El precio no puede exceder 99,999.99'),
-  duration_minutes: z.coerce.number()
-    .min(15, 'La duración mínima es 15 minutos')
-    .max(480, 'La duración máxima es 8 horas (480 minutos)'),
-  is_active: z.boolean().default(true)
-})
-
-type ServiceFormData = z.infer<typeof serviceSchema>
 
 interface EditServicePageProps {
   params: {
@@ -50,6 +31,7 @@ export default function EditServicePage({ params }: EditServicePageProps) {
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const { authState } = useAuth()
+  const { toast } = useToast()
   const supabase = createClient()
   const router = useRouter()
 
@@ -59,9 +41,10 @@ export default function EditServicePage({ params }: EditServicePageProps) {
     watch,
     setValue,
     reset,
-    formState: { errors }
+    formState: { errors, isValid }
   } = useForm<ServiceFormData>({
-    resolver: zodResolver(serviceSchema)
+    resolver: zodResolver(serviceFormSchema),
+    mode: 'onChange'
   })
 
   const isActive = watch('is_active')
@@ -131,13 +114,17 @@ export default function EditServicePage({ params }: EditServicePageProps) {
     try {
       setSubmitting(true)
 
+      // Validar y convertir números
+      const price = parseFloat(data.price)
+      const duration = parseInt(data.duration_minutes)
+
       const { error } = await supabase
         .from('services')
         .update({
           name: data.name,
           description: data.description || null,
-          price: data.price,
-          duration_minutes: data.duration_minutes,
+          price: price,
+          duration_minutes: duration,
           is_active: data.is_active,
           updated_at: new Date().toISOString()
         })
@@ -145,13 +132,25 @@ export default function EditServicePage({ params }: EditServicePageProps) {
 
       if (error) {
         console.error('Error updating service:', error)
-        alert('Error al actualizar el servicio')
+        toast({
+          title: 'Error',
+          description: 'No se pudo actualizar el servicio',
+          variant: 'destructive'
+        })
       } else {
+        toast({
+          title: 'Servicio actualizado',
+          description: 'El servicio fue actualizado correctamente'
+        })
         router.push('/dashboard/business/services')
       }
     } catch (error) {
       console.error('Error updating service:', error)
-      alert('Error al actualizar el servicio')
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el servicio',
+        variant: 'destructive'
+      })
     } finally {
       setSubmitting(false)
     }
@@ -159,10 +158,6 @@ export default function EditServicePage({ params }: EditServicePageProps) {
 
   const handleDeleteService = async () => {
     if (!service) return
-
-    if (!confirm('¿Estás seguro de que quieres eliminar este servicio? Esta acción no se puede deshacer.')) {
-      return
-    }
 
     try {
       setDeleting(true)
@@ -174,13 +169,25 @@ export default function EditServicePage({ params }: EditServicePageProps) {
 
       if (error) {
         console.error('Error deleting service:', error)
-        alert('Error al eliminar el servicio')
+        toast({
+          title: 'Error',
+          description: 'No se pudo desactivar el servicio',
+          variant: 'destructive'
+        })
       } else {
+        toast({
+          title: 'Servicio desactivado',
+          description: 'El servicio fue desactivado correctamente'
+        })
         router.push('/dashboard/business/services')
       }
     } catch (error) {
       console.error('Error deleting service:', error)
-      alert('Error al eliminar el servicio')
+      toast({
+        title: 'Error',
+        description: 'No se pudo desactivar el servicio',
+        variant: 'destructive'
+      })
     } finally {
       setDeleting(false)
     }
@@ -346,7 +353,7 @@ export default function EditServicePage({ params }: EditServicePageProps) {
                   </div>
                   {durationMinutes && (
                     <p className="text-sm text-gray-600">
-                      Equivale a: {formatDuration(durationMinutes)}
+                      Equivale a: {formatDuration(parseInt(durationMinutes))}
                     </p>
                   )}
                   {errors.duration_minutes && (
@@ -391,23 +398,31 @@ export default function EditServicePage({ params }: EditServicePageProps) {
               {/* Botones */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <Link href="/dashboard/business/services" className="w-full sm:flex-1">
-                  <Button variant="outline" type="button" className="w-full hover:bg-gray-100 transition-colors">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="w-full h-9 hover:bg-gray-100 transition-colors"
+                    disabled={submitting}
+                  >
                     Cancelar
                   </Button>
                 </Link>
                 <Button
                   type="submit"
-                  className="w-full sm:flex-1 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  disabled={submitting}
+                  className="w-full sm:flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isValid || submitting}
                 >
                   {submitting ? (
                     <>
-                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      <div className="relative w-3.5 h-3.5 mr-2">
+                        <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
+                        <div className="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      </div>
                       Guardando...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
+                      <Save className="w-3.5 h-3.5 mr-2" />
                       Guardar Cambios
                     </>
                   )}

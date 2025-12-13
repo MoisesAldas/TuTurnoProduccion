@@ -98,6 +98,11 @@ export default function CreateAppointmentModal({
     fetchData()
   }, [businessId])
 
+  // Reset search term when client type changes
+  useEffect(() => {
+    setSearchTerm('')
+  }, [clientType])
+
   // Populate form fields when editing an appointment
   useEffect(() => {
     if (appointment) {
@@ -613,70 +618,130 @@ export default function CreateAppointmentModal({
               {clientType === 'registered' && (
                 <div className="space-y-3">
                   <Label htmlFor="client">Cliente registrado *</Label>
-                  <Input
-                    id="client-search"
-                    type="text"
-                    placeholder="Buscar cliente por nombre, teléfono o email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mb-2"
-                  />
-                  <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredClients.length > 0 ? (
-                        filteredClients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.first_name} {client.last_name}
-                            {client.phone && ` - ${client.phone}`}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-6 text-center text-sm text-gray-500">
-                          No hay clientes registrados aún
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Input
+                      id="client-search"
+                      type="text"
+                      placeholder="Escribe para buscar cliente..."
+                      value={
+                        selectedClientId
+                          ? (() => {
+                              const client = clients.find(c => c.id === selectedClientId)
+                              return client ? `${client.first_name} ${client.last_name}` : searchTerm
+                            })()
+                          : searchTerm
+                      }
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value)
+                        setSelectedClientId('')
+                      }}
+                      onFocus={() => setSearchTerm('')}
+                      className="text-base"
+                    />
+                    {searchTerm && !selectedClientId && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {filteredClients.length > 0 ? (
+                          filteredClients.map((client) => (
+                            <button
+                              key={client.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedClientId(client.id)
+                                setSearchTerm('')
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors border-b last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">
+                                {client.first_name} {client.last_name}
+                              </div>
+                              {client.phone && (
+                                <div className="text-sm text-gray-600">{client.phone}</div>
+                              )}
+                              {client.email && (
+                                <div className="text-sm text-gray-500">{client.email}</div>
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-sm text-gray-500">
+                            No se encontraron clientes
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {selectedClientId && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <Check className="w-4 h-4" />
+                      Cliente seleccionado
+                    </div>
+                  )}
                 </div>
               )}
 
               {clientType === 'business_client' && (
                 <div className="space-y-3">
                   <Label htmlFor="bc-client">Cliente del negocio *</Label>
-                  <Input
-                    id="bc-client-search"
-                    type="text"
-                    placeholder="Buscar por nombre, teléfono o email..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      setSearchTerm(value)
-                      debouncedSearch(value)
-                    }}
-                    className="mb-2"
-                  />
-                  <Select value={selectedBusinessClientId} onValueChange={setSelectedBusinessClientId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un cliente del negocio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {businessClients.length > 0 ? (
-                        businessClients.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.first_name} {c.last_name || ''}
-                            {c.phone ? ` - ${c.phone}` : ''}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-2 py-6 text-center text-sm text-gray-500">
-                          No hay clientes del negocio
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Input
+                      id="bc-client-search"
+                      type="text"
+                      placeholder="Escribe para buscar cliente..."
+                      value={
+                        selectedBusinessClientId
+                          ? (() => {
+                              const client = businessClients.find(c => c.id === selectedBusinessClientId)
+                              return client ? `${client.first_name} ${client.last_name || ''}` : searchTerm
+                            })()
+                          : searchTerm
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setSearchTerm(value)
+                        setSelectedBusinessClientId('')
+                        debouncedSearch(value)
+                      }}
+                      onFocus={() => setSearchTerm('')}
+                      className="text-base"
+                    />
+                    {searchTerm && !selectedBusinessClientId && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {businessClients.length > 0 ? (
+                          businessClients.map((c) => (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedBusinessClientId(c.id)
+                                setSearchTerm('')
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors border-b last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">
+                                {c.first_name} {c.last_name || ''}
+                              </div>
+                              {c.phone && (
+                                <div className="text-sm text-gray-600">{c.phone}</div>
+                              )}
+                              {c.email && (
+                                <div className="text-sm text-gray-500">{c.email}</div>
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-sm text-gray-500">
+                            {searchTerm ? 'No se encontraron clientes' : 'Escribe para buscar...'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {selectedBusinessClientId && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <Check className="w-4 h-4" />
+                      Cliente seleccionado
+                    </div>
+                  )}
                 </div>
               )}
             </div>

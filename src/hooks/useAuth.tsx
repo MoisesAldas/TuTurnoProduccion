@@ -376,6 +376,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signUpWithEmail = async (email: string, password: string, metadata: { first_name: string; last_name: string }, userType: 'client' | 'business_owner') => {
     try {
 
+      // Verificar si el email ya existe ANTES de hacer signUp
+      const { data: emailExists, error: checkError } = await supabase.rpc('check_email_exists', {
+        p_email: email
+      })
+
+      if (checkError) {
+        console.error('Error checking email:', checkError)
+        throw checkError
+      }
+
+      if (emailExists) {
+        throw new Error('User already registered')
+      }
+
       // Persist user type for email flows as well, so the callback can recover it
       const maxAge = 60 * 10
       const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:'

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,33 +29,7 @@ import type { Business } from '@/types/database'
 import SpecialHoursManager from '@/components/SpecialHoursManager'
 import InvoiceConfigSection from '@/components/InvoiceConfigSection'
 import { useToast } from '@/hooks/use-toast'
-
-// Schema de validación para configuraciones avanzadas
-const advancedSettingsSchema = z.object({
-  // Políticas de cancelación
-  cancellation_policy_hours: z.number().min(0).max(168),
-  cancellation_policy_text: z.string().max(500),
-  allow_client_cancellation: z.boolean(),
-  allow_client_reschedule: z.boolean(),
-
-  // Restricciones de reserva
-  min_booking_hours: z.number().min(0).max(72),
-  max_booking_days: z.number().min(1).max(365),
-
-  // Recordatorios
-  enable_reminders: z.boolean(),
-  reminder_hours_before: z.number().min(1).max(168),
-  reminder_email_enabled: z.boolean(),
-  reminder_sms_enabled: z.boolean(),
-  reminder_push_enabled: z.boolean(),
-
-  // Otras configuraciones
-  require_deposit: z.boolean(),
-  deposit_percentage: z.number().min(0).max(100),
-  auto_confirm_appointments: z.boolean(),
-})
-
-type AdvancedSettingsData = z.infer<typeof advancedSettingsSchema>
+import { advancedSettingsSchema, type AdvancedSettingsData } from '@/lib/validation'
 
 interface SpecialHour {
   id: string

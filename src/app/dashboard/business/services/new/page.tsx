@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,25 +14,11 @@ import { ArrowLeft, Save, DollarSign, Clock, Building, AlertCircle } from 'lucid
 import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/hooks/use-toast'
+import { serviceFormSchema, type ServiceFormData } from '@/lib/validation'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { Business } from '@/types/database'
-
-// Schema de validación del formulario
-const serviceFormSchema = z.object({
-  name: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'El nombre no puede exceder 100 caracteres'),
-  description: z.string(),
-  price: z.string()
-    .min(1, 'El precio es requerido'),
-  duration_minutes: z.string()
-    .min(1, 'La duración es requerida'),
-  is_active: z.boolean()
-})
-
-
-type ServiceFormData = z.infer<typeof serviceFormSchema>
 
 // Opciones predefinidas de duración
 const durationOptions = [
@@ -56,6 +41,7 @@ export default function NewServicePage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const { authState } = useAuth()
+  const { toast } = useToast()
   const supabase = createClient()
   const router = useRouter()
 
@@ -64,7 +50,7 @@ export default function NewServicePage() {
     handleSubmit,
     watch,
     setValue,
-    formState: { errors }
+    formState: { errors, isValid }
   } = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: {
@@ -74,7 +60,7 @@ export default function NewServicePage() {
       duration_minutes: '',
       is_active: true
     },
-    mode: 'onSubmit'
+    mode: 'onChange'
   })
 
 
@@ -113,7 +99,6 @@ export default function NewServicePage() {
   }
 
   const onSubmit = async (formData: ServiceFormData) => {
-
     if (!business) return
 
     try {
@@ -124,12 +109,20 @@ export default function NewServicePage() {
       const duration = parseInt(formData.duration_minutes)
 
       if (isNaN(price) || price < 0) {
-        alert('El precio debe ser un número válido mayor o igual a 0')
+        toast({
+          title: 'Error',
+          description: 'El precio debe ser un número válido mayor o igual a 0',
+          variant: 'destructive'
+        })
         return
       }
 
       if (isNaN(duration) || duration < 15) {
-        alert('La duración debe ser un número válido mayor o igual a 15 minutos')
+        toast({
+          title: 'Error',
+          description: 'La duración debe ser un número válido mayor o igual a 15 minutos',
+          variant: 'destructive'
+        })
         return
       }
 
@@ -148,13 +141,25 @@ export default function NewServicePage() {
 
       if (error) {
         console.error('Error creating service:', error)
-        alert('Error al crear el servicio')
+        toast({
+          title: 'Error',
+          description: 'No se pudo crear el servicio',
+          variant: 'destructive'
+        })
       } else {
+        toast({
+          title: 'Servicio creado',
+          description: 'El servicio fue creado correctamente'
+        })
         router.push('/dashboard/business/services')
       }
     } catch (error) {
       console.error('Error creating service:', error)
-      alert('Error al crear el servicio')
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear el servicio',
+        variant: 'destructive'
+      })
     } finally {
       setSubmitting(false)
     }
@@ -356,14 +361,19 @@ export default function NewServicePage() {
               {/* Botones */}
               <div className="flex gap-2">
                 <Link href="/dashboard/business/services" className="flex-1">
-                  <Button variant="outline" type="button" className="w-full h-9 hover:bg-gray-100 transition-colors">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="w-full h-9 hover:bg-gray-100 transition-colors"
+                    disabled={submitting}
+                  >
                     Cancelar
                   </Button>
                 </Link>
                 <Button
                   type="submit"
-                  className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all"
-                  disabled={submitting}
+                  className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isValid || submitting}
                 >
                   {submitting ? (
                     <>

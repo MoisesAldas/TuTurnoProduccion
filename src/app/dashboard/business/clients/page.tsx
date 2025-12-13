@@ -1,9 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -20,6 +24,7 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
+import { clientFormSchema, type ClientFormData } from '@/lib/validation'
 import {
   Plus,
   Edit,
@@ -96,6 +101,7 @@ export default function ClientsPage() {
 
   const [loading, setLoading] = useState(true)
   const [fetching, setFetching] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   // Dialog state
   const [openDialog, setOpenDialog] = useState(false)
@@ -105,13 +111,26 @@ export default function ClientsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [clientToDelete, setClientToDelete] = useState<string | null>(null)
 
-  // Form
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
-  const [notes, setNotes] = useState('')
-  const [isActive, setIsActive] = useState(true)
+  // Form with React Hook Form + Zod validation
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isValid, touchedFields }
+  } = useForm<ClientFormData>({
+    resolver: zodResolver(clientFormSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      notes: '',
+      is_active: true
+    }
+  })
 
   useEffect(() => {
     if (authState.user) loadBusiness()
@@ -173,12 +192,14 @@ export default function ClientsPage() {
 
   const resetForm = () => {
     setEditing(null)
-    setFirstName('')
-    setLastName('')
-    setPhone('')
-    setEmail('')
-    setNotes('')
-    setIsActive(true)
+    reset({
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      notes: '',
+      is_active: true
+    })
   }
 
   const openCreate = () => {
@@ -195,12 +216,14 @@ export default function ClientsPage() {
       if (error) throw error
       const r = data as BusinessClient
       setEditing(r)
-      setFirstName(r.first_name || '')
-      setLastName(r.last_name || '')
-      setPhone(r.phone || '')
-      setEmail(r.email || '')
-      setNotes(r.notes || '')
-      setIsActive(!!r.is_active)
+      reset({
+        first_name: r.first_name || '',
+        last_name: r.last_name || '',
+        phone: r.phone || '',
+        email: r.email || '',
+        notes: r.notes || '',
+        is_active: !!r.is_active
+      })
       setOpenDialog(true)
     } catch (e) {
       toast({
@@ -211,25 +234,17 @@ export default function ClientsPage() {
     }
   }
 
-  const saveClient = async () => {
-    if (!firstName.trim()) {
-      toast({
-        title: 'Campo requerido',
-        description: 'El nombre es obligatorio',
-        variant: 'destructive'
-      })
-      return
-    }
-
+  const onSubmit = async (formData: ClientFormData) => {
     try {
+      setSubmitting(true)
       const { data, error } = await supabase.rpc('upsert_business_client', {
         p_business_id: businessId,
-        p_first_name: firstName.trim(),
-        p_last_name: lastName.trim() || null,
-        p_phone: phone.trim() || null,
-        p_email: email.trim() || null,
-        p_notes: notes.trim() || null,
-        p_is_active: isActive,
+        p_first_name: formData.first_name, // Ya viene en MAYÚSCULAS por Zod
+        p_last_name: formData.last_name,   // Ya viene en MAYÚSCULAS por Zod
+        p_phone: formData.phone || null,
+        p_email: formData.email || null,
+        p_notes: formData.notes || null,
+        p_is_active: formData.is_active,
         p_client_id: editing?.id ?? null,
       })
       if (error) throw error
@@ -248,6 +263,8 @@ export default function ClientsPage() {
         description: 'No se pudo guardar el cliente',
         variant: 'destructive'
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -824,81 +841,138 @@ export default function ClientsPage() {
                         <User className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                         Nombre *
                       </label>
-                      <Input
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Ej: Juan"
-                        className="focus:border-orange-500 focus:ring-orange-500"
-                      />
+                      <div className="relative">
+                        <Input
+                          {...register('first_name')}
+                          placeholder="Ej: Juan"
+                          className={`focus:border-orange-500 focus:ring-orange-500 ${
+                            touchedFields.first_name && !errors.first_name ? 'border-green-500' : ''
+                          } ${
+                            errors.first_name ? 'border-red-500' : ''
+                          }`}
+                        />
+                        {touchedFields.first_name && !errors.first_name && (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      {errors.first_name && (
+                        <p className="text-sm text-red-500">{errors.first_name.message}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Apellido</label>
-                      <Input
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Ej: Pérez"
-                      />
+                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Apellido *</label>
+                      <div className="relative">
+                        <Input
+                          {...register('last_name')}
+                          placeholder="Ej: Pérez"
+                          className={`focus:border-orange-500 focus:ring-orange-500 ${
+                            touchedFields.last_name && !errors.last_name ? 'border-green-500' : ''
+                          } ${
+                            errors.last_name ? 'border-red-500' : ''
+                          }`}
+                        />
+                        {touchedFields.last_name && !errors.last_name && (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      {errors.last_name && (
+                        <p className="text-sm text-red-500">{errors.last_name.message}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                         <Phone className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                        Teléfono
+                        Teléfono *
                       </label>
-                      <Input
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="Ej: 0991234567"
-                      />
+                      <div className="relative">
+                        <Input
+                          {...register('phone')}
+                          placeholder="Ej: 0991234567"
+                          className={`focus:border-orange-500 focus:ring-orange-500 ${
+                            touchedFields.phone && !errors.phone ? 'border-green-500' : ''
+                          } ${
+                            errors.phone ? 'border-red-500' : ''
+                          }`}
+                        />
+                        {touchedFields.phone && !errors.phone && (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      {errors.phone && (
+                        <p className="text-sm text-red-500">{errors.phone.message}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                         <Mail className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                        Email
+                        Email *
                       </label>
-                      <Input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Ej: juan@email.com"
-                      />
+                      <div className="relative">
+                        <Input
+                          type="email"
+                          {...register('email')}
+                          placeholder="Ej: juan@email.com"
+                          className={`focus:border-orange-500 focus:ring-orange-500 ${
+                            touchedFields.email && !errors.email ? 'border-green-500' : ''
+                          } ${
+                            errors.email ? 'border-red-500' : ''
+                          }`}
+                        />
+                        {touchedFields.email && !errors.email && (
+                          <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      {errors.email && (
+                        <p className="text-sm text-red-500">{errors.email.message}</p>
+                      )}
+                    </div>
+                    <div className="sm:col-span-2">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                        * Debe proporcionar al menos un método de contacto (teléfono o email)
+                      </p>
                     </div>
                     <div className="sm:col-span-2 space-y-2">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                         <FileText className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                        Notas
+                        Notas (opcional)
                       </label>
-                      <Input
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
+                      <Textarea
+                        {...register('notes')}
                         placeholder="Notas adicionales..."
+                        rows={3}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
-                      <Select value={isActive ? 'true' : 'false'} onValueChange={(v: any) => setIsActive(v === 'true')}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="true">Activo</SelectItem>
-                          <SelectItem value="false">Inactivo</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {errors.notes && (
+                        <p className="text-sm text-red-500">{errors.notes.message}</p>
+                      )}
                     </div>
                   </div>
                   <DialogFooter className="gap-2">
                     <Button
+                      type="button"
                       variant="outline"
                       onClick={() => setOpenDialog(false)}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="flex-1 h-9"
+                      disabled={submitting}
                     >
                       Cancelar
                     </Button>
                     <Button
-                      onClick={saveClient}
-                      className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+                      type="submit"
+                      className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!isValid || submitting}
+                      onClick={handleSubmit(onSubmit)}
                     >
-                      Guardar
+                      {submitting ? (
+                        <>
+                          <div className="relative w-3.5 h-3.5 mr-2">
+                            <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
+                            <div className="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                          {editing ? 'Actualizando...' : 'Guardando...'}
+                        </>
+                      ) : (
+                        editing ? 'Actualizar' : 'Guardar'
+                      )}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

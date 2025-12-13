@@ -13,7 +13,9 @@
       "Bash(npm run dev:*)",
       "Bash(git checkout:*)",
       "mcp__shadcn__get_project_registries",
-      "mcp__shadcn__list_items_in_registries"
+      "mcp__shadcn__list_items_in_registries",
+      "Bash(npx tsc:*)",
+      "Bash(exit 0)"
     ],
     "deny": [],
     "ask": []
