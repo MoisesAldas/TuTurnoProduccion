@@ -296,18 +296,38 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        {pathname !== '/dashboard/business' && (
-          <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
-            <div className="flex items-center space-x-4">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Menu className="w-6 h-6 text-gray-600" />
-              </button>
+        {/* Mobile Header - Always visible on mobile */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm lg:hidden">
+          <div className="flex items-center space-x-4">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Abrir menú de navegación"
+            >
+              <Menu className="w-6 h-6 text-gray-600" />
+            </button>
+            <Logo color="black" size="sm" />
+          </div>
 
+          <div className="flex items-center space-x-4">
+            {/* Notifications */}
+            <NotificationBell userId={authState.user?.id} />
+
+            {/* User Avatar */}
+            <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
+              <AvatarImage src={authState.user?.avatar_url} />
+              <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
+                {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        </header>
+
+        {/* Desktop Top Header - Only for non-home pages */}
+        {pathname !== '/dashboard/business' && (
+          <header className="hidden lg:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm">
+            <div className="flex items-center space-x-4">
               <h1 className="text-xl font-bold text-gray-900">
                 {businessName || 'Mi Negocio'}
               </h1>
