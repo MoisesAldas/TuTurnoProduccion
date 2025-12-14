@@ -75,7 +75,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden min-h-screen bg-gray-50 dark:bg-slate-950">
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
@@ -110,7 +110,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             {/* Desktop collapsed logo */}
             <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-500 to-green-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/50 hover:scale-110 transition-transform duration-300">
+              <div className="w-10 h-10 rounded-xl bg-theme-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-theme-500/50 hover:scale-110 transition-transform duration-300">
                 T
               </div>
             </div>
@@ -133,7 +133,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <Link key={item.name} href={item.href} prefetch={true} onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-500 ease-in-out
                   ${isActive
-                    ? 'bg-gradient-to-r from-emerald-600 via-teal-500 to-green-500 text-white shadow-lg shadow-emerald-500/30 scale-[1.02]'
+                    ? 'bg-theme-600 text-white shadow-lg shadow-theme-500/30 scale-[1.02]'
                     : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:shadow-md hover:scale-[1.02]'
                   }`}>
                 <Icon className={`flex-shrink-0 w-5 h-5 transition-all duration-500 ease-in-out ${collapsed ? 'lg:mx-auto mr-3' : 'mr-3'} ${isActive ? 'text-white scale-110' : 'text-gray-400 group-hover:text-white group-hover:scale-110'}`} />
@@ -149,9 +149,9 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="p-3 border-t border-gray-700">
           <div className={`space-y-2 transition-all duration-500 ${collapsed ? 'lg:hidden' : ''}`}>
             <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/50 transition-all duration-300 cursor-pointer group">
-              <Avatar className="w-9 h-9 border-2 border-emerald-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <Avatar className="w-9 h-9 border-2 border-theme-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <AvatarImage src={authState.user?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-600 text-white text-sm">
+                <AvatarFallback className="bg-theme-600 text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -170,9 +170,9 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
           <div className={`transition-all duration-500 ${collapsed ? 'lg:block' : 'lg:hidden'} hidden`}>
             <div className="flex flex-col items-center space-y-3">
-               <Avatar className="w-10 h-10 border-2 border-emerald-500 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
+               <Avatar className="w-10 h-10 border-2 border-theme-500 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
                 <AvatarImage src={authState.user?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-emerald-600 to-teal-600 text-white text-xs">
+                <AvatarFallback className="bg-theme-600 text-white text-xs">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -191,28 +191,35 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm">
+        {/* Top Header - Mobile Menu Button */}
+        <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 shadow-sm lg:hidden">
           <div className="flex items-center space-x-4">
+            {/* Mobile Menu Button */}
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               aria-label="Abrir menú de navegación"
             >
-              <Menu className="w-6 h-6 text-gray-600" />
+              <Menu className="w-6 h-6 text-gray-600 dark:text-gray-400" />
             </button>
-            <h1 className="text-xl font-bold text-gray-900">
-              {navigation.find(item => item.href === pathname)?.name || 'Dashboard'}
-            </h1>
+
+            <Logo color="black" size="sm" />
           </div>
+
           <div className="flex items-center space-x-4">
-            <Button onClick={() => router.push('/marketplace')} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg">
-              <PlusSquare className="w-4 h-4 mr-2" />
-              Nueva Reserva
-            </Button>
+            {/* User Avatar */}
+            <Avatar className="w-9 h-9 border-2 border-theme-500 cursor-pointer">
+              <AvatarImage src={authState.user?.avatar_url} />
+              <AvatarFallback className="bg-theme-600 text-white text-sm">
+                {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'U'}
+              </AvatarFallback>
+            </Avatar>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-slate-50">
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto bg-gray-50 dark:bg-slate-950">
           {children}
         </main>
       </div>

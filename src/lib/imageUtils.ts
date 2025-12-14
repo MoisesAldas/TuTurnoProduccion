@@ -164,3 +164,16 @@ export const formatFileSize = (bytes: number): string => {
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
+
+/**
+ * Comprime una imagen de comprobante de pago
+ * Optimizado para legibilidad de números y datos bancarios
+ */
+export const compressReceiptImage = async (file: File): Promise<File> => {
+  return compressImage(file, {
+    maxWidth: 1200,
+    maxHeight: 1200,
+    quality: 0.90,
+    maxSizeKB: 500
+  })
+}

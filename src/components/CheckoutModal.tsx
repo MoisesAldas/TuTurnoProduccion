@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, DollarSign, CreditCard, Banknote, ArrowRight, Check, AlertCircle, Settings } from 'lucide-react'
+import { X, DollarSign, CreditCard, Banknote, ArrowRight, Check, AlertCircle, Settings, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabaseClient'
+import { validateImageFile, compressReceiptImage } from '@/lib/imageUtils'
 
 interface CheckoutModalProps {
   appointmentId: string
@@ -33,6 +34,10 @@ export default function CheckoutModal({
   const [transferReference, setTransferReference] = useState('')
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
+  const [receiptPreview, setReceiptPreview] = useState<string>('')
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const { toast } = useToast()
   const router = useRouter()
@@ -49,6 +54,85 @@ export default function CheckoutModal({
     setError('')
     if (method === 'cash') {
       setTransferReference('')
+      setReceiptFile(null)
+      setReceiptPreview('')
+    }
+  }
+
+  const handleReceiptSelect = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validar archivo
+    const validation = validateImageFile(file)
+    if (!validation.isValid) {
+      setError(validation.error || 'Archivo inválido')
+      return
+    }
+
+    try {
+      setUploadingReceipt(true)
+      setError('')
+
+      // Comprimir imagen (sin crop, solo compresión)
+      const compressed = await compressReceiptImage(file)
+
+      // Crear preview
+      const preview = URL.createObjectURL(compressed)
+      setReceiptFile(compressed)
+      setReceiptPreview(preview)
+    } catch (error) {
+      console.error('Error al procesar imagen:', error)
+      setError('Error al procesar la imagen. Por favor intenta nuevamente.')
+    } finally {
+      setUploadingReceipt(false)
+    }
+  }
+
+  const uploadReceipt = async (invoiceId: string, businessId: string): Promise<string | null> => {
+    if (!receiptFile) return null
+
+    try {
+      // 1. Crear carpeta del negocio si no existe
+      const businessFolderKeep = `${businessId}/.keep`
+      await supabase.storage
+        .from('payment-receipts')
+        .upload(businessFolderKeep, new Blob([''], { type: 'text/plain' }), {
+          upsert: true
+        })
+
+      // 2. Crear carpeta de la factura si no existe
+      const invoiceFolderKeep = `${businessId}/${invoiceId}/.keep`
+      await supabase.storage
+        .from('payment-receipts')
+        .upload(invoiceFolderKeep, new Blob([''], { type: 'text/plain' }), {
+          upsert: true
+        })
+
+      // 3. Subir el comprobante
+      const fileExt = receiptFile.name.split('.').pop()
+      const fileName = `${businessId}/${invoiceId}/${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('payment-receipts')
+        .upload(fileName, receiptFile, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('Error uploading receipt:', uploadError)
+        throw uploadError
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('payment-receipts')
+        .getPublicUrl(fileName)
+
+      return publicUrl
+    } catch (error) {
+      console.error('Error in uploadReceipt:', error)
+      return null
     }
   }
 
@@ -69,10 +153,10 @@ export default function CheckoutModal({
       setProcessing(true)
       setError('')
 
-      // 1. Get the appointment to check its status
+      // 1. Get the appointment to check its status and business_id
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
-        .select('status')
+        .select('status, business_id')
         .eq('id', appointmentId)
         .single()
 
@@ -119,7 +203,16 @@ export default function CheckoutModal({
         throw new Error('No se pudo obtener la factura. Por favor intenta nuevamente.')
       }
 
-      // 4. Create payment record
+      // 4. Upload receipt if exists (for transfers)
+      let receiptUrl: string | null = null
+      if (receiptFile && paymentMethod === 'transfer') {
+        receiptUrl = await uploadReceipt(invoice.id, appointment.business_id)
+        if (!receiptUrl) {
+          console.warn('⚠️ Failed to upload receipt, continuing without it')
+        }
+      }
+
+      // 5. Create payment record
       const { error: paymentError } = await supabase
         .from('payments')
         .insert({
@@ -127,6 +220,9 @@ export default function CheckoutModal({
           payment_method: paymentMethod,
           amount: totalAmount,
           transfer_reference: paymentMethod === 'transfer' ? transferReference.trim() : null,
+          receipt_url: receiptUrl,
+          receipt_filename: receiptFile?.name || null,
+          receipt_uploaded_at: receiptUrl ? new Date().toISOString() : null,
           payment_date: new Date().toISOString()
         })
 
@@ -138,7 +234,7 @@ export default function CheckoutModal({
         throw paymentError
       }
 
-      // 5. Send invoice email
+      // 6. Send invoice email
       try {
         await fetch('/api/send-invoice-notification', {
           method: 'POST',
@@ -150,7 +246,7 @@ export default function CheckoutModal({
         // Don't block the operation if email fails
       }
 
-      // 6. Success!
+      // 7. Success!
       toast({
         title: '¡Pago registrado exitosamente!',
         description: `El pago de ${formatPrice(totalAmount)} ha sido registrado correctamente.`,
@@ -342,25 +438,103 @@ export default function CheckoutModal({
 
           {/* Transfer Reference Input */}
           {paymentMethod === 'transfer' && (
-            <div className="animate-in slide-in-from-top-2 duration-300">
-              <Label htmlFor="transfer-reference" className="text-gray-900 font-medium mb-2 block">
-                Número de Referencia *
-              </Label>
-              <Input
-                id="transfer-reference"
-                type="text"
-                placeholder="Ej: 1234567890"
-                value={transferReference}
-                onChange={(e) => {
-                  setTransferReference(e.target.value)
-                  setError('')
-                }}
-                disabled={processing}
-                className="border-2 border-gray-200 focus:border-orange-500 rounded-lg p-3"
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Este número debe ser único y corresponder a la referencia de la transferencia bancaria
-              </p>
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+              <div>
+                <Label htmlFor="transfer-reference" className="text-gray-900 font-medium mb-2 block">
+                  Número de Referencia *
+                </Label>
+                <Input
+                  id="transfer-reference"
+                  type="text"
+                  placeholder="Ej: 1234567890"
+                  value={transferReference}
+                  onChange={(e) => {
+                    setTransferReference(e.target.value)
+                    setError('')
+                  }}
+                  disabled={processing}
+                  className="border-2 border-gray-200 focus:border-orange-500 rounded-lg p-3"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Este número debe ser único y corresponder a la referencia de la transferencia bancaria
+                </p>
+              </div>
+
+              {/* Receipt Upload Section */}
+              <div className="pt-4 border-t border-gray-200">
+                <Label className="text-gray-900 font-medium mb-2 block">
+                  Comprobante de pago (opcional)
+                </Label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleReceiptSelect}
+                  disabled={processing || uploadingReceipt}
+                  className="hidden"
+                  aria-label="Subir comprobante de pago"
+                />
+
+                {!receiptPreview ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={processing || uploadingReceipt}
+                    className="w-full border-2 border-dashed border-gray-300 hover:border-orange-400 h-auto py-4"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Camera className="w-6 h-6 text-gray-400" />
+                      <span className="text-sm">
+                        {uploadingReceipt ? 'Procesando...' : 'Subir Comprobante'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        Mobile: Tomar foto | Web: Seleccionar archivo
+                      </span>
+                    </div>
+                  </Button>
+                ) : (
+                  <div className="relative rounded-lg overflow-hidden border-2 border-orange-200">
+                    <img
+                      src={receiptPreview}
+                      alt="Comprobante"
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={processing || uploadingReceipt}
+                        className="bg-white/90 backdrop-blur-sm hover:bg-white"
+                      >
+                        <Camera className="w-4 h-4 mr-1" />
+                        Cambiar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setReceiptFile(null)
+                          setReceiptPreview('')
+                        }}
+                        disabled={processing}
+                        className="bg-red-500/90 backdrop-blur-sm hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500 mt-2">
+                  Opcional: Sube una foto del comprobante de transferencia para tener un respaldo visual
+                </p>
+              </div>
             </div>
           )}
 

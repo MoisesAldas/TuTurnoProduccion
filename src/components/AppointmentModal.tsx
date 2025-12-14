@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { X, User, Phone, Mail, Clock, DollarSign, Calendar, FileText, AlertCircle, Edit, Check, MoreVertical } from 'lucide-react'
+import { X, User, Phone, Mail, Clock, DollarSign, Calendar, FileText, AlertCircle, Edit, Check, MoreVertical, FileImage } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabaseClient'
 import { formatSpanishDate } from '@/lib/dateUtils'
+import ReceiptViewer from './ReceiptViewer'
 
 // Lazy load CheckoutModal
 const CheckoutModal = dynamic(() => import('./CheckoutModal'), {
@@ -68,6 +69,8 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
   const [showCheckout, setShowCheckout] = useState(false)
   const [hasPendingPayment, setHasPendingPayment] = useState(false)
   const [checkingPayment, setCheckingPayment] = useState(false)
+  const [receiptViewerOpen, setReceiptViewerOpen] = useState(false)
+  const [paymentReceipt, setPaymentReceipt] = useState<{url: string, reference: string} | null>(null)
   const supabase = createClient()
   const { toast } = useToast()
 
@@ -91,6 +94,35 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
           } else {
             setHasPendingPayment(false)
           }
+
+          // If invoice exists, check for payment receipt
+          if (invoice) {
+            const { data: paymentData } = await supabase
+              .from('payments')
+              .select('payment_method, transfer_reference, receipt_url')
+              .eq('invoice_id', invoice.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+
+            console.log('🧾 Payment Receipt Debug:', {
+              hasPaymentData: !!paymentData,
+              receipt_url: paymentData?.receipt_url,
+              transfer_reference: paymentData?.transfer_reference,
+              payment_method: paymentData?.payment_method
+            })
+
+            if (paymentData && paymentData.receipt_url) {
+              setPaymentReceipt({
+                url: paymentData.receipt_url,
+                reference: paymentData.transfer_reference || ''
+              })
+              console.log('✅ Receipt found! Button should appear.')
+            } else {
+              setPaymentReceipt(null)
+              console.log('❌ No receipt_url found. Button will NOT appear.')
+            }
+          }
         } catch (error) {
           console.error('Error checking payment status:', error)
           setHasPendingPayment(true) // Show button by default on error
@@ -99,6 +131,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
         }
       } else {
         setHasPendingPayment(false)
+        setPaymentReceipt(null)
       }
     }
 
@@ -545,6 +578,18 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
 
             {/* Botones principales */}
             <div className="flex-1 flex flex-col sm:flex-row items-stretch gap-3">
+              {/* Botón Ver Comprobante */}
+              {paymentReceipt && (
+                <Button
+                  onClick={() => setReceiptViewerOpen(true)}
+                  variant="outline"
+                  className="w-full sm:flex-1 border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-all hover:scale-105"
+                >
+                  <FileImage className="w-4 h-4 mr-2" />
+                  <span className="truncate">Ver Comprobante</span>
+                </Button>
+              )}
+
               {/* Botón principal: Finalizar y Cobrar / Registrar Pago */}
               {hasPendingPayment && !checkingPayment && ['confirmed', 'in_progress', 'completed'].includes(appointment.status) && (
                 <Button
@@ -582,6 +627,16 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
           </div>
         </div>
       </div>
+
+      {/* Receipt Viewer Modal */}
+      {paymentReceipt && (
+        <ReceiptViewer
+          isOpen={receiptViewerOpen}
+          onClose={() => setReceiptViewerOpen(false)}
+          receiptUrl={paymentReceipt.url}
+          transferReference={paymentReceipt.reference}
+        />
+      )}
     </div>
   )
 }

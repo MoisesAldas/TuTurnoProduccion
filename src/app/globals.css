@@ -43,6 +43,18 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --theme-50: #EDF8F3;
+    --theme-100: #CCEBDD;
+    --theme-200: #ABDEC7;
+    --theme-300: #89D1B1;
+    --theme-400: #68C49B;
+    --theme-500: #47B885;
+    --theme-600: #3B976D;
+    --theme-700: #2E7655;
+    --theme-800: #22573F;
+    --theme-900: #143325;
+    --theme-950: #07120D;
   }
   
   .dark {

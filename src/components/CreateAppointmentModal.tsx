@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
-import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Users } from 'lucide-react'
+import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -57,6 +57,8 @@ export default function CreateAppointmentModal({
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [showRegisteredDropdown, setShowRegisteredDropdown] = useState(false)
+  const [showBusinessClientDropdown, setShowBusinessClientDropdown] = useState(false)
 
   // Form state
   const [currentStep, setCurrentStep] = useState(1)
@@ -619,10 +621,11 @@ export default function CreateAppointmentModal({
                 <div className="space-y-3">
                   <Label htmlFor="client">Cliente registrado *</Label>
                   <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     <Input
                       id="client-search"
                       type="text"
-                      placeholder="Escribe para buscar cliente..."
+                      placeholder="Buscar o seleccionar cliente..."
                       value={
                         selectedClientId
                           ? (() => {
@@ -634,11 +637,19 @@ export default function CreateAppointmentModal({
                       onChange={(e) => {
                         setSearchTerm(e.target.value)
                         setSelectedClientId('')
+                        setShowRegisteredDropdown(true)
                       }}
-                      onFocus={() => setSearchTerm('')}
-                      className="text-base"
+                      onFocus={() => {
+                        setSearchTerm('')
+                        setShowRegisteredDropdown(true)
+                      }}
+                      onBlur={() => {
+                        // Delay to allow click on dropdown items
+                        setTimeout(() => setShowRegisteredDropdown(false), 200)
+                      }}
+                      className="text-base pl-10"
                     />
-                    {searchTerm && !selectedClientId && (
+                    {showRegisteredDropdown && !selectedClientId && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {filteredClients.length > 0 ? (
                           filteredClients.map((client) => (
@@ -648,6 +659,7 @@ export default function CreateAppointmentModal({
                               onClick={() => {
                                 setSelectedClientId(client.id)
                                 setSearchTerm('')
+                                setShowRegisteredDropdown(false)
                               }}
                               className="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors border-b last:border-b-0"
                             >
@@ -664,7 +676,7 @@ export default function CreateAppointmentModal({
                           ))
                         ) : (
                           <div className="px-4 py-6 text-center text-sm text-gray-500">
-                            No se encontraron clientes
+                            {clients.length === 0 ? 'No hay clientes registrados' : 'No se encontraron clientes'}
                           </div>
                         )}
                       </div>
@@ -683,10 +695,11 @@ export default function CreateAppointmentModal({
                 <div className="space-y-3">
                   <Label htmlFor="bc-client">Cliente del negocio *</Label>
                   <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     <Input
                       id="bc-client-search"
                       type="text"
-                      placeholder="Escribe para buscar cliente..."
+                      placeholder="Buscar o seleccionar cliente..."
                       value={
                         selectedBusinessClientId
                           ? (() => {
@@ -699,12 +712,20 @@ export default function CreateAppointmentModal({
                         const value = e.target.value
                         setSearchTerm(value)
                         setSelectedBusinessClientId('')
+                        setShowBusinessClientDropdown(true)
                         debouncedSearch(value)
                       }}
-                      onFocus={() => setSearchTerm('')}
-                      className="text-base"
+                      onFocus={() => {
+                        setSearchTerm('')
+                        setShowBusinessClientDropdown(true)
+                      }}
+                      onBlur={() => {
+                        // Delay to allow click on dropdown items
+                        setTimeout(() => setShowBusinessClientDropdown(false), 200)
+                      }}
+                      className="text-base pl-10"
                     />
-                    {searchTerm && !selectedBusinessClientId && (
+                    {showBusinessClientDropdown && !selectedBusinessClientId && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {businessClients.length > 0 ? (
                           businessClients.map((c) => (
@@ -714,6 +735,7 @@ export default function CreateAppointmentModal({
                               onClick={() => {
                                 setSelectedBusinessClientId(c.id)
                                 setSearchTerm('')
+                                setShowBusinessClientDropdown(false)
                               }}
                               className="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors border-b last:border-b-0"
                             >
@@ -730,7 +752,7 @@ export default function CreateAppointmentModal({
                           ))
                         ) : (
                           <div className="px-4 py-6 text-center text-sm text-gray-500">
-                            {searchTerm ? 'No se encontraron clientes' : 'Escribe para buscar...'}
+                            {businessClients.length === 0 ? 'No hay clientes guardados' : 'No se encontraron clientes'}
                           </div>
                         )}
                       </div>
