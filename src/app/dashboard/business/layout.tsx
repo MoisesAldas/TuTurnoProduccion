@@ -26,7 +26,9 @@ import {
   X,
   Clock,
   Sliders,
-  List
+  List,
+  Pin,
+  PinOff
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -57,9 +59,17 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
   const { authState, signOut } = useAuth()
   const [collapsed, setCollapsed] = useState(true) // Start collapsed for hover effect
+  const [isPinned, setIsPinned] = useState(false) // Pin sidebar state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [businessName, setBusinessName] = useState<string>('')
   const supabase = createClient()
+
+  // Mantener el sidebar expandido cuando está pinned
+  useEffect(() => {
+    if (isPinned) {
+      setCollapsed(false)
+    }
+  }, [isPinned])
 
   useEffect(() => {
     if (authState.user) {
@@ -135,8 +145,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Sidebar */}
       <aside
-        onMouseEnter={() => setCollapsed(false)}
-        onMouseLeave={() => setCollapsed(true)}
+        onMouseEnter={() => !isPinned && setCollapsed(false)}
+        onMouseLeave={() => !isPinned && setCollapsed(true)}
         className={`${
           collapsed ? 'lg:w-20' : 'lg:w-64'
         }
@@ -147,8 +157,25 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         flex flex-col border-r border-gray-700 shadow-2xl
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         group
+        relative
         `}
       >
+        {/* Desktop Pin/Unpin Button - Top Right Corner */}
+        <button
+          type="button"
+          onClick={() => setIsPinned(!isPinned)}
+          className={`hidden lg:block absolute top-1 right-1 z-10 p-1 hover:bg-gray-700 rounded-md transition-all duration-300 ${
+            collapsed && !isPinned ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+          title={isPinned ? 'Desfijar sidebar' : 'Fijar sidebar'}
+        >
+          {isPinned ? (
+            <PinOff className="w-3.5 h-3.5 text-orange-400" />
+          ) : (
+            <Pin className="w-3.5 h-3.5 text-gray-400 hover:text-orange-400 transition-colors" />
+          )}
+        </button>
+
         {/* Logo Section */}
         <div className="h-16 flex items-center justify-center px-4 border-b border-gray-700/50 relative">
           {/* Logo - Centered, always visible with smooth animations */}
@@ -174,6 +201,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
           {/* Mobile Close Button */}
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(false)}
             className="lg:hidden p-1.5 hover:bg-gray-700 rounded-lg transition-colors absolute right-4"
           >

@@ -7,11 +7,14 @@ import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useRealtimeAppointments } from '@/hooks/useRealtimeAppointments'
 import { parseDateString, toDateString } from '@/lib/dateUtils'
+import { es } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Calendar, ChevronLeft, ChevronRight, Plus, Settings, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import type { Business, Employee, Appointment } from '@/types/database'
@@ -50,6 +53,7 @@ export default function AppointmentsPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [allowOverlapping, setAllowOverlapping] = useState(false)
   const [updatingSettings, setUpdatingSettings] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const [createModalData, setCreateModalData] = useState<{
     date: Date
     time?: string
@@ -516,10 +520,28 @@ export default function AppointmentsPage() {
             </div>
 
             {/* Selector de fecha con calendario */}
-            <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-            </Button>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300">
+                  <Calendar className="w-4 h-4" />
+                  {selectedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date)
+                      setCalendarOpen(false)
+                    }
+                  }}
+                  initialFocus
+                  locale={es}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Controles de vista y filtros */}

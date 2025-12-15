@@ -106,7 +106,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <Logo color="white" size="sm" className="lg:hidden" />
             {/* Desktop expanded logo */}
             <div className={`hidden lg:flex items-center justify-center transition-all duration-500 ${collapsed ? 'opacity-0 scale-75 w-0' : 'opacity-100 scale-100 w-auto'}`}>
-                <Logo color="white" size="md" />
+               <Logo color="white" size="lg" />
             </div>
             {/* Desktop collapsed logo */}
             <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
