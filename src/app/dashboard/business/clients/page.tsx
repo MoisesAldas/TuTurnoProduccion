@@ -822,7 +822,7 @@ export default function ClientsPage() {
               <Dialog open={openDialog} onOpenChange={setOpenDialog}>
                 <DialogTrigger asChild>
                   <Button
-                    className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-md hover:shadow-lg transition-all"
+                    className="w-full sm:w-auto  bg-orange-600 hover:bg-orange-700 shadow-md hover:shadow-lg transition-all"
                     onClick={openCreate}
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -958,7 +958,7 @@ export default function ClientsPage() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 h-9 bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!isValid || submitting}
                       onClick={handleSubmit(onSubmit)}
                     >
@@ -1078,7 +1078,7 @@ export default function ClientsPage() {
                 size="sm"
                 onClick={() => setViewMode('grid')}
                 className={viewMode === 'grid'
-                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700'
+                  ? ' bg-orange-600 hover:bg-orange-700'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
                 }
               >
@@ -1090,7 +1090,7 @@ export default function ClientsPage() {
                 size="sm"
                 onClick={() => setViewMode('table')}
                 className={viewMode === 'table'
-                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white hover:from-orange-700 hover:to-amber-700'
+                  ? ' bg-orange-600 hover:bg-orange-700'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
                 }
               >

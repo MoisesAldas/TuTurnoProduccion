@@ -615,7 +615,7 @@ export default function EditEmployeeModal({
             </Button>
             <Button
               type="submit"
-              className="h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all order-1 sm:order-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-9 bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all order-1 sm:order-3 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!isValid || submitting || deleting}
             >
               {submitting ? (

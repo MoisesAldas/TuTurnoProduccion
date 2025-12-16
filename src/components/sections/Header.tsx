@@ -100,10 +100,10 @@ export default function Header() {
       className={`fixed top-0 w-full z-50 bg-white dark:bg-gray-900 transition-all duration-300 ${
         isScrolled ? 'shadow-md border-b border-gray-200 dark:border-gray-800' : ''
       }`}>
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 ">
         <div className="flex items-center justify-between h-20">
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => router.push('/')}>
-            <Logo color={theme === 'dark' ? 'white' : 'black'} size="md" />
+          <div className="flex items-center space-x-3 cursor-pointer ml-4" onClick={() => router.push('/')}>
+            <Logo color={theme === 'dark' ? 'white' : 'black'} size="lg" />
           </div>
 
           <nav className="hidden md:flex items-center space-x-8">
@@ -145,7 +145,7 @@ export default function Header() {
                 </Button>
                 <Button
                   onClick={handleBusinessClick}
-                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                  className=" bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                 >
                   Registra tu Negocio
                 </Button>

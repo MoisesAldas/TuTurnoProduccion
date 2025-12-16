@@ -291,12 +291,13 @@ const formatDuration = (minutes: number) => {
                 </Badge>
               )}
               <Button
-                onClick={() => setCreateModalOpen(true)}
-                className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-md hover:shadow-lg transition-all"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Servicio
-              </Button>
+  onClick={() => setCreateModalOpen(true)}
+  className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
+>
+  <Plus className="w-4 h-4 mr-2" />
+  Nuevo Servicio
+</Button>
+
             </div>
           </div>
         </div>
@@ -370,7 +371,7 @@ const formatDuration = (minutes: number) => {
               onClick={() => setViewMode('grid')}
               className={`h-10 ${
                 viewMode === 'grid'
-                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm'
+                  ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
               }`}
             >
@@ -383,7 +384,7 @@ const formatDuration = (minutes: number) => {
               onClick={() => setViewMode('table')}
               className={`h-10 ${
                 viewMode === 'table'
-                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm'
+                  ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
               }`}
             >
@@ -462,10 +463,10 @@ const formatDuration = (minutes: number) => {
                   {/* Price - Simplified */}
                   <div className="flex items-baseline justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <DollarSign className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+                      <DollarSign className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                       <span className="text-sm font-medium">Precio</span>
                     </div>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                    <span className="text-2xl font-bold  bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
                       {formatPrice(service.price)}
                     </span>
                   </div>

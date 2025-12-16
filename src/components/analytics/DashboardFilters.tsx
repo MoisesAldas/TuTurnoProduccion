@@ -149,7 +149,7 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
           {/* Apply Button */}
           <Button
             onClick={handleApplyFilters}
-            className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
+            className=" bg-orange-600 hover:bg-orange-600 text-white"
           >
             Aplicar Filtros
           </Button>

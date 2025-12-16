@@ -193,7 +193,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
             {/* Desktop collapsed logo - Icon "T" */}
             <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-600 via-orange-500 to-amber-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-orange-500/50 hover:scale-110 transition-transform duration-300">
+              <div className="w-10 h-10 rounded-xl  bg-orange-600 hover:bg-orange-700 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-orange-500/50 hover:scale-110 transition-transform duration-300">
                 T
               </div>
             </div>
@@ -241,7 +241,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   flex items-center px-3 py-2.5 rounded-xl text-sm font-medium
                   transition-all duration-500 ease-in-out
                   ${isActive
-                    ? 'bg-gradient-to-r from-orange-600 via-orange-500 to-amber-600 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
+                    ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
                     : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:shadow-md hover:scale-[1.02]'
                   }
                 `}
@@ -280,7 +280,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/50 transition-all duration-300 cursor-pointer group">
               <Avatar className="w-9 h-9 border-2 border-orange-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <AvatarImage src={authState.user?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
+                <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>
               </Avatar>
@@ -306,7 +306,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <div className="flex flex-col items-center space-y-3">
               <Avatar className="w-10 h-10 border-2 border-orange-500 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
                 <AvatarImage src={authState.user?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-xs">
+                <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-xs">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>
               </Avatar>
@@ -345,7 +345,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             {/* User Avatar */}
             <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
               <AvatarImage src={authState.user?.avatar_url} />
-              <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
+              <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
                 {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
               </AvatarFallback>
             </Avatar>
@@ -373,7 +373,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               {/* User Avatar */}
               <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
                 <AvatarImage src={authState.user?.avatar_url} />
-                <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
+                <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>
               </Avatar>

@@ -183,6 +183,7 @@ export default function AppointmentsPage() {
           .select(`
             *,
             users(first_name, last_name, phone, avatar_url, email),
+            business_clients(first_name, last_name, phone, email),
             employees(first_name, last_name),
             appointment_services(
               service_id,
@@ -208,6 +209,7 @@ export default function AppointmentsPage() {
           .select(`
             *,
             users(first_name, last_name, phone, avatar_url, email),
+            business_clients(first_name, last_name, phone, email),
             employees(first_name, last_name),
             appointment_services(
               service_id,
@@ -240,6 +242,7 @@ export default function AppointmentsPage() {
         .select(`
           *,
           users(first_name, last_name, phone, avatar_url, email),
+          business_clients(first_name, last_name, phone, email),
           employees(first_name, last_name),
           appointment_services(
             service_id,
@@ -616,7 +619,7 @@ export default function AppointmentsPage() {
             {/* Botón Añadir cita */}
             <Button
               onClick={() => handleCreateAppointment()}
-              className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg"
+              className=" bg-orange-600 hover:bg-orange-700 text-white shadow-lg"
             >
               <Plus className="w-4 h-4 mr-2" />
               Añadir

@@ -31,7 +31,7 @@ export default function CTASection() {
             <Button
               size="lg"
               onClick={() => router.push('/auth/business/register')}
-              className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:via-amber-600 hover:to-yellow-600 text-white px-10 py-7 text-lg font-semibold shadow-2xl shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 transform hover:scale-105 group"
+              className=" bg-orange-600 hover:bg-orange-700 text-white px-10 py-7 text-lg font-semibold shadow-2xl shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 transform hover:scale-105 group"
             >
               Empieza Gratis Ahora
               <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />

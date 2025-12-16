@@ -148,7 +148,7 @@ export default function BusinessRegisterPage() {
 
         {/* Left Panel - Visual */}
 
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 p-12 flex-col justify-between relative overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 bg-orange-600 hover:bg-orange-700 p-12 flex-col justify-between relative overflow-hidden">
 
           {/* Decorative elements */}
 
@@ -579,7 +579,7 @@ export default function BusinessRegisterPage() {
            <Button
   type="submit"
   disabled={loading || !isValid}
-  className="h-10 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-semibold flex items-center gap-2"
+  className="h-10 bg-orange-600 hover:bg-orange-700 text-white font-semibold flex items-center gap-2"
 >
   {loading ? (
     <>

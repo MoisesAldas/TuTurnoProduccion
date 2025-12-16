@@ -553,7 +553,7 @@ export default function NewEmployeePage() {
                 </Link>
                 <Button
                   type="submit"
-                  className="w-full sm:flex-1 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  className="w-full sm:flex-1 bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                   disabled={submitting || uploadingAvatar}
                 >
                   {submitting ? (

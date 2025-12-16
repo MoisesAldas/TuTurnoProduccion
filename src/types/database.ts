@@ -80,6 +80,7 @@ export interface Appointment {
   id: string
   business_id: string
   client_id: string | null  // Nullable para walk-in clients
+  business_client_id: string | null  // Nullable para clientes del negocio
   employee_id: string
   appointment_date: string
   start_time: string
@@ -98,6 +99,13 @@ export interface Appointment {
     last_name: string
     phone?: string
     avatar_url?: string
+    email?: string
+  }
+  business_clients?: {
+    first_name: string
+    last_name: string | null
+    phone?: string | null
+    email?: string | null
   }
   employees?: {
     first_name: string

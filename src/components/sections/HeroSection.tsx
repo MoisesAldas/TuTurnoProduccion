@@ -30,7 +30,7 @@ export default function HeroSection() {
               <h1
                 className={`text-4xl md:text-5xl lg:text-6xl font-bold text-balance leading-tight mb-6 text-gray-900 dark:text-gray-100 transition-all duration-700 ease-out delay-100 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 Más citas, menos caos. Tu negocio,{' '}
-                <span className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 bg-clip-text text-transparent">
+                <span className=" bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
                   simplificado.
                 </span>
               </h1>
@@ -45,7 +45,7 @@ export default function HeroSection() {
                 <Button
                   size="lg"
                   onClick={() => router.push('/auth/business/register')}
-                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-8 py-7 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
+                  className=" bg-orange-600 hover:bg-orange-700 text-white px-8 py-7 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
                 >
                   Empieza Gratis
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

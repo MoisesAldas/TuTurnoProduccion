@@ -523,7 +523,7 @@ export default function CreateEmployeeModal({
             </Button>
             <Button
               type="submit"
-              className="flex-1 h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-9 bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={!isValid || submitting || uploadingAvatar}
             >
               {submitting ? (

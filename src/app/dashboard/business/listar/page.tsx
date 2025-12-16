@@ -1016,7 +1016,7 @@ export default function ListarPage() {
         <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
           <CardHeader className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-900/20 dark:via-amber-900/20 dark:to-yellow-900/20 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 rounded-lg flex items-center justify-center shadow-md">
+              <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center shadow-md">
                 <SearchIcon className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -1229,7 +1229,7 @@ export default function ListarPage() {
         <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center shadow-md">
+              <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center shadow-md">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <div>

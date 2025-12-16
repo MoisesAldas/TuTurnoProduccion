@@ -36,7 +36,7 @@ export default function BusinessAuthPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Visual */}
-      <div className={`hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 p-12 flex-col justify-between relative overflow-hidden transition-all duration-1000 ${
+      <div className={`hidden lg:flex lg:w-1/2  bg-orange-600 hover:bg-orange-700 p-12 flex-col justify-between relative overflow-hidden transition-all duration-1000 ${
         isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
       }`}>
         {/* Decorative elements */}
@@ -137,7 +137,7 @@ export default function BusinessAuthPage() {
             <Link href="/auth/business/login">
               <div className="group cursor-pointer bg-white border-2 border-gray-200 rounded-xl py-8 px-6 hover:border-orange-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-14 h-14 bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                     <LogIn className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1">
@@ -153,9 +153,9 @@ export default function BusinessAuthPage() {
 
             {/* Register Card */}
             <Link href="/auth/business/register">
-              <div className="group cursor-pointer bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl py-8 px-6 hover:border-orange-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="mt-2 group cursor-pointer bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl py-8 px-6 hover:border-orange-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-14 h-14  bg-orange-500 hover:bg-orange-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                     <UserPlus className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1">

@@ -27,6 +27,7 @@ interface Appointment {
   id: string
   business_id: string
   client_id: string | null
+  business_client_id: string | null
   employee_id: string
   appointment_date: string
   start_time: string
@@ -43,6 +44,12 @@ interface Appointment {
     phone?: string
     avatar_url?: string
     email?: string
+  }
+  business_clients?: {
+    first_name: string
+    last_name: string | null
+    phone?: string | null
+    email?: string | null
   }
   employees?: {
     first_name: string
@@ -337,7 +344,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header con gradiente */}
-        <div className="relative bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 rounded-t-2xl p-6">
+        <div className="relative bg-orange-600 hover:bg-orange-700 rounded-t-2xl p-6">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -370,7 +377,12 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
               <div className="flex items-center gap-2 mb-4">
                 <User className="w-4 h-4 text-orange-600" />
                 <h3 className="font-semibold text-gray-900">Cliente</h3>
-                {!appointment.client_id && (
+                {appointment.business_client_id && (
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                    Cliente del Negocio
+                  </span>
+                )}
+                {(appointment.walk_in_client_name || appointment.walk_in_client_phone) && (
                   <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
                     Walk-in
                   </span>
@@ -385,9 +397,11 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                       className="object-cover"
                     />
                   )}
-                  <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-lg">
+                  <AvatarFallback className="bg-orange-600 hover:bg-orange-700 text-white text-lg">
                     {appointment.users
                       ? getInitials(appointment.users.first_name, appointment.users.last_name)
+                      : appointment.business_clients
+                      ? getInitials(appointment.business_clients.first_name, appointment.business_clients.last_name || 'C')
                       : appointment.walk_in_client_name
                       ? getInitials(
                           appointment.walk_in_client_name.split(' ')[0] || 'C',
@@ -400,19 +414,21 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                   <p className="font-semibold text-gray-900 text-lg truncate">
                     {appointment.users
                       ? `${appointment.users.first_name} ${appointment.users.last_name}`
+                      : appointment.business_clients
+                      ? `${appointment.business_clients.first_name} ${appointment.business_clients.last_name || ''}`.trim()
                       : appointment.walk_in_client_name || 'Cliente Walk-in'}
                   </p>
                   <div className="space-y-1 mt-2">
-                    {(appointment.users?.phone || appointment.walk_in_client_phone) && (
+                    {(appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone) && (
                       <p className="text-sm text-gray-600 flex items-center gap-2">
                         <Phone className="w-3.5 h-3.5" />
-                        {appointment.users?.phone || appointment.walk_in_client_phone}
+                        {appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone}
                       </p>
                     )}
-                    {appointment.users?.email && (
+                    {(appointment.users?.email || appointment.business_clients?.email) && (
                       <p className="text-sm text-gray-600 flex items-center gap-2 truncate">
                         <Mail className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span className="truncate">{appointment.users.email}</span>
+                        <span className="truncate">{appointment.users?.email || appointment.business_clients?.email}</span>
                       </p>
                     )}
                   </div>
@@ -471,7 +487,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                   <DollarSign className="w-5 h-5 text-orange-600" />
                   <span className="text-lg font-semibold text-gray-900">Total</span>
                 </div>
-                <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                <span className="text-3xl font-bold bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
                   {formatPrice(appointment.total_price)}
                 </span>
               </div>

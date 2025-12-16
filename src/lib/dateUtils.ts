@@ -9,10 +9,15 @@
 
 /**
  * Convierte una fecha string (YYYY-MM-DD) a Date object SIN conversión de zona horaria
- * @param dateString - Fecha en formato YYYY-MM-DD (ej: "2025-10-11")
+ * @param dateString - Fecha en formato YYYY-MM-DD (ej: "2025-10-11") o Date object
  * @returns Date object representando esa fecha a las 12:00 PM hora local
  */
-export function parseDateString(dateString: string): Date {
+export function parseDateString(dateString: string | Date): Date {
+  // If already a Date object, return it
+  if (dateString instanceof Date) {
+    return dateString
+  }
+
   const [year, month, day] = dateString.split('-').map(Number)
   // Usar hora del mediodía (12:00) para evitar problemas de zona horaria
   return new Date(year, month - 1, day, 12, 0, 0)

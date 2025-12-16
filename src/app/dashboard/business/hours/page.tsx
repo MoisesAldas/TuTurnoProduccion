@@ -222,7 +222,7 @@ export default function BusinessHoursPage() {
               <Button
                 onClick={handleSave}
                 disabled={submitting || !hasChanges}
-                className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto  bg-orange-600 hover:bg-orange-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <>

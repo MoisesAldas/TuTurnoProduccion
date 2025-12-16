@@ -473,7 +473,7 @@ export default function CreateAppointmentModal({
         <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-amber-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -500,7 +500,7 @@ export default function CreateAppointmentModal({
                 key={step}
                 className={`flex-1 h-2 rounded-full transition-all ${
                   step < currentStep
-                    ? 'bg-gradient-to-r from-orange-600 to-amber-600'
+                    ? ' bg-orange-600 hover:bg-orange-700'
                     : step === currentStep
                     ? 'bg-orange-400'
                     : 'bg-gray-200'
@@ -1009,7 +1009,7 @@ export default function CreateAppointmentModal({
               type="button"
               onClick={handleNext}
               disabled={!validateStep(currentStep)}
-              className="flex-1 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+              className="flex-1  bg-orange-600 hover:bg-orange-700 text-white"
             >
               Siguiente
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -1019,7 +1019,7 @@ export default function CreateAppointmentModal({
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex-1 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+              className="flex-1  bg-orange-600 hover:bg-orange-700 text-white"
             >
               {submitting ? (
                 <>

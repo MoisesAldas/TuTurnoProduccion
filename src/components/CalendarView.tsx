@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
-import { parseDateString, toDateString } from '@/lib/dateUtils'
+import { toDateString } from '@/lib/dateUtils'
 
-import type { Employee, Appointment, AppointmentStatus } from '@/types/database'
+import type { Employee, Appointment } from '@/types/database'
 
 // Lazy load AppointmentModal
 const AppointmentModal = dynamic(() => import('./AppointmentModal'), {
@@ -92,6 +93,64 @@ const formatDuration = (startTime: string, endTime: string) => {
   }
 }
 
+// Helper para detectar si dos citas se superponen
+const appointmentsOverlap = (apt1: Appointment, apt2: Appointment): boolean => {
+  const start1 = apt1.start_time
+  const end1 = apt1.end_time
+  const start2 = apt2.start_time
+  const end2 = apt2.end_time
+
+  // Convertir a minutos desde medianoche para comparación
+  const toMinutes = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number)
+    return hours * 60 + minutes
+  }
+
+  const start1Min = toMinutes(start1)
+  const end1Min = toMinutes(end1)
+  const start2Min = toMinutes(start2)
+  const end2Min = toMinutes(end2)
+
+  // Overlap si: start1 < end2 AND start2 < end1
+  return start1Min < end2Min && start2Min < end1Min
+}
+
+// Helper para agrupar citas superpuestas
+const groupOverlappingAppointments = (appointments: Appointment[]): Appointment[][] => {
+  if (appointments.length === 0) return []
+
+  const sorted = [...appointments].sort((a, b) => {
+    return a.start_time.localeCompare(b.start_time)
+  })
+
+  const groups: Appointment[][] = []
+  const used = new Set<string>()
+
+  sorted.forEach((apt) => {
+    if (used.has(apt.id)) return
+
+    // Buscar todas las citas que se superponen con esta
+    const group = [apt]
+    used.add(apt.id)
+
+    sorted.forEach((otherApt) => {
+      if (used.has(otherApt.id) || apt.id === otherApt.id) return
+
+      // Verificar si se superpone con alguna cita del grupo
+      const overlapsWithGroup = group.some(groupApt => appointmentsOverlap(groupApt, otherApt))
+
+      if (overlapsWithGroup) {
+        group.push(otherApt)
+        used.add(otherApt.id)
+      }
+    })
+
+    groups.push(group)
+  })
+
+  return groups
+}
+
 export default function CalendarView({
   selectedDate,
   appointments,
@@ -115,6 +174,7 @@ export default function CalendarView({
     appointment: CalendarAppointment
     position: { x: number; y: number }
   } | null>(null)
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
   const { toast } = useToast()
@@ -192,14 +252,21 @@ export default function CalendarView({
 
   // Helper functions that depend on appointment data
   const getClientName = useCallback((appointment: CalendarAppointment) => {
+    // 1. Cliente registrado (con cuenta TuTurno)
     if (appointment.users) {
       return `${appointment.users.first_name} ${appointment.users.last_name}`
     }
+    // 2. Cliente del negocio (guardado en business_clients)
+    if (appointment.business_clients) {
+      const lastName = appointment.business_clients.last_name || ''
+      return `${appointment.business_clients.first_name} ${lastName}`.trim()
+    }
+    // 3. Walk-in (temporal)
     return appointment.walk_in_client_name || 'Cliente'
   }, [])
 
   const getClientPhone = useCallback((appointment: CalendarAppointment) => {
-    return appointment.users?.phone || appointment.walk_in_client_phone
+    return appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone
   }, [])
 
   // Event handlers - memoized to prevent unnecessary re-renders
@@ -582,52 +649,184 @@ export default function CalendarView({
                     ))}
 
                     {/* Citas del día */}
-                    {dayAppointments.map((appointment) => {
-                      const top = getTimePosition(appointment.start_time)
-                      const height = getAppointmentHeight(appointment.start_time, appointment.end_time)
-                      const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
-                      const employee = employees.find(e => e.id === appointment.employee_id)
-                      const isDragging = draggingAppointment?.id === appointment.id
+                    {(() => {
+                      // Agrupar citas superpuestas
+                      const appointmentGroups = groupOverlappingAppointments(dayAppointments)
 
-                      return (
-                        <div
-                          key={appointment.id}
-                          draggable={appointment.status !== 'completed' && appointment.status !== 'cancelled'}
-                          onDragStart={(e) => handleDragStart(e, appointment)}
-                          onDragEnd={handleDragEnd}
-                          onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
-                          onMouseLeave={handleAppointmentLeave}
-                          className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-move hover:shadow-md transition-all z-20 overflow-hidden ${getStatusColor(
-                            appointment.status
-                          )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
-                          style={{
-                            top: `${top}px`,
-                            height: `${height}px`
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleAppointmentClick(appointment)
-                          }}
-                        >
-                          <div className="p-2 h-full overflow-hidden">
-                            <p className="text-xs font-semibold truncate">
-                              🕐 {appointment.start_time.substring(0, 5)}
-                            </p>
-                            <p className="text-xs truncate mt-0.5">
-                              <span className="font-medium">👤</span> {getClientName(appointment)}
-                              {!appointment.client_id && (
-                                <span className="ml-1 text-orange-600 font-semibold">W</span>
-                              )}
-                            </p>
-                            {employee && (
-                              <p className="text-xs font-medium truncate mt-0.5 border-t border-gray-300/50 pt-0.5">
-                                👨‍💼 {employee.first_name} {employee.last_name}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
+                      return appointmentGroups.map((group, groupIndex) => {
+                        // Si solo hay una cita en el grupo, renderizar normalmente
+                        if (group.length === 1) {
+                          const appointment = group[0]
+                          const top = getTimePosition(appointment.start_time)
+                          const height = getAppointmentHeight(appointment.start_time, appointment.end_time)
+                          const employee = employees.find(e => e.id === appointment.employee_id)
+                          const isDragging = draggingAppointment?.id === appointment.id
+
+                          return (
+                            <div
+                              key={appointment.id}
+                              draggable={appointment.status !== 'completed' && appointment.status !== 'cancelled'}
+                              onDragStart={(e) => handleDragStart(e, appointment)}
+                              onDragEnd={handleDragEnd}
+                              onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
+                              onMouseLeave={handleAppointmentLeave}
+                              className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-move hover:shadow-md transition-all z-20 overflow-hidden ${getStatusColor(
+                                appointment.status
+                              )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                              style={{
+                                top: `${top}px`,
+                                height: `${height}px`
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAppointmentClick(appointment)
+                              }}
+                            >
+                              <div className="p-2 h-full overflow-hidden">
+                                <p className="text-xs font-semibold truncate">
+                                  🕐 {appointment.start_time.substring(0, 5)}
+                                </p>
+                                <p className="text-xs truncate mt-0.5">
+                                  <span className="font-medium">👤</span> {getClientName(appointment)}
+                                  {!appointment.client_id && (
+                                    <span className="ml-1 text-orange-600 font-semibold">W</span>
+                                  )}
+                                </p>
+                                {employee && (
+                                  <p className="text-xs font-medium truncate mt-0.5 border-t border-gray-300/50 pt-0.5">
+                                    👨‍💼 {employee.first_name} {employee.last_name}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        }
+
+                        // Si hay múltiples citas superpuestas, renderizar con Popover
+                        const firstAppointment = group[0]
+                        const top = getTimePosition(firstAppointment.start_time)
+                        const height = getAppointmentHeight(firstAppointment.start_time, firstAppointment.end_time)
+                        const employee = employees.find(e => e.id === firstAppointment.employee_id)
+                        const isDragging = draggingAppointment?.id === firstAppointment.id
+
+                        const popoverId = `week-${dateStr}-${groupIndex}`
+
+                        return (
+                          <Popover
+                            key={popoverId}
+                            open={openPopoverId === popoverId}
+                            onOpenChange={(open) => setOpenPopoverId(open ? popoverId : null)}
+                          >
+                            <PopoverTrigger asChild>
+                              <div
+                                draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                                onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                                onDragEnd={handleDragEnd}
+                                className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
+                                  firstAppointment.status
+                                )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                                style={{
+                                  top: `${top}px`,
+                                  height: `${height}px`
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                }}
+                              >
+                                <div className="p-2 h-full overflow-hidden relative">
+                                  <p className="text-xs font-semibold truncate">
+                                    🕐 {firstAppointment.start_time.substring(0, 5)}
+                                  </p>
+                                  <p className="text-xs truncate mt-0.5">
+                                    <span className="font-medium">👤</span> {getClientName(firstAppointment)}
+                                    {!firstAppointment.client_id && (
+                                      <span className="ml-1 text-orange-600 font-semibold">W</span>
+                                    )}
+                                  </p>
+                                  {employee && (
+                                    <p className="text-xs font-medium truncate mt-0.5 border-t border-gray-300/50 pt-0.5">
+                                      👨‍💼 {employee.first_name} {employee.last_name}
+                                    </p>
+                                  )}
+
+                                  {/* Badge de citas adicionales */}
+                                  <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white">
+                                    +{group.length - 1}
+                                  </div>
+                                </div>
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-80 p-0"
+                              align="start"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+                                <h4 className="font-semibold text-sm text-gray-900">
+                                  {group.length} Citas Superpuestas
+                                </h4>
+                                <p className="text-xs text-gray-600 mt-0.5">
+                                  Haz clic en una cita para ver detalles
+                                </p>
+                              </div>
+                              <div className="max-h-96 overflow-y-auto">
+                                {group.map((appointment, index) => {
+                                  const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
+                                  const employee = employees.find(e => e.id === appointment.employee_id)
+                                  return (
+                                    <div
+                                      key={appointment.id}
+                                      className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                        index === 0 ? 'bg-orange-50/30' : ''
+                                      }`}
+                                      onClick={() => {
+                                        setOpenPopoverId(null)
+                                        handleAppointmentClick(appointment)
+                                      }}
+                                    >
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <span className={`inline-block w-2 h-2 rounded-full ${
+                                              appointment.status === 'confirmed' ? 'bg-green-500' :
+                                              appointment.status === 'pending' ? 'bg-yellow-500' :
+                                              appointment.status === 'in_progress' ? 'bg-blue-500' :
+                                              appointment.status === 'completed' ? 'bg-gray-500' :
+                                              appointment.status === 'cancelled' ? 'bg-red-500' :
+                                              'bg-orange-500'
+                                            }`} />
+                                            <p className="text-sm font-semibold text-gray-900 truncate">
+                                              {getClientName(appointment)}
+                                              {!appointment.client_id && (
+                                                <span className="ml-1 text-orange-600">👤</span>
+                                              )}
+                                            </p>
+                                          </div>
+                                          <p className="text-xs text-gray-600 truncate">{serviceName}</p>
+                                          {employee && (
+                                            <p className="text-xs text-gray-500 truncate mt-0.5">
+                                              👨‍💼 {employee.first_name} {employee.last_name}
+                                            </p>
+                                          )}
+                                          <p className="text-xs font-medium text-gray-700 mt-1">
+                                            {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
+                                          </p>
+                                        </div>
+                                        <div className="flex-shrink-0 text-right">
+                                          <p className="text-sm font-semibold text-gray-900">
+                                            ${appointment.total_price}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )
+                      })
+                    })()}
 
                     {/* Drop preview indicator */}
                     {draggingAppointment && isDropTarget && dropTarget?.time && (
@@ -896,52 +1095,175 @@ export default function CalendarView({
                   )}
 
                   {/* Citas del empleado */}
-                  {employeeAppointments.map((appointment) => {
-                    const top = getTimePosition(appointment.start_time)
-                    const height = getAppointmentHeight(appointment.start_time, appointment.end_time)
-                    const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
-                    const isDragging = draggingAppointment?.id === appointment.id
+                  {(() => {
+                    // Agrupar citas superpuestas
+                    const appointmentGroups = groupOverlappingAppointments(employeeAppointments)
 
-                    return (
-                      <div
-                        key={appointment.id}
-                        draggable={appointment.status !== 'completed' && appointment.status !== 'cancelled'}
-                        onDragStart={(e) => handleDragStart(e, appointment)}
-                        onDragEnd={handleDragEnd}
-                        onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
-                        onMouseLeave={handleAppointmentLeave}
-                        className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-move hover:shadow-md transition-all z-20 overflow-hidden ${getStatusColor(
-                          appointment.status
-                        )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
-                        style={{
-                          top: `${top}px`,
-                          height: `${height}px`
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleAppointmentClick(appointment)
-                        }}
-                      >
-                        <div className="p-2 h-full overflow-hidden">
-                          <p className="text-xs font-semibold truncate">
-                            {getClientName(appointment)}
-                            {!appointment.client_id && (
-                              <span className="ml-1 text-xs font-normal">👤</span>
-                            )}
-                          </p>
-                          <p className="text-xs truncate mt-0.5">{serviceName}</p>
-                          <p className="text-xs font-medium mt-1">
-                            {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
-                          </p>
-                          {getClientPhone(appointment) && (
-                            <p className="text-xs text-gray-600 truncate mt-0.5">
-                              {getClientPhone(appointment)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                    return appointmentGroups.map((group, groupIndex) => {
+                      // Si solo hay una cita en el grupo, renderizar normalmente
+                      if (group.length === 1) {
+                        const appointment = group[0]
+                        const top = getTimePosition(appointment.start_time)
+                        const height = getAppointmentHeight(appointment.start_time, appointment.end_time)
+                        const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
+                        const isDragging = draggingAppointment?.id === appointment.id
+
+                        return (
+                          <div
+                            key={appointment.id}
+                            draggable={appointment.status !== 'completed' && appointment.status !== 'cancelled'}
+                            onDragStart={(e) => handleDragStart(e, appointment)}
+                            onDragEnd={handleDragEnd}
+                            onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
+                            onMouseLeave={handleAppointmentLeave}
+                            className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-move hover:shadow-md transition-all z-20 overflow-hidden ${getStatusColor(
+                              appointment.status
+                            )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                            style={{
+                              top: `${top}px`,
+                              height: `${height}px`
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleAppointmentClick(appointment)
+                            }}
+                          >
+                            <div className="p-2 h-full overflow-hidden">
+                              <p className="text-xs font-semibold truncate">
+                                {getClientName(appointment)}
+                                {!appointment.client_id && (
+                                  <span className="ml-1 text-xs font-normal">👤</span>
+                                )}
+                              </p>
+                              <p className="text-xs truncate mt-0.5">{serviceName}</p>
+                              <p className="text-xs font-medium mt-1">
+                                {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
+                              </p>
+                              {getClientPhone(appointment) && (
+                                <p className="text-xs text-gray-600 truncate mt-0.5">
+                                  {getClientPhone(appointment)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      // Si hay múltiples citas superpuestas, renderizar con Popover
+                      const firstAppointment = group[0]
+                      const top = getTimePosition(firstAppointment.start_time)
+                      const height = getAppointmentHeight(firstAppointment.start_time, firstAppointment.end_time)
+                      const serviceName = firstAppointment.appointment_services?.[0]?.services?.name || 'Servicio'
+                      const isDragging = draggingAppointment?.id === firstAppointment.id
+
+                      const popoverId = `day-${employee.id}-${groupIndex}`
+
+                      return (
+                        <Popover
+                          key={popoverId}
+                          open={openPopoverId === popoverId}
+                          onOpenChange={(open) => setOpenPopoverId(open ? popoverId : null)}
+                        >
+                          <PopoverTrigger asChild>
+                            <div
+                              draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                              onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                              onDragEnd={handleDragEnd}
+                              className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
+                                firstAppointment.status
+                              )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                              style={{
+                                top: `${top}px`,
+                                height: `${height}px`
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                              }}
+                            >
+                              <div className="p-2 h-full overflow-hidden relative">
+                                <p className="text-xs font-semibold truncate">
+                                  {getClientName(firstAppointment)}
+                                  {!firstAppointment.client_id && (
+                                    <span className="ml-1 text-xs font-normal">👤</span>
+                                  )}
+                                </p>
+                                <p className="text-xs truncate mt-0.5">{serviceName}</p>
+                                <p className="text-xs font-medium mt-1">
+                                  {firstAppointment.start_time.substring(0, 5)} - {firstAppointment.end_time.substring(0, 5)}
+                                </p>
+
+                                {/* Badge de citas adicionales */}
+                                <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-white">
+                                  +{group.length - 1}
+                                </div>
+                              </div>
+                            </div>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-80 p-0"
+                            align="start"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+                              <h4 className="font-semibold text-sm text-gray-900">
+                                {group.length} Citas Superpuestas
+                              </h4>
+                              <p className="text-xs text-gray-600 mt-0.5">
+                                Haz clic en una cita para ver detalles
+                              </p>
+                            </div>
+                            <div className="max-h-96 overflow-y-auto">
+                              {group.map((appointment, index) => {
+                                const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
+                                return (
+                                  <div
+                                    key={appointment.id}
+                                    className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                      index === 0 ? 'bg-orange-50/30' : ''
+                                    }`}
+                                    onClick={() => {
+                                      setOpenPopoverId(null)
+                                      handleAppointmentClick(appointment)
+                                    }}
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className={`inline-block w-2 h-2 rounded-full ${
+                                            appointment.status === 'confirmed' ? 'bg-green-500' :
+                                            appointment.status === 'pending' ? 'bg-yellow-500' :
+                                            appointment.status === 'in_progress' ? 'bg-blue-500' :
+                                            appointment.status === 'completed' ? 'bg-gray-500' :
+                                            appointment.status === 'cancelled' ? 'bg-red-500' :
+                                            'bg-orange-500'
+                                          }`} />
+                                          <p className="text-sm font-semibold text-gray-900 truncate">
+                                            {getClientName(appointment)}
+                                            {!appointment.client_id && (
+                                              <span className="ml-1 text-orange-600">👤</span>
+                                            )}
+                                          </p>
+                                        </div>
+                                        <p className="text-xs text-gray-600 truncate">{serviceName}</p>
+                                        <p className="text-xs font-medium text-gray-700 mt-1">
+                                          {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
+                                        </p>
+                                      </div>
+                                      <div className="flex-shrink-0 text-right">
+                                        <p className="text-sm font-semibold text-gray-900">
+                                          ${appointment.total_price}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )
+                    })
+                  })()}
 
                   {/* Drop preview indicator */}
                   {draggingAppointment && isDropTarget && dropTarget?.time && (

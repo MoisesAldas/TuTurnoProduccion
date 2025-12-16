@@ -366,7 +366,7 @@ export default function EditServiceModal({
             </Button>
             <Button
               type="submit"
-              className="h-9 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-3"
+              className="h-9    bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-3"
               disabled={!isValid || submitting || deleting}
             >
               {submitting ? (

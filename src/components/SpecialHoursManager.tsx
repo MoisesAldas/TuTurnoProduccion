@@ -295,7 +295,7 @@ export default function SpecialHoursManager({
           <Button
             type="button"
             onClick={() => openDialog()}
-            className="w-full bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Agregar Horario Especial
@@ -437,7 +437,7 @@ export default function SpecialHoursManager({
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+                className="bg-orange-600 hover:bg-orange-700 text-white"
               >
                 {submitting ? (
                   <>

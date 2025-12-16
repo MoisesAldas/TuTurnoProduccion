@@ -85,7 +85,7 @@ export default function FeaturesSection() {
                     className="group bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-xl hover:border-orange-400 dark:hover:border-orange-600 transition-all duration-300 transform hover:-translate-y-2 h-full"
                   >
                     <CardHeader className="p-6">
-                      <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 dark:group-hover:bg-orange-600 transition-colors duration-300">
+                      <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-600 dark:group-hover:bg-orange-700 transition-colors duration-300">
                         <IconComponent className="w-6 h-6 text-orange-600 dark:text-orange-500 group-hover:text-white transition-colors duration-300" />
                       </div>
                       <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">

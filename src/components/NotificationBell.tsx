@@ -247,7 +247,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-1 text-xs bg-orange-500 hover:bg-orange-600"
+              className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-1 text-xs bg-orange-600 hover:bg-orange-700"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>

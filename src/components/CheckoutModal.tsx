@@ -310,7 +310,7 @@ export default function CheckoutModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 rounded-t-2xl p-6">
+        <div className="relative bg-orange-600 hover:bg-orange-700 rounded-t-2xl p-6">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -352,7 +352,7 @@ export default function CheckoutModal({
           <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-5 border-2 border-orange-200 mb-6">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-gray-900">Total a Pagar</span>
-              <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+              <span className="text-3xl font-bold bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
                 {formatPrice(totalAmount)}
               </span>
             </div>
@@ -561,7 +561,7 @@ export default function CheckoutModal({
             <Button
               onClick={handleFinalizePurchase}
               disabled={processing || !paymentMethod}
-              className="flex-1 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {processing ? (
                 <div className="flex items-center gap-2">

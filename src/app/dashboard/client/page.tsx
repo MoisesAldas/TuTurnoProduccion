@@ -6,11 +6,28 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  Calendar, Clock, MapPin, User, Star, Plus, CheckCircle, XCircle, AlertCircle, History, Edit, DollarSign, Users, Briefcase
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Calendar, Clock, MapPin, User, Star, Plus, CheckCircle, XCircle, AlertCircle, History, Edit, DollarSign, Users, Briefcase, MoreVertical, Eye, Trash2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
+import { parseDateString, formatSpanishDate } from '@/lib/dateUtils'
 import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
 import { StatsCard } from '@/components/StatsCard'
@@ -65,6 +82,9 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelling, setCancelling] = useState(false)
 
   const { authState } = useAuth()
   const { toast } = useToast()
@@ -110,7 +130,12 @@ export default function ClientDashboard() {
       setAppointments(appointmentsWithReviewStatus)
 
       const now = new Date()
-      const upcoming = appointmentsWithReviewStatus.filter(apt => new Date(`${apt.appointment_date}T${apt.start_time}`) > now && ['pending', 'confirmed'].includes(apt.status)).length
+      const upcoming = appointmentsWithReviewStatus.filter(apt => {
+        const aptDate = parseDateString(apt.appointment_date)
+        const [hours, minutes] = apt.start_time.split(':').map(Number)
+        aptDate.setHours(hours, minutes)
+        return aptDate > now && ['pending', 'confirmed'].includes(apt.status)
+      }).length
       const completed = appointmentsWithReviewStatus.filter(apt => apt.status === 'completed').length
       const totalSpent = appointmentsWithReviewStatus
         .filter(apt => ['completed', 'confirmed'].includes(apt.status)) // Also include confirmed in total spent
@@ -128,15 +153,23 @@ export default function ClientDashboard() {
     switch (status) {
       case 'pending': return { label: 'Pendiente', variant: 'secondary', className: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-400 dark:border-yellow-800' }
       case 'confirmed': return { label: 'Confirmada', variant: 'default', className: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800' }
-      case 'completed': return { label: 'Completada', variant: 'default', className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800' }
+      case 'in_progress': return { label: 'En Progreso', variant: 'default', className: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/50 dark:text-purple-400 dark:border-purple-800' }
+      case 'completed': return { label: 'Completada', variant: 'default', className: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-400 dark:border-green-800' }
       case 'cancelled': return { label: 'Cancelada', variant: 'destructive', className: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/50 dark:text-red-400 dark:border-red-800' }
+      case 'no_show': return { label: 'No asistió', variant: 'secondary', className: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700' }
       default: return { label: status, variant: 'secondary', className: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700' }
     }
   }
 
-  const formatDate = (dateString: string, timeString?: string) => {
-    const date = new Date(timeString ? `${dateString}T${timeString}` : dateString)
-    return date.toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' })
+  const formatDate = (dateString: string) => {
+    return formatSpanishDate(dateString, { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':').map(Number)
+    const period = hours >= 12 ? 'PM' : 'AM'
+    const displayHours = hours % 12 || 12
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`
   }
 
   const formatPrice = (price: number) => {
@@ -145,13 +178,28 @@ export default function ClientDashboard() {
 
   const upcomingAppointments = useMemo(() =>
     appointments
-      .filter(apt => new Date(`${apt.appointment_date}T${apt.start_time}`) > new Date() && ['pending', 'confirmed'].includes(apt.status))
-      .sort((a, b) => new Date(`${a.appointment_date}T${a.start_time}`).getTime() - new Date(`${b.appointment_date}T${b.start_time}`).getTime()),
+      .filter(apt => {
+        const aptDate = parseDateString(apt.appointment_date)
+        const [hours, minutes] = apt.start_time.split(':').map(Number)
+        aptDate.setHours(hours, minutes)
+        return aptDate > new Date() && ['pending', 'confirmed'].includes(apt.status)
+      })
+      .sort((a, b) => {
+        const dateA = parseDateString(a.appointment_date)
+        const [hoursA, minutesA] = a.start_time.split(':').map(Number)
+        dateA.setHours(hoursA, minutesA)
+
+        const dateB = parseDateString(b.appointment_date)
+        const [hoursB, minutesB] = b.start_time.split(':').map(Number)
+        dateB.setHours(hoursB, minutesB)
+
+        return dateA.getTime() - dateB.getTime()
+      }),
     [appointments]
   )
 
   const recentActivity = useMemo(() =>
-    appointments.filter(apt => ['completed', 'cancelled'].includes(apt.status)).slice(0, 10),
+    appointments.filter(apt => ['confirmed', 'completed', 'cancelled'].includes(apt.status)).slice(0, 10),
     [appointments]
   )
 
@@ -163,6 +211,40 @@ export default function ClientDashboard() {
     })
   }
 
+  const handleCancelAppointment = async () => {
+    if (!selectedAppointment) return
+    setCancelling(true)
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          status: 'cancelled',
+          client_notes: `${selectedAppointment.client_notes || ''}\nMotivo de cancelación: ${cancelReason}`.trim()
+        })
+        .eq('id', selectedAppointment.id)
+
+      if (error) throw error
+
+      await fetchAppointments()
+      setShowCancelDialog(false)
+      setSelectedAppointment(null)
+      setCancelReason('')
+      toast({
+        title: 'Cita cancelada',
+        description: 'Tu cita ha sido cancelada exitosamente.',
+      })
+    } catch (error) {
+      console.error('Error canceling appointment:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error al cancelar',
+        description: 'No pudimos cancelar tu cita. Por favor intenta nuevamente.',
+      })
+    } finally {
+      setCancelling(false)
+    }
+  }
+
   const columns: ColumnDef<Appointment>[] = useMemo(() => [
     {
       accessorKey: 'business',
@@ -170,18 +252,45 @@ export default function ClientDashboard() {
       cell: ({ row }) => <span className="font-medium text-gray-900 dark:text-gray-50">{row.original.business?.name}</span>,
     },
     {
-      accessorKey: 'total_price',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Total" />,
-      cell: ({ row }) => <span className="font-semibold text-orange-600 dark:text-orange-400">{formatPrice(row.original.total_price)}</span>,
+      accessorKey: 'appointment_services',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Servicios" />,
+      cell: ({ row }) => (
+        <div className="max-w-[200px]">
+          <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+            {row.original.appointment_services.map(s => s.service?.name).join(', ')}
+          </span>
+        </div>
+      )
+    },
+    {
+      accessorKey: 'employee',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Profesional" />,
+      cell: ({ row }) => (
+        row.original.employee ? (
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            {row.original.employee.first_name} {row.original.employee.last_name}
+          </span>
+        ) : <span className="text-sm text-gray-400">-</span>
+      )
     },
     {
       accessorKey: 'appointment_date',
       header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-      cell: ({ row }) => <span>{formatDate(row.original.appointment_date)}</span>
+      cell: ({ row }) => <span className="text-sm">{formatDate(row.original.appointment_date)}</span>
+    },
+    {
+      accessorKey: 'start_time',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Hora" />,
+      cell: ({ row }) => <span className="text-sm font-medium">{formatTime(row.original.start_time)}</span>
+    },
+    {
+      accessorKey: 'total_price',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Total" />,
+      cell: ({ row }) => <span className="font-semibold text-gray-900 dark:text-gray-50">{formatPrice(row.original.total_price)}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Estado',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
       cell: ({ row }) => {
         const statusInfo = getStatusInfo(row.original.status)
         return <Badge variant={statusInfo.variant as any} className={statusInfo.className}>{statusInfo.label}</Badge>
@@ -189,28 +298,72 @@ export default function ClientDashboard() {
     },
     {
       id: 'actions',
-      header: 'Acciones',
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Acciones" />,
       cell: ({ row }) => {
         const appointment = row.original
-        if (appointment.status === 'completed' && !appointment.has_review) {
-          return (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSelectedAppointment(appointment)
-                setReviewModalOpen(true)
-              }}
-            >
-              <Star className="w-4 h-4 mr-2" />
-              Escribir Reseña
-            </Button>
-          )
-        }
-        return null
+        const aptDate = parseDateString(appointment.appointment_date)
+        const [hours, minutes] = appointment.start_time.split(':').map(Number)
+        aptDate.setHours(hours, minutes)
+        const isUpcoming = aptDate > new Date()
+        const canCancel = ['pending', 'confirmed'].includes(appointment.status)
+        const canManage = !['cancelled', 'completed'].includes(appointment.status)
+        const canReview = appointment.status === 'completed' && !appointment.has_review
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/client/appointments/${appointment.id}`} className="cursor-pointer">
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver Cita
+                </Link>
+              </DropdownMenuItem>
+              {canManage && (
+                <DropdownMenuItem asChild>
+                  <Link href={`/dashboard/client/appointments`} className="cursor-pointer">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Gestionar Cita
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              {canReview && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedAppointment(appointment)
+                    setReviewModalOpen(true)
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Star className="mr-2 h-4 w-4" />
+                  Escribir Reseña
+                </DropdownMenuItem>
+              )}
+              {canCancel && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSelectedAppointment(appointment)
+                      setShowCancelDialog(true)
+                    }}
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Cancelar Cita
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
       }
     }
-  ], [formatPrice, formatDate])
+  ], [formatPrice, formatDate, formatTime])
 
   if (loading) {
     return (
@@ -231,7 +384,7 @@ export default function ClientDashboard() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Sticky Header */}
       <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">¡Hola, {authState.user?.first_name || 'Cliente'}!</h1>
@@ -252,7 +405,7 @@ export default function ClientDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatsCard title="Citas Próximas" value={stats.upcoming} description="Reservas confirmadas" icon={Calendar} variant="green" />
@@ -276,7 +429,7 @@ export default function ClientDashboard() {
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
                     <div className="flex items-center text-gray-600 dark:text-gray-400"><Calendar className="w-4 h-4 mr-3 text-theme-500"/>{formatDate(apt.appointment_date)}</div>
-                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Clock className="w-4 h-4 mr-3 text-theme-500"/>{apt.start_time.slice(0,5)}</div>
+                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Clock className="w-4 h-4 mr-3 text-theme-500"/>{formatTime(apt.start_time)}</div>
                     {apt.employee && <div className="flex items-center text-gray-600 dark:text-gray-400"><User className="w-4 h-4 mr-3 text-theme-500"/>{apt.employee.first_name} {apt.employee.last_name}</div>}
                     {apt.business?.address && <div className="flex items-center text-gray-600 dark:text-gray-400"><MapPin className="w-4 h-4 mr-3 text-theme-500"/>{apt.business.address}</div>}
                   </CardContent>
@@ -331,6 +484,53 @@ export default function ClientDashboard() {
           onReviewSubmitted={handleReviewSubmitted}
         />
       )}
+
+      {/* Cancel Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancelar Cita</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="cancelReason" className="text-sm font-medium">
+                Motivo de cancelación (opcional)
+              </label>
+              <Textarea
+                id="cancelReason"
+                placeholder="Escribe el motivo de la cancelación..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelDialog(false)
+                setCancelReason('')
+                setSelectedAppointment(null)
+              }}
+              disabled={cancelling}
+            >
+              Volver
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelAppointment}
+              disabled={cancelling}
+            >
+              {cancelling ? 'Cancelando...' : 'Cancelar Cita'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

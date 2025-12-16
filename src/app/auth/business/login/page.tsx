@@ -115,7 +115,7 @@ export default function BusinessLoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2  bg-orange-600 hover:bg-orange-700 p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
@@ -265,7 +265,7 @@ export default function BusinessLoginPage() {
             <Button
               type="submit"
               disabled={loading || !isValid}
-              className="w-full h-10 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-semibold"
+              className="w-full h-10  bg-orange-600 hover:bg-orange-700 text-white font-semibold"
             >
               {loading ? (
                 <>
@@ -293,7 +293,8 @@ export default function BusinessLoginPage() {
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
             variant="outline"
-            className="w-full h-10 border-2 border-gray-300 hover:bg-gray-50"
+        className="w-full h-10 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+
           >
             {googleLoading ? (
               <>
