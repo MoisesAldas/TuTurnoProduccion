@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabaseClient'
+import { toDateString } from '@/lib/dateUtils'
 import type { Employee, Service, Appointment } from '@/types/database'
 
 type Client = {
@@ -69,7 +70,7 @@ export default function CreateAppointmentModal({
   const [walkInPhone, setWalkInPhone] = useState('')
   const [selectedEmployeeIdState, setSelectedEmployeeIdState] = useState(selectedEmployeeId || '')
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
-  const [appointmentDate, setAppointmentDate] = useState(selectedDate.toISOString().split('T')[0])
+  const [appointmentDate, setAppointmentDate] = useState(toDateString(selectedDate))
   const [startTime, setStartTime] = useState(selectedTime || '09:00')
   const [notes, setNotes] = useState('')
   const [clientNotes, setClientNotes] = useState('')

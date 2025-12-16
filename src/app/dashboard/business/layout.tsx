@@ -62,6 +62,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [isPinned, setIsPinned] = useState(false) // Pin sidebar state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [businessName, setBusinessName] = useState<string>('')
+  const [businessLogo, setBusinessLogo] = useState<string>('')
   const supabase = createClient()
 
   // Mantener el sidebar expandido cuando está pinned
@@ -99,12 +100,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
     const { data, error } = await supabase
       .from('businesses')
-      .select('name')
+      .select('name, logo_url')
       .eq('owner_id', authState.user.id)
       .single()
 
     if (data) {
       setBusinessName(data.name)
+      setBusinessLogo(data.logo_url || '')
     }
   }
 
@@ -131,7 +133,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden overflow-x-hidden bg-gray-50 w-full max-w-full">
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
@@ -147,17 +149,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <aside
         onMouseEnter={() => !isPinned && setCollapsed(false)}
         onMouseLeave={() => !isPinned && setCollapsed(true)}
-        className={`${
-          collapsed ? 'lg:w-20' : 'lg:w-64'
-        }
-        fixed lg:static inset-y-0 left-0 z-50
+        className={`
+        ${collapsed ? 'lg:w-20' : 'lg:w-64'}
+        absolute lg:relative inset-y-0 left-0 z-50
         w-64 lg:w-auto
         bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white
         transition-all duration-500 ease-in-out
         flex flex-col border-r border-gray-700 shadow-2xl
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         group
-        relative
         `}
       >
         {/* Desktop Pin/Unpin Button - Top Right Corner */}
@@ -279,7 +279,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           <div className={`space-y-2 transition-all duration-500 ${collapsed ? 'lg:hidden' : ''}`}>
             <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/50 transition-all duration-300 cursor-pointer group">
               <Avatar className="w-9 h-9 border-2 border-orange-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <AvatarImage src={authState.user?.avatar_url} />
+                {authState.user?.avatar_url ? (
+                  <AvatarImage src={authState.user.avatar_url} />
+                ) : businessLogo ? (
+                  <AvatarImage src={businessLogo} className="object-cover" />
+                ) : null}
                 <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>
@@ -305,7 +309,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           <div className={`transition-all duration-500 ${collapsed ? 'lg:block' : 'lg:hidden'} hidden`}>
             <div className="flex flex-col items-center space-y-3">
               <Avatar className="w-10 h-10 border-2 border-orange-500 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
-                <AvatarImage src={authState.user?.avatar_url} />
+                {authState.user?.avatar_url ? (
+                  <AvatarImage src={authState.user.avatar_url} />
+                ) : businessLogo ? (
+                  <AvatarImage src={businessLogo} className="object-cover" />
+                ) : null}
                 <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-xs">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>
@@ -323,7 +331,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
         {/* Mobile Header - Always visible on mobile */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm lg:hidden">
           <div className="flex items-center space-x-4">
@@ -344,7 +352,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
             {/* User Avatar */}
             <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
-              <AvatarImage src={authState.user?.avatar_url} />
+              {authState.user?.avatar_url ? (
+                <AvatarImage src={authState.user.avatar_url} />
+              ) : businessLogo ? (
+                <AvatarImage src={businessLogo} className="object-cover" />
+              ) : null}
               <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
                 {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
               </AvatarFallback>
@@ -372,7 +384,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
               {/* User Avatar */}
               <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
-                <AvatarImage src={authState.user?.avatar_url} />
+                {authState.user?.avatar_url ? (
+                  <AvatarImage src={authState.user.avatar_url} />
+                ) : businessLogo ? (
+                  <AvatarImage src={businessLogo} className="object-cover" />
+                ) : null}
                 <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>

@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { toDateString } from '@/lib/dateUtils'
+import OverlappingAppointmentsDialog from './OverlappingAppointmentsDialog'
 
 import type { Employee, Appointment } from '@/types/database'
 
@@ -175,6 +175,8 @@ export default function CalendarView({
     position: { x: number; y: number }
   } | null>(null)
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null)
+  const [overlappingDialogOpen, setOverlappingDialogOpen] = useState(false)
+  const [overlappingAppointments, setOverlappingAppointments] = useState<CalendarAppointment[]>([])
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
   const { toast } = useToast()
@@ -513,7 +515,7 @@ export default function CalendarView({
                   {statusLabels[appointment.status as keyof typeof statusLabels]}
                 </span>
               </div>
-              <span className="text-lg font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+              <span className="text-lg font-bold bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
                 ${appointment.total_price}
               </span>
             </div>
@@ -709,30 +711,25 @@ export default function CalendarView({
                         const employee = employees.find(e => e.id === firstAppointment.employee_id)
                         const isDragging = draggingAppointment?.id === firstAppointment.id
 
-                        const popoverId = `week-${dateStr}-${groupIndex}`
-
                         return (
-                          <Popover
-                            key={popoverId}
-                            open={openPopoverId === popoverId}
-                            onOpenChange={(open) => setOpenPopoverId(open ? popoverId : null)}
+                          <div
+                            key={`week-${dateStr}-${groupIndex}`}
+                            draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                            onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                            onDragEnd={handleDragEnd}
+                            className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
+                              firstAppointment.status
+                            )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                            style={{
+                              top: `${top}px`,
+                              height: `${height}px`
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOverlappingAppointments(group)
+                              setOverlappingDialogOpen(true)
+                            }}
                           >
-                            <PopoverTrigger asChild>
-                              <div
-                                draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
-                                onDragStart={(e) => handleDragStart(e, firstAppointment)}
-                                onDragEnd={handleDragEnd}
-                                className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
-                                  firstAppointment.status
-                                )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
-                                style={{
-                                  top: `${top}px`,
-                                  height: `${height}px`
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                }}
-                              >
                                 <div className="p-2 h-full overflow-hidden relative">
                                   <p className="text-xs font-semibold truncate">
                                     🕐 {firstAppointment.start_time.substring(0, 5)}
@@ -754,76 +751,7 @@ export default function CalendarView({
                                     +{group.length - 1}
                                   </div>
                                 </div>
-                              </div>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-80 p-0"
-                              align="start"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
-                                <h4 className="font-semibold text-sm text-gray-900">
-                                  {group.length} Citas Superpuestas
-                                </h4>
-                                <p className="text-xs text-gray-600 mt-0.5">
-                                  Haz clic en una cita para ver detalles
-                                </p>
-                              </div>
-                              <div className="max-h-96 overflow-y-auto">
-                                {group.map((appointment, index) => {
-                                  const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
-                                  const employee = employees.find(e => e.id === appointment.employee_id)
-                                  return (
-                                    <div
-                                      key={appointment.id}
-                                      className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors ${
-                                        index === 0 ? 'bg-orange-50/30' : ''
-                                      }`}
-                                      onClick={() => {
-                                        setOpenPopoverId(null)
-                                        handleAppointmentClick(appointment)
-                                      }}
-                                    >
-                                      <div className="flex items-start justify-between gap-2">
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2 mb-1">
-                                            <span className={`inline-block w-2 h-2 rounded-full ${
-                                              appointment.status === 'confirmed' ? 'bg-green-500' :
-                                              appointment.status === 'pending' ? 'bg-yellow-500' :
-                                              appointment.status === 'in_progress' ? 'bg-blue-500' :
-                                              appointment.status === 'completed' ? 'bg-gray-500' :
-                                              appointment.status === 'cancelled' ? 'bg-red-500' :
-                                              'bg-orange-500'
-                                            }`} />
-                                            <p className="text-sm font-semibold text-gray-900 truncate">
-                                              {getClientName(appointment)}
-                                              {!appointment.client_id && (
-                                                <span className="ml-1 text-orange-600">👤</span>
-                                              )}
-                                            </p>
-                                          </div>
-                                          <p className="text-xs text-gray-600 truncate">{serviceName}</p>
-                                          {employee && (
-                                            <p className="text-xs text-gray-500 truncate mt-0.5">
-                                              👨‍💼 {employee.first_name} {employee.last_name}
-                                            </p>
-                                          )}
-                                          <p className="text-xs font-medium text-gray-700 mt-1">
-                                            {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
-                                          </p>
-                                        </div>
-                                        <div className="flex-shrink-0 text-right">
-                                          <p className="text-sm font-semibold text-gray-900">
-                                            ${appointment.total_price}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          </div>
                         )
                       })
                     })()}
@@ -870,6 +798,15 @@ export default function CalendarView({
             }
           />
         )}
+
+        {/* Dialog de citas superpuestas */}
+        <OverlappingAppointmentsDialog
+          isOpen={overlappingDialogOpen}
+          onClose={() => setOverlappingDialogOpen(false)}
+          appointments={overlappingAppointments}
+          employees={employees}
+          onAppointmentClick={handleAppointmentClick}
+        />
 
         {/* Tooltip */}
         <AppointmentTooltip />
@@ -1156,111 +1093,43 @@ export default function CalendarView({
                       const serviceName = firstAppointment.appointment_services?.[0]?.services?.name || 'Servicio'
                       const isDragging = draggingAppointment?.id === firstAppointment.id
 
-                      const popoverId = `day-${employee.id}-${groupIndex}`
-
                       return (
-                        <Popover
-                          key={popoverId}
-                          open={openPopoverId === popoverId}
-                          onOpenChange={(open) => setOpenPopoverId(open ? popoverId : null)}
+                        <div
+                          key={`day-${employee.id}-${groupIndex}`}
+                          draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                          onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                          onDragEnd={handleDragEnd}
+                          className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
+                            firstAppointment.status
+                          )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                          style={{
+                            top: `${top}px`,
+                            height: `${height}px`
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOverlappingAppointments(group)
+                            setOverlappingDialogOpen(true)
+                          }}
                         >
-                          <PopoverTrigger asChild>
-                            <div
-                              draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
-                              onDragStart={(e) => handleDragStart(e, firstAppointment)}
-                              onDragEnd={handleDragEnd}
-                              className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
-                                firstAppointment.status
-                              )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
-                              style={{
-                                top: `${top}px`,
-                                height: `${height}px`
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                              }}
-                            >
-                              <div className="p-2 h-full overflow-hidden relative">
-                                <p className="text-xs font-semibold truncate">
-                                  {getClientName(firstAppointment)}
-                                  {!firstAppointment.client_id && (
-                                    <span className="ml-1 text-xs font-normal">👤</span>
-                                  )}
-                                </p>
-                                <p className="text-xs truncate mt-0.5">{serviceName}</p>
-                                <p className="text-xs font-medium mt-1">
-                                  {firstAppointment.start_time.substring(0, 5)} - {firstAppointment.end_time.substring(0, 5)}
-                                </p>
+                          <div className="p-2 h-full overflow-hidden relative">
+                            <p className="text-xs font-semibold truncate">
+                              {getClientName(firstAppointment)}
+                              {!firstAppointment.client_id && (
+                                <span className="ml-1 text-xs font-normal">👤</span>
+                              )}
+                            </p>
+                            <p className="text-xs truncate mt-0.5">{serviceName}</p>
+                            <p className="text-xs font-medium mt-1">
+                              {firstAppointment.start_time.substring(0, 5)} - {firstAppointment.end_time.substring(0, 5)}
+                            </p>
 
-                                {/* Badge de citas adicionales */}
-                                <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-white">
-                                  +{group.length - 1}
-                                </div>
-                              </div>
+                            {/* Badge de citas adicionales */}
+                            <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-white">
+                              +{group.length - 1}
                             </div>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-80 p-0"
-                            align="start"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
-                              <h4 className="font-semibold text-sm text-gray-900">
-                                {group.length} Citas Superpuestas
-                              </h4>
-                              <p className="text-xs text-gray-600 mt-0.5">
-                                Haz clic en una cita para ver detalles
-                              </p>
-                            </div>
-                            <div className="max-h-96 overflow-y-auto">
-                              {group.map((appointment, index) => {
-                                const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
-                                return (
-                                  <div
-                                    key={appointment.id}
-                                    className={`p-3 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors ${
-                                      index === 0 ? 'bg-orange-50/30' : ''
-                                    }`}
-                                    onClick={() => {
-                                      setOpenPopoverId(null)
-                                      handleAppointmentClick(appointment)
-                                    }}
-                                  >
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <span className={`inline-block w-2 h-2 rounded-full ${
-                                            appointment.status === 'confirmed' ? 'bg-green-500' :
-                                            appointment.status === 'pending' ? 'bg-yellow-500' :
-                                            appointment.status === 'in_progress' ? 'bg-blue-500' :
-                                            appointment.status === 'completed' ? 'bg-gray-500' :
-                                            appointment.status === 'cancelled' ? 'bg-red-500' :
-                                            'bg-orange-500'
-                                          }`} />
-                                          <p className="text-sm font-semibold text-gray-900 truncate">
-                                            {getClientName(appointment)}
-                                            {!appointment.client_id && (
-                                              <span className="ml-1 text-orange-600">👤</span>
-                                            )}
-                                          </p>
-                                        </div>
-                                        <p className="text-xs text-gray-600 truncate">{serviceName}</p>
-                                        <p className="text-xs font-medium text-gray-700 mt-1">
-                                          {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
-                                        </p>
-                                      </div>
-                                      <div className="flex-shrink-0 text-right">
-                                        <p className="text-sm font-semibold text-gray-900">
-                                          ${appointment.total_price}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                          </div>
+                        </div>
                       )
                     })
                   })()}
@@ -1309,6 +1178,15 @@ export default function CalendarView({
           }
         />
       )}
+
+      {/* Dialog de citas superpuestas */}
+      <OverlappingAppointmentsDialog
+        isOpen={overlappingDialogOpen}
+        onClose={() => setOverlappingDialogOpen(false)}
+        appointments={overlappingAppointments}
+        employees={employees}
+        onAppointmentClick={handleAppointmentClick}
+      />
 
       {/* Tooltip */}
       <AppointmentTooltip />

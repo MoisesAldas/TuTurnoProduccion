@@ -255,7 +255,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-96 p-0" align="end">
+      <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] p-0" align="end">
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
           <h3 className="font-semibold text-gray-900">Notificaciones</h3>
