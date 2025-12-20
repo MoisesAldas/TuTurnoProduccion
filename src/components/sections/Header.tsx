@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { Menu, X, LogIn, LogOut, User, Briefcase, ShoppingCart, LayoutDashboard } from "lucide-react"
+import { Menu, X, LogIn, LogOut, User, Briefcase, ShoppingCart, LayoutDashboard, MessageCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import Logo from '../logo'
@@ -155,13 +155,18 @@ export default function Header() {
                 >
                   Registra tu Negocio
                 </Button>
-                <ThemeToggle />
+                <Button
+                  onClick={() => window.open('https://wa.me/qr/WZEXHWGYTPJPK1', '_blank')}
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Contáctame
+                </Button>
               </>
             )}
           </div>
 
           <div className="flex md:hidden items-center gap-2">
-            <ThemeToggle />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -221,6 +226,14 @@ export default function Header() {
                     onClick={handleReserveClick}
                   >
                     Reservar Cita
+                  </Button>
+                  <Button
+                    size="lg"
+                    onClick={() => window.open('https://wa.me/qr/WZEXHWGYTPJPK1', '_blank')}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    Contáctame
                   </Button>
                 </>
               )}
