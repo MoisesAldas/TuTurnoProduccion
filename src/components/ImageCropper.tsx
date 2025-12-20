@@ -201,9 +201,27 @@ export default function ImageCropper({
 
     const img = imageRef.current
 
-    // Configurar canvas con el tamaño final deseado
-    canvas.width = maxWidth
-    canvas.height = maxHeight
+    // Calcular aspect ratio del área recortada
+    const cropAspectRatio = cropArea.width / cropArea.height
+
+    // Calcular dimensiones del canvas manteniendo el aspect ratio
+    let finalWidth = maxWidth
+    let finalHeight = maxHeight
+
+    // Ajustar dimensiones para mantener el aspect ratio sin exceder límites
+    if (cropAspectRatio > (maxWidth / maxHeight)) {
+      // Área más ancha que el límite - ajustar por ancho
+      finalWidth = maxWidth
+      finalHeight = Math.round(maxWidth / cropAspectRatio)
+    } else {
+      // Área más alta que el límite - ajustar por altura
+      finalHeight = maxHeight
+      finalWidth = Math.round(maxHeight * cropAspectRatio)
+    }
+
+    // Configurar canvas con el tamaño calculado
+    canvas.width = finalWidth
+    canvas.height = finalHeight
 
     // Limpiar canvas con fondo blanco
     ctx.fillStyle = '#ffffff'
@@ -592,15 +610,44 @@ export default function ImageCropper({
                   className="w-full h-full object-cover"
                   style={{ display: 'none' }}
                 />
-                {imageLoaded && (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-900 flex items-center justify-center text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    {maxWidth}x{maxHeight}
-                  </div>
-                )}
+                {imageLoaded && (() => {
+                  const cropAspectRatio = cropArea.width / cropArea.height
+                  let finalWidth = maxWidth
+                  let finalHeight = maxHeight
+                  if (cropAspectRatio > (maxWidth / maxHeight)) {
+                    finalWidth = maxWidth
+                    finalHeight = Math.round(maxWidth / cropAspectRatio)
+                  } else {
+                    finalHeight = maxHeight
+                    finalWidth = Math.round(maxHeight * cropAspectRatio)
+                  }
+                  return (
+                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-900 flex items-center justify-center text-xs text-gray-600 dark:text-gray-400 font-medium">
+                      {finalWidth}x{finalHeight}
+                    </div>
+                  )
+                })()}
               </div>
               <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-                <p className="font-medium">Tamaño final: <span className="text-orange-600 dark:text-orange-400">{maxWidth} x {maxHeight}px</span></p>
-                <p className="text-gray-600 dark:text-gray-400 hidden sm:block">Formato: {imageFile.type}</p>
+                {(() => {
+                  const cropAspectRatio = cropArea.width / cropArea.height
+                  let finalWidth = maxWidth
+                  let finalHeight = maxHeight
+                  if (cropAspectRatio > (maxWidth / maxHeight)) {
+                    finalWidth = maxWidth
+                    finalHeight = Math.round(maxWidth / cropAspectRatio)
+                  } else {
+                    finalHeight = maxHeight
+                    finalWidth = Math.round(maxHeight * cropAspectRatio)
+                  }
+                  return (
+                    <>
+                      <p className="font-medium">Tamaño final: <span className="text-orange-600 dark:text-orange-400">{finalWidth} x {finalHeight}px</span></p>
+                      <p className="text-gray-600 dark:text-gray-400 hidden sm:block">Formato: {imageFile.type}</p>
+                      <p className="text-gray-600 dark:text-gray-400 text-xs">Máximo: {maxWidth}x{maxHeight}px</p>
+                    </>
+                  )
+                })()}
               </div>
             </div>
           </div>
@@ -618,7 +665,7 @@ export default function ImageCropper({
             <Button
               onClick={handleSave}
               disabled={!imageLoaded}
-              className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white shadow-md hover:shadow-lg transition-all"
+              className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
             >
               <Check className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Aplicar Recorte</span>

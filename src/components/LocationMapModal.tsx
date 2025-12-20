@@ -31,15 +31,15 @@ export default function LocationMapModal({
   const marker = useRef<mapboxgl.Marker | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  // Theme colors - Using emerald for client-facing views
+  // Theme colors - Using slate for client
   const colors = {
-    markerBg: '#059669', // emerald-600
-    headerBg: 'from-emerald-50 to-teal-50',
-    iconBg: 'from-emerald-500 to-teal-600',
-    buttonBg: 'bg-emerald-600 hover:bg-emerald-700',
-    loadingBorder: 'border-emerald-200',
-    loadingBorderTop: 'border-t-emerald-600',
-    popupColor: '#059669'
+    markerBg: '#0f172a', // slate-900
+    headerBg: 'bg-slate-900',
+    iconBg: 'bg-slate-800',
+    buttonBg: 'bg-slate-900 hover:bg-slate-800',
+    loadingBorder: 'border-slate-200',
+    loadingBorderTop: 'border-t-slate-900',
+    popupColor: '#0f172a'
   }
 
   useEffect(() => {
@@ -103,7 +103,6 @@ export default function LocationMapModal({
         el.style.height = '40px'
         el.style.borderRadius = '50% 50% 50% 0'
         el.style.background = colors.markerBg
-        el.style.border = '3px solid white'
         el.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.3)'
         el.style.transform = 'rotate(-45deg)'
         el.style.cursor = 'pointer'
@@ -191,16 +190,16 @@ export default function LocationMapModal({
         </DialogHeader>
 
         {/* Header Visual */}
-        <div className={`flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r ${colors.headerBg}`}>
+        <div className={`flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-b ${colors.headerBg}`}>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${colors.iconBg} rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}>
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 ${colors.iconBg} rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}>
               <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+              <h3 className="text-base sm:text-lg font-bold text-white truncate">
                 {businessName}
               </h3>
-              <p className="text-xs sm:text-sm text-gray-600 truncate">{address}</p>
+              <p className="text-xs sm:text-sm text-slate-200 truncate">{address}</p>
             </div>
           </div>
         </div>
@@ -227,7 +226,7 @@ export default function LocationMapModal({
             <Button
               onClick={getDirections}
               size="lg"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white shadow-md hover:shadow-lg transition-all duration-200"
             >
               <Navigation className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               <span className="text-sm sm:text-base">Cómo Llegar</span>
@@ -236,7 +235,7 @@ export default function LocationMapModal({
               onClick={openInGoogleMaps}
               size="lg"
               variant="outline"
-              className="w-full border-2 border-gray-300 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition-all duration-200"
+              className="w-full border-2 border-gray-300 text-gray-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
             >
               <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
               <span className="text-sm sm:text-base">Google Maps</span>
@@ -245,7 +244,7 @@ export default function LocationMapModal({
               onClick={openInWaze}
               size="lg"
               variant="outline"
-              className="w-full border-2 border-gray-300 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-300 transition-all duration-200"
+              className="w-full border-2 border-gray-300 text-gray-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
             >
               <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2c-4.962 0-9 4.038-9 9 0 1.549.396 3.069 1.158 4.437L12 23l7.842-7.563C20.604 14.069 21 12.549 21 11c0-4.962-4.038-9-9-9zm0 12.5c-1.933 0-3.5-1.567-3.5-3.5s1.567-3.5 3.5-3.5 3.5 1.567 3.5 3.5-1.567 3.5-3.5 3.5z"/>

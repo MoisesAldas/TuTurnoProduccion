@@ -813,15 +813,16 @@ export default function ListarPage() {
 
   const statusOptions = ['pending','confirmed','in_progress','completed','cancelled','no_show']
 
+  const statusConfig = {
+    pending: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pendiente' },
+    confirmed: { className: 'bg-green-100 text-green-800 border-green-200', label: 'Confirmada' },
+    in_progress: { className: 'bg-blue-100 text-blue-800 border-blue-200', label: 'En Progreso' },
+    completed: { className: 'bg-gray-100 text-gray-800 border-gray-200', label: 'Completada' },
+    cancelled: { className: 'bg-red-100 text-red-800 border-red-200', label: 'Cancelada' },
+    no_show: { className: 'bg-orange-100 text-orange-800 border-orange-200', label: 'No Asistió' },
+  }
+
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pendiente' },
-      confirmed: { className: 'bg-green-100 text-green-800 border-green-200', label: 'Confirmada' },
-      in_progress: { className: 'bg-blue-100 text-blue-800 border-blue-200', label: 'En Progreso' },
-      completed: { className: 'bg-gray-100 text-gray-800 border-gray-200', label: 'Completada' },
-      cancelled: { className: 'bg-red-100 text-red-800 border-red-200', label: 'Cancelada' },
-      no_show: { className: 'bg-orange-100 text-orange-800 border-orange-200', label: 'No Asistió' },
-    }
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
     return <Badge className={`${config.className} border`}>{config.label}</Badge>
   }
@@ -843,7 +844,7 @@ export default function ListarPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Sticky Header */}
       <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             {/* Título */}
             <div>
@@ -920,7 +921,7 @@ export default function ListarPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Appointments */}
@@ -1099,7 +1100,9 @@ export default function ListarPage() {
                 <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
                   {statusOptions.map(s => (
-                    <SelectItem key={s} value={s} className="capitalize">{s.replace('_',' ')}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {statusConfig[s as keyof typeof statusConfig]?.label || s}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

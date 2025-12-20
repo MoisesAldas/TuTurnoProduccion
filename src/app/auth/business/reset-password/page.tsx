@@ -60,10 +60,15 @@ export default function BusinessResetPasswordPage() {
           console.error('No valid session for password reset:', error)
           setSessionValid(false)
           setError('Enlace de recuperación inválido o expirado. Solicita uno nuevo.')
+
+          // Redirigir al forgot password después de 3 segundos
+          setTimeout(() => {
+            router.push('/auth/business/forgot-password?error=link_expired&message=El+enlace+de+recuperación+ha+expirado')
+          }, 3000)
           return
         }
 
-        ('✅ Valid session found for password reset')
+        console.log('✅ Valid session found for password reset')
         setSessionValid(true)
       } catch (err) {
         console.error('Error checking session:', err)
@@ -127,7 +132,7 @@ export default function BusinessResetPasswordPage() {
         return
       }
 
-      ('✅ Password updated successfully')
+      console.log('✅ Password updated successfully')
       setSuccess(true)
 
       // Redirigir al login después de 3 segundos

@@ -106,7 +106,7 @@ export default function ClientRegisterPage() {
       { strength: 1, text: 'Muy débil', color: 'bg-red-500' },
       { strength: 2, text: 'Débil', color: 'bg-orange-500' },
       { strength: 3, text: 'Regular', color: 'bg-yellow-500' },
-      { strength: 4, text: 'Fuerte', color: 'bg-emerald-500' },
+      { strength: 4, text: 'Fuerte', color: 'bg-slate-500' },
       { strength: 5, text: 'Muy fuerte', color: 'bg-green-600' },
     ]
 
@@ -169,11 +169,9 @@ export default function ClientRegisterPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900  hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-
+    
         {/* Back button */}
         <div className="relative z-10">
           <Link href="/auth/client">
@@ -212,7 +210,7 @@ export default function ClientRegisterPage() {
           {/* Mobile back button */}
           <div className="lg:hidden">
             <Link href="/auth/client">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-emerald-600 hover:bg-emerald-50">
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-slate-600 hover:bg-slate-50">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver
               </Button>
@@ -250,7 +248,7 @@ export default function ClientRegisterPage() {
                   <Input
                     id="firstName"
                     placeholder="Juan"
-                    className="pl-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                    className="pl-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                     {...register('firstName')}
                     onInput={(e) => {
                       const target = e.target as HTMLInputElement
@@ -272,7 +270,7 @@ export default function ClientRegisterPage() {
                   <Input
                     id="lastName"
                     placeholder="Pérez"
-                    className="pl-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                    className="pl-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                     {...register('lastName')}
                     onInput={(e) => {
                       const target = e.target as HTMLInputElement
@@ -297,7 +295,7 @@ export default function ClientRegisterPage() {
                   id="email"
                   type="email"
                   placeholder="tu@email.com"
-                  className="pl-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  className="pl-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                   {...register('email')}
                 />
               </div>
@@ -317,7 +315,7 @@ export default function ClientRegisterPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Crea una contraseña segura"
-                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                   {...register('password')}
                 />
                 <button
@@ -358,7 +356,7 @@ export default function ClientRegisterPage() {
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Confirma tu contraseña"
-                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                   {...register('confirmPassword')}
                 />
                 <button
@@ -377,11 +375,11 @@ export default function ClientRegisterPage() {
             {/* Terms and Conditions */}
             <div className="bg-gray-50 rounded-lg p-2.5 text-xs text-gray-600">
               Al crear una cuenta, aceptas nuestros{' '}
-              <Link href="/terms" className="text-emerald-600 hover:text-emerald-700 underline">
+              <Link href="/terms" className="text-slate-800 hover:text-slate-900 underline">
                 Términos
               </Link>
               {' '}y{' '}
-              <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700 underline">
+              <Link href="/privacy" className="text-slate-800 hover:text-slate-900 underline">
                 Privacidad
               </Link>
             </div>
@@ -392,7 +390,7 @@ export default function ClientRegisterPage() {
               <Button
                 type="submit"
                 disabled={loading || !isValid}
-                className="h-10 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold"
+                className="h-10 bg-slate-900  hover:bg-slate-800 text-white font-semibold"
               >
                 {loading ? (
                   <>
@@ -401,6 +399,7 @@ export default function ClientRegisterPage() {
                 ) : (
                   <>
                     <UserPlus className="w-4 h-4" />
+                      <span>Registrar</span>
                   </>
                 )}
               </Button>
@@ -411,7 +410,7 @@ export default function ClientRegisterPage() {
                 disabled={googleLoading}
                 variant="outline"
                 type="button"
-                className="h-10 border-2 border-gray-300 hover:bg-gray-50"
+                className="h-10 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
               >
                 {googleLoading ? (
                   <>
@@ -436,7 +435,7 @@ export default function ClientRegisterPage() {
             {/* Login Link */}
             <div className="text-center">
               <p className="text-xs text-gray-600 mb-1">¿Ya tienes cuenta?</p>
-              <Link href="/auth/client/login" className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold">
+              <Link href="/auth/client/login" className="text-sm text-slate-800 hover:text-slate-900 font-semibold">
                 Iniciar sesión
               </Link>
             </div>
@@ -444,7 +443,7 @@ export default function ClientRegisterPage() {
             {/* Business Link */}
             <div className="text-center">
               <p className="text-xs text-gray-600 mb-1">¿Tienes negocio?</p>
-              <Link href="/auth/business" className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold">
+              <Link href="/auth/business" className="text-sm text-slate-800 hover:text-slate-900 font-semibold">
                 Registrar negocio
               </Link>
             </div>

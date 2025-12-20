@@ -48,6 +48,7 @@ export default function AjustesPage() {
     booking_confirmations: true
   })
 
+  const [initialLoading, setInitialLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -64,6 +65,9 @@ export default function AjustesPage() {
 
   const loadSettings = async () => {
     console.log('Loading notification settings...')
+    // Simulate loading
+    await new Promise(resolve => setTimeout(resolve, 500))
+    setInitialLoading(false)
   }
 
   const handleSaveSettings = async () => {
@@ -104,15 +108,37 @@ export default function AjustesPage() {
     setSettings(prev => ({ ...prev, [key]: value }))
   }
 
+  if (initialLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="text-center">
+          <div className="relative w-16 h-16 mx-auto mb-6">
+            <div className="absolute inset-0 border-4 border-slate-200 dark:border-slate-800 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-slate-900 dark:border-slate-100 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando ajustes</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Preparando tus preferencias...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">
+            Ajustes
+          </h1>
+        </div>
+
         <div className="space-y-8">
           {/* Notification Settings */}
-          <Card className="overflow-hidden border-t-4 border-t-emerald-500">
+          <Card className="overflow-hidden border-t-4 border-t-slate-700">
             <CardHeader>
-              <CardTitle className="flex items-center text-xl">
-                <Bell className="w-6 h-6 mr-3 text-emerald-600" />
+              <CardTitle className="flex items-center text-lg font-semibold">
+                <Bell className="w-5 h-5 mr-3 text-slate-700" />
                 Notificaciones
               </CardTitle>
             </CardHeader>
@@ -128,7 +154,7 @@ export default function AjustesPage() {
                       <p className="text-sm text-gray-500 mt-1">Recibe confirmaciones y recordatorios.</p>
                     </div>
                   </div>
-                  <Switch checked={settings.email_notifications} onCheckedChange={(value) => updateSetting('email_notifications', value)} className="data-[state=checked]:bg-emerald-600" />
+                  <Switch checked={settings.email_notifications} onCheckedChange={(value) => updateSetting('email_notifications', value)} className="data-[state=checked]:bg-slate-900" />
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border hover:bg-slate-100 transition-colors">
@@ -141,7 +167,7 @@ export default function AjustesPage() {
                       <p className="text-sm text-gray-500 mt-1">Recibe mensajes directos para tus citas.</p>
                     </div>
                   </div>
-                  <Switch checked={settings.whatsapp_notifications} onCheckedChange={(value) => updateSetting('whatsapp_notifications', value)} className="data-[state=checked]:bg-emerald-600" />
+                  <Switch checked={settings.whatsapp_notifications} onCheckedChange={(value) => updateSetting('whatsapp_notifications', value)} className="data-[state=checked]:bg-slate-900" />
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border hover:bg-slate-100 transition-colors">
@@ -154,7 +180,7 @@ export default function AjustesPage() {
                       <p className="text-sm text-gray-500 mt-1">Alertas instantáneas en tu dispositivo.</p>
                     </div>
                   </div>
-                  <Switch checked={settings.push_notifications} onCheckedChange={(value) => updateSetting('push_notifications', value)} className="data-[state=checked]:bg-emerald-600" />
+                  <Switch checked={settings.push_notifications} onCheckedChange={(value) => updateSetting('push_notifications', value)} className="data-[state=checked]:bg-slate-900" />
                 </div>
 
                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border hover:bg-slate-100 transition-colors">
@@ -167,12 +193,12 @@ export default function AjustesPage() {
                       <p className="text-sm text-gray-500 mt-1">Ofertas y descuentos de tus lugares favoritos.</p>
                     </div>
                   </div>
-                  <Switch checked={settings.promotional_messages} onCheckedChange={(value) => updateSetting('promotional_messages', value)} className="data-[state=checked]:bg-emerald-600" />
+                  <Switch checked={settings.promotional_messages} onCheckedChange={(value) => updateSetting('promotional_messages', value)} className="data-[state=checked]:bg-slate-900" />
                 </div>
               </div>
 
               <div className="mt-8 flex justify-end">
-                <Button onClick={handleSaveSettings} disabled={loading} size="lg" className="bg-emerald-600 hover:bg-emerald-700">
+                <Button onClick={handleSaveSettings} disabled={loading} size="lg" className="bg-slate-900 hover:bg-slate-800">
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -192,8 +218,8 @@ export default function AjustesPage() {
           {/* Account Management */}
           <Card className="border-red-200">
             <CardHeader className="bg-red-50 border-b border-red-100">
-              <CardTitle className="flex items-center text-xl text-red-700">
-                <Shield className="w-6 h-6 mr-3" />
+              <CardTitle className="flex items-center text-lg font-semibold text-red-700">
+                <Shield className="w-5 h-5 mr-3" />
                 Gestión de Cuenta
               </CardTitle>
             </CardHeader>

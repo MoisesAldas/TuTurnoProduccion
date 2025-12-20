@@ -113,11 +113,9 @@ export default function ClientLoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900  hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-
+   
         {/* Back button */}
         <div className="relative z-10">
           <Link href="/auth/client">
@@ -131,7 +129,7 @@ export default function ClientLoginPage() {
         {/* Content */}
         <div className="relative z-10 space-y-6">
           <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-            <Sparkles className="w-5 h-5 text-white" />
+            
             <span className="text-white font-medium">Bienvenido de vuelta</span>
           </div>
 
@@ -156,7 +154,7 @@ export default function ClientLoginPage() {
           {/* Mobile back button */}
           <div className="lg:hidden">
             <Link href="/auth/client">
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-emerald-600 hover:bg-emerald-50">
+              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-slate-600 hover:bg-slate-50">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver
               </Button>
@@ -164,9 +162,7 @@ export default function ClientLoginPage() {
           </div>
 
           {/* Progress Steps */}
-          <div className="flex justify-center">
-            <AuthProgressSteps currentStep={2} userType="client" variant="login" />
-          </div>
+         
 
           {/* Header */}
           <div className="text-center space-y-1">
@@ -178,11 +174,11 @@ export default function ClientLoginPage() {
           </div>
 
           {/* New User Banner */}
-          <Alert className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 py-2">
+          <Alert className="bg-gradient-to-r from-slate-50 to-teal-50 border-2 border-slate-200 py-2">
             <AlertDescription className="text-center">
               <p className="text-sm text-gray-800 font-medium">
-                ¿Primera vez en TuTurno?{' '}
-                <Link href="/auth/client/register" className="font-bold text-emerald-700 hover:text-emerald-800 underline decoration-2 underline-offset-2 transition-colors">
+                ¿Primera vez en tuturno?{' '}
+                <Link href="/auth/client/register" className="font-bold text-slate-700 hover:text-slate-800 underline decoration-2 underline-offset-2 transition-colors">
                   Crea tu cuenta gratis aquí
                 </Link>
               </p>
@@ -211,7 +207,7 @@ export default function ClientLoginPage() {
                   id="email"
                   type="email"
                   placeholder="tu@email.com"
-                  className="pl-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  className="pl-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                   {...register('email')}
                 />
               </div>
@@ -231,7 +227,7 @@ export default function ClientLoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Tu contraseña"
-                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-emerald-500 focus:ring-emerald-500"
+                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                   {...register('password')}
                 />
                 <button
@@ -249,7 +245,7 @@ export default function ClientLoginPage() {
 
             {/* Forgot Password */}
             <div className="text-right">
-              <Link href="/auth/client/forgot-password" className="text-xs text-emerald-600 hover:text-emerald-700 font-medium">
+              <Link href="/auth/client/forgot-password" className="text-xs text-slate-700 hover:text-slate-800 font-medium">
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
@@ -258,7 +254,7 @@ export default function ClientLoginPage() {
             <Button
               type="submit"
               disabled={loading || !isValid}
-              className="w-full h-10 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold"
+              className="w-full h-10 bg-gradient-to-r bg-slate-900  hover:bg-slate-800 text-white font-semibold"
             >
               {loading ? (
                 <>
@@ -286,7 +282,7 @@ export default function ClientLoginPage() {
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
             variant="outline"
-            className="w-full h-10 border-2 border-gray-300 hover:bg-gray-50"
+            className="w-full h-10 border-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             {googleLoading ? (
               <>
@@ -311,7 +307,7 @@ export default function ClientLoginPage() {
             <p className="text-xs text-gray-600 mb-1">
               ¿Tienes un negocio?
             </p>
-            <Link href="/auth/business" className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold">
+            <Link href="/auth/business" className="text-xs text-slate-800 hover:text-slate-900 font-semibold">
               Registrar mi negocio →
             </Link>
           </div>

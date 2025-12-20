@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CalendarDays, ArrowLeft, Mail, CheckCircle, Send } from 'lucide-react'
+import { KeyRound, ArrowLeft, Mail, CheckCircle, Send } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import Logo from '@/components/logo'
@@ -36,6 +36,17 @@ export default function BusinessForgotPasswordPage() {
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100)
     return () => clearTimeout(timer)
+  }, [])
+
+  // Verificar si hay mensaje de error en la URL (ej: enlace expirado)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const errorType = searchParams.get('error')
+    const errorMessage = searchParams.get('message')
+
+    if (errorType === 'link_expired') {
+      setError(errorMessage || 'El enlace de recuperación ha expirado. Por favor solicita uno nuevo.')
+    }
   }, [])
 
   const {
@@ -76,220 +87,239 @@ export default function BusinessForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}>
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-orange-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-amber-400/10 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 right-10 w-72 h-72 bg-yellow-400/10 rounded-full filter blur-3xl animate-pulse delay-500"></div>
+      <div className="min-h-screen flex">
+        {/* Left Panel - Visual */}
+        <div className="hidden lg:flex lg:w-1/2 bg-orange-600 dark:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-800 p-12 flex-col justify-between relative overflow-hidden">
+          {/* Back button */}
+          <div className="relative z-10">
+            <Link href="/auth/business">
+              <Button variant="ghost" className="text-white hover:bg-white/20">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver
+              </Button>
+            </Link>
+          </div>
+
+          {/* Content */}
+          <div className="relative z-10 space-y-6">
+            <div className="inline-flex items-center gap-3 bg-white/10 dark:bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 dark:border-white/10">
+              <CheckCircle className="w-5 h-5 text-white" />
+              <span className="text-white font-medium">Email Enviado</span>
+            </div>
+
+            <h1 className="text-5xl font-bold text-white leading-tight">
+              Revisa tu<br />correo
+            </h1>
+
+            <p className="text-xl text-white/80 dark:text-white/70 max-w-md">
+              Te hemos enviado las instrucciones para restablecer tu contraseña
+            </p>
+          </div>
+
+          {/* Logo */}
+          <div className="relative z-10">
+            <Logo color="white" size="lg" />
+          </div>
         </div>
 
-        <div className="w-full max-w-md space-y-6 relative z-10">
-          {/* Success Card */}
-          <Card className="bg-white/95 backdrop-blur-md border border-white/40 shadow-xl">
-            <CardHeader className="text-center pb-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <CheckCircle className="w-8 h-8 text-white" />
+        {/* Right Panel - Success Content */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white dark:bg-gray-950 overflow-y-auto">
+          <div className="w-full max-w-md space-y-4 py-2">
+            {/* Mobile back button */}
+            <div className="lg:hidden">
+              <Link href="/auth/business">
+                <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Volver
+                </Button>
+              </Link>
+            </div>
+
+            {/* Header */}
+            <div className="text-center space-y-1">
+              <div className="lg:hidden mb-2">
+                <Logo color="black" size="lg" />
               </div>
-              <CardTitle className="text-xl font-bold text-gray-900">Email Enviado</CardTitle>
-              <CardDescription className="text-gray-600">
-                Te hemos enviado las instrucciones para restablecer tu contraseña
-              </CardDescription>
-            </CardHeader>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">¡Email Enviado!</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Revisa tu bandeja de entrada</p>
+            </div>
 
-            <CardContent className="space-y-6">
-              {/* Email Display */}
-              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                <p className="text-orange-800 font-medium text-center break-all">
-                  {emailValue}
-                </p>
+            {/* Email Display */}
+            <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-3 border border-orange-200 dark:border-orange-800">
+              <p className="text-orange-800 dark:text-orange-400 font-medium text-center break-all text-sm">
+                {emailValue}
+              </p>
+            </div>
+
+            {/* Instructions */}
+            <div className="space-y-3 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Haz clic en el enlace del email para restablecer tu contraseña.
+              </p>
+
+              <div className="text-xs text-gray-500 dark:text-gray-500 space-y-1">
+                <p>• Si no ves el email, revisa tu carpeta de spam</p>
+                <p>• El enlace expira en 1 hora</p>
               </div>
+            </div>
 
-              <div className="space-y-4 text-center">
-                <p className="text-sm text-gray-600">
-                  Revisa tu bandeja de entrada y haz clic en el enlace para restablecer tu contraseña.
-                </p>
+            {/* Actions */}
+            <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+              <Link href="/auth/business/login">
+                <Button className="w-full h-10 bg-orange-600 dark:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-800 text-white">
+                  Volver al Login
+                </Button>
+              </Link>
 
-                <div className="text-xs text-gray-500">
-                  <p>Si no ves el email, revisa tu carpeta de spam.</p>
-                  <p>El enlace expira en 1 hora.</p>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="space-y-3 pt-4 border-t border-gray-100">
-                <Link href="/auth/business/login">
-                  <Button className="w-full bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white">
-                    Volver al Login
-                  </Button>
-                </Link>
-
-                <Link href="/auth/business">
-                  <Button variant="outline" className="w-full border-2 border-orange-200 text-orange-700 hover:bg-orange-50">
-                    Inicio
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+              <Link href="/auth/business">
+                <Button variant="outline" className="mt-2 w-full h-10 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  Inicio
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center p-4 relative overflow-hidden transition-all duration-1000 ${
-      isVisible ? 'opacity-100' : 'opacity-0'
-    }`}>
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-orange-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-amber-400/10 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 right-10 w-72 h-72 bg-yellow-400/10 rounded-full filter blur-3xl animate-pulse delay-500"></div>
-
-        {/* Floating dots */}
-        <div className="absolute top-1/4 left-10 animate-bounce delay-1000">
-          <div className="w-4 h-4 bg-orange-400 rounded-full opacity-60"></div>
-        </div>
-        <div className="absolute top-1/3 right-20 animate-bounce delay-[1500ms]">
-          <div className="w-6 h-6 bg-amber-400 rounded-full opacity-40"></div>
-        </div>
-        <div className="absolute bottom-1/3 left-1/4 animate-bounce delay-[2000ms]">
-          <div className="w-5 h-5 bg-yellow-400 rounded-full opacity-50"></div>
-        </div>
-      </div>
-
-      <div className="w-full max-w-md space-y-6 relative z-10">
-        {/* Back Button */}
-        <div className={`flex justify-start transition-all duration-700 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`}>
+    <div className="min-h-screen flex">
+      {/* Left Panel - Visual */}
+      <div className="hidden lg:flex lg:w-1/2 bg-orange-600 dark:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-800 p-12 flex-col justify-between relative overflow-hidden">
+        {/* Back button */}
+        <div className="relative z-10">
           <Link href="/auth/business/login">
-            <Button variant="ghost" className="text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-all duration-200">
+            <Button variant="ghost" className="text-white hover:bg-white/20">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver al Login
             </Button>
           </Link>
         </div>
 
-        {/* Header */}
-        <div className={`text-center transition-all duration-700 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`} style={{ transitionDelay: '200ms' }}>
-          <div className="flex items-center justify-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <CalendarDays className="w-7 h-7 text-white" />
-            </div>
-            <Logo color="black" size="lg" />
+        {/* Content */}
+        <div className="relative z-10 space-y-6">
+          <div className="inline-flex items-center gap-3 bg-white/10 dark:bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 dark:border-white/10">
+            <KeyRound className="w-5 h-5 text-white" />
+            <span className="text-white font-medium">Recuperación</span>
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Recuperar Contraseña
+          <h1 className="text-5xl font-bold text-white leading-tight">
+            Recupera tu<br />contraseña
           </h1>
-          <p className="text-gray-600">
-            Ingresa tu email para recibir instrucciones de recuperación
+
+          <p className="text-xl text-white/80 dark:text-white/70 max-w-md">
+            Te enviaremos un enlace para restablecer tu contraseña de forma segura
           </p>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert variant="destructive" className={`border-red-200 bg-red-50/90 backdrop-blur-sm transition-all duration-500 ${
-            isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-          }`} style={{ transitionDelay: '400ms' }}>
-            <AlertDescription className="text-red-700">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Logo */}
+        <div className="relative z-10">
+          <Logo color="white" size="lg" />
+        </div>
+      </div>
 
-        {/* Forgot Password Form */}
-        <Card className={`bg-white/95 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-500 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-        }`} style={{ transitionDelay: '600ms' }}>
-          <CardHeader className="text-center pb-4">
-            <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Mail className="w-8 h-8 text-white" />
-            </div>
-            <CardTitle className="text-xl font-bold text-gray-900">Restablecer Contraseña</CardTitle>
-            <CardDescription className="text-gray-600">
-              Te enviaremos un enlace para cambiar tu contraseña
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email *
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="tu@negocio.com"
-                    className="pl-10 h-12 bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
-                    {...register('email')}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-red-600 flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                    {errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={loading || !isValid}
-                className="w-full bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:transform-none disabled:shadow-lg h-12"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5 mr-2" />
-                    Enviar Instrucciones
-                  </>
-                )}
+      {/* Right Panel - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white dark:bg-gray-950 overflow-y-auto">
+        <div className="w-full max-w-md space-y-4 py-2">
+          {/* Mobile back button */}
+          <div className="lg:hidden">
+            <Link href="/auth/business/login">
+              <Button variant="ghost" size="sm" className="text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver al Login
               </Button>
-            </form>
+            </Link>
+          </div>
 
-            {/* Back to Login */}
-            <div className="text-center pt-4 border-t border-gray-100">
-              <p className="text-sm text-gray-600 mb-3">
-                ¿Recordaste tu contraseña?
+          {/* Header */}
+          <div className="text-center space-y-1">
+            <div className="lg:hidden mb-2">
+              <Logo color="black" size="lg" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Recuperar Contraseña</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Ingresa tu email para recibir instrucciones</p>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
+              <AlertDescription className="text-red-700 dark:text-red-400">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Form */}
+          <Card className="border border-gray-200 dark:border-gray-800 shadow-sm">
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {/* Email Field */}
+                <div className="space-y-1">
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Email *
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="tu@negocio.com"
+                      className="pl-10 h-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400"
+                      {...register('email')}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-xs text-red-600 dark:text-red-400">{errors.email.message}</p>
+                  )}
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={loading || !isValid}
+                  className="w-full h-10 bg-orange-600 dark:bg-orange-700 hover:bg-orange-700 dark:hover:bg-orange-800 text-white font-semibold"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Enviar Instrucciones
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              {/* Back to Login */}
+              <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-800 mt-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  ¿Recordaste tu contraseña?
+                </p>
+                <Link href="/auth/business/login">
+                  <Button variant="outline" className="w-full h-10 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    Volver al Login
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Client Link */}
+          <div className="text-center pt-2">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border border-gray-200 dark:border-gray-800">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                ¿Eres cliente?
               </p>
-              <Link href="/auth/business/login">
-                <Button variant="outline" className="border-2 border-orange-200 text-orange-700 hover:bg-orange-50 transition-all duration-200">
-                  Volver al Login
+              <Link href="/auth/client">
+                <Button variant="outline" className="border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                  Reservar una cita
                 </Button>
               </Link>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Client Link */}
-        <div className={`text-center transition-all duration-700 ${
-          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-        }`} style={{ transitionDelay: '800ms' }}>
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
-            <p className="text-sm text-gray-600 mb-3">
-              ¿Eres cliente?
-            </p>
-            <Link href="/auth/client">
-              <Button variant="outline" className="border-2 border-orange-200 text-orange-700 hover:bg-orange-50 transition-all duration-200">
-                Reservar una cita
-              </Button>
-            </Link>
           </div>
         </div>
       </div>

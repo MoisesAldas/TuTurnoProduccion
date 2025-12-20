@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { Search, MapPin, Star, Filter, Map, Building2, Sparkles, ChevronRight, AlertCircle, RefreshCw, ArrowLeft, List, X } from 'lucide-react'
+import { Search, MapPin, Star, Filter, Map, Building2, Sparkles, ChevronRight, AlertCircle, RefreshCw, ArrowLeft, List, X, ChevronDown, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { getCategoryIcon } from '@/lib/categoryIcons'
 import Link from 'next/link'
@@ -15,6 +15,13 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Logo from '@/components/logo'
 import FilterSheet from '@/components/FilterSheet'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 
 // Lazy load Mapbox to save 500KB on initial bundle
 const MarketplaceMap = dynamic(() => import('@/components/MarketplaceMap'), {
@@ -22,7 +29,7 @@ const MarketplaceMap = dynamic(() => import('@/components/MarketplaceMap'), {
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-slate-100">
       <div className="text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-2"></div>
+        <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full mx-auto mb-2"></div>
         <p className="text-sm text-gray-500">Cargando mapa...</p>
       </div>
     </div>
@@ -248,13 +255,20 @@ export default function MarketplacePage() {
 
   // Memoize filtered businesses to avoid recalculating on every render
   const filteredBusinesses = useMemo(() => {
-    return businesses.filter(business => {
+    const filtered = businesses.filter(business => {
       const matchesSearch = business.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            business.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            business.business_categories?.name.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesCategory = !selectedCategory || business.business_category_id === selectedCategory
       const matchesRating = ratingFilter === 0 || (business.average_rating || 0) >= ratingFilter
       return matchesSearch && matchesCategory && matchesRating
+    })
+    
+    // Sort by rating (highest first), then by review count
+    return filtered.sort((a, b) => {
+      const ratingDiff = (b.average_rating || 0) - (a.average_rating || 0)
+      if (ratingDiff !== 0) return ratingDiff
+      return (b.review_count || 0) - (a.review_count || 0)
     })
   }, [businesses, searchQuery, selectedCategory, ratingFilter])
 
@@ -284,64 +298,72 @@ export default function MarketplacePage() {
                         </Button>
                         <div className="h-6 w-px bg-gray-200" />
                         <Link href="/">
-                            <Logo color="emerald" size="sm" className="md:hidden" />
-                            <Logo color="emerald" size="md" className="hidden md:block" />
+                            <Logo color="gray" size="sm" className="md:hidden" />
+                            <Logo color="gray" size="md" className="hidden md:block" />
                         </Link>
                     </div>
                     {/* Search Input */}
                     <div className="w-full flex-grow relative group">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 transition-colors group-focus-within:text-emerald-600" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 transition-colors group-focus-within:text-slate-900" />
                         <Input
                             type="text"
                             placeholder="Buscar por nombre, ubicación o categoría..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10 w-full h-12 text-base bg-gray-50 border-gray-200 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200"
+                            className="pl-10 w-full h-12 text-base bg-gray-50 border-gray-200 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/20 transition-all duration-200"
                         />
+                    </div>
+                    {/* Category Dropdown */}
+                    <div className="w-full md:w-auto">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full h-12 border-gray-300 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200">
+                                    {selectedCategory 
+                                        ? categories.find(c => c.id === selectedCategory)?.name 
+                                        : 'Todas las categorías'}
+                                    <ChevronDown className="w-4 h-4 ml-2" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem 
+                                    onClick={() => setSelectedCategory('')}
+                                    className="cursor-pointer"
+                                >
+                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    Todas las categorías
+                                    {!selectedCategory && <Check className="w-4 h-4 ml-auto" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {categories.map((category) => {
+                                    const CategoryIcon = getCategoryIcon(category.name)
+                                    const isSelected = selectedCategory === category.id
+                                    return (
+                                        <DropdownMenuItem
+                                            key={category.id}
+                                            onClick={() => setSelectedCategory(category.id)}
+                                            className="cursor-pointer"
+                                        >
+                                            <CategoryIcon className="w-4 h-4 mr-2" />
+                                            {category.name}
+                                            {isSelected && <Check className="w-4 h-4 ml-auto" />}
+                                        </DropdownMenuItem>
+                                    )
+                                })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                     {/* Filter Button */}
                     <div className="w-full md:w-auto relative">
-                        <Button variant="outline" className="w-full h-12 border-gray-300 hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-200" onClick={() => setIsFilterSheetOpen(true)}>
+                        <Button variant="outline" className="w-full h-12 border-gray-300 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => setIsFilterSheetOpen(true)}>
                             <Filter className="w-4 h-4 mr-2" />
                             Filtros
                             {activeFiltersCount > 0 && (
-                                <Badge className="ml-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+                                <Badge className="ml-2 bg-slate-900 hover:bg-slate-800 text-white">
                                     {activeFiltersCount}
                                 </Badge>
                             )}
                         </Button>
                     </div>
-                </div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
-                    <button
-                        onClick={() => setSelectedCategory('')}
-                        className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                            !selectedCategory
-                                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
-                                : 'bg-white text-gray-700 border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'
-                        }`}
-                    >
-                        <Sparkles className="w-4 h-4" />
-                        Todos
-                    </button>
-                    {categories.map((category) => {
-                        const isSelected = selectedCategory === category.id
-                        const CategoryIcon = getCategoryIcon(category.name)
-                        return (
-                            <button
-                                key={category.id}
-                                onClick={() => setSelectedCategory(category.id)}
-                                className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                                    isSelected
-                                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
-                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'
-                                }`}
-                            >
-                                <CategoryIcon className="w-4 h-4" />
-                                {category.name}
-                            </button>
-                        )
-                    })}
                 </div>
             </div>
         </header>
@@ -363,11 +385,11 @@ export default function MarketplacePage() {
                                 {(selectedCategory || ratingFilter > 0) && (
                                     <div className="hidden sm:flex items-center gap-2">
                                         {selectedCategory && (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full">
+                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-700 text-xs font-medium rounded-full">
                                                 {categories.find(c => c.id === selectedCategory)?.name}
                                                 <button
                                                     onClick={(e) => { e.preventDefault(); setSelectedCategory('') }}
-                                                    className="ml-0.5 hover:text-emerald-900"
+                                                    className="ml-0.5 hover:text-slate-900"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -397,7 +419,7 @@ export default function MarketplacePage() {
                                         setSelectedCategory('')
                                         setRatingFilter(0)
                                     }}
-                                    className="text-xs text-gray-500 hover:text-emerald-600 transition-colors"
+                                    className="text-xs text-gray-500 hover:text-slate-900 transition-colors"
                                 >
                                     Limpiar todo
                                 </button>
@@ -434,9 +456,9 @@ export default function MarketplacePage() {
                         <div className="flex flex-col items-center justify-center py-16 px-6">
                             {/* Icono con fondo */}
                             <div className="relative mb-6">
-                                <div className="absolute inset-0 bg-emerald-100 rounded-full blur-xl opacity-60"></div>
-                                <div className="relative w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center border-2 border-emerald-100">
-                                    <Search className="w-10 h-10 text-emerald-400" />
+                                <div className="absolute inset-0 bg-slate-100 rounded-full blur-xl opacity-60"></div>
+                                <div className="relative w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center border-2 border-slate-100">
+                                    <Search className="w-10 h-10 text-slate-400" />
                                 </div>
                             </div>
 
@@ -463,7 +485,7 @@ export default function MarketplacePage() {
                                             setRatingFilter(0)
                                         }}
                                         variant="outline"
-                                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                                        className="border-slate-200 text-slate-900 hover:bg-slate-50"
                                     >
                                         <X className="w-4 h-4 mr-2" />
                                         Limpiar filtros
@@ -471,7 +493,7 @@ export default function MarketplacePage() {
                                 )}
                                 <Button
                                     onClick={fetchBusinesses}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    className="bg-slate-900 hover:bg-slate-800 text-white"
                                 >
                                     <RefreshCw className="w-4 h-4 mr-2" />
                                     Recargar
@@ -485,15 +507,15 @@ export default function MarketplacePage() {
                                 </p>
                                 <ul className="text-sm text-gray-500 space-y-2">
                                     <li className="flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
                                         Verifica la ortografía de tu búsqueda
                                     </li>
                                     <li className="flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
                                         Prueba con términos más generales
                                     </li>
                                     <li className="flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
                                         Explora diferentes categorías
                                     </li>
                                 </ul>
@@ -559,7 +581,7 @@ export default function MarketplacePage() {
         <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-30">
             <Button
                 onClick={() => setShowMobileMap(!showMobileMap)}
-                className="rounded-full shadow-xl bg-emerald-600 hover:bg-emerald-700 text-white px-6 h-12 font-medium transition-all duration-200 active:scale-95"
+                className="rounded-full shadow-xl bg-slate-900 hover:bg-slate-800 text-white px-6 h-12 font-medium transition-all duration-200 active:scale-95"
                 size="lg"
             >
                 {showMobileMap ? (
@@ -602,14 +624,14 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
         <Card
             className={`group relative overflow-hidden h-full flex flex-col bg-white border border-gray-100 transition-all duration-300 ease-out cursor-pointer ${
                 isHovered
-                    ? 'shadow-xl shadow-emerald-600/10 border-emerald-400 -translate-y-1'
+                    ? 'shadow-xl shadow-slate-900/10 border-slate-400 -translate-y-1'
                     : 'hover:shadow-lg hover:shadow-gray-200/50 hover:border-gray-200 hover:-translate-y-0.5'
             }`}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
             {/* Overlay sutil en hover */}
-            <div className={`absolute inset-0 bg-emerald-600/[0.02] pointer-events-none transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+            <div className={`absolute inset-0 bg-slate-900/[0.02] pointer-events-none transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
 
             <div className="relative w-full overflow-hidden">
                 <AspectRatio ratio={16 / 10}>
@@ -633,7 +655,7 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
                 </div>
             </div>
             <CardContent className="p-4 flex flex-col flex-grow relative">
-                <h3 className={`font-semibold text-lg leading-tight mb-1 transition-colors duration-200 truncate ${isHovered ? 'text-emerald-700' : 'text-gray-900'}`}>
+                <h3 className={`font-semibold text-lg leading-tight mb-1 transition-colors duration-200 truncate ${isHovered ? 'text-slate-900' : 'text-gray-900'}`}>
                     {business.name}
                 </h3>
                 <div className="flex items-center gap-1.5 text-gray-500 mb-2">
@@ -666,7 +688,7 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
                     ) : (
                         <span className="text-xs text-gray-400 italic">Sin reseñas aún</span>
                     )}
-                    <ChevronRight className={`w-5 h-5 text-gray-300 transition-all duration-200 ${isHovered ? 'text-emerald-500 translate-x-1' : 'group-hover:text-gray-400'}`} />
+                    <ChevronRight className={`w-5 h-5 text-gray-300 transition-all duration-200 ${isHovered ? 'text-slate-900 translate-x-1' : 'group-hover:text-gray-400'}`} />
                 </div>
             </CardContent>
         </Card>

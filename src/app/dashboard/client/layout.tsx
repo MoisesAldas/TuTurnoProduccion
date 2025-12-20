@@ -93,14 +93,14 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
         onMouseLeave={() => setCollapsed(true)}
         className={`${collapsed ? 'lg:w-20' : 'lg:w-64'}
         fixed lg:static inset-y-0 left-0 z-50 w-64 lg:w-auto
-        bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white
+        bg-slate-900 text-white
         transition-all duration-500 ease-in-out
-        flex flex-col border-r border-gray-700 shadow-2xl
+        flex flex-col border-r border-slate-700 shadow-2xl
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         group`}>
 
         {/* Logo Section */}
-        <div className="h-20 flex items-center justify-center px-4 border-b border-gray-700/50 relative">
+        <div className="h-20 flex items-center justify-center px-4 border-b border-slate-700/50 relative">
           <Link href="/" className="flex items-center justify-center transition-all duration-500">
             {/* Mobile logo */}
             <Logo color="white" size="sm" className="lg:hidden" />
@@ -110,14 +110,14 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             {/* Desktop collapsed logo */}
             <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
-              <div className="w-10 h-10 rounded-xl bg-theme-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-theme-500/50 hover:scale-110 transition-transform duration-300">
+              <div className="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center text-white font-black text-xl shadow-lg hover:scale-110 transition-transform duration-300">
                 T
               </div>
             </div>
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-1.5 hover:bg-gray-700 rounded-lg transition-colors absolute right-4"
+            className="lg:hidden p-1.5 hover:bg-slate-800 rounded-lg transition-colors absolute right-4"
             aria-label="Cerrar menú de navegación"
           >
             <X className="w-5 h-5" />
@@ -125,7 +125,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {navigation.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard/client' && pathname?.startsWith(item.href))
             const Icon = item.icon
@@ -133,8 +133,8 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <Link key={item.name} href={item.href} prefetch={true} onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-500 ease-in-out
                   ${isActive
-                    ? 'bg-theme-600 text-white shadow-lg shadow-theme-500/30 scale-[1.02]'
-                    : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:shadow-md hover:scale-[1.02]'
+                    ? 'bg-slate-700 text-white shadow-lg scale-[1.02]'
+                    : 'text-gray-300 hover:bg-slate-800 hover:text-white hover:shadow-md hover:scale-[1.02]'
                   }`}>
                 <Icon className={`flex-shrink-0 w-5 h-5 transition-all duration-500 ease-in-out ${collapsed ? 'lg:mx-auto mr-3' : 'mr-3'} ${isActive ? 'text-white scale-110' : 'text-gray-400 group-hover:text-white group-hover:scale-110'}`} />
                 <span className={`transition-all duration-500 ease-in-out whitespace-nowrap overflow-hidden ${collapsed ? 'lg:opacity-0 lg:w-0' : 'lg:opacity-100 lg:w-auto'} ${isActive ? 'font-semibold' : ''}`}>
@@ -146,12 +146,12 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         {/* User Section */}
-        <div className="p-3 border-t border-gray-700">
+        <div className="p-3 border-t border-slate-700">
           <div className={`space-y-2 transition-all duration-500 ${collapsed ? 'lg:hidden' : ''}`}>
-            <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/50 transition-all duration-300 cursor-pointer group">
-              <Avatar className="w-9 h-9 border-2 border-theme-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-slate-800 transition-all duration-300 cursor-pointer group">
+              <Avatar className="w-9 h-9 border-2 border-slate-600 shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <AvatarImage src={authState.user?.avatar_url} />
-                <AvatarFallback className="bg-theme-600 text-white text-sm">
+                <AvatarFallback className="bg-slate-700 text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'U'}
                 </AvatarFallback>
               </Avatar>
@@ -162,7 +162,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 <p className="text-xs text-gray-400 truncate">Cliente</p>
               </div>
             </div>
-            <Button onClick={handleSignOut} variant="ghost" className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md">
+            <Button onClick={handleSignOut} variant="ghost" className="w-full justify-start text-gray-300 hover:text-white hover:bg-slate-800 rounded-xl transition-all duration-300 hover:shadow-md">
               <LogOut className="w-4 h-4 mr-3" />
               Cerrar sesión
             </Button>
@@ -170,15 +170,15 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
           <div className={`transition-all duration-500 ${collapsed ? 'lg:block' : 'lg:hidden'} hidden`}>
             <div className="flex flex-col items-center space-y-3">
-               <Avatar className="w-10 h-10 border-2 border-theme-500 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
+               <Avatar className="w-10 h-10 border-2 border-slate-600 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
                 <AvatarImage src={authState.user?.avatar_url} />
-                <AvatarFallback className="bg-theme-600 text-white text-xs">
+                <AvatarFallback className="bg-slate-700 text-white text-xs">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'U'}
                 </AvatarFallback>
               </Avatar>
               <button
                 onClick={handleSignOut}
-                className="w-10 h-10 flex items-center justify-center hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md group"
+                className="w-10 h-10 flex items-center justify-center hover:bg-slate-800 rounded-xl transition-all duration-300 hover:shadow-md group"
                 title="Cerrar sesión"
                 aria-label="Cerrar sesión"
               >
@@ -209,9 +209,9 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
           <div className="flex items-center space-x-4">
             {/* User Avatar */}
-            <Avatar className="w-9 h-9 border-2 border-theme-500 cursor-pointer">
+            <Avatar className="w-9 h-9 border-2 border-slate-600 cursor-pointer">
               <AvatarImage src={authState.user?.avatar_url} />
-              <AvatarFallback className="bg-theme-600 text-white text-sm">
+              <AvatarFallback className="bg-slate-700 text-white text-sm">
                 {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'U'}
               </AvatarFallback>
             </Avatar>

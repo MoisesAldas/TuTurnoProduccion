@@ -73,12 +73,13 @@ interface Appointment {
 interface QuickStats {
   upcoming: number
   completed: number
+  cancelled: number
   totalSpent: number
 }
 
 export default function ClientDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [stats, setStats] = useState<QuickStats>({ upcoming: 0, completed: 0, totalSpent: 0 })
+  const [stats, setStats] = useState<QuickStats>({ upcoming: 0, completed: 0, cancelled: 0, totalSpent: 0 })
   const [loading, setLoading] = useState(true)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
@@ -137,11 +138,12 @@ export default function ClientDashboard() {
         return aptDate > now && ['pending', 'confirmed'].includes(apt.status)
       }).length
       const completed = appointmentsWithReviewStatus.filter(apt => apt.status === 'completed').length
+      const cancelled = appointmentsWithReviewStatus.filter(apt => apt.status === 'cancelled').length
       const totalSpent = appointmentsWithReviewStatus
         .filter(apt => ['completed', 'confirmed'].includes(apt.status)) // Also include confirmed in total spent
         .reduce((sum, apt) => sum + apt.total_price, 0)
 
-      setStats({ upcoming, completed, totalSpent })
+      setStats({ upcoming, completed, cancelled, totalSpent })
     } catch (error) {
       console.error('Error fetching appointments:', error)
     } finally {
@@ -367,11 +369,11 @@ export default function ClientDashboard() {
 
   if (loading) {
     return (
-       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-6">
-            <div className="absolute inset-0 border-4 border-theme-100 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-theme-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute inset-0 border-4 border-slate-200 dark:border-slate-800 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-slate-900 dark:border-slate-100 border-t-transparent rounded-full animate-spin"></div>
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando tu dashboard</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">Preparando tus citas y estadísticas...</p>
@@ -393,7 +395,7 @@ export default function ClientDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button asChild className="w-full sm:w-auto bg-theme-600 hover:bg-theme-700 shadow-md hover:shadow-lg transition-all text-white">
+              <Button asChild className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 shadow-md hover:shadow-lg transition-all text-white">
                 <Link href="/marketplace">
                   <Plus className="w-4 h-4 mr-2" />
                   Nueva Reserva
@@ -407,9 +409,10 @@ export default function ClientDashboard() {
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard title="Citas Próximas" value={stats.upcoming} description="Reservas confirmadas" icon={Calendar} variant="green" />
           <StatsCard title="Citas Completadas" value={stats.completed} description="Historial de citas" icon={CheckCircle} variant="blue" />
+          <StatsCard title="Citas Canceladas" value={stats.cancelled} description="Reservas canceladas" icon={XCircle} variant="red" />
           <StatsCard title="Gasto Total" value={formatPrice(stats.totalSpent)} description="En todas tus citas" icon={DollarSign} variant="purple" />
         </div>
 
@@ -428,13 +431,13 @@ export default function ClientDashboard() {
                      <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">{apt.appointment_services.map(s => s.service?.name).join(', ')}</p>
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
-                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Calendar className="w-4 h-4 mr-3 text-theme-500"/>{formatDate(apt.appointment_date)}</div>
-                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Clock className="w-4 h-4 mr-3 text-theme-500"/>{formatTime(apt.start_time)}</div>
-                    {apt.employee && <div className="flex items-center text-gray-600 dark:text-gray-400"><User className="w-4 h-4 mr-3 text-theme-500"/>{apt.employee.first_name} {apt.employee.last_name}</div>}
-                    {apt.business?.address && <div className="flex items-center text-gray-600 dark:text-gray-400"><MapPin className="w-4 h-4 mr-3 text-theme-500"/>{apt.business.address}</div>}
+                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Calendar className="w-4 h-4 mr-3 text-slate-700"/>{formatDate(apt.appointment_date)}</div>
+                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Clock className="w-4 h-4 mr-3 text-slate-700"/>{formatTime(apt.start_time)}</div>
+                    {apt.employee && <div className="flex items-center text-gray-600 dark:text-gray-400"><User className="w-4 h-4 mr-3 text-slate-700"/>{apt.employee.first_name} {apt.employee.last_name}</div>}
+                    {apt.business?.address && <div className="flex items-center text-gray-600 dark:text-gray-400"><MapPin className="w-4 h-4 mr-3 text-slate-700"/>{apt.business.address}</div>}
                   </CardContent>
                   <div className="p-6 pt-3 flex items-center justify-between">
-                     <span className="text-2xl font-bold text-theme-600">{formatPrice(apt.total_price)}</span>
+                     <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatPrice(apt.total_price)}</span>
                      <Button asChild variant="ghost" size="sm">
                        <Link href={`/dashboard/client/appointments/${apt.id}`}><Edit className="w-4 h-4 mr-2"/>Ver Detalles</Link>
                      </Button>
@@ -445,14 +448,14 @@ export default function ClientDashboard() {
           ) : (
              <Card className="border-2 border-dashed border-gray-200 dark:border-gray-800">
                 <CardContent className="text-center py-16">
-                  <div className="w-20 h-20 bg-theme-100 dark:bg-theme-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Calendar className="w-10 h-10 text-theme-600 dark:text-theme-400" />
+                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <Calendar className="w-10 h-10 text-slate-700 dark:text-slate-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Tu agenda está libre</h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
                     Explora miles de servicios y encuentra el perfecto para ti.
                   </p>
-                   <Button asChild className="bg-theme-600 hover:bg-theme-700 shadow-md hover:shadow-lg transition-all text-white">
+                   <Button asChild className="bg-slate-900 hover:bg-slate-800 shadow-md hover:shadow-lg transition-all text-white">
                         <Link href="/marketplace">
                           <Plus className="w-4 h-4 mr-2" />
                           Explorar Servicios

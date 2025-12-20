@@ -140,7 +140,13 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={handleReserveClick} className="dark:text-gray-300 dark:hover:bg-gray-800">
+                <Button variant="ghost" onClick={handleReserveClick} className=" border-2 border-slate-200
+    text-slate-800
+    hover:bg-slate-900
+    hover:text-white
+    hover:border-slate-900
+    transition-colors
+    duration-200">
                   Reservar Cita
                 </Button>
                 <Button

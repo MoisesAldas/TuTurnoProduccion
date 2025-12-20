@@ -36,13 +36,11 @@ export default function ClientAuthPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Visual */}
-      <div className={`hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 p-12 flex-col justify-between relative overflow-hidden transition-all duration-1000 ${
+      <div className={`hidden lg:flex lg:w-1/2 bg-slate-900 hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden transition-all duration-1000 ${
         isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
       }`}>
         {/* Decorative elements */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-
+ 
         {/* Back button */}
         <div className="relative z-10">
           <Link href="/">
@@ -56,7 +54,7 @@ export default function ClientAuthPage() {
         {/* Content */}
         <div className="relative z-10 space-y-6">
           <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
-            <Sparkles className="w-5 h-5 text-white" />
+            
             <span className="text-white font-medium">Bienvenido de vuelta</span>
           </div>
 
@@ -135,16 +133,16 @@ export default function ClientAuthPage() {
           <div className="space-y-6">
             {/* Login Card */}
             <Link href="/auth/client/login">
-              <div className="group cursor-pointer bg-white border-2 border-gray-200 rounded-xl py-8 px-6 hover:border-emerald-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="group cursor-pointer bg-white border-2 border-gray-200 rounded-xl py-8 px-6 hover:border-slate-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-14 h-14 bg-slate-900  hover:bg-slate-800 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                     <LogIn className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-gray-900 mb-1">Iniciar Sesión</h3>
                     <p className="text-sm text-gray-600">Ya tengo una cuenta de cliente</p>
                   </div>
-                  <div className="text-emerald-600 text-2xl group-hover:translate-x-1 transition-transform duration-300">
+                  <div className="text-slate-600 text-2xl group-hover:translate-x-1 transition-transform duration-300">
                     →
                   </div>
                 </div>
@@ -153,16 +151,16 @@ export default function ClientAuthPage() {
 
             {/* Register Card */}
             <Link href="/auth/client/register">
-              <div className="group cursor-pointer bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl py-8 px-6 hover:border-emerald-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="group cursor-pointer mt-2 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-slate-300 rounded-xl py-8 px-6 hover:border-slate-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-14 h-14 bg-slate-900  hover:bg-slate-800 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                     <UserPlus className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold text-gray-900 mb-1">Crear Cuenta</h3>
                     <p className="text-sm text-gray-600">Soy nuevo, quiero registrarme</p>
                   </div>
-                  <div className="text-teal-600 text-2xl group-hover:translate-x-1 transition-transform duration-300">
+                  <div className="text-slate-600 text-2xl group-hover:translate-x-1 transition-transform duration-300">
                     →
                   </div>
                 </div>
@@ -174,9 +172,21 @@ export default function ClientAuthPage() {
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600 mb-3">¿Tienes un negocio?</p>
             <Link href="/auth/business">
-              <Button variant="outline" className="border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-                Registrar mi negocio
-              </Button>
+              <Button
+  variant="outline"
+  className="
+    border-2 border-slate-800
+    text-slate-800
+    hover:bg-slate-900
+    hover:text-white
+    hover:border-slate-900
+    transition-colors
+    duration-200
+  "
+>
+  Registrar mi negocio
+</Button>
+
             </Link>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import "@fontsource/poppins/900.css"; // Black weight for Logo component (extra bold)
 import StickyCTA from "@/components/StickyCTA";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -77,6 +78,7 @@ export default function RootLayout({
             {children}
             <StickyCTA />
             <Toaster />
+            <SonnerToaster position="top-right" richColors />
           </AuthProvider>
         </ThemeProvider>
       </body>

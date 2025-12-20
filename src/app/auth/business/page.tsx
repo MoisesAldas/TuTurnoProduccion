@@ -40,9 +40,7 @@ export default function BusinessAuthPage() {
         isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
       }`}>
         {/* Decorative elements */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-
+    
         {/* Back button */}
         <div className="relative z-10">
           <Link href="/">
@@ -174,7 +172,13 @@ export default function BusinessAuthPage() {
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600 mb-3">¿Eres un cliente?</p>
             <Link href="/auth/client">
-              <Button variant="outline" className="border-2 border-orange-200 text-orange-700 hover:bg-orange-50">
+              <Button variant="outline" className=" border-2 border-orange-600
+    text-orange-600
+    hover:bg-orange-700
+    hover:text-white
+    hover:border-orange-700
+    transition-colors
+    duration-200">
                 Reservar una cita
               </Button>
             </Link>

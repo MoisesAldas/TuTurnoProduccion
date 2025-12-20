@@ -413,7 +413,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
   // Full Mode - Grid View
   return (
     <>
-      <Card>
+      <Card className="border-gray-200 dark:border-gray-700">
         <CardHeader className="border-b dark:border-gray-800 bg-white dark:bg-gray-900">
           <CardTitle className="flex items-center gap-3 text-xl">
             <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">

@@ -335,42 +335,14 @@ export default function ClientProfilePage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8">
-        <div className="max-w-4xl mx-auto">
-          {/* Profile Header Skeleton */}
-          <Card className="mb-8">
-            <CardContent className="p-6 sm:p-8">
-              <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-6">
-                <Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full" />
-                <div className="flex-grow space-y-3">
-                  <Skeleton className="h-8 w-64 mx-auto sm:mx-0" />
-                  <Skeleton className="h-5 w-48 mx-auto sm:mx-0" />
-                  <div className="flex gap-4 justify-center sm:justify-start">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                </div>
-                <Skeleton className="h-12 w-40" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Profile Info Skeleton */}
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-7 w-48" />
-            </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
+        <div className="text-center">
+          <div className="relative w-16 h-16 mx-auto mb-6">
+            <div className="absolute inset-0 border-4 border-slate-200 dark:border-slate-800 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-slate-900 dark:border-slate-100 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando tu perfil</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Obteniendo tu información personal...</p>
         </div>
       </div>
     )
@@ -391,8 +363,15 @@ export default function ClientProfilePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">
+            Mi Perfil
+          </h1>
+        </div>
+
         {showSuccess && (
-            <div className="mb-6 flex items-center space-x-2 text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
+            <div className="mb-6 flex items-center space-x-2 text-slate-700 bg-slate-100 p-3 rounded-lg border border-slate-300">
                 <CheckCircle className="w-5 h-5" />
                 <span className="text-sm font-medium">¡Perfil actualizado con éxito!</span>
             </div>
@@ -404,12 +383,12 @@ export default function ClientProfilePage() {
               <div className="relative mb-4 sm:mb-0 sm:mr-8">
                 <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-lg">
                   <AvatarImage src={profile.avatar_url} alt={profile.first_name || profile.email} />
-                  <AvatarFallback className="bg-emerald-100 text-emerald-600 text-3xl font-medium">{(profile.first_name || profile.email)?.charAt(0)?.toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="bg-slate-200 text-slate-700 text-3xl font-medium">{(profile.first_name || profile.email)?.charAt(0)?.toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <Button
                   size="sm"
                   onClick={handleAvatarClick}
-                  className="absolute bottom-0 right-0 rounded-full h-10 w-10 p-0 bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+                  className="absolute bottom-0 right-0 rounded-full h-10 w-10 p-0 bg-slate-900 hover:bg-slate-800 shadow-lg"
                   aria-label="Cambiar foto de perfil"
                 >
                   <Camera className="h-4 w-4" />
@@ -434,7 +413,7 @@ export default function ClientProfilePage() {
               </div>
               {!isEditing && (
                 <div className="mt-4 sm:mt-0 sm:ml-6 w-full sm:w-auto">
-                  <Button onClick={() => setIsEditing(true)} size="lg" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700">
+                  <Button onClick={() => setIsEditing(true)} size="lg" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800">
                     <Edit className="w-4 h-4 mr-2" />Editar Perfil
                   </Button>
                 </div>
@@ -450,7 +429,7 @@ export default function ClientProfilePage() {
               {isEditing && (
                 <div className="flex space-x-2">
                   <Button variant="outline" onClick={handleCancel} disabled={saving}><X className="w-4 h-4 mr-2" />Cancelar</Button>
-                  <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Button onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-800">
                     {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</> : <><Save className="w-4 h-4 mr-2" />Guardar Cambios</>}
                   </Button>
                 </div>
@@ -571,7 +550,7 @@ export default function ClientProfilePage() {
             {uploadingAvatar && (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
-                  <Loader2 className="w-12 h-12 animate-spin text-emerald-600 mx-auto mb-4" />
+                  <Loader2 className="w-12 h-12 animate-spin text-slate-900 mx-auto mb-4" />
                   <p className="text-lg font-medium text-gray-900 mb-2">Subiendo foto...</p>
                   <p className="text-sm text-gray-600">Por favor espera un momento</p>
                 </div>

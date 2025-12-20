@@ -456,7 +456,7 @@ export default function CalendarView({
       >
         <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-w-xs">
           {/* Header con gradiente */}
-          <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 px-4 py-2">
+          <div className="bg-orange-600 hover:bg-orange-700 px-4 py-2">
             <div className="flex items-center justify-between text-white">
               <span className="text-sm font-semibold">
                 {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}

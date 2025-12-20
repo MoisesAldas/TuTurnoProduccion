@@ -18,7 +18,7 @@ import {
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { compressImage, validateImageFile } from '@/lib/imageUtils'
-import ImageCropper from '@/components/ImageCropper'
+import ImageCropperEasy from '@/components/ImageCropperEasy'
 import BusinessPhotoGallery from '@/components/BusinessPhotoGallery'
 import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
 import SpecialHoursManager from '@/components/SpecialHoursManager'
@@ -528,7 +528,7 @@ export default function UnifiedSettingsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Configuración</h1>
@@ -545,7 +545,7 @@ export default function UnifiedSettingsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
         {/* Mobile Section Selector */}
         <div className="lg:hidden w-full mb-4">
           <select
@@ -561,10 +561,10 @@ export default function UnifiedSettingsPage() {
           </select>
         </div>
 
-        <div className="flex gap-6">
-          {/* Sidebar Navigation */}
+        <div className="flex gap-6 items-start">
+          {/* Sidebar Navigation - Sticky */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-24 space-y-1">
+            <div className="sticky top-20 space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon
                 const isActive = activeSection === item.id
@@ -832,18 +832,17 @@ export default function UnifiedSettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Alert className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-                      <Info className="w-4 h-4" />
-                      <AlertDescription className="text-sm dark:text-gray-200">
-                        <strong>Requisitos:</strong> JPG, PNG o WebP • Tamaño recomendado: 2000x1000px (2:1) • Máximo 10MB
-                        <br/>
-                        Tu portada aparecerá en la parte superior de tu perfil público.
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-start gap-2 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
+                      <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-xs text-orange-900 dark:text-orange-200">
+                        <p><strong>Requisitos:</strong> JPG, PNG o WebP • Tamaño recomendado: 2000x1000px (2:1) • Máximo 10MB</p>
+                        <p className="mt-1 text-orange-700 dark:text-orange-300">Tu portada aparecerá en la parte superior de tu perfil público.</p>
+                      </div>
+                    </div>
                     <div className="space-y-4">
-                      <div className="w-full border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 min-h-[200px] flex items-center justify-center">
+                      <div className="w-full aspect-[2/1] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
                         {coverPreview ? (
-                          <img src={coverPreview} alt="Cover" className="w-full h-full object-cover" />
+                          <img src={coverPreview} alt="Cover" className="w-full h-full object-contain" />
                         ) : (
                           <div className="text-center text-gray-400 dark:text-gray-500">
                             <ImageIcon className="w-12 h-12 mx-auto mb-2" />
@@ -894,20 +893,7 @@ export default function UnifiedSettingsPage() {
 
                 {/* Photo Gallery */}
                 {business && (
-                  <Card className="dark:border-gray-700">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <ImageIcon className="w-5 h-5 text-orange-600" />
-                        Galería de Fotos
-                      </CardTitle>
-                      <CardDescription className="dark:text-gray-400">
-                        Muestra fotos de tu trabajo y espacio
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <BusinessPhotoGallery businessId={business.id} />
-                    </CardContent>
-                  </Card>
+                  <BusinessPhotoGallery businessId={business.id} />
                 )}
 
                 <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
@@ -1310,13 +1296,12 @@ export default function UnifiedSettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Alert className="mb-6 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-                      <Info className="w-4 h-4" />
-                      <AlertDescription className="dark:text-gray-200">
-                        Configura días especiales donde tu negocio tendrá horarios diferentes o estará cerrado.
-                        Estos horarios tienen prioridad sobre los horarios regulares.
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex items-start gap-2 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-6">
+                      <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-orange-900 dark:text-orange-200">
+                        Configura días especiales donde tu negocio tendrá horarios diferentes o estará cerrado. Estos horarios tienen prioridad sobre los horarios regulares.
+                      </p>
+                    </div>
 
                     {loadingSpecialHours ? (
                       <div className="text-center py-8">
@@ -1509,7 +1494,7 @@ export default function UnifiedSettingsPage() {
 
       {/* Cropper Modals */}
       {showLogoCropper && originalLogoFile && (
-        <ImageCropper
+        <ImageCropperEasy
           imageFile={originalLogoFile}
           onSave={handleLogoCropSave}
           onCancel={handleLogoCropCancel}
@@ -1520,7 +1505,7 @@ export default function UnifiedSettingsPage() {
       )}
 
       {showCoverCropper && originalCoverFile && (
-        <ImageCropper
+        <ImageCropperEasy
           imageFile={originalCoverFile}
           onSave={handleCoverCropSave}
           onCancel={handleCoverCropCancel}

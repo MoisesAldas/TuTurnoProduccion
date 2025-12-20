@@ -19,7 +19,7 @@ export default function SettingsRedirect() {
   return (
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
-        <div className="animate-spin w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
+        <div className="animate-spin w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full mx-auto mb-4"></div>
         <p className="text-gray-600">Redirigiendo...</p>
       </div>
     </div>

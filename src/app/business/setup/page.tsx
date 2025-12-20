@@ -12,11 +12,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { MapPin, Building2, ArrowRight, ArrowLeft, Phone, Mail, Globe, FileText, Tag, Check } from 'lucide-react'
+import { MapPin, Building2, ArrowRight, ArrowLeft, Phone, Mail, Globe, Check, Info, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
-import Logo from '@/components/logo'
 
 const businessSchema = z.object({
   name: z
@@ -104,7 +103,7 @@ export default function BusinessSetupPage() {
     },
     {
       id: 2,
-      title: 'Información de Contacto',
+      title: 'Contacto',
       description: 'Cómo pueden contactarte',
       icon: Phone,
       fields: ['phone', 'email', 'website']
@@ -133,6 +132,14 @@ export default function BusinessSetupPage() {
       return locationData.address && locationData.address.trim() !== ''
     }
     return false
+  }
+
+  // Verificar si se puede clickear un paso
+  const isClickable = (stepId: number) => {
+    // Puede ir atrás siempre
+    if (stepId <= currentStep) return true
+    // Puede ir adelante solo si el paso anterior está completo
+    return completedSteps.includes(stepId - 1)
   }
 
   // Navegar al siguiente paso
@@ -180,7 +187,7 @@ export default function BusinessSetupPage() {
 
   // Navegar directamente a un paso
   const goToStep = (stepId: number) => {
-    if (stepId <= currentStep || completedSteps.includes(stepId - 1)) {
+    if (isClickable(stepId)) {
       setSlideDirection(stepId > currentStep ? 'right' : 'left')
       setIsTransitioning(true)
 
@@ -267,448 +274,475 @@ export default function BusinessSetupPage() {
 
   if (authState.loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-gray-200 dark:border-gray-700 border-t-orange-600 dark:border-t-orange-500 rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 p-4 relative overflow-hidden transition-all duration-1000 ${
+    <div className={`min-h-screen bg-gray-50 dark:bg-slate-950 py-4 transition-all duration-1000 ${
       isVisible ? 'opacity-100' : 'opacity-0'
     }`}>
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-orange-400/10 rounded-full filter blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-amber-400/10 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 right-10 w-72 h-72 bg-yellow-400/10 rounded-full filter blur-3xl animate-pulse delay-500"></div>
-
-        {/* Floating dots */}
-        <div className="absolute top-1/4 left-10 animate-bounce delay-1000">
-          <div className="w-4 h-4 bg-orange-400 rounded-full opacity-60"></div>
-        </div>
-        <div className="absolute top-1/3 right-20 animate-bounce delay-1500">
-          <div className="w-6 h-6 bg-amber-400 rounded-full opacity-40"></div>
-        </div>
-        <div className="absolute bottom-1/3 left-1/4 animate-bounce delay-2000">
-          <div className="w-5 h-5 bg-yellow-400 rounded-full opacity-50"></div>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto relative z-10">
-        {/* Header */}
-        <div className={`text-center mb-8 transition-all duration-700 ${
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Simplificado */}
+        <div className={`text-center mb-4 transition-all duration-700 ${
           isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
         }`}>
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Building2 className="w-6 h-6 text-white" />
-            </div>
-            <Logo color="black" size="md" />
+          <div className="w-10 h-10 bg-orange-600 dark:bg-orange-700 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-md">
+            <Building2 className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            Configura tu <span className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent">Negocio</span>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            Configura tu <span className="text-orange-600 dark:text-orange-500">Negocio</span>
           </h1>
-          <p className="text-gray-600 max-w-lg mx-auto">
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
             Completa la información para comenzar a recibir reservas
           </p>
         </div>
 
         {/* Alert de error */}
         {error && (
-          <Alert variant="destructive" className={`mb-6 bg-red-50/90 backdrop-blur-sm border-red-200 transition-all duration-500 ${
+          <Alert variant="destructive" className={`mb-3 bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800 transition-all duration-500 ${
             isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
           }`} style={{ transitionDelay: '400ms' }}>
-            <AlertDescription className="text-red-700">{error}</AlertDescription>
+            <AlertDescription className="text-red-700 dark:text-red-400">{error}</AlertDescription>
           </Alert>
         )}
 
-        {/* Layout de dos columnas */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Columna izquierda - Progreso vertical */}
-          <div className="lg:col-span-4">
-            <div className="lg:sticky lg:top-8">
-              <Card className="bg-white/90 backdrop-blur-md border border-white/40 shadow-xl">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-bold text-gray-900">Progreso de configuración</CardTitle>
+        {/* Stepper Horizontal Compacto */}
+        <div className={`mb-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3 shadow-sm transition-all duration-700 ${
+          isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+        }`} style={{ transitionDelay: '200ms' }}>
+          {/* Stepper Horizontal */}
+          <div className="flex items-center">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-1">
+                {/* Step Button Circle */}
+                <button
+                  type="button"
+                  onClick={() => goToStep(step.id)}
+                  disabled={!isClickable(step.id)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-200 flex-shrink-0 ${
+                    completedSteps.includes(step.id)
+                      ? 'bg-orange-600 dark:bg-orange-700 text-white shadow-sm'
+                      : currentStep === step.id
+                      ? 'bg-orange-600 dark:bg-orange-700 text-white ring-2 ring-orange-200 dark:ring-orange-800 shadow-md'
+                      : isClickable(step.id)
+                      ? 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-orange-400 dark:hover:border-orange-600 cursor-pointer'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  {completedSteps.includes(step.id) ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <span>{index + 1}</span>
+                  )}
+                </button>
+
+                {/* Step Label (desktop only) */}
+                <div className="ml-2 hidden sm:block flex-shrink-0">
+                  <p className={`text-xs font-medium transition-colors ${
+                    currentStep === step.id
+                      ? 'text-orange-600 dark:text-orange-400'
+                      : completedSteps.includes(step.id)
+                      ? 'text-orange-700 dark:text-orange-500'
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}>
+                    {step.title}
+                  </p>
+                </div>
+
+                {/* Connector Line */}
+                {index < steps.length - 1 && (
+                  <div className="flex-1 h-0.5 mx-2 sm:mx-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-300 rounded-full ${
+                        completedSteps.includes(step.id)
+                          ? 'w-full bg-orange-600 dark:bg-orange-700'
+                          : 'w-0'
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile: Current Step Info */}
+          <div className="sm:hidden mt-2 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Paso {currentStep} de {steps.length}
+            </p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mt-0.5">
+              {steps.find(s => s.id === currentStep)?.title}
+            </p>
+          </div>
+        </div>
+
+        {/* Formulario */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className={`transition-all duration-300 ease-in-out ${
+            isTransitioning
+              ? slideDirection === 'right'
+                ? 'translate-x-4 opacity-0'
+                : '-translate-x-4 opacity-0'
+              : 'translate-x-0 opacity-100'
+          }`}>
+
+            {/* Paso 1: Información Básica */}
+            {currentStep === 1 && (
+              <Card className="border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
+                <CardHeader className="border-b bg-white dark:bg-gray-900 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        Información Básica
+                      </CardTitle>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Datos principales de tu negocio
+                      </p>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Progreso vertical */}
-                  {steps.map((step, index) => {
-                    const isCompleted = completedSteps.includes(step.id)
-                    const isCurrent = currentStep === step.id
-                    const isClickable = step.id <= currentStep || completedSteps.includes(step.id - 1)
-                    const StepIcon = step.icon
 
-                    return (
-                      <div key={step.id} className="relative">
-                        <div className="flex items-start gap-4">
-                          <button
-                            type="button"
-                            onClick={() => isClickable && goToStep(step.id)}
-                            disabled={!isClickable}
-                            className={`w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-500 flex-shrink-0 ${
-                              isCompleted
-                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-                                : isCurrent
-                                ? 'bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 text-white shadow-xl scale-110'
-                                : isClickable
-                                ? 'bg-white border-2 border-gray-300 text-gray-500 hover:border-orange-300 hover:text-orange-600 hover:scale-105'
-                                : 'bg-gray-100 border-2 border-gray-200 text-gray-400'
-                            } ${
-                              isClickable ? 'cursor-pointer' : 'cursor-not-allowed'
-                            }`}
+                <CardContent className="pt-4 space-y-2">
+                  {/* Nombre del Negocio */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Nombre del Negocio *
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="name"
+                        placeholder="Ej: Salón de Belleza María"
+                        className={`h-10 ${
+                          watchedFields.name && !errors.name ? 'border-green-500 dark:border-green-600' : ''
+                        } ${errors.name ? 'border-red-500 dark:border-red-600' : ''}`}
+                        {...register('name')}
+                        onInput={(e) => {
+                          const target = e.target as HTMLInputElement
+                          target.value = target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s&.-]/g, '')
+                        }}
+                      />
+                      {watchedFields.name && !errors.name && (
+                        <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600 dark:text-green-500" />
+                      )}
+                    </div>
+                    {errors.name && (
+                      <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-red-700 dark:text-red-400">{errors.name.message}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Categoría */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="business_category_id" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Categoría del Negocio *
+                    </Label>
+                    <Select
+                      value={watchedFields.business_category_id || ''}
+                      onValueChange={(value) => {
+                        setValue('business_category_id', value, { shouldValidate: true })
+                      }}
+                    >
+                      <SelectTrigger className={`h-10 ${
+                        watchedFields.business_category_id && !errors.business_category_id
+                          ? 'border-green-500 dark:border-green-600'
+                          : ''
+                      } ${errors.business_category_id ? 'border-red-500 dark:border-red-600' : ''}`}>
+                        <SelectValue placeholder="Selecciona el tipo de negocio" />
+                      </SelectTrigger>
+                      <SelectContent position="popper" className="max-h-[300px]">
+                        {categories.map((category) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id}
+                            className="focus:bg-orange-50 dark:focus:bg-orange-900/20 focus:text-orange-900 dark:focus:text-orange-100 cursor-pointer"
                           >
-                            {isCompleted ? (
-                              <Check className="w-6 h-6" />
-                            ) : (
-                              <StepIcon className="w-6 h-6" />
-                            )}
-                          </button>
-
-                          <div className="flex-1 min-w-0">
-                            <h4 className={`font-semibold transition-all duration-300 ${
-                              isCurrent ? 'text-orange-600' : isCompleted ? 'text-orange-700' : 'text-gray-500'
-                            }`}>
-                              {step.title}
-                            </h4>
-                            <p className={`text-sm mt-1 transition-all duration-300 ${
-                              isCurrent ? 'text-orange-600' : isCompleted ? 'text-orange-600' : 'text-gray-400'
-                            }`}>
-                              {step.description}
-                            </p>
-                            {isCompleted && (
-                              <span className="inline-flex items-center gap-1 text-xs text-orange-600 font-medium mt-2">
-                                <Check className="w-3 h-3" />
-                                Completado
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Línea conectora vertical */}
-                        {index < steps.length - 1 && (
-                          <div className="absolute left-6 top-12 w-0.5 h-6 transition-all duration-700">
-                            <div className="w-full h-full bg-gray-200 rounded-full" />
-                            <div className={`absolute top-0 left-0 w-full rounded-full transition-all duration-700 ease-out ${
-                              completedSteps.includes(step.id)
-                                ? 'h-full bg-gradient-to-b from-orange-500 to-amber-600'
-                                : currentStep === step.id && isStepValid(step.id)
-                                ? 'h-1/2 bg-gradient-to-b from-orange-400 to-amber-500'
-                                : 'h-0'
-                            }`} />
-                          </div>
-                        )}
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {watchedFields.business_category_id && !errors.business_category_id && (
+                      <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-500">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>
+                          {categories.find(c => c.id === watchedFields.business_category_id)?.name || 'Categoría seleccionada'}
+                        </span>
                       </div>
-                    )
-                  })}
-
-                  {/* Información adicional */}
-                  <div className="mt-8 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                        🚀
+                    )}
+                    {errors.business_category_id && (
+                      <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-red-700 dark:text-red-400">{errors.business_category_id.message}</p>
                       </div>
-                      <h4 className="font-semibold text-orange-800">¿Qué sigue después?</h4>
-                    </div>
-                    <p className="text-sm text-orange-700 mb-3">
-                      Una vez creado tu negocio, podrás configurar servicios, empleados y comenzar a recibir reservas.
+                    )}
+                  </div>
+
+                  {/* Descripción */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Descripción (opcional)
+                    </Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe tu negocio..."
+                      rows={2}
+                      className="resize-none"
+                      {...register('description')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {watchedFields.description?.length || 0}/500 caracteres
                     </p>
-                    <div className="flex flex-wrap gap-2 text-xs text-orange-600">
-                      <span className="bg-orange-100 px-2 py-1 rounded-full">✓ Configuración gratuita</span>
-                      <span className="bg-orange-100 px-2 py-1 rounded-full">✓ Sin límites</span>
-                      <span className="bg-orange-100 px-2 py-1 rounded-full">✓ Soporte incluido</span>
-                    </div>
+                    {errors.description && (
+                      <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-red-700 dark:text-red-400">{errors.description.message}</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </div>
+            )}
 
-          {/* Columna derecha - Formulario */}
-          <div className="lg:col-span-8">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className={`transition-all duration-500 ease-in-out transform ${
-                isTransitioning
-                  ? `${
-                      slideDirection === 'right'
-                        ? 'translate-x-8 opacity-0'
-                        : '-translate-x-8 opacity-0'
-                    } scale-95`
-                  : isVisible
-                  ? 'translate-x-0 opacity-100 scale-100'
-                  : 'translate-x-8 opacity-0 scale-95'
-              }`}>
+            {/* Paso 2: Información de Contacto */}
+            {currentStep === 2 && (
+              <Card className="border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
+                <CardHeader className="border-b bg-white dark:bg-gray-900 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center">
+                      <Phone className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        Información de Contacto
+                      </CardTitle>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Cómo pueden contactarte tus clientes
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
 
-                {/* Paso 1: Información Básica */}
-                {currentStep === 1 && (
-                  <Card className="bg-white/95 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardHeader className="pb-6 text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <Building2 className="w-8 h-8 text-white" />
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-gray-900">Información Básica</CardTitle>
-                      <p className="text-gray-600">Cuéntanos sobre tu negocio</p>
-                    </CardHeader>
-
-                    <CardContent className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                          Nombre del Negocio *
-                        </Label>
-                        <Input
-                          id="name"
-                          placeholder="Ej: Salón de Belleza María"
-                          className="h-12 text-base bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
-                          {...register('name')}
-                          onInput={(e) => {
-                            const target = e.target as HTMLInputElement
-                            target.value = target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s&.-]/g, '')
-                          }}
-                        />
-                        {errors.name && (
-                          <p className="text-sm text-red-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                            <span>{errors.name.message}</span>
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="business_category_id" className="text-sm font-medium text-gray-700">
-                          Categoría del Negocio *
-                        </Label>
-                        <Select onValueChange={(value) => setValue('business_category_id', value)}>
-                          <SelectTrigger className="h-12 text-base bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 hover:border-gray-300">
-                            <SelectValue placeholder="Selecciona el tipo de negocio" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-60">
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id} className="cursor-pointer py-3">
-                                <div className="w-full">
-                                  <span className="font-medium block">{category.name}</span>
-                                  <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{category.description}</p>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.business_category_id && (
-                          <p className="text-sm text-red-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                            <span>{errors.business_category_id.message}</span>
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="description" className="text-sm font-medium text-gray-700">
-                          Descripción (opcional)
-                        </Label>
-                        <Textarea
-                          id="description"
-                          placeholder="Describe tu negocio, servicios que ofreces, lo que te hace especial..."
-                          rows={4}
-                          className="text-base bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all resize-none"
-                          {...register('description')}
-                        />
-                        {errors.description && (
-                          <p className="text-sm text-red-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                            <span>{errors.description.message}</span>
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Paso 2: Información de Contacto */}
-                {currentStep === 2 && (
-                  <Card className="bg-white/95 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardHeader className="pb-6 text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-amber-500 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <Phone className="w-8 h-8 text-white" />
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-gray-900">Información de Contacto</CardTitle>
-                      <p className="text-gray-600">¿Cómo pueden contactarte tus clientes?</p>
-                    </CardHeader>
-
-                    <CardContent className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                          Teléfono (opcional)
-                        </Label>
+                <CardContent className="pt-4 space-y-2">
+                  {/* Grid: Phone + Email en desktop, stack en mobile */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Phone */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Teléfono (opcional)
+                      </Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <Input
                           id="phone"
                           type="tel"
                           placeholder="+593 99 123 4567"
-                          className="h-12 text-base bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
+                          className="pl-10 h-10"
                           {...register('phone')}
                         />
-                        {errors.phone && (
-                          <p className="text-sm text-red-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                            <span>{errors.phone.message}</span>
-                          </p>
-                        )}
                       </div>
+                      {errors.phone && (
+                        <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                          <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-red-700 dark:text-red-400">{errors.phone.message}</p>
+                        </div>
+                      )}
+                    </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                          Email (opcional)
-                        </Label>
+                    {/* Email */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email (opcional)
+                      </Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                         <Input
                           id="email"
                           type="email"
                           placeholder="contacto@tunegocio.com"
-                          className="h-12 text-base bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
+                          className="pl-10 h-10"
                           {...register('email')}
                         />
-                        {errors.email && (
-                          <p className="text-sm text-red-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                            <span>{errors.email.message}</span>
-                          </p>
-                        )}
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="website" className="text-sm font-medium text-gray-700">
-                          Sitio Web (opcional)
-                        </Label>
-                        <Input
-                          id="website"
-                          type="url"
-                          placeholder="https://www.tunegocio.com"
-                          className="h-12 text-base bg-white/50 backdrop-blur-sm border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 hover:border-gray-300 transition-all"
-                          {...register('website')}
-                        />
-                        {errors.website && (
-                          <p className="text-sm text-red-600 flex items-start gap-2">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></span>
-                            <span>{errors.website.message}</span>
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            💡
-                          </div>
-                          <div>
-                            <p className="font-medium text-orange-800 mb-1">Consejo profesional</p>
-                            <p className="text-sm text-orange-700">
-                              Aunque estos campos son opcionales, tener información de contacto ayuda a que tus clientes confíen más en tu negocio.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Paso 3: Ubicación */}
-                {currentStep === 3 && (
-                  <Card className="bg-white/95 backdrop-blur-md border border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardHeader className="pb-6 text-center">
-                      <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <MapPin className="w-8 h-8 text-white" />
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-gray-900">Ubicación del Negocio</CardTitle>
-                      <p className="text-gray-600">¿Dónde pueden encontrarte tus clientes?</p>
-                    </CardHeader>
-
-                    <CardContent>
-                      <MapboxLocationPicker
-                        onLocationSelect={(location) => {
-                          setLocationData({
-                            address: location.address,
-                            latitude: location.latitude,
-                            longitude: location.longitude
-                          })
-                        }}
-                        initialLocation={locationData}
-                      />
-                      {!locationData.address && (
-                        <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              ⚠️
-                            </div>
-                            <div>
-                              <p className="font-medium text-amber-800 mb-1">Ubicación requerida</p>
-                              <p className="text-sm text-amber-700">
-                                Selecciona la ubicación de tu negocio para continuar con el proceso.
-                              </p>
-                            </div>
-                          </div>
+                      {errors.email && (
+                        <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                          <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-red-700 dark:text-red-400">{errors.email.message}</p>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                )}
+                    </div>
+                  </div>
 
-                {/* Navegación entre pasos */}
-                <div className={`flex justify-between items-center pt-8 transition-all duration-700 ${
-                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                }`} style={{ transitionDelay: '400ms' }}>
-                  <div>
-                    {currentStep > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={prevStep}
-                        className="border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-                      >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Anterior
-                      </Button>
+                  {/* Website (full width) */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="website" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Sitio Web (opcional)
+                    </Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <Input
+                        id="website"
+                        type="url"
+                        placeholder="https://www.tunegocio.com"
+                        className="pl-10 h-10"
+                        {...register('website')}
+                      />
+                    </div>
+                    {errors.website && (
+                      <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-red-700 dark:text-red-400">{errors.website.message}</p>
+                      </div>
                     )}
                   </div>
 
-                  <div className="flex space-x-3">
-                    {currentStep < 3 ? (
-                      <Button
-                        type="button"
-                        onClick={nextStep}
-                        disabled={!isStepValid(currentStep) || isTransitioning}
-                        size="lg"
-                        className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:transform-none disabled:shadow-lg"
-                      >
-                        Siguiente
-                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    ) : (
-                      <Button
-                        type="submit"
-                        disabled={loading || !isStepValid(3) || isTransitioning}
-                        size="lg"
-                        className="bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white font-medium shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:transform-none disabled:shadow-lg"
-                      >
-                        {loading ? (
-                          <>
-                            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
-                            Creando negocio...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="w-5 h-5 mr-2" />
-                            Crear Mi Negocio
-                          </>
-                        )}
-                      </Button>
-                    )}
+                  {/* Info Box (sin emoji, con icono) */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-start gap-2">
+                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-900 dark:text-blue-300">
+                      Aunque estos campos son opcionales, tener información de contacto ayuda a que tus clientes confíen más en tu negocio.
+                    </p>
                   </div>
-                </div>
-              </div>
-            </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Paso 3: Ubicación */}
+            {currentStep === 3 && (
+              <Card className="border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
+                <CardHeader className="border-b bg-white dark:bg-gray-900 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/40 rounded-lg flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        Ubicación del Negocio
+                      </CardTitle>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Dónde pueden encontrarte tus clientes
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-4">
+                  <MapboxLocationPicker
+                    onLocationSelect={(location) => {
+                      setLocationData({
+                        address: location.address,
+                        latitude: location.latitude,
+                        longitude: location.longitude
+                      })
+                    }}
+                    initialLocation={locationData}
+                  />
+                  {!locationData.address && (
+                    <div className="mt-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-2 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-orange-900 dark:text-orange-400 text-sm">Ubicación requerida</p>
+                        <p className="text-xs text-orange-800 dark:text-orange-500 mt-0.5">
+                          Selecciona la ubicación de tu negocio para continuar.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Info Box: Qué sigue después */}
+                  <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-300 text-sm mb-1">
+                          ¿Qué sigue después?
+                        </h4>
+                        <p className="text-xs text-blue-800 dark:text-blue-400 mb-3">
+                          Una vez creado tu negocio, podrás configurar servicios, empleados y comenzar a recibir reservas.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Configuración gratuita
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-xs bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Sin límites
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-xs bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Soporte incluido
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Navegación Simplificada */}
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
+              {/* Anterior (solo visible si currentStep > 1) */}
+              {currentStep > 1 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  className="h-10 px-4"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Anterior
+                </Button>
+              ) : (
+                <div />
+              )}
+
+              {/* Siguiente / Crear */}
+              {currentStep < 3 ? (
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  disabled={!isStepValid(currentStep)}
+                  className="h-10 px-6 bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800 text-white"
+                >
+                  Siguiente
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={loading || !isStepValid(3)}
+                  className="h-10 px-6 bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-800 text-white"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                      Creando negocio...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Crear Mi Negocio
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   )

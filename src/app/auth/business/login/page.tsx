@@ -117,9 +117,7 @@ export default function BusinessLoginPage() {
       {/* Left Panel - Visual */}
       <div className="hidden lg:flex lg:w-1/2  bg-orange-600 hover:bg-orange-700 p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-
+   
         {/* Back button */}
         <div className="relative z-10">
           <Link href="/auth/business">

@@ -135,7 +135,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
         innerWrapper.style.transformOrigin = 'center bottom';
         innerWrapper.style.transition = 'transform 0.2s ease-out';
         innerWrapper.innerHTML = `
-          <svg viewBox="0 0 24 24" width="32" height="32" fill="#059669" stroke="#FFFFFF" stroke-width="1.5">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="#0f172a" stroke="#FFFFFF" stroke-width="1.5">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3" fill="#FFFFFF"></circle>
           </svg>
@@ -162,7 +162,7 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
                 </div>
                 ` : '<p style="font-size: 0.875rem; color: #9ca3af; margin-bottom: 12px;">Sin reseñas aún</p>'}
                 ${business.address ? `<p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">${business.address}</p>` : ''}
-                <a href="/business/${business.id}" style="display: block; width: 100%; padding: 10px 16px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; text-align: center; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(5, 150, 105, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(5, 150, 105, 0.2)'">
+                <a href="/business/${business.id}" style="display: block; width: 100%; padding: 10px 16px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; text-align: center; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(15, 23, 42, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(15, 23, 42, 0.2)'">
                   Ver Detalles →
                 </a>
               </div>
@@ -177,57 +177,22 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
         // Validar que el popup exista
         if (!popup) return;
 
-        // Función para cerrar el popup después de 3 segundos
-        const scheduleClose = () => {
-          // Limpiar timer anterior si existe
-          if (closeTimerRef.current) {
-            clearTimeout(closeTimerRef.current);
-          }
-
-          // Programar cierre en 3 segundos
-          closeTimerRef.current = setTimeout(() => {
-            if (popup && popup.isOpen()) {
-              popup.remove();
-            }
-            setHoveredBusinessIdRef.current(null);
-          }, 3000);
-        };
-
-        // Función para cancelar el cierre programado
-        const cancelClose = () => {
-          if (closeTimerRef.current) {
-            clearTimeout(closeTimerRef.current);
-            closeTimerRef.current = null;
-          }
-        };
-
-        // Hover: abrir popup y resaltar
+        // Hover: solo resaltar el marcador (sin abrir popup)
         markerElement.addEventListener('mouseenter', () => {
           setHoveredBusinessIdRef.current(business.id);
-          if (popup && !popup.isOpen()) {
-            marker.togglePopup();
-          }
-          cancelClose(); // Cancelar cierre si vuelve a entrar
         });
 
-        // Salir: programar cierre en 5 segundos
+        // Salir: quitar resaltado
         markerElement.addEventListener('mouseleave', () => {
-          scheduleClose();
+          setHoveredBusinessIdRef.current(null);
         });
 
-        // Agregar listeners al popup para mantenerlo abierto cuando el mouse está sobre él
-        if (popup) {
-          popup.on('open', () => {
-            const popupElement = popup.getElement();
-            if (popupElement) {
-              popupElement.addEventListener('mouseenter', cancelClose);
-              popupElement.addEventListener('mouseleave', scheduleClose);
-            }
-          });
-        }
-
-        // Click: scroll a la card (el popup ya está abierto por hover)
-        markerElement.addEventListener('click', () => {
+        // Click: abrir/cerrar popup y scroll a la card
+        markerElement.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Toggle popup
+          marker.togglePopup();
+          // Scroll a la card
           onMarkerClickRef.current(business.id);
         });
 
@@ -269,8 +234,15 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
 
   return (
     <>
-
       <div ref={mapContainer} className="w-full h-full" />
+      <style jsx global>{`
+        .mapboxgl-popup {
+          z-index: 999 !important;
+        }
+        .mapboxgl-popup-content {
+          z-index: 1000 !important;
+        }
+      `}</style>
     </>
   );
 }

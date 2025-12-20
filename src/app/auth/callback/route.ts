@@ -2,7 +2,7 @@ import { createServerClient } from '@/lib/supabaseServer'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams, origin, hash } = new URL(request.url)
   const code = searchParams.get('code')
   // Try to resolve user type from query param first, then from cookie fallback
   let type = searchParams.get('type') as 'client' | 'business_owner' | null // 'client' o 'business_owner'
@@ -11,6 +11,30 @@ export async function GET(request: NextRequest) {
     type = cookieType
   }
   const action = searchParams.get('action') // 'reset-password' o undefined
+
+  // Verificar si hay errores en searchParams o hash (típico de enlaces expirados)
+  const errorParam = searchParams.get('error')
+  const errorCode = searchParams.get('error_code')
+  const errorDescription = searchParams.get('error_description')
+
+  if (errorParam || (hash && hash.includes('error='))) {
+    const finalError = errorDescription || (hash.match(/error_description=([^&]+)/)?.[1]) || 'Enlace inválido o expirado'
+    console.error('❌ Error in callback:', { error: errorParam || 'hash_error', errorCode, errorDescription: finalError })
+
+    // Si es un error de reset password, redirigir a forgot-password
+    if (action === 'reset-password' || errorCode === 'otp_expired') {
+      const forgotPath = type === 'business_owner' ? '/auth/business/forgot-password' : '/auth/client/forgot-password'
+      const res = NextResponse.redirect(`${origin}${forgotPath}?error=link_expired&message=${encodeURIComponent(decodeURIComponent(finalError))}`)
+      res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+      return res
+    }
+
+    // Para otros errores, redirigir al login
+    const loginPath = type === 'business_owner' ? '/auth/business/login' : '/auth/client/login'
+    const res = NextResponse.redirect(`${origin}${loginPath}?error=auth_error&message=${encodeURIComponent(decodeURIComponent(finalError))}`)
+    res.cookies.set('auth_user_type', '', { maxAge: 0, path: '/' })
+    return res
+  }
 
   console.log('🔐 Auth callback received:', { hasCode: !!code, userType: type, action })
 
