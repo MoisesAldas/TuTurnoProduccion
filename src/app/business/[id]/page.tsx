@@ -192,36 +192,149 @@ export default function BusinessProfilePage() {
     }
   }, [])
 
+  // Cache utilities
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  
+  const getCachedData = (key: string) => {
+    try {
+      const cached = localStorage.getItem(key)
+      if (!cached) return null
+      
+      const { data, timestamp } = JSON.parse(cached)
+      if (Date.now() - timestamp > CACHE_DURATION) {
+        localStorage.removeItem(key)
+        return null
+      }
+      
+      return data
+    } catch {
+      return null
+    }
+  }
+  
+  const setCachedData = (key: string, data: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }))
+    } catch {
+      // Ignore cache errors
+    }
+  }
+
   const fetchBusinessData = async () => {
     try {
       setLoading(true)
 
-      // Debug: Check current user
+      // Check cache first
+      const cacheKey = `business_${businessId}`
+      const cachedData = getCachedData(cacheKey)
+      
+      if (cachedData) {
+        console.log('📦 [CACHE] Using cached data for business:', businessId)
+        setBusiness(cachedData.business)
+        setServices(cachedData.services || [])
+        setEmployees(cachedData.employees || [])
+        setReviews(cachedData.reviews || [])
+        setBusinessPhotos(cachedData.photos || [])
+        setBusinessHours(cachedData.hours || [])
+        setLoading(false)
+        return
+      }
+
+      console.log('🔄 [FETCH] Loading fresh data for business:', businessId)
+
+      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       console.log('👤 [AUTH DEBUG] Current user:', user?.id, user?.email)
 
-      // Fetch business details with JOIN to business_categories
-      const { data: businessData, error: businessError } = await supabase
-        .from('businesses')
-        .select(`
-          *,
-          business_categories (
+      // Execute all queries in parallel with Promise.all
+      const [
+        businessRes,
+        servicesRes,
+        employeesRes,
+        reviewsRes,
+        photosRes,
+        hoursRes
+      ] = await Promise.all([
+        // 1. Business details with category
+        supabase
+          .from('businesses')
+          .select(`
+            *,
+            business_categories (
+              id,
+              name,
+              description,
+              icon_url
+            )
+          `)
+          .eq('id', businessId)
+          .eq('is_active', true)
+          .single(),
+        
+        // 2. Services
+        supabase
+          .from('services')
+          .select('*')
+          .eq('business_id', businessId)
+          .eq('is_active', true)
+          .order('name'),
+        
+        // 3. Employees
+        supabase
+          .from('employees')
+          .select('*')
+          .eq('business_id', businessId)
+          .eq('is_active', true)
+          .order('first_name'),
+        
+        // 4. Reviews
+        supabase
+          .from('reviews')
+          .select(`
             id,
-            name,
-            description,
-            icon_url
-          )
-        `)
-        .eq('id', businessId)
-        .eq('is_active', true)
-        .single()
+            rating,
+            comment,
+            created_at,
+            business_reply,
+            business_reply_at,
+            client_id,
+            users (
+              first_name,
+              last_name,
+              email
+            )
+          `)
+          .eq('business_id', businessId)
+          .order('created_at', { ascending: false }),
+        
+        // 5. Photos
+        supabase
+          .from('business_photos')
+          .select('id, photo_url, display_order')
+          .eq('business_id', businessId)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true })
+          .order('created_at', { ascending: true }),
+        
+        // 6. Business hours
+        supabase
+          .from('business_hours')
+          .select('*')
+          .eq('business_id', businessId)
+          .order('day_of_week', { ascending: true })
+      ])
 
-      if (businessError) {
-        console.error('Error fetching business:', businessError)
+      // Handle business data
+      if (businessRes.error) {
+        console.error('Error fetching business:', businessRes.error)
         router.push('/marketplace')
         return
       }
 
+      const businessData = businessRes.data
       setBusiness(businessData)
 
       // Check if current user is owner
@@ -229,60 +342,24 @@ export default function BusinessProfilePage() {
         setIsOwner(true)
       }
 
-      // Fetch services
-      const { data: servicesData, error: servicesError } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', businessId)
-        .eq('is_active', true)
-        .order('name')
+      // Handle services
+      const servicesData = servicesRes.data || []
+      setServices(servicesData)
 
-      if (!servicesError) {
-        setServices(servicesData || [])
-      }
+      // Handle employees
+      const employeesData = employeesRes.data || []
+      setEmployees(employeesData)
 
-      // Fetch employees
-      const { data: employeesData, error: employeesError } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('business_id', businessId)
-        .eq('is_active', true)
-        .order('first_name')
-
-      if (!employeesError) {
-        setEmployees(employeesData || [])
-      }
-
-      // Fetch reviews from database
+      // Handle reviews
       console.log('🔍 [REVIEWS DEBUG] Fetching reviews for business:', businessId)
+      console.log('📊 [REVIEWS DEBUG] Raw reviews data:', reviewsRes.data)
+      console.log('❌ [REVIEWS DEBUG] Reviews error:', reviewsRes.error)
 
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select(`
-          id,
-          rating,
-          comment,
-          created_at,
-          business_reply,
-          business_reply_at,
-          client_id,
-          users (
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false })
+      if (!reviewsRes.error && reviewsRes.data) {
+        console.log('✅ [REVIEWS DEBUG] Total reviews fetched:', reviewsRes.data.length)
 
-      console.log('📊 [REVIEWS DEBUG] Raw reviews data:', reviewsData)
-      console.log('❌ [REVIEWS DEBUG] Reviews error:', reviewsError)
-
-      if (!reviewsError && reviewsData) {
-        console.log('✅ [REVIEWS DEBUG] Total reviews fetched:', reviewsData.length)
-
-        // Transform and filter reviews - Supabase returns users object
-        const validReviews = (reviewsData as any[])
+        // Transform and filter reviews
+        const validReviews = (reviewsRes.data as any[])
           .filter(review => {
             const isValid = review.users !== null && review.users !== undefined
             if (!isValid) {
@@ -297,7 +374,7 @@ export default function BusinessProfilePage() {
             created_at: review.created_at,
             business_reply: review.business_reply,
             business_reply_at: review.business_reply_at,
-            client: review.users  // Rename 'users' to 'client' to match interface
+            client: review.users
           }))
 
         console.log('✅ [REVIEWS DEBUG] Valid reviews after filter:', validReviews.length)
@@ -309,29 +386,25 @@ export default function BusinessProfilePage() {
         setReviews([])
       }
 
-      // Fetch business photos
-      const { data: photosData, error: photosError } = await supabase
-        .from('business_photos')
-        .select('id, photo_url, display_order')
-        .eq('business_id', businessId)
-        .eq('is_active', true)
-        .order('display_order', { ascending: true })
-        .order('created_at', { ascending: true })
+      // Handle photos
+      const photosData = photosRes.data || []
+      setBusinessPhotos(photosData)
 
-      if (!photosError && photosData) {
-        setBusinessPhotos(photosData)
-      }
+      // Handle hours
+      const hoursData = hoursRes.data || []
+      setBusinessHours(hoursData)
 
-      // Fetch business hours
-      const { data: hoursData, error: hoursError } = await supabase
-        .from('business_hours')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('day_of_week', { ascending: true })
+      // Cache the data
+      setCachedData(cacheKey, {
+        business: businessData,
+        services: servicesData,
+        employees: employeesData,
+        reviews: reviewsRes.data || [],
+        photos: photosData,
+        hours: hoursData
+      })
 
-      if (!hoursError && hoursData) {
-        setBusinessHours(hoursData)
-      }
+      console.log('✅ [CACHE] Data cached successfully')
 
     } catch (error) {
       console.error('Error fetching business data:', error)
