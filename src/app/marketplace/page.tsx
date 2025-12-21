@@ -298,8 +298,8 @@ export default function MarketplacePage() {
                         </Button>
                         <div className="h-6 w-px bg-gray-200" />
                         <Link href="/">
-                            <Logo color="gray" size="sm" className="md:hidden" />
-                            <Logo color="gray" size="md" className="hidden md:block" />
+                            <Logo color="slate" size="sm" className="md:hidden" />
+                            <Logo color="slate" size="md" className="hidden md:block" />
                         </Link>
                     </div>
                     {/* Search Input */}

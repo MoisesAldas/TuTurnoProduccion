@@ -438,8 +438,8 @@ export default function ClientDashboard() {
                   </CardContent>
                   <div className="p-6 pt-3 flex items-center justify-between">
                      <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatPrice(apt.total_price)}</span>
-                     <Button asChild variant="ghost" size="sm">
-                       <Link href={`/dashboard/client/appointments/${apt.id}`}><Edit className="w-4 h-4 mr-2"/>Ver Detalles</Link>
+                     <Button asChild variant="ghost" size="sm" className='bg-slate-900  hover:bg-slate-800 text-white'>
+                       <Link href={`/dashboard/client/appointments/${apt.id}`}><Edit className="w-4 h-4 mr-2 text-white"/>Ver Detalles</Link>
                      </Button>
                   </div>
                 </Card>

@@ -103,6 +103,7 @@ export default function LocationMapModal({
         el.style.height = '40px'
         el.style.borderRadius = '50% 50% 50% 0'
         el.style.background = colors.markerBg
+        el.style.border = '3px solid white'
         el.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.3)'
         el.style.transform = 'rotate(-45deg)'
         el.style.cursor = 'pointer'

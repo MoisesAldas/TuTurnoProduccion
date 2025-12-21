@@ -1,5 +1,5 @@
 interface LogoProps {
-  color?: "emerald" | "white" | "black" | "gray"
+  color?: "emerald" | "white" | "black" | "gray" | "slate"
   size?: "sm" | "md" | "lg"
   className?: string
 }
@@ -25,6 +25,8 @@ export default function Logo({
       ? "text-white"
       : color === "black"
       ? "text-black"
+      : color === "slate"
+      ? "text-slate-900"
       : "text-gray-700"
 
   return (

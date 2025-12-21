@@ -460,10 +460,14 @@ export default function BusinessProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando información del negocio...</p>
+          <div className="relative w-16 h-16 mx-auto mb-6">
+            <div className="absolute inset-0 border-4 border-slate-200 dark:border-slate-800 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-slate-900 dark:border-slate-100 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando información del negocio</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Preparando el perfil completo...</p>
         </div>
       </div>
     )
@@ -476,7 +480,7 @@ export default function BusinessProfilePage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Negocio no encontrado</h1>
           <p className="text-gray-600 mb-4">El negocio que buscas no existe o no está disponible.</p>
           <Link href="/marketplace">
-            <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white">Volver al Marketplace</Button>
+            <Button className="bg-slate-900 hover:bg-slate-800 text-white">Volver al Marketplace</Button>
           </Link>
         </div>
       </div>
@@ -509,39 +513,47 @@ export default function BusinessProfilePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1 sm:gap-2 -ml-2 sm:ml-0 min-h-[44px] min-w-[44px]"
+                className="gap-1 sm:gap-2 -ml-2 sm:ml-0 min-h-[44px] min-w-[44px] hover:bg-slate-100 hover:text-slate-900 transition-all duration-200"
                 onClick={() => window.location.href = '/marketplace'}
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline text-sm">Marketplace</span>
               </Button>
               <div className="hidden sm:block h-6 w-px bg-gray-200"></div>
-              <Logo color="emerald" size="md" />
+              <Logo color="slate" size="md" />
             </div>
 
             {/* Right: Auth Actions - Responsive */}
             <div className="flex items-center gap-1 sm:gap-2">
               {authState?.user ? (
                 <>
-                  <Link href="/dashboard/client" className="hidden md:block">
-                    <Button variant="outline" size="sm" className="text-sm">
-                      Mi Dashboard
+                  <Link href="/dashboard/client">
+                    <Button 
+                      size="sm" 
+                      className="text-xs sm:text-sm bg-slate-900 hover:bg-slate-800 text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 px-3 py-2"
+                    >
+                      <span className="hidden sm:inline">Mi Dashboard</span>
+                      <span className="sm:hidden">Dashboard</span>
                     </Button>
                   </Link>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={signOut}
-                    className="min-h-[44px] min-w-[44px]"
+                    className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200 px-2 py-2"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span className="hidden sm:inline ml-2 text-sm">Cerrar Sesión</span>
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline ml-1.5 text-xs">Cerrar Sesión</span>
                   </Button>
                 </>
               ) : (
                 <>
                   <Link href="/auth/client/login">
-                    <Button variant="ghost" size="sm" className="text-sm min-h-[44px]">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-sm min-h-[44px] text-gray-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-200"
+                    >
                       <span className="hidden sm:inline">Iniciar Sesión</span>
                       <span className="sm:hidden">Ingresar</span>
                     </Button>
@@ -549,7 +561,7 @@ export default function BusinessProfilePage() {
                   <Link href="/auth/client/register">
                     <Button
                       size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm min-h-[44px]"
+                      className="bg-slate-900 hover:bg-slate-800 text-white text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
                     >
                       <span className="hidden sm:inline">Registrarse</span>
                       <span className="sm:hidden">Registro</span>
@@ -617,7 +629,7 @@ export default function BusinessProfilePage() {
               {business.address && (
                 <button
                   onClick={() => business.latitude && business.longitude && setShowLocationModal(true)}
-                  className="text-gray-600 hover:text-emerald-600 flex items-center gap-2 text-sm sm:text-base group transition-colors text-left"
+                  className="text-gray-600 hover:text-slate-900 flex items-center gap-2 text-sm sm:text-base group transition-colors text-left"
                 >
                   <MapPin className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <span className="line-clamp-1">{business.address}</span>
@@ -818,7 +830,7 @@ export default function BusinessProfilePage() {
                             onClick={() => setSelectedCategory(category)}
                             className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 ${
                               selectedCategory === category
-                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+                                ? 'bg-slate-900 text-white shadow-md'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                             style={{ minWidth: '44px', minHeight: '44px' }} // Touch target size
@@ -834,7 +846,7 @@ export default function BusinessProfilePage() {
                       {filteredServices.map((service) => (
                         <div
                           key={service.id}
-                          className="group flex flex-col sm:flex-row sm:items-start sm:justify-between p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-emerald-200 active:scale-[0.995] transition-all duration-200"
+                          className="group flex flex-col sm:flex-row sm:items-start sm:justify-between p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-slate-300 active:scale-[0.995] transition-all duration-200"
                         >
                           {/* Service Info */}
                           <div className="flex-1 mb-4 sm:mb-0 sm:mr-4">
@@ -847,7 +859,7 @@ export default function BusinessProfilePage() {
                               </p>
                             )}
                             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                              <span className="text-lg sm:text-xl font-bold text-emerald-700">
+                              <span className="text-lg sm:text-xl font-bold text-slate-900">
                                 {formatPrice(service.price)}
                               </span>
                               <div className="flex items-center gap-1.5 text-sm text-gray-500">
@@ -906,7 +918,7 @@ export default function BusinessProfilePage() {
                         >
                           {/* Avatar with gradient border */}
                           <div className="relative mb-3">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 ring-2 ring-emerald-100 group-hover:ring-emerald-400 group-hover:scale-105 transition-all duration-200">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 ring-2 ring-slate-100 group-hover:ring-slate-400 group-hover:scale-105 transition-all duration-200">
                               {employee.avatar_url ? (
                                 <img
                                   src={employee.avatar_url}
@@ -915,15 +927,15 @@ export default function BusinessProfilePage() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center">
-                                  <Users className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600" />
+                                <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                                  <Users className="w-8 h-8 sm:w-10 sm:h-10 text-slate-600" />
                                 </div>
                               )}
                             </div>
                           </div>
 
                           {/* Name and Position */}
-                          <p className="font-medium text-gray-900 text-sm sm:text-base text-center max-w-[100px] group-hover:text-emerald-700 transition-colors">
+                          <p className="font-medium text-gray-900 text-sm sm:text-base text-center max-w-[100px] group-hover:text-slate-900 transition-colors">
                             {employee.first_name}
                           </p>
                           {employee.position && (
@@ -1014,7 +1026,7 @@ export default function BusinessProfilePage() {
                         Sé el primero en compartir tu experiencia con este negocio.
                       </p>
                       <Button
-                        className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                        className="bg-black hover:bg-neutral-800 text-white"
                         onClick={() => handleBookAppointment()}
                       >
                         <Calendar className="w-4 h-4 mr-2" />
@@ -1031,7 +1043,7 @@ export default function BusinessProfilePage() {
                           <CardContent className="p-6">
                             <div className="flex items-start gap-4">
                               {/* Client Avatar */}
-                              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                              <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
                                 {review.client.first_name.charAt(0).toUpperCase()}
                               </div>
 
@@ -1143,8 +1155,8 @@ export default function BusinessProfilePage() {
                     <Card className="border border-gray-200">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-emerald-600" />
+                          <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-slate-900" />
                           </div>
                           <h3 className="font-semibold text-gray-900">Horarios de atención</h3>
                         </div>
@@ -1181,13 +1193,13 @@ export default function BusinessProfilePage() {
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {business.allow_client_cancellation && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge className="text-xs bg-blue-50 text-blue-700 border border-blue-200">
                               <Ban className="w-3 h-3 mr-1" />
                               Cancelación permitida
                             </Badge>
                           )}
                           {business.allow_client_reschedule && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200">
                               <RefreshCw className="w-3 h-3 mr-1" />
                               Reagendamiento permitido
                             </Badge>
@@ -1290,7 +1302,7 @@ export default function BusinessProfilePage() {
                         {business.phone && (
                           <div className="flex items-start gap-3 text-sm">
                             <Phone className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <a href={`tel:${business.phone}`} className="text-gray-700 hover:text-emerald-600 transition-colors">
+                            <a href={`tel:${business.phone}`} className="text-gray-700 hover:text-slate-900 transition-colors">
                               {business.phone}
                             </a>
                           </div>
@@ -1298,7 +1310,7 @@ export default function BusinessProfilePage() {
                         {business.email && (
                           <div className="flex items-start gap-3 text-sm">
                             <Mail className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <a href={`mailto:${business.email}`} className="text-gray-700 hover:text-emerald-600 transition-colors">
+                            <a href={`mailto:${business.email}`} className="text-gray-700 hover:text-slate-900 transition-colors">
                               {business.email}
                             </a>
                           </div>
@@ -1310,7 +1322,7 @@ export default function BusinessProfilePage() {
                               href={business.website}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-gray-700 hover:text-emerald-600 transition-colors"
+                              className="text-gray-700 hover:text-slate-900 transition-colors"
                             >
                               Visitar sitio web
                             </a>
@@ -1344,14 +1356,14 @@ export default function BusinessProfilePage() {
                     <div className="space-y-4 pt-4 border-t border-gray-200 mt-4">
                       {business.address && (
                         <div className="flex items-start gap-3">
-                          <MapPin className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                          <MapPin className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 mb-1 text-sm sm:text-base">Ubicación</p>
                             <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">{business.address}</p>
                             {business.latitude && business.longitude && (
                               <button
                                 onClick={() => setShowLocationModal(true)}
-                                className="text-emerald-600 hover:text-emerald-700 font-medium mt-2 inline-flex items-center gap-1 text-sm transition-colors"
+                                className="text-slate-900 hover:text-slate-800 font-medium mt-2 inline-flex items-center gap-1 text-sm transition-colors"
                                 style={{ minHeight: '44px', minWidth: '44px' }} // Touch target
                               >
                                 <MapPin className="w-4 h-4" />
@@ -1364,12 +1376,12 @@ export default function BusinessProfilePage() {
 
                       {business.phone && (
                         <div className="flex items-start gap-3">
-                          <Phone className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                          <Phone className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 mb-1 text-sm sm:text-base">Teléfono</p>
                             <a
                               href={`tel:${business.phone}`}
-                              className="text-gray-600 hover:text-emerald-600 font-medium transition-colors text-sm"
+                              className="text-gray-600 hover:text-slate-900 font-medium transition-colors text-sm"
                               style={{ minHeight: '44px', minWidth: '44px' }} // Touch target
                             >
                               {business.phone}
@@ -1389,7 +1401,7 @@ export default function BusinessProfilePage() {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Categoría</span>
                         <span className="font-medium text-gray-900 flex items-center gap-1.5">
-                          <CategoryIcon className="w-4 h-4 text-emerald-600" />
+                          <CategoryIcon className="w-4 h-4 text-slate-900" />
                           <span className="text-xs sm:text-sm">{categoryName}</span>
                         </span>
                       </div>
