@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X, CheckCircle2, Phone, Mail, FileText } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X, CheckCircle2, Phone, Mail, FileText, CalendarDays } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation'
 import type { Business } from '@/types/database'
 import CreateEmployeeModal from '@/components/CreateEmployeeModal'
 import EditEmployeeModal from '@/components/EditEmployeeModal'
+import EmployeeAbsencesModal from '@/components/EmployeeAbsencesModal'
 import { StatsCard } from '@/components/StatsCard'
 
 // Tipo para empleados
@@ -49,6 +50,7 @@ export default function EmployeesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [absencesModalOpen, setAbsencesModalOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null)
@@ -290,19 +292,19 @@ export default function EmployeesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredEmployees.map((employee) => (
             <Card
               key={employee.id}
               className={`
-                hover:shadow-lg transition-all duration-200 group flex flex-col
+                overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col
                 ${!employee.is_active ? 'bg-gray-50 dark:bg-gray-900/50 opacity-75' : ''}
               `}
             >
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center overflow-hidden border-2 border-orange-200 dark:border-orange-800 flex-shrink-0">
+              <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent dark:from-orange-900/10 dark:via-amber-900/10 border-b border-gray-100 dark:border-gray-800">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                       {employee.avatar_url ? (
                         <img
                           src={employee.avatar_url}
@@ -310,23 +312,23 @@ export default function EmployeesPage() {
                           className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
-                        <User className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                        <User className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-50 line-clamp-1">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-50 truncate">
                         {employee.first_name} {employee.last_name}
-                      </CardTitle>
+                      </h3>
                       {employee.position && (
-                        <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">{employee.position}</p>
+                        <p className="text-xs text-orange-600 dark:text-orange-400 font-medium truncate">{employee.position}</p>
                       )}
                     </div>
                   </div>
                   <Badge
                     variant={employee.is_active ? "default" : "secondary"}
                     className={employee.is_active
-                      ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800 flex-shrink-0'
-                      : 'bg-gray-200 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 flex-shrink-0'
+                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800 flex-shrink-0'
+                      : 'bg-gray-200 text-gray-600 border-gray-300 text-xs dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 flex-shrink-0'
                     }
                   >
                     {employee.is_active ? 'Activo' : 'Inactivo'}
@@ -356,19 +358,33 @@ export default function EmployeesPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2 pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedEmployee(employee)
-                      setEditModalOpen(true)
-                    }}
-                    className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800 shadow-sm hover:shadow-md"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Editar
-                  </Button>
+                <div className="flex flex-col gap-2 pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEmployee(employee)
+                        setEditModalOpen(true)
+                      }}
+                      className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800"
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEmployee(employee)
+                        setAbsencesModalOpen(true)
+                      }}
+                      className="flex-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-colors shadow-sm hover:shadow-md dark:hover:bg-blue-900/50 dark:hover:text-blue-400 dark:hover:border-blue-700"
+                    >
+                      <CalendarDays className="w-4 h-4 mr-2" />
+                      Ausencias
+                    </Button>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
@@ -376,9 +392,10 @@ export default function EmployeesPage() {
                       setEmployeeToDelete(employee.id)
                       setDeleteDialogOpen(true)
                     }}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
+                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
                   </Button>
                 </div>
               </CardContent>
@@ -405,6 +422,16 @@ export default function EmployeesPage() {
         employee={selectedEmployee}
         onSuccess={fetchData}
       />
+
+      {/* Employee Absences Modal */}
+      {selectedEmployee && (
+        <EmployeeAbsencesModal
+          open={absencesModalOpen}
+          onOpenChange={setAbsencesModalOpen}
+          employeeId={selectedEmployee.id}
+          employeeName={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

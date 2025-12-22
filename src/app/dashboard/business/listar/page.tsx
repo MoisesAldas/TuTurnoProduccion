@@ -183,6 +183,34 @@ export default function ListarPage() {
     }
   }
 
+  const fetchAllAppointments = async (): Promise<AppointmentRow[]> => {
+    try {
+      const { data, error } = await supabase.rpc('get_appointments_list_v2', {
+        p_business_id: businessId,
+        p_employee_ids: employeeIds.length ? employeeIds : null,
+        p_service_ids: serviceIds.length ? serviceIds : null,
+        p_statuses: statuses.length ? statuses : null,
+        p_date_from: dateFrom || null,
+        p_date_to: dateTo || null,
+        p_search: search.trim() || null,
+        p_walkin_filter: walkinFilter,
+        p_sort_by: sortBy,
+        p_sort_dir: sortDir,
+        p_limit: 999999, // Get all records
+        p_offset: 0
+      })
+      if (error) throw error
+      return (data as any) || []
+    } catch (e) {
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar todas las citas para exportar',
+        variant: 'destructive'
+      })
+      return []
+    }
+  }
+
   const fetchFullAppointment = async (appointmentId: string) => {
     try {
       const { data, error } = await supabase
@@ -237,9 +265,18 @@ export default function ListarPage() {
     }
   }
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
+    const allRows = await fetchAllAppointments()
+    if (allRows.length === 0) {
+      toast({
+        title: 'Sin datos',
+        description: 'No hay citas para exportar',
+        variant: 'destructive'
+      })
+      return
+    }
     const header = ['Fecha','Hora Inicio','Hora Fin','Estado','Precio','Empleado','Cliente','Teléfono','Walk-in','Servicios']
-    const lines = rows.map(r => [
+    const lines = allRows.map(r => [
       r.appointment_date,
       r.start_time?.substring(0,5),
       r.end_time?.substring(0,5),
@@ -261,11 +298,21 @@ export default function ListarPage() {
     URL.revokeObjectURL(url)
     toast({
       title: 'Exportación exitosa',
-      description: 'El archivo CSV se ha descargado correctamente'
+      description: `Se exportaron ${allRows.length} citas correctamente`
     })
   }
 
   const handleExportExcel = async () => {
+    const allRows = await fetchAllAppointments()
+    if (allRows.length === 0) {
+      toast({
+        title: 'Sin datos',
+        description: 'No hay citas para exportar',
+        variant: 'destructive'
+      })
+      return
+    }
+
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Citas')
 
@@ -278,10 +325,10 @@ export default function ListarPage() {
     })
 
     // Calcular totales - solo citas completadas generan ingresos
-    const totalRevenue = rows
+    const totalRevenue = allRows
       .filter(r => r.status === 'completed')
       .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
-    const totalAppointments = totalCount
+    const totalAppointments = allRows.length
 
     // Período de fechas (si aplica)
     const period = (dateFrom && dateTo)
@@ -358,7 +405,7 @@ export default function ListarPage() {
     // ========================================
     // DATOS (Desde fila 8)
     // ========================================
-    rows.forEach((row, index) => {
+    allRows.forEach((row, index) => {
       const rowNum = index + 8
       const dataRow = worksheet.getRow(rowNum)
 
@@ -431,11 +478,21 @@ export default function ListarPage() {
 
     toast({
       title: 'Exportación exitosa',
-      description: 'El archivo Excel se ha descargado correctamente'
+      description: `Se exportaron ${allRows.length} citas correctamente`
     })
   }
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    const allRows = await fetchAllAppointments()
+    if (allRows.length === 0) {
+      toast({
+        title: 'Sin datos',
+        description: 'No hay citas para exportar',
+        variant: 'destructive'
+      })
+      return
+    }
+
     const doc = new jsPDF('landscape', 'mm', 'a4')
     const pageWidth = doc.internal.pageSize.width
     const pageHeight = doc.internal.pageSize.height
@@ -475,10 +532,10 @@ export default function ListarPage() {
     doc.setFont('helvetica', 'bold')
 
     // Calculate totals - solo citas completadas generan ingresos
-    const totalRevenue = rows
+    const totalRevenue = allRows
       .filter(r => r.status === 'completed')
       .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
-    const totalAppointments = totalCount
+    const totalAppointments = allRows.length
 
     // Period
     const period = (dateFrom && dateTo)
@@ -514,7 +571,7 @@ export default function ListarPage() {
         'Walk-in',
         'Servicios'
       ]],
-      body: rows.map(r => [
+      body: allRows.map(r => [
         new Date(r.appointment_date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         r.start_time?.substring(0,5) || '-',
         r.end_time?.substring(0,5) || '-',
@@ -619,7 +676,7 @@ export default function ListarPage() {
 
     toast({
       title: 'Exportación exitosa',
-      description: 'El archivo PDF se ha descargado correctamente'
+      description: `Se exportaron ${allRows.length} citas correctamente`
     })
   }
 
@@ -923,95 +980,7 @@ export default function ListarPage() {
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Appointments */}
-          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Total Citas
-                </CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                {stats.total}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Todas las citas
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Completed Appointments */}
-          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Completadas
-                </CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900 dark:to-green-900 rounded-lg flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                {stats.completed}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Finalizadas exitosamente
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Pending Appointments */}
-          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Pendientes
-                </CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-yellow-100 to-amber-100 dark:from-yellow-900 dark:to-amber-900 rounded-lg flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                {stats.pending}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Por confirmar/completar
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Total Revenue (Only completed) */}
-          <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Ingresos Totales
-                </CardTitle>
-                <div className="w-8 h-8 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
-                ${stats.totalRevenue.toFixed(2)}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Solo citas completadas
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+       
 
         {/* Filtros */}
         <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">

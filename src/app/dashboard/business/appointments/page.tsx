@@ -31,7 +31,22 @@ const CalendarView = dynamic(() => import('@/components/CalendarView'), {
   )
 })
 
+const MonthCalendarView = dynamic(() => import('@/components/MonthCalendarView'), {
+  loading: () => (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
+        <p className="text-gray-600">Cargando calendario...</p>
+      </div>
+    </div>
+  )
+})
+
 const CreateAppointmentModal = dynamic(() => import('@/components/CreateAppointmentModal'), {
+  loading: () => <div className="text-center p-4">Cargando...</div>
+})
+
+const AppointmentModal = dynamic(() => import('@/components/AppointmentModal'), {
   loading: () => <div className="text-center p-4">Cargando...</div>
 })
 
@@ -45,11 +60,13 @@ export default function AppointmentsPage() {
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [viewType, setViewType] = useState<'day' | 'week'>('day')
+  const [viewType, setViewType] = useState<'day' | 'week' | 'month'>('day')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [allowOverlapping, setAllowOverlapping] = useState(false)
   const [updatingSettings, setUpdatingSettings] = useState(false)
@@ -166,7 +183,37 @@ export default function AppointmentsPage() {
     try {
       setRefreshing(true)
 
-      if (viewType === 'week') {
+      if (viewType === 'month') {
+        // Calculate month range
+        const startOfMonthDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+        const endOfMonthDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0)
+
+        const startDate = toDateString(startOfMonthDate)
+        const endDate = toDateString(endOfMonthDate)
+
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            users(first_name, last_name, phone, avatar_url, email),
+            business_clients(first_name, last_name, phone, email),
+            employees(first_name, last_name),
+            appointment_services(
+              service_id,
+              price,
+              services(name, duration_minutes)
+            )
+          `)
+          .eq('business_id', business.id)
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
+          .in('employee_id', selectedEmployees.length > 0 ? selectedEmployees : [''])
+          .order('appointment_date')
+          .order('start_time')
+
+        if (error) throw error
+        setAppointments((data as any) || [])
+      } else if (viewType === 'week') {
         // Calculate week range
         const current = new Date(selectedDate)
         const day = current.getDay()
@@ -438,6 +485,16 @@ export default function AppointmentsPage() {
     setEditingAppointment(appointment)
   }
 
+  const handleAppointmentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment)
+    setShowAppointmentModal(true)
+  }
+
+  const handleCloseAppointmentModal = () => {
+    setShowAppointmentModal(false)
+    setSelectedAppointment(null)
+  }
+
   const handleUpdateOverlappingSetting = async (enabled: boolean) => {
     if (!business) return
 
@@ -567,7 +624,7 @@ export default function AppointmentsPage() {
               </SelectContent>
             </Select>
 
-            {/* Vista Día/Semana */}
+            {/* Vista Día/Semana/Mes */}
             <div className="hidden sm:flex border border-gray-300 rounded-lg overflow-hidden">
               <Button
                 variant={viewType === 'day' ? 'default' : 'ghost'}
@@ -592,6 +649,18 @@ export default function AppointmentsPage() {
                 }`}
               >
                 Semana
+              </Button>
+              <Button
+                variant={viewType === 'month' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewType('month')}
+                className={`rounded-none ${
+                  viewType === 'month'
+                    ? 'bg-orange-600 text-white hover:bg-orange-700'
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                Mes
               </Button>
             </div>
 
@@ -630,16 +699,32 @@ export default function AppointmentsPage() {
 
       {/* Calendario */}
       <div className="flex-1 overflow-hidden">
-        <CalendarView
-          selectedDate={selectedDate}
-          appointments={appointments}
-          employees={employees.filter(e => selectedEmployees.includes(e.id))}
-          viewType={viewType}
-          businessId={business?.id || ''}
-          onRefresh={fetchAppointments}
-          onCreateAppointment={handleCreateAppointment}
-          onEditAppointment={handleEditAppointment}
-        />
+        {viewType === 'month' ? (
+          <MonthCalendarView
+            selectedDate={selectedDate}
+            appointments={appointments}
+            employees={employees.filter(e => selectedEmployees.includes(e.id))}
+            onDateSelect={(date) => {
+              setSelectedDate(date)
+              setViewType('day')
+            }}
+            onAppointmentClick={handleAppointmentClick}
+            onMonthChange={(date) => {
+              setSelectedDate(date)
+            }}
+          />
+        ) : (
+          <CalendarView
+            selectedDate={selectedDate}
+            appointments={appointments}
+            employees={employees.filter(e => selectedEmployees.includes(e.id))}
+            viewType={viewType}
+            businessId={business?.id || ''}
+            onRefresh={fetchAppointments}
+            onCreateAppointment={handleCreateAppointment}
+            onEditAppointment={handleEditAppointment}
+          />
+        )}
       </div>
 
       {/* Modal de crear/editar cita */}
@@ -662,6 +747,22 @@ export default function AppointmentsPage() {
           appointment={editingAppointment}
           onClose={() => setEditingAppointment(null)}
           onSuccess={handleCreateSuccess}
+        />
+      )}
+
+      {/* Modal de detalles de cita (desde vista mensual) */}
+      {showAppointmentModal && selectedAppointment && (
+        <AppointmentModal
+          appointment={selectedAppointment}
+          onClose={handleCloseAppointmentModal}
+          onUpdate={() => {
+            handleCloseAppointmentModal()
+            fetchAppointments()
+          }}
+          onEdit={() => {
+            handleCloseAppointmentModal()
+            handleEditAppointment(selectedAppointment)
+          }}
         />
       )}
 
