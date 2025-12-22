@@ -120,47 +120,41 @@ export default function HeroSection() {
 
                 {/* Mobile Mockup - Refined 3D iPhone Style */}
                 <div
-                  className={`absolute -right-4 top-20 w-[170px] transition-all duration-1000 ease-out delay-500 ${isMounted ? 'opacity-100 translate-x-0 translate-y-0 [transform:rotateY(-25deg)] animate-float' : 'opacity-0 translate-x-12 translate-y-6 rotate-6'} group-hover:[transform:rotateY(0deg)_translateY(-12px)_scale(1.08)] group-hover:pause`}>
+                  className={`absolute -right-6 top-4 w-[160px] transition-all duration-1000 ease-out delay-500 ${isMounted ? 'opacity-100 translate-x-0 translate-y-0 [transform:rotateY(-25deg)] animate-float' : 'opacity-0 translate-x-12 translate-y-6 rotate-6'} group-hover:[transform:rotateY(0deg)_translateY(-12px)_scale(1.08)] group-hover:pause`}>
 
                   {/* iPhone Frame with 3D Effect */}
                   <div className="relative [transform-style:preserve-3d]">
                     {/* Subtle Shadow */}
                     <div className="absolute inset-0 bg-slate-900/15 rounded-[2.5rem] blur-xl translate-y-3 translate-x-1"></div>
-                    
-                    {/* Phone Body - Thinner Bezel */}
-                    <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2.5rem] p-[2px] shadow-[0_15px_35px_-10px_rgba(0,0,0,0.3)]">
-                      {/* Inner Bezel - Much Thinner */}
-                      <div className="relative bg-black rounded-[2.4rem] p-[4px]">
-                        {/* Notch - Smaller and More Refined */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[25%] h-[16px] bg-black rounded-b-[0.8rem] z-20 shadow-md"></div>
 
-                        {/* Screen Content with Glow */}
-                        <div className="relative rounded-[2.2rem] overflow-hidden bg-white ring-1 ring-slate-900/10">
-                          <Image
-                            src="/mobile2.png"
-                            alt="TuTurno Mobile App"
-                            width={340}
-                            height={680}
-                            quality={100}
-                            priority
-                            className="w-full h-auto"
-                          />
-                          
-                          {/* Screen Shine Effect */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-60 pointer-events-none"></div>
-                        </div>
+                    {/* Phone Body - Thin Border Style with Padding */}
+                    <div className="relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 rounded-[2.5rem] shadow-[0_15px_35px_-10px_rgba(0,0,0,0.3)] border border-slate-200/60 dark:border-slate-700/60 p-2 overflow-hidden">
+                      {/* Inner Glow Border */}
+                      <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-inset ring-white/20 dark:ring-white/10 pointer-events-none"></div>
 
-                        {/* Glass Reflection - Subtle */}
-                        <div className="absolute inset-[4px] rounded-[2.2rem] bg-gradient-to-tr from-white/5 via-transparent to-white/10 pointer-events-none mix-blend-overlay"></div>
+                      {/* Notch - Smaller and More Refined */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[25%] h-[18px] bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 rounded-b-[0.8rem] z-20 shadow-md"></div>
+
+                      {/* Screen Content */}
+                      <div className="relative rounded-[1.8rem] overflow-hidden bg-white shadow-inner ring-1 ring-slate-900/5">
+                        <Image
+                          src="/mobile4.png"
+                          alt="TuTurno Mobile App"
+                          width={360}
+                          height={780}
+                          quality={100}
+                          priority
+                          className="w-full h-auto"
+                        />
+
+                        {/* Screen Shine Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-60 pointer-events-none"></div>
                       </div>
 
                       {/* Side Buttons - Thinner */}
-                      <div className="absolute left-0 top-[75px] w-[1.5px] h-[28px] bg-slate-700/80 rounded-r-sm -translate-x-[2px]"></div>
-                      <div className="absolute left-0 top-[115px] w-[1.5px] h-[45px] bg-slate-700/80 rounded-r-sm -translate-x-[2px]"></div>
-                      <div className="absolute right-0 top-[95px] w-[1.5px] h-[60px] bg-slate-700/80 rounded-l-sm translate-x-[2px]"></div>
-                      
-                      {/* Subtle Edge Highlight */}
-                      <div className="absolute inset-0 rounded-[2.5rem] ring-1 ring-inset ring-white/10 pointer-events-none"></div>
+                      <div className="absolute left-0 top-[75px] w-[1.5px] h-[28px] bg-slate-700/80 rounded-r-sm -translate-x-[1.5px]"></div>
+                      <div className="absolute left-0 top-[115px] w-[1.5px] h-[45px] bg-slate-700/80 rounded-r-sm -translate-x-[1.5px]"></div>
+                      <div className="absolute right-0 top-[95px] w-[1.5px] h-[60px] bg-slate-700/80 rounded-l-sm translate-x-[1.5px]"></div>
                     </div>
 
                     {/* Pulsing Glow - Constant Animation */}
