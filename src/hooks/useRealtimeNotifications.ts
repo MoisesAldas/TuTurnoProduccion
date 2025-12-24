@@ -70,19 +70,26 @@ export function useRealtimeNotifications({
   const supabase = createClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
   const callbackRef = useRef(onNewNotification);
+  const isSubscribingRef = useRef(false); // Prevenir múltiples suscripciones simultáneas
 
   // Actualizar el callback ref cada vez que cambie (sin causar re-suscripción)
   useEffect(() => {
-    console.log("🔄 [useRealtimeNotifications] Actualizando callback ref");
+    if (debug)
+      console.log("🔄 [useRealtimeNotifications] Actualizando callback ref");
     callbackRef.current = onNewNotification;
-  }, [onNewNotification]);
+  }, [onNewNotification, debug]);
 
   // Suscripción (SOLO depende de userId y debug, NO del callback)
   useEffect(() => {
-    console.log("🔵 [useRealtimeNotifications] useEffect de suscripción ejecutado", {
-      userId,
-      debug,
-    });
+    console.log(
+      "🔵 [useRealtimeNotifications] useEffect de suscripción ejecutado",
+      {
+        userId,
+        debug,
+        isSubscribing: isSubscribingRef.current,
+        hasExistingChannel: !!channelRef.current,
+      }
+    );
 
     // No suscribirse si no hay userId válido
     if (
@@ -98,70 +105,123 @@ export function useRealtimeNotifications({
       return;
     }
 
-    // Crear canal único por usuario
-    const channelName = `notifications:user_id=eq.${userId}`;
-    console.log(
-      `🟢 [Realtime Notifications] Subscribing to channel: ${channelName}`
-    );
+    // ✅ FIX: Prevenir doble suscripción si ya estamos suscribiendo
+    if (isSubscribingRef.current) {
+      console.warn(
+        "⚠️ [Realtime Notifications] Ya hay una suscripción en progreso, saltando..."
+      );
+      return;
+    }
 
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload: RealtimePostgresChangesPayload<Notification>) => {
-          console.log(
-            "🔔 [Realtime Notifications] ✨ EVENTO INSERT RECIBIDO:",
-            payload.new
-          );
-          console.log(
-            "🔔 [Realtime Notifications] callbackRef.current existe?",
-            !!callbackRef.current
-          );
-          // Usar callbackRef.current para evitar stale closures
-          callbackRef.current?.(payload.new as Notification);
-          console.log("🔔 [Realtime Notifications] Callback ejecutado");
-        }
-      )
-      .subscribe((status, err) => {
-        console.log(
-          `📡 [Realtime Notifications] Subscription Status: ${status}`
-        );
-        if (err) console.error("❌ [Realtime Notifications] Error:", err);
+    // ✅ FIX: Si ya existe un canal, limpiarlo ANTES de crear uno nuevo
+    if (channelRef.current) {
+      console.log(
+        "🧹 [Realtime Notifications] Limpiando canal existente antes de re-suscribir..."
+      );
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
 
-        if (status === "CHANNEL_ERROR") {
-          console.error(
-            "❌ [Realtime Notifications] Error subscribing to channel. Check Supabase configuration and RLS policies"
-          );
-        } else if (status === "TIMED_OUT") {
-          console.error(
-            "❌ [Realtime Notifications] Subscription timed out. Check your internet connection"
-          );
-        } else if (status === "SUBSCRIBED") {
-          console.log(
-            "✅ [Realtime Notifications] Successfully subscribed to notifications channel"
-          );
-        }
-      });
+    // ✅ NUEVO: Debouncing para prevenir múltiples suscripciones durante F5
+    const debounceTimer = setTimeout(() => {
+      // Marcar que estamos suscribiendo
+      isSubscribingRef.current = true;
 
-    // Guardar referencia al canal
-    channelRef.current = channel;
+      // Crear canal único por usuario (con timestamp para evitar colisiones en F5)
+      const channelName = `notifications:${userId}:${Date.now()}`;
+      console.log(
+        `🟢 [Realtime Notifications] Subscribing to channel: ${channelName}`
+      );
+
+      const channel = supabase
+        .channel(channelName)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload: RealtimePostgresChangesPayload<Notification>) => {
+            if (debug) {
+              console.log(
+                "🔔 [Realtime Notifications] ✨ EVENTO INSERT RECIBIDO:",
+                payload.new
+              );
+              console.log(
+                "🔔 [Realtime Notifications] callbackRef.current existe?",
+                !!callbackRef.current
+              );
+            }
+            // Usar callbackRef.current para evitar stale closures
+            callbackRef.current?.(payload.new as Notification);
+            if (debug)
+              console.log("🔔 [Realtime Notifications] Callback ejecutado");
+          }
+        )
+        .subscribe((status, err) => {
+          console.log(
+            `📡 [Realtime Notifications] Subscription Status: ${status}`
+          );
+          if (err) console.error("❌ [Realtime Notifications] Error:", err);
+
+          if (status === "CHANNEL_ERROR") {
+            console.error(
+              "❌ [Realtime Notifications] Error subscribing to channel. Check Supabase configuration and RLS policies"
+            );
+            isSubscribingRef.current = false; // ✅ Resetear flag en error
+          } else if (status === "TIMED_OUT") {
+            console.error(
+              "❌ [Realtime Notifications] Subscription timed out. Check your internet connection"
+            );
+            isSubscribingRef.current = false; // ✅ Resetear flag en timeout
+          } else if (status === "SUBSCRIBED") {
+            console.log(
+              "✅ [Realtime Notifications] Successfully subscribed to notifications channel"
+            );
+            isSubscribingRef.current = false; // ✅ Resetear flag cuando se completa
+          } else if (status === "CLOSED") {
+            console.log("🔴 [Realtime Notifications] Channel closed");
+            isSubscribingRef.current = false; // ✅ Resetear flag cuando se cierra
+          }
+        });
+
+      // Guardar referencia al canal
+      channelRef.current = channel;
+    }, 100); // ✅ Debounce de 100ms para prevenir múltiples suscripciones
 
     // Cleanup: desuscribirse al desmontar o cuando cambie userId
     return () => {
-      console.log("🔴 [Realtime Notifications] Cleaning up channel");
+      // ✅ Cancelar el debounce si el componente se desmonta antes
+      clearTimeout(debounceTimer);
+
+      console.log(
+        "🔴 [Realtime Notifications] Cleaning up channel (unmount o cambio de userId)"
+      );
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        // ✅ FIX: Asegurar cleanup completo
+        const channelToRemove = channelRef.current;
         channelRef.current = null;
-        console.log("🔴 [Realtime Notifications] Channel removed");
+        isSubscribingRef.current = false;
+
+        // Unsubscribe asíncronamente
+        supabase
+          .removeChannel(channelToRemove)
+          .then(() => {
+            console.log(
+              "🔴 [Realtime Notifications] Channel removed successfully"
+            );
+          })
+          .catch((err) => {
+            console.error(
+              "❌ [Realtime Notifications] Error removing channel:",
+              err
+            );
+          });
       }
     };
-  }, [userId, debug]); // SOLO userId y debug - callback NO causa re-suscripción
+  }, [userId, debug]); // NO incluir supabase (instancia estable)
 
   // No retornamos nada porque el hook maneja todo internamente
   // Los callbacks se ejecutan automáticamente cuando hay eventos

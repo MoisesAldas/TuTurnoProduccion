@@ -18,7 +18,7 @@
  * - useRouter: Navegación
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, memo } from 'react'
 import { Bell, X, Check, CalendarPlus, CalendarX, CalendarClock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -100,7 +100,7 @@ const getNotificationStyles = (type: string) => {
   }
 }
 
-export default function NotificationBell({ userId }: NotificationBellProps) {
+function NotificationBell({ userId }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
@@ -154,12 +154,17 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     console.log('🎯 [NotificationBell] ============ FIN handleNewNotification ============')
   }, [addNotification, toast]) // Dependencias estables
 
-  console.log('🟣 [NotificationBell] Component render', {
-    userId,
-    hasCallback: !!handleNewNotification,
-    unreadCount,
-    notificationsLength: notifications.length
-  })
+  // ✅ Logging reducido - solo en desarrollo
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🟣 [NotificationBell] Component mounted/updated', {
+        userId,
+        hasCallback: !!handleNewNotification,
+        unreadCount,
+        notificationsLength: notifications.length
+      })
+    }
+  }, [userId, unreadCount, notifications.length])
 
   // Realtime subscription
   useRealtimeNotifications({
@@ -382,3 +387,6 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     </Popover>
   )
 }
+
+// ✅ Exportar con React.memo para prevenir re-renders innecesarios
+export default memo(NotificationBell)
