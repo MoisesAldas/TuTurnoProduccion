@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -81,6 +82,9 @@ export default function UnifiedSettingsPage() {
     longitude: -78.5249
   })
 
+  // Estado para categorías
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
+
   const { authState } = useAuth()
   const supabase = createClient()
   const { toast } = useToast()
@@ -90,6 +94,8 @@ export default function UnifiedSettingsPage() {
     register: registerInfo,
     handleSubmit: handleSubmitInfo,
     reset: resetInfo,
+    watch: watchInfo,
+    setValue,
     formState: { errors: errorsInfo, touchedFields: touchedInfo }
   } = useForm<BusinessInfoData>({
     resolver: zodResolver(businessInfoSchema),
@@ -134,6 +140,7 @@ export default function UnifiedSettingsPage() {
     if (authState.user) {
       fetchBusiness()
       fetchSpecialHours()
+      fetchCategories()
     }
   }, [authState.user])
 
@@ -171,7 +178,8 @@ export default function UnifiedSettingsPage() {
         phone: businessData.phone || '',
         email: businessData.email || '',
         website: businessData.website || '',
-        address: businessData.address || ''
+        address: businessData.address || '',
+        business_category_id: businessData.business_category_id || ''
       })
 
       // Llenar formulario de configuraciones avanzadas
@@ -237,6 +245,20 @@ export default function UnifiedSettingsPage() {
       console.error('Error fetching special hours:', error)
     } finally {
       setLoadingSpecialHours(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('business_categories')
+        .select('id, name')
+        .order('name')
+
+      if (error) throw error
+      setCategories(data || [])
+    } catch (err) {
+      console.error('Error fetching categories:', err)
     }
   }
 
@@ -721,7 +743,40 @@ export default function UnifiedSettingsPage() {
                           </div>
                         </div>
 
-                        {/* Fila 2: Email + Website */}
+                        {/* Fila 2: Categoría (Full Width) */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="business_category_id" className="text-sm dark:text-gray-50">
+                            Categoría del Negocio *
+                          </Label>
+                          <Select
+                            value={watchInfo('business_category_id') || ''}
+                            onValueChange={(value) => {
+                              setValue('business_category_id', value, { shouldValidate: true })
+                            }}
+                          >
+                            <SelectTrigger className={`h-9 ${
+                              touchedInfo.business_category_id && !errorsInfo.business_category_id
+                                ? 'border-green-500'
+                                : ''
+                            } ${
+                              errorsInfo.business_category_id ? 'border-red-500' : ''
+                            }`}>
+                              <SelectValue placeholder="Selecciona una categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {errorsInfo.business_category_id && (
+                            <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.business_category_id.message}</p>
+                          )}
+                        </div>
+
+                        {/* Fila 3: Email + Website */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {/* Email */}
                           <div className="space-y-1.5">

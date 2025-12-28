@@ -21,8 +21,9 @@ function Calendar({
         months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
         month: 'space-y-4',
         caption: 'flex justify-center pt-1 relative items-center',
-        caption_label: 'text-sm font-medium capitalize',
+        caption_label: 'hidden', // Hide caption text when using dropdown layout
         caption_dropdowns: 'flex gap-2 justify-center',
+        vhidden: 'hidden', // Hide labels for month and year dropdowns
         dropdown: 'appearance-none px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer',
         dropdown_month: 'appearance-none px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]',
         dropdown_year: 'appearance-none px-3 py-1.5 rounded-md border border-gray-300 text-sm font-medium bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[80px]',

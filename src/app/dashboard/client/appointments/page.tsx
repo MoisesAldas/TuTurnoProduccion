@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger
@@ -24,6 +25,8 @@ import { useToast } from '@/hooks/use-toast'
 import { patterns } from '@/lib/design-tokens'
 import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
+import ClientAppointmentDetailsModal from '@/components/ClientAppointmentDetailsModal'
+import LocationMapModal from '@/components/LocationMapModal'
 
 // NOTE: All data fetching and state logic from the original file is preserved.
 // Only the JSX for the appointment cards has been restructured to be mobile-first.
@@ -42,6 +45,8 @@ interface Appointment {
     address?: string
     phone?: string
     cover_photo_url?: string // Mapped from cover_image_url in DB
+    latitude?: number
+    longitude?: number
   } | null
   appointment_services: {
     service?: {
@@ -71,6 +76,8 @@ export default function ClientAppointmentsPage() {
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showMobileDetailsModal, setShowMobileDetailsModal] = useState(false)
+  const [showMapModal, setShowMapModal] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [newDate, setNewDate] = useState<Date | undefined>(undefined)
   const [newTime, setNewTime] = useState('')
@@ -97,18 +104,48 @@ export default function ClientAppointmentsPage() {
     try {
       setLoading(true)
 
-      // Use optimized RPC function instead of multiple queries
+      // Direct query instead of RPC to get latitude/longitude
       const { data, error } = await supabase
-        .rpc('get_client_appointments_with_reviews', {
-          p_client_id: authState.user.id
-        })
+        .from('appointments')
+        .select(`
+          *,
+          business:businesses(
+            id,
+            name,
+            address,
+            phone,
+            cover_image_url,
+            latitude,
+            longitude
+          ),
+          employee:employees(id, first_name, last_name, position, avatar_url),
+          appointment_services(
+            service:services(id, name, description),
+            price
+          )
+        `)
+        .eq('client_id', authState.user.id)
+        .order('appointment_date', { ascending: false })
+        .order('start_time', { ascending: false })
 
       if (error) {
         console.error('Error fetching appointments:', error)
         return
       }
 
-      // Transform RPC result to match component interface
+      // Debug: Log raw data to see structure
+      console.log('📊 Raw Supabase Data:', data?.[0])
+
+      // Check for reviews
+      const appointmentIds = (data || []).map((apt: any) => apt.id)
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('appointment_id')
+        .in('appointment_id', appointmentIds)
+
+      const reviewedAppointmentIds = new Set(reviews?.map((r: any) => r.appointment_id) || [])
+
+      // Transform data to match component interface
       const transformedData = (data || []).map((apt: any) => ({
         id: apt.id,
         appointment_date: apt.appointment_date,
@@ -118,29 +155,18 @@ export default function ClientAppointmentsPage() {
         status: apt.status,
         client_notes: apt.client_notes,
         created_at: apt.created_at,
-        has_review: apt.has_review,
-        business: {
-          id: apt.business_id,
-          name: apt.business_name,
-          address: apt.business_address,
-          phone: apt.business_phone,
-          cover_photo_url: apt.business_cover_image_url
-        },
-        employee: apt.employee_id ? {
-          id: apt.employee_id,
-          first_name: apt.employee_first_name,
-          last_name: apt.employee_last_name,
-          position: apt.employee_position,
-          avatar_url: apt.employee_avatar_url
+        has_review: reviewedAppointmentIds.has(apt.id),
+        business: apt.business ? {
+          id: apt.business.id,
+          name: apt.business.name,
+          address: apt.business.address,
+          phone: apt.business.phone,
+          cover_photo_url: apt.business.cover_image_url,
+          latitude: apt.business.latitude,
+          longitude: apt.business.longitude
         } : null,
-        appointment_services: (apt.services || []).map((s: any) => ({
-          service: {
-            id: s.service_id,
-            name: s.service_name,
-            description: s.service_description
-          },
-          price: s.price
-        }))
+        employee: apt.employee,
+        appointment_services: apt.appointment_services || []
       }))
 
       setAppointments(transformedData)
@@ -469,7 +495,13 @@ export default function ClientAppointmentsPage() {
                 {filteredAppointments.map((appointment) => (
                   <button
                     key={appointment.id}
-                    onClick={() => setSelectedAppointment(appointment)}
+                    onClick={() => {
+                      setSelectedAppointment(appointment)
+                      // On mobile, open modal instead of showing in right panel
+                      if (window.innerWidth < 1024) {
+                        setShowMobileDetailsModal(true)
+                      }
+                    }}
                     className={`w-full p-4 text-left transition-all duration-200 ${
                       selectedAppointment?.id === appointment.id
                         ? 'bg-slate-100 border-l-4 border-l-slate-900 shadow-sm'
@@ -521,196 +553,216 @@ export default function ClientAppointmentsPage() {
         <div className="hidden lg:flex flex-1 flex-col overflow-hidden bg-gray-50">
           {selectedAppointment ? (
             <div className="flex flex-col h-full">
-              {/* Compact Header */}
-              <div className="bg-white border-b p-4 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {/* Small Business Photo */}
-                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0 shadow-sm">
-                      {selectedAppointment.business?.cover_photo_url ? (
-                        <img
-                          src={selectedAppointment.business.cover_photo_url}
-                          alt={selectedAppointment.business.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Store className="w-7 h-7 text-slate-400" />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              {/* Hero Header with Cover Image */}
+              <div className="relative h-80 flex-shrink-0 overflow-hidden">
+                {/* Background Image */}
+                {selectedAppointment.business?.cover_photo_url ? (
+                  <img
+                    src={selectedAppointment.business.cover_photo_url}
+                    alt={selectedAppointment.business.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900"></div>
+                )}
+                
+                {/* Overlay Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+                
+                {/* Content */}
+                <div className="absolute inset-0 flex flex-col justify-end p-6">
+                  <div className="flex items-end justify-between">
+                    <div className="flex-1">
+                      <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">
                         {selectedAppointment.business?.name || 'Negocio'}
                       </h1>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-white/90 drop-shadow">
                         ID: #{selectedAppointment.id.slice(0, 8)}
                       </p>
                     </div>
+                    <Badge className={`${getStatusInfo(selectedAppointment.status).color} text-sm px-3 py-1.5 font-medium rounded-full shadow-lg`}>
+                      {React.createElement(getStatusInfo(selectedAppointment.status).icon, { className: 'w-4 h-4 mr-1.5 inline' })}
+                      {getStatusInfo(selectedAppointment.status).label}
+                    </Badge>
                   </div>
-                  <Badge className={`${getStatusInfo(selectedAppointment.status).color} text-sm px-3 py-1.5 font-medium rounded-full`}>
-                    {React.createElement(getStatusInfo(selectedAppointment.status).icon, { className: 'w-4 h-4 mr-1.5 inline' })}
-                    {getStatusInfo(selectedAppointment.status).label}
-                  </Badge>
                 </div>
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Date & Time Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <Card className="border-gray-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CalendarIcon className="w-5 h-5 text-slate-700" />
-                        <p className="text-sm font-medium text-gray-500 uppercase">Fecha</p>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Key Information - 5 Column Grid */}
+                <div className="grid grid-cols-5 gap-3">
+                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-5 text-center">
+                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <CalendarIcon className="w-6 h-6 text-white" />
                       </div>
-                      <p className="text-base font-semibold text-gray-900 capitalize">
+                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Fecha</p>
+                      <p className="text-sm font-bold text-gray-900 leading-tight capitalize">
                         {formatDateShort(selectedAppointment.appointment_date)}
                       </p>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-gray-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-5 h-5 text-slate-700" />
-                        <p className="text-sm font-medium text-gray-500 uppercase">Hora</p>
+                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-5 text-center">
+                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <Clock className="w-6 h-6 text-white" />
                       </div>
-                      <p className="text-base font-semibold text-gray-900">
-                        {selectedAppointment.start_time.slice(0, 5)} • {getDuration(selectedAppointment.start_time, selectedAppointment.end_time)}
+                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Hora</p>
+                      <p className="text-sm font-bold text-gray-900">
+                        {selectedAppointment.start_time.slice(0, 5)}
+                      </p>
+                      <p className="text-xs text-slate-600 mt-1">
+                        {getDuration(selectedAppointment.start_time, selectedAppointment.end_time)}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-5 text-center">
+                      <Avatar className="w-12 h-12 mx-auto mb-3 border-2 border-slate-200">
+                        <AvatarImage src={selectedAppointment.employee?.avatar_url} alt={selectedAppointment.employee?.first_name} />
+                        <AvatarFallback className="bg-slate-900 text-white">
+                          <User className="w-6 h-6" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Profesional</p>
+                      <p className="text-sm font-bold text-gray-900 leading-tight">
+                        {selectedAppointment.employee?.first_name} {selectedAppointment.employee?.last_name}
+                      </p>
+                      {selectedAppointment.employee?.position && (
+                        <p className="text-xs text-slate-600 mt-1">{selectedAppointment.employee.position}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card 
+                    className="border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setShowMapModal(true)}
+                  >
+                    <CardContent className="p-5 text-center">
+                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <MapPin className="w-6 h-6 text-white" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Ubicación</p>
+                      <p className="text-sm font-bold text-gray-900 leading-tight">
+                        Ver mapa
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    <CardContent className="p-5 text-center">
+                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
+                        <Receipt className="w-6 h-6 text-white" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Servicios</p>
+                      <p className="text-sm font-bold text-gray-900 leading-tight">
+                        {selectedAppointment.appointment_services.length} servicio{selectedAppointment.appointment_services.length > 1 ? 's' : ''}
                       </p>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Review Section - Compact */}
-                {selectedAppointment.status === 'completed' && !selectedAppointment.has_review && (
-                  <Card className="bg-amber-50 border-amber-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="text-base font-semibold text-gray-900 mb-1">¿Cómo fue tu experiencia?</p>
-                          <p className="text-sm text-gray-600">Califica este servicio</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => setShowReviewModal(true)}
-                          className="bg-amber-600 hover:bg-amber-700 text-white"
-                        >
-                          <Star className="w-4 h-4 mr-1.5" />
-                          Calificar
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                {/* Action Buttons - Dynamic Layout */}
+                {(() => {
+                  const buttons = []
+                  
+                  // Gestionar Cita - Slate
+                  if (canModify(selectedAppointment)) {
+                    buttons.push(
+                      <Button
+                        key="manage"
+                        asChild
+                        className="bg-slate-900 hover:bg-slate-800 text-white h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Link href={`/dashboard/client/appointments/${selectedAppointment.id}`}>
+                          <Edit className="w-5 h-5 mr-2" />
+                          Gestionar cita
+                        </Link>
+                      </Button>
+                    )
+                  }
+                  
+                  // Llamar al Negocio - Blue
+                  if (selectedAppointment.business?.phone) {
+                    buttons.push(
+                      <Button
+                        key="call"
+                        asChild
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                      >
+                        <a href={`tel:${selectedAppointment.business.phone}`}>
+                          <Phone className="w-5 h-5 mr-2" />
+                          Llamar
+                        </a>
+                      </Button>
+                    )
+                  }
+                  
+                  // Dejar Reseña - Amber
+                  if (selectedAppointment.status === 'completed' && !selectedAppointment.has_review) {
+                    buttons.push(
+                      <Button
+                        key="review"
+                        onClick={() => setShowReviewModal(true)}
+                        className="bg-amber-600 hover:bg-amber-700 text-white h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Star className="w-5 h-5 mr-2" />
+                        Calificar
+                      </Button>
+                    )
+                  }
+                  
+                  // Determine grid class based on button count
+                  const gridClass = buttons.length === 1 
+                    ? 'grid grid-cols-1 gap-3' 
+                    : buttons.length === 2 
+                    ? 'grid grid-cols-2 gap-3' 
+                    : 'grid grid-cols-3 gap-3'
+                  
+                  return <div className={gridClass}>{buttons}</div>
+                })()}
 
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  {canModify(selectedAppointment) && (
-                    <Button
-  asChild
-  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 hover:border-slate-800 transition-colors"
->
-
-                      <Link href={`/dashboard/client/appointments/${selectedAppointment.id}`}>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Gestionar cita
-                      </Link>
-                    </Button>
-                  )}
-                  {selectedAppointment.status === 'completed' && (
-                    <Button asChild className="flex-1 bg-slate-900 hover:bg-slate-800 text-white">
-                      <Link href={`/business/${selectedAppointment.business?.id}/book`}>
-                        <CalendarIcon className="w-4 h-4 mr-2" />
-                        Reservar otra vez
-                      </Link>
-                    </Button>
-                  )}
-                </div>
-
-                {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Business Info */}
-                  <Card className="border-gray-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Store className="w-5 h-5 text-slate-700" />
-                        Información del Negocio
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Dirección</p>
-                          <p className="text-sm text-gray-900 font-medium">
-                            {selectedAppointment.business?.address || 'No disponible'}
+                {/* Services Summary - Full Width */}
+                <Card className="border-slate-200 shadow-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <Receipt className="w-5 h-5 text-slate-700" />
+                      Resumen de Servicios
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedAppointment.appointment_services.map((service, index) => (
+                        <div key={index} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">
+                              {service.service?.name || 'Servicio'}
+                            </p>
+                          </div>
+                          <p className="text-lg font-bold text-slate-900">
+                            {formatPrice(service.price)}
                           </p>
                         </div>
-                        {selectedAppointment.business?.phone && (
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1">Teléfono</p>
-                            <a
-                              href={`tel:${selectedAppointment.business.phone}`}
-                              className="text-sm text-slate-700 font-medium hover:text-slate-900 hover:underline"
-                            >
-                              {selectedAppointment.business.phone}
-                            </a>
-                          </div>
-                        )}
-                        {selectedAppointment.employee && (
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1">Profesional</p>
-                            <p className="text-sm text-gray-900 font-medium">
-                              {selectedAppointment.employee.first_name} {selectedAppointment.employee.last_name}
-                            </p>
-                            {selectedAppointment.employee.position && (
-                              <p className="text-xs text-gray-500">{selectedAppointment.employee.position}</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Summary */}
-                  <Card className="border-gray-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-slate-700" />
-                        Resumen de Servicios
-                      </h3>
-                      <div className="space-y-2">
-                        {selectedAppointment.appointment_services.map((service, index) => (
-                          <div key={index} className="flex justify-between items-start pb-2 border-b border-gray-100 last:border-0">
-                            <div className="flex-1 pr-2">
-                              <p className="text-sm font-medium text-gray-900">
-                                {service.service?.name || 'Servicio'}
-                              </p>
-                            </div>
-                            <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                              {formatPrice(service.price)}
-                            </p>
-                          </div>
-                        ))}
-                        <div className="pt-2 mt-2">
-                          <div className="flex justify-between items-center bg-slate-100 px-3 py-2 rounded-lg">
-                            <p className="text-base font-bold text-gray-900">Total</p>
-                            <p className="text-base font-bold text-slate-900">
-                              {formatPrice(selectedAppointment.total_price)}
-                            </p>
-                          </div>
+                      ))}
+                      <div className="pt-3 mt-2 border-t-2 border-slate-200">
+                        <div className="flex justify-between items-center bg-slate-900 px-4 py-3 rounded-lg">
+                          <p className="text-lg font-bold text-white">Total</p>
+                          <p className="text-2xl font-bold text-white">
+                            {formatPrice(selectedAppointment.total_price)}
+                          </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Client Notes Section */}
                 {selectedAppointment.client_notes && (
                   <Card className="border-blue-200 bg-blue-50/50 shadow-sm">
-                    <CardContent className="p-4">
-                      <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-blue-600" />
+                    <CardContent className="p-5">
+                      <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <AlertTriangle className="w-5 h-5 text-blue-600" />
                         Notas de la Cita
                       </h3>
                       <p className="text-sm text-gray-700 leading-relaxed">
@@ -735,6 +787,17 @@ export default function ClientAppointmentsPage() {
         </div>
       </div>
 
+      {/* Mobile Details Modal */}
+      <ClientAppointmentDetailsModal
+        appointment={selectedAppointment}
+        isOpen={showMobileDetailsModal}
+        onClose={() => setShowMobileDetailsModal(false)}
+        onReview={() => {
+          setShowMobileDetailsModal(false)
+          setShowReviewModal(true)
+        }}
+      />
+
       {selectedAppointment && (
         <ReviewModal
           isOpen={showReviewModal}
@@ -746,6 +809,26 @@ export default function ClientAppointmentsPage() {
           onReviewSubmitted={() => handleReviewSubmitted(selectedAppointment.id)}
         />
       )}
+
+      {/* Location Map Modal */}
+      {selectedAppointment && selectedAppointment.business && (() => {
+        console.log('🗺️ Map Modal Data:', {
+          businessName: selectedAppointment.business.name,
+          address: selectedAppointment.business.address,
+          latitude: selectedAppointment.business.latitude,
+          longitude: selectedAppointment.business.longitude
+        })
+        return (
+          <LocationMapModal
+            isOpen={showMapModal}
+            onClose={() => setShowMapModal(false)}
+            businessName={selectedAppointment.business.name}
+            address={selectedAppointment.business.address || ''}
+            latitude={selectedAppointment.business.latitude || 0}
+            longitude={selectedAppointment.business.longitude || 0}
+          />
+        )
+      })()}
     </>
   )
 }

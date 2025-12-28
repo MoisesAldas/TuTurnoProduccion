@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -20,9 +20,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  Calendar, Clock, MapPin, User, Star, Plus, CheckCircle, XCircle, AlertCircle, History, Edit, DollarSign, Users, Briefcase, MoreVertical, Eye, Trash2
+  Calendar, Clock, MapPin, User, Star, Plus, CheckCircle, XCircle, AlertCircle, History, Edit, DollarSign, Users, Briefcase, MoreVertical, Eye, Trash2, Search
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
@@ -31,9 +39,7 @@ import { parseDateString, formatSpanishDate } from '@/lib/dateUtils'
 import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
 import { StatsCard } from '@/components/StatsCard'
-import { DataTable } from '@/components/ui/data-table'
-import { ColumnDef } from '@tanstack/react-table'
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
+import { Pagination } from '@/components/Pagination'
 
 // NOTE: All data fetching and state logic from the original file is preserved.
 
@@ -77,6 +83,8 @@ interface QuickStats {
   totalSpent: number
 }
 
+const ITEMS_PER_PAGE = 10
+
 export default function ClientDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [stats, setStats] = useState<QuickStats>({ upcoming: 0, completed: 0, cancelled: 0, totalSpent: 0 })
@@ -86,6 +94,8 @@ export default function ClientDashboard() {
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
 
   const { authState } = useAuth()
   const { toast } = useToast()
@@ -201,9 +211,32 @@ export default function ClientDashboard() {
   )
 
   const recentActivity = useMemo(() =>
-    appointments.filter(apt => ['confirmed', 'completed', 'cancelled'].includes(apt.status)).slice(0, 10),
+    appointments.filter(apt => ['confirmed', 'completed', 'cancelled'].includes(apt.status)),
     [appointments]
   )
+
+  // Filter appointments based on search
+  const filteredActivity = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase()
+    return recentActivity.filter(apt =>
+      apt.business?.name.toLowerCase().includes(searchLower) ||
+      apt.appointment_services.some(s => s.service?.name.toLowerCase().includes(searchLower)) ||
+      apt.employee?.first_name.toLowerCase().includes(searchLower) ||
+      apt.employee?.last_name.toLowerCase().includes(searchLower) ||
+      getStatusInfo(apt.status).label.toLowerCase().includes(searchLower)
+    )
+  }, [recentActivity, searchTerm])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredActivity.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedActivity = filteredActivity.slice(startIndex, endIndex)
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
 
   const handleReviewSubmitted = () => {
     fetchAppointments()
@@ -247,125 +280,25 @@ export default function ClientDashboard() {
     }
   }
 
-  const columns: ColumnDef<Appointment>[] = useMemo(() => [
-    {
-      accessorKey: 'business',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Negocio" />,
-      cell: ({ row }) => <span className="font-medium text-gray-900 dark:text-gray-50">{row.original.business?.name}</span>,
-    },
-    {
-      accessorKey: 'appointment_services',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Servicios" />,
-      cell: ({ row }) => (
-        <div className="max-w-[200px]">
-          <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-            {row.original.appointment_services.map(s => s.service?.name).join(', ')}
-          </span>
-        </div>
-      )
-    },
-    {
-      accessorKey: 'employee',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Profesional" />,
-      cell: ({ row }) => (
-        row.original.employee ? (
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            {row.original.employee.first_name} {row.original.employee.last_name}
-          </span>
-        ) : <span className="text-sm text-gray-400">-</span>
-      )
-    },
-    {
-      accessorKey: 'appointment_date',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-      cell: ({ row }) => <span className="text-sm">{formatDate(row.original.appointment_date)}</span>
-    },
-    {
-      accessorKey: 'start_time',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Hora" />,
-      cell: ({ row }) => <span className="text-sm font-medium">{formatTime(row.original.start_time)}</span>
-    },
-    {
-      accessorKey: 'total_price',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Total" />,
-      cell: ({ row }) => <span className="font-semibold text-gray-900 dark:text-gray-50">{formatPrice(row.original.total_price)}</span>,
-    },
-    {
-      accessorKey: 'status',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Estado" />,
-      cell: ({ row }) => {
-        const statusInfo = getStatusInfo(row.original.status)
-        return <Badge variant={statusInfo.variant as any} className={statusInfo.className}>{statusInfo.label}</Badge>
-      }
-    },
-    {
-      id: 'actions',
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Acciones" />,
-      cell: ({ row }) => {
-        const appointment = row.original
-        const aptDate = parseDateString(appointment.appointment_date)
-        const [hours, minutes] = appointment.start_time.split(':').map(Number)
-        aptDate.setHours(hours, minutes)
-        const isUpcoming = aptDate > new Date()
-        const canCancel = ['pending', 'confirmed'].includes(appointment.status)
-        const canManage = !['cancelled', 'completed'].includes(appointment.status)
-        const canReview = appointment.status === 'completed' && !appointment.has_review
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/client/appointments/${appointment.id}`} className="cursor-pointer">
-                  <Eye className="mr-2 h-4 w-4" />
-                  Ver Cita
-                </Link>
-              </DropdownMenuItem>
-              {canManage && (
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/client/appointments`} className="cursor-pointer">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Gestionar Cita
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              {canReview && (
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedAppointment(appointment)
-                    setReviewModalOpen(true)
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Star className="mr-2 h-4 w-4" />
-                  Escribir Reseña
-                </DropdownMenuItem>
-              )}
-              {canCancel && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSelectedAppointment(appointment)
-                      setShowCancelDialog(true)
-                    }}
-                    className="cursor-pointer text-red-600 focus:text-red-600"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Cancelar Cita
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      }
+  const getStatusBadge = (status: Appointment['status']) => {
+    const statusInfo = getStatusInfo(status)
+    const statusIcons = {
+      pending: AlertCircle,
+      confirmed: CheckCircle,
+      in_progress: Clock,
+      completed: CheckCircle,
+      cancelled: XCircle,
+      no_show: XCircle
     }
-  ], [formatPrice, formatDate, formatTime])
+    const Icon = statusIcons[status] || AlertCircle
+
+    return (
+      <Badge className={`${statusInfo.className} gap-1`}>
+        <Icon className="h-3 w-3" />
+        {statusInfo.label}
+      </Badge>
+    )
+  }
 
   if (loading) {
     return (
@@ -468,9 +401,169 @@ export default function ClientDashboard() {
 
         {/* Recent Activity */}
         {recentActivity.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-4">Actividad Reciente</h2>
-            <DataTable columns={columns} data={recentActivity} />
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Actividad Reciente</h2>
+
+            {/* Search Bar */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar por negocio, servicio, profesional o estado..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Activity Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lista de Citas</CardTitle>
+                <CardDescription>
+                  Mostrando {startIndex + 1}-{Math.min(endIndex, filteredActivity.length)} de {filteredActivity.length} citas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Fecha y Hora</TableHead>
+                      <TableHead>Negocio</TableHead>
+                      <TableHead>Servicios</TableHead>
+                      <TableHead>Profesional</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedActivity.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                          No se encontraron citas
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      paginatedActivity.map((appointment) => {
+                        const aptDate = parseDateString(appointment.appointment_date)
+                        const [hours, minutes] = appointment.start_time.split(':').map(Number)
+                        aptDate.setHours(hours, minutes)
+                        const canCancel = ['pending', 'confirmed'].includes(appointment.status)
+                        const canReview = appointment.status === 'completed' && !appointment.has_review
+
+                        return (
+                          <TableRow key={appointment.id}>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-sm font-medium">
+                                  <Calendar className="h-3 w-3 text-muted-foreground" />
+                                  {formatDate(appointment.appointment_date)}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium">{appointment.business?.name}</div>
+                              {appointment.business?.address && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                  <MapPin className="h-3 w-3" />
+                                  <span className="line-clamp-1">{appointment.business.address}</span>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-[200px]">
+                                <span className="text-sm line-clamp-2">
+                                  {appointment.appointment_services.map(s => s.service?.name).join(', ')}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {appointment.employee ? (
+                                <div className="flex items-center gap-2">
+                                  <User className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-sm">
+                                    {appointment.employee.first_name} {appointment.employee.last_name}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">Sin asignar</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(appointment.status)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-semibold">
+                                {formatPrice(appointment.total_price)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/dashboard/client/appointments/${appointment.id}`} className="cursor-pointer">
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      Ver Detalles
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  {canReview && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSelectedAppointment(appointment)
+                                        setReviewModalOpen(true)
+                                      }}
+                                      className="cursor-pointer"
+                                    >
+                                      <Star className="mr-2 h-4 w-4" />
+                                      Escribir Reseña
+                                    </DropdownMenuItem>
+                                  )}
+                                  {canCancel && (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          setSelectedAppointment(appointment)
+                                          setShowCancelDialog(true)
+                                        }}
+                                        className="cursor-pointer text-red-600 focus:text-red-600"
+                                      >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Cancelar Cita
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

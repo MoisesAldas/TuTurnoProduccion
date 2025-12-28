@@ -293,6 +293,7 @@ export const businessInfoSchema = z.object({
   email: emailSchema,
   website: websiteSchema,
   address: addressSchema,
+  business_category_id: z.string().min(1, "Selecciona una categoría"),
 });
 
 /**

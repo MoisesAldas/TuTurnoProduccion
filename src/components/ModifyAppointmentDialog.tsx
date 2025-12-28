@@ -4,12 +4,11 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, Clock, User, CheckCircle, Loader2, CalendarIcon } from 'lucide-react'
+import { Calendar, Clock, User, CheckCircle, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
-import { parseDateString, formatSpanishDate } from '@/lib/dateUtils'
+import { parseDateString } from '@/lib/dateUtils'
 
 interface Service {
   id: string
@@ -80,6 +79,8 @@ export default function ModifyAppointmentDialog({
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([])
   const [saving, setSaving] = useState(false)
+  const [specialHourForDate, setSpecialHourForDate] = useState<any>(null)
+  const [checkingSpecialHours, setCheckingSpecialHours] = useState(false)
 
   // Initialize form when dialog opens
   useEffect(() => {
@@ -88,12 +89,21 @@ export default function ModifyAppointmentDialog({
     }
   }, [isOpen, appointment])
 
+  useEffect(() => {
+    if (selectedDate) {
+      checkSpecialHours(selectedDate)
+    } else {
+      setSpecialHourForDate(null)
+      setAvailableSlots([])
+    }
+  }, [selectedDate])
+
   // Generate time slots when dependencies change
   useEffect(() => {
     if (selectedDate && selectedEmployee && selectedServices.length > 0) {
       generateTimeSlots()
     }
-  }, [selectedDate, selectedEmployee, selectedServices])
+  }, [selectedDate, selectedEmployee, selectedServices, specialHourForDate])
 
   const initializeForm = async () => {
     // Reset to step 1
@@ -184,11 +194,53 @@ export default function ModifyAppointmentDialog({
     })
   }
 
+  const checkSpecialHours = async (date: Date) => {
+    if (!appointment.business.id) return
+
+    try {
+      setCheckingSpecialHours(true)
+
+      const formatDateForDB = (date: Date) => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+
+      const dateStr = formatDateForDB(date)
+
+      const { data, error } = await supabase
+        .from('business_special_hours')
+        .select('*')
+        .eq('business_id', appointment.business.id)
+        .eq('special_date', dateStr)
+        .maybeSingle()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking special hours:', error)
+        return
+      }
+
+      console.log('✅ [ModifyDialog - checkSpecialHours] Found special hours:', data)
+      setSpecialHourForDate(data)
+
+    } catch (error) {
+      console.error('Error checking special hours:', error)
+    } finally {
+      setCheckingSpecialHours(false)
+    }
+  }
+
   const generateTimeSlots = async () => {
     if (!selectedDate || !selectedEmployee || selectedServices.length === 0) return
 
-    const slots: TimeSlot[] = []
-    const serviceDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
+    // Check if business is closed on this date (special hours)
+    console.log('🔍 [ModifyDialog - generateTimeSlots] specialHourForDate:', specialHourForDate)
+    if (specialHourForDate?.is_closed) {
+      console.log('🚫 [ModifyDialog - generateTimeSlots] Business is CLOSED, clearing slots')
+      setAvailableSlots([])
+      return
+    }
 
     const formatDateForDB = (date: Date) => {
       const year = date.getFullYear()
@@ -199,97 +251,94 @@ export default function ModifyAppointmentDialog({
 
     const selectedDateStr = formatDateForDB(selectedDate)
     const dayOfWeek = selectedDate.getDay()
+    const serviceDuration = selectedServices.reduce((sum, service) => sum + service.duration_minutes, 0)
 
     try {
-      // Fetch employee schedule
-      const { data: scheduleData } = await supabase
-        .from('employee_schedules')
-        .select('start_time, end_time, is_available')
-        .eq('employee_id', selectedEmployee)
+      // 1) Get business hours for this day of week
+      const { data: businessHours, error: hoursError } = await supabase
+        .from('business_hours')
+        .select('is_closed, open_time, close_time')
+        .eq('business_id', appointment.business.id)
         .eq('day_of_week', dayOfWeek)
-        .eq('is_available', true)
-        .single()
+        .maybeSingle()
 
-      if (!scheduleData) {
+      if (hoursError) {
+        console.error('Error fetching business hours:', hoursError)
+      }
+
+      // If business is closed on this day, show no slots
+      if (businessHours?.is_closed) {
         setAvailableSlots([])
         return
       }
 
-      const employeeStartHour = parseInt(scheduleData.start_time.split(':')[0])
-      const employeeStartMinute = parseInt(scheduleData.start_time.split(':')[1])
-      const employeeEndHour = parseInt(scheduleData.end_time.split(':')[0])
-      const employeeEndMinute = parseInt(scheduleData.end_time.split(':')[1])
+      // Default hours (9 AM - 6 PM)
+      let startHour = 9
+      let endHour = 18
 
-      // Fetch employee absences
-      const { data: absenceData } = await supabase
-        .from('employee_absences')
-        .select('is_full_day, start_time, end_time')
-        .eq('employee_id', selectedEmployee)
-        .eq('absence_date', selectedDateStr)
+      // Use business hours if available
+      if (businessHours?.open_time && businessHours?.close_time) {
+        const openTime = businessHours.open_time.split(':')
+        const closeTime = businessHours.close_time.split(':')
+        startHour = parseInt(openTime[0])
+        endHour = parseInt(closeTime[0])
+      }
 
-      const hasFullDayAbsence = absenceData?.some(absence => absence.is_full_day)
-      if (hasFullDayAbsence) {
+      const businessStart = `${String(startHour).padStart(2, '0')}:00:00`
+      const businessEnd = `${String(endHour).padStart(2, '0')}:00:00`
+      const slotDuration = 30 // minutes
+
+      // 2) Use RPC function to get available slots (same as booking flow)
+      const { data: rpcSlots, error: rpcError } = await supabase.rpc('get_available_time_slots', {
+        p_business_id: appointment.business.id,
+        p_employee_id: selectedEmployee,
+        p_date: selectedDateStr,
+        p_business_start: businessStart,
+        p_business_end: businessEnd,
+        p_service_duration_minutes: serviceDuration,
+        p_slot_step_minutes: slotDuration
+      })
+
+      if (rpcError) {
+        console.error('Error fetching available slots (RPC):', rpcError)
         setAvailableSlots([])
         return
       }
 
-      // Fetch existing appointments (excluding current)
-      const { data: employeeAppointments } = await supabase
-        .from('appointments')
-        .select('start_time, end_time, status')
-        .eq('employee_id', selectedEmployee)
-        .eq('appointment_date', selectedDateStr)
-        .neq('id', appointment.id)
-        .in('status', ['confirmed', 'pending'])
+      // 3) Filter out slots that conflict with the current appointment being edited
+      const filtered = (rpcSlots || []).filter((row: any) => {
+        const timeStr: string = row.slot_time ?? row.slot_time?.slot_time
+        if (!timeStr) return false
 
-      // Generate time slots
-      const totalEmployeeStartMinutes = employeeStartHour * 60 + employeeStartMinute
-      const totalEmployeeEndMinutes = employeeEndHour * 60 + employeeEndMinute
-      const slotDuration = 30
-
-      for (let totalMinutes = totalEmployeeStartMinutes; totalMinutes < totalEmployeeEndMinutes; totalMinutes += slotDuration) {
-        const hour = Math.floor(totalMinutes / 60)
-        const minute = totalMinutes % 60
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
-
-        const slotStart = new Date(`${selectedDateStr}T${timeString}:00`)
+        const slotStart = new Date(`${selectedDateStr}T${timeStr}`)
         const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000)
 
-        const slotEndTotalMinutes = slotEnd.getHours() * 60 + slotEnd.getMinutes()
-        if (slotEndTotalMinutes > totalEmployeeEndMinutes) {
-          continue
+        // Check if this is the current appointment time (allow it to be selected)
+        const currentAppointmentStart = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
+        const currentAppointmentEnd = new Date(`${appointment.appointment_date}T${appointment.end_time}`)
+
+        // If this slot matches the current appointment, include it
+        if (selectedDateStr === appointment.appointment_date &&
+            slotStart.getTime() === currentAppointmentStart.getTime()) {
+          return true
         }
 
-        // Check for partial absences
-        const hasPartialAbsenceConflict = absenceData?.some(absence => {
-          if (absence.is_full_day || !absence.start_time || !absence.end_time) return false
-          const absenceStart = new Date(`${selectedDateStr}T${absence.start_time}`)
-          const absenceEnd = new Date(`${selectedDateStr}T${absence.end_time}`)
-          return (slotStart < absenceEnd && slotEnd > absenceStart)
-        })
+        return true
+      })
 
-        if (hasPartialAbsenceConflict) {
-          continue
-        }
+      const newSlots: TimeSlot[] = filtered.map((row: any) => {
+        const t: string = (row.slot_time as string).substring(0, 5)
+        return { time: t, available: true }
+      })
 
-        // Check for appointment conflicts
-        const hasConflict = employeeAppointments?.some(appt => {
-          const appointmentStart = new Date(`${selectedDateStr}T${appt.start_time}`)
-          const appointmentEnd = new Date(`${selectedDateStr}T${appt.end_time}`)
-          return (slotStart < appointmentEnd && slotEnd > appointmentStart)
-        })
-
-        if (!hasConflict) {
-          slots.push({
-            time: timeString,
-            available: true
-          })
-        }
-      }
-
-      setAvailableSlots(slots)
+      setAvailableSlots(newSlots)
     } catch (error) {
       console.error('Error generating time slots:', error)
+      // ⚠️ CRITICAL: If business is closed, don't show fallback slots
+      if (specialHourForDate?.is_closed) {
+        setAvailableSlots([])
+        return
+      }
       setAvailableSlots([])
     }
   }
@@ -559,54 +608,118 @@ export default function ModifyAppointmentDialog({
 
               {/* Step 3: Date & Time */}
               {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">Selecciona fecha</h3>
-                    <Popover modal={true}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start border-2 hover:border-slate-900">
-                          <CalendarIcon className="mr-2 h-5 w-5 text-slate-700" />
-                          {selectedDate ? selectedDate.toLocaleDateString('es-ES') : 'Selecciona una fecha'}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 z-[100]" align="start" sideOffset={5}>
-                        <CalendarComponent
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={setSelectedDate}
-                          disabled={(date) => {
-                            const today = new Date()
-                            const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-                            const checkingDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-                            return checkingDateOnly < todayDateOnly || date.getDay() === 0
-                          }}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Selecciona fecha y hora</h3>
+
+                  {/* Calendar - First (Top) */}
+                  <div className="border-2 border-slate-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Fecha</h4>
+                    <div className="flex justify-center">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        defaultMonth={selectedDate || new Date()}
+                        locale={{
+                          localize: {
+                            month: (n: number) => ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][n],
+                            day: (n: number) => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][n],
+                          },
+                          formatLong: {
+                            date: () => 'dd/MM/yyyy',
+                          },
+                        } as any}
+                        disabled={(date) => {
+                          const today = new Date()
+                          const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                          const checkingDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                          return checkingDateOnly < todayDateOnly
+                        }}
+                        fromYear={new Date().getFullYear()}
+                        toYear={new Date().getFullYear() + 1}
+                        className="rounded-md"
+                        captionLayout="dropdown"
+                      />
+                    </div>
                   </div>
 
-                  {selectedDate && (
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-3">Selecciona hora</h3>
-                      {availableSlots.length > 0 ? (
-                        <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
-                          {availableSlots.map((slot) => (
-                            <Button
-                              key={slot.time}
-                              variant={selectedTime === slot.time ? "default" : "outline"}
-                              onClick={() => setSelectedTime(slot.time)}
-                              className={selectedTime === slot.time ? 'bg-slate-900 hover:bg-slate-800' : 'border-2 hover:border-slate-900'}
-                            >
-                              {slot.time}
-                            </Button>
-                          ))}
+                  {/* Special Hours Alert */}
+                  {specialHourForDate && selectedDate && (
+                    <div className={`p-4 rounded-lg border-2 ${
+                      specialHourForDate.is_closed
+                        ? 'bg-red-50 border-red-200'
+                        : 'bg-blue-50 border-blue-200'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                          specialHourForDate.is_closed
+                            ? 'bg-red-100'
+                            : 'bg-blue-100'
+                        }`}>
+                          <span className="text-sm">⚠️</span>
                         </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 text-center py-8">No hay horarios disponibles</p>
-                      )}
+                        <div className="flex-1">
+                          <p className={`font-semibold text-sm ${
+                            specialHourForDate.is_closed
+                              ? 'text-red-900'
+                              : 'text-blue-900'
+                          }`}>
+                            {specialHourForDate.is_closed ? 'Negocio cerrado' : 'Horario especial'}
+                          </p>
+                          <p className={`text-sm mt-1 ${
+                            specialHourForDate.is_closed
+                              ? 'text-red-700'
+                              : 'text-blue-700'
+                          }`}>
+                            {specialHourForDate.is_closed
+                              ? `El negocio estará cerrado este día (${specialHourForDate.reason || 'Día especial'}). Por favor selecciona otra fecha.`
+                              : `El negocio tendrá horario especial: ${specialHourForDate.open_time?.slice(0, 5)} - ${specialHourForDate.close_time?.slice(0, 5)} (${specialHourForDate.reason || 'Horario especial'})`
+                            }
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {/* Time Slots - Second (Bottom) */}
+                  <div className="border-2 border-slate-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                      {selectedDate ? `Horarios disponibles` : 'Primero selecciona una fecha'}
+                    </h4>
+                    {!selectedDate ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="text-center text-gray-400">
+                          <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">Selecciona una fecha primero</p>
+                        </div>
+                      </div>
+                    ) : !specialHourForDate?.is_closed && availableSlots.length > 0 ? (
+                      <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
+                        {availableSlots.map((slot) => (
+                          <Button
+                            key={slot.time}
+                            variant={selectedTime === slot.time ? "default" : "outline"}
+                            onClick={() => setSelectedTime(slot.time)}
+                            className={selectedTime === slot.time ? 'bg-slate-900 hover:bg-slate-800' : 'border-2 hover:border-slate-900'}
+                          >
+                            {slot.time}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="text-center text-gray-400">
+                          <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">
+                            {specialHourForDate?.is_closed 
+                              ? 'El negocio está cerrado este día'
+                              : 'No hay horarios disponibles'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </motion.div>

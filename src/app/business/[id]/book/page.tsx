@@ -116,6 +116,7 @@ export default function BookingPage() {
       checkSpecialHours(selectedDate)
     } else {
       setSpecialHourForDate(null)
+      setAvailableSlots([])
     }
   }, [selectedDate])
 
@@ -133,7 +134,7 @@ export default function BookingPage() {
     if (selectedDate && selectedEmployee && selectedServices.length > 0) {
       generateTimeSlots()
     }
-  }, [selectedDate, selectedEmployee, selectedServices])
+  }, [selectedDate, selectedEmployee, selectedServices, specialHourForDate])
 
   const fetchData = async () => {
     try {
@@ -228,6 +229,7 @@ export default function BookingPage() {
         return
       }
 
+      console.log('✅ [checkSpecialHours] Found special hours:', data)
       setSpecialHourForDate(data)
 
     } catch (error) {
@@ -241,7 +243,9 @@ export default function BookingPage() {
     if (!selectedDate || !selectedEmployee || selectedServices.length === 0) return
 
     // Check if business is closed on this date (special hours)
+    console.log('🔍 [generateTimeSlots] specialHourForDate:', specialHourForDate)
     if (specialHourForDate?.is_closed) {
+      console.log('🚫 [generateTimeSlots] Business is CLOSED, clearing slots')
       setAvailableSlots([])
       return
     }
@@ -385,6 +389,11 @@ export default function BookingPage() {
 
     } catch (error) {
       console.error('Error generating time slots:', error)
+      // ⚠️ CRITICAL: If business is closed, don't show fallback slots
+      if (specialHourForDate?.is_closed) {
+        setAvailableSlots([])
+        return
+      }
       // Fallback: show all slots as available
       const fallbackSlots: TimeSlot[] = []
       for (let hour = startHour; hour < endHour; hour++) {
@@ -1063,11 +1072,23 @@ export default function BookingPage() {
                 </Button>
               </div>
 
+              {/* Continue Button - Floating at bottom on mobile */}
+              {selectedDate && selectedTime && (
+                <div className="lg:hidden sticky bottom-4 z-10">
+                  <Button
+                    onClick={handleDateTimeConfirm}
+                    className="w-full bg-black hover:bg-neutral-800 text-white shadow-lg hover:shadow-xl h-12"
+                  >
+                    Continuar
+                  </Button>
+                </div>
+              )}
+
               {/* Calendar and Time Slots - Side by Side */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Calendar */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="hidden lg:block">
                     <CardTitle>Selecciona una fecha</CardTitle>
                   </CardHeader>
                   <CardContent className="flex justify-center">
@@ -1085,16 +1106,6 @@ export default function BookingPage() {
                           date: () => 'dd/MM/yyyy',
                         },
                       } as any}
-                      labels={{
-                        labelMonthDropdown: () => 'Mes: ',
-                        labelYearDropdown: () => 'Año: ',
-                      }}
-                      formatters={{
-                        formatCaption: (date) => {
-                          const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                          return `${months[date.getMonth()]} ${date.getFullYear()}`;
-                        },
-                      }}
                       disabled={(date) => {
                         // Create clean date objects for comparison (date-only, no time)
                         const today = new Date()
@@ -1102,9 +1113,6 @@ export default function BookingPage() {
                         const checkingDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
                         const minDateOnly = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())
                         const maxDateOnly = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())
-
-                        // Block Sundays (day 0)
-                        if (date.getDay() === 0) return true
 
                         // Block dates before minDate (respects min_booking_hours)
                         if (checkingDateOnly < minDateOnly) return true
@@ -1173,23 +1181,23 @@ export default function BookingPage() {
                           </Alert>
                         )}
 
-                        {/* Time Slots Grid */}
-                        <div className="grid grid-cols-3 gap-2 max-h-[400px] overflow-y-auto pr-2">
-                          {availableSlots.map((slot) => (
-                            <Button
-                              key={slot.time}
-                              variant={selectedTime === slot.time ? 'default' : 'outline'}
-                              disabled={!slot.available}
-                              onClick={() => setSelectedTime(slot.time)}
-                              className="h-12"
-                            >
-                              {slot.time}
-                            </Button>
-                          ))}
-                        </div>
-
-                        {availableSlots.length === 0 && !specialHourForDate?.is_closed && (
-                          <Alert className="bg-yellow-50 border-yellow-200 mt-4">
+                        {/* Time Slots Grid or Empty State */}
+                        {!specialHourForDate?.is_closed && availableSlots.length > 0 ? (
+                          <div className="grid grid-cols-3 gap-2 max-h-[400px] overflow-y-auto pr-2">
+                            {availableSlots.map((slot) => (
+                              <Button
+                                key={slot.time}
+                                variant={selectedTime === slot.time ? 'default' : 'outline'}
+                                disabled={!slot.available}
+                                onClick={() => setSelectedTime(slot.time)}
+                                className="h-12"
+                              >
+                                {slot.time}
+                              </Button>
+                            ))}
+                          </div>
+                        ) : !specialHourForDate?.is_closed && (
+                          <Alert className="bg-yellow-50 border-yellow-200">
                             <AlertCircle className="h-4 w-4 text-yellow-600" />
                             <AlertTitle className="text-yellow-900 font-semibold">Sin horarios disponibles</AlertTitle>
                             <AlertDescription className="text-yellow-700 text-sm">

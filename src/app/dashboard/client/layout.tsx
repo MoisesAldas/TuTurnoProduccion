@@ -35,7 +35,7 @@ const navigation: NavItem[] = [
   { name: 'Mis Citas', href: '/dashboard/client/appointments', icon: BookOpen },
   { name: 'Mi Perfil', href: '/dashboard/client/profile', icon: User }, // Added link
   { name: 'Nueva Reserva', href: '/marketplace', icon: PlusSquare },
-  { name: 'Ajustes', href: '/dashboard/client/ajustes', icon: Settings },
+  // { name: 'Ajustes', href: '/dashboard/client/ajustes', icon: Settings }, // Moved to profile page tabs
 ]
 
 const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {

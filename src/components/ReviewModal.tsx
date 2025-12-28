@@ -143,8 +143,8 @@ export default function ReviewModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Star className="w-6 h-6 text-amber-500" />
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+            <Star className="w-6 h-6 text-slate-700" />
+            <span className="text-slate-900 font-bold">
               Deja tu Reseña
             </span>
           </DialogTitle>
@@ -159,7 +159,7 @@ export default function ReviewModal({
             <Label htmlFor="rating" className="text-base font-semibold text-gray-900">
               Calificación <span className="text-red-500">*</span>
             </Label>
-            <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+            <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
               <StarRating
                 rating={rating}
                 onRatingChange={setRating}
@@ -188,7 +188,7 @@ export default function ReviewModal({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Cuéntanos sobre tu experiencia..."
-                className="min-h-[120px] resize-none focus:border-emerald-500 focus:ring-emerald-500"
+                className="min-h-[120px] resize-none focus:border-slate-500 focus:ring-slate-500"
                 maxLength={500}
                 disabled={isSubmitting}
               />
@@ -222,7 +222,7 @@ export default function ReviewModal({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || rating === 0}
-            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+            className="flex-1 bg-slate-900 hover:bg-slate-800 text-white"
           >
             {isSubmitting ? (
               <>
