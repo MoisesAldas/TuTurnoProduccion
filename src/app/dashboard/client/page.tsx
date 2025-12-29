@@ -77,6 +77,7 @@ interface Appointment {
 }
 
 interface QuickStats {
+  total: number
   upcoming: number
   completed: number
   cancelled: number
@@ -87,7 +88,7 @@ const ITEMS_PER_PAGE = 10
 
 export default function ClientDashboard() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [stats, setStats] = useState<QuickStats>({ upcoming: 0, completed: 0, cancelled: 0, totalSpent: 0 })
+  const [stats, setStats] = useState<QuickStats>({ total: 0, upcoming: 0, completed: 0, cancelled: 0, totalSpent: 0 })
   const [loading, setLoading] = useState(true)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
@@ -141,6 +142,7 @@ export default function ClientDashboard() {
       setAppointments(appointmentsWithReviewStatus)
 
       const now = new Date()
+      const total = appointmentsWithReviewStatus.length
       const upcoming = appointmentsWithReviewStatus.filter(apt => {
         const aptDate = parseDateString(apt.appointment_date)
         const [hours, minutes] = apt.start_time.split(':').map(Number)
@@ -150,10 +152,10 @@ export default function ClientDashboard() {
       const completed = appointmentsWithReviewStatus.filter(apt => apt.status === 'completed').length
       const cancelled = appointmentsWithReviewStatus.filter(apt => apt.status === 'cancelled').length
       const totalSpent = appointmentsWithReviewStatus
-        .filter(apt => ['completed', 'confirmed'].includes(apt.status)) // Also include confirmed in total spent
+        .filter(apt => apt.status === 'completed') // Only completed appointments count for total spent
         .reduce((sum, apt) => sum + apt.total_price, 0)
 
-      setStats({ upcoming, completed, cancelled, totalSpent })
+      setStats({ total, upcoming, completed, cancelled, totalSpent })
     } catch (error) {
       console.error('Error fetching appointments:', error)
     } finally {
@@ -342,11 +344,12 @@ export default function ClientDashboard() {
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatsCard title="Total de Citas" value={stats.total} description="Todas tus citas" icon={Calendar} variant="gray" />
           <StatsCard title="Citas Próximas" value={stats.upcoming} description="Reservas confirmadas" icon={Calendar} variant="green" />
           <StatsCard title="Citas Completadas" value={stats.completed} description="Historial de citas" icon={CheckCircle} variant="blue" />
           <StatsCard title="Citas Canceladas" value={stats.cancelled} description="Reservas canceladas" icon={XCircle} variant="red" />
-          <StatsCard title="Gasto Total" value={formatPrice(stats.totalSpent)} description="En todas tus citas" icon={DollarSign} variant="purple" />
+          <StatsCard title="Gasto Total" value={formatPrice(stats.totalSpent)} description="Solo citas completadas" icon={DollarSign} variant="purple" />
         </div>
 
         {/* Upcoming Appointments */}
