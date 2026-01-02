@@ -13,6 +13,12 @@ import {
   EmployeeRankingChart,
   TimeSlotChart,
   MonthlyAppointmentsChart,
+  // Revenue charts (NEW)
+  PaymentMethodsPieChart,
+  DailyRevenueLineChart,
+  MonthlyRevenueBarChart,
+  EmployeeRevenueBarChart,
+  formatCurrency,
 } from '@/components/analytics'
 import {
   Users,
@@ -22,6 +28,8 @@ import {
   RefreshCw,
   Star,
   AlertCircle,
+  DollarSign,
+  Receipt,
 } from 'lucide-react'
 import { startOfMonth, endOfMonth } from 'date-fns'
 import type { DashboardFilters as FiltersType } from '@/types/analytics'
@@ -186,56 +194,183 @@ export default function BusinessDashboard() {
         </div>
       </div>
 
-      {/* KPIs Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatsCard
-          title="Total Clientes"
-          value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
-          description="Clientes únicos en período"
-          icon={Users}
-          variant="orange"
-        />
-        <StatsCard
-          title="Total Citas"
-          value={totalAppointments.toString()}
-          description="Citas en período seleccionado"
-          icon={Calendar}
-          variant="green"
-        />
-        <StatsCard
-          title="Día con Más Citas"
-          value={getDayFullName(maxWeekday.day_name)}
-          description={`${maxWeekday.appointment_count} citas`}
-          icon={TrendingUp}
-          variant="blue"
-        />
-        <StatsCard
-          title="Día con Menos Citas"
-          value={getDayFullName(minWeekday.day_name)}
-          description={`${minWeekday.appointment_count} citas`}
-          icon={TrendingDown}
-          variant="red"
-        />
-        <StatsCard
-          title="Mes con Más Citas"
-          value={maxMonth.month_label}
-          description={`${maxMonth.appointment_count} citas`}
-          icon={Star}
-          variant="orange"
-        />
+      {/* ========================================
+          KPIs PRINCIPALES
+          ======================================== */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+            Indicadores Clave
+          </h2>
+        </div>
+        
+        {/* Fila 1: Métricas Generales */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <StatsCard
+            title="Total Clientes"
+            value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
+            description="Únicos en período"
+            icon={Users}
+            variant="orange"
+          />
+          <StatsCard
+            title="Total Citas"
+            value={totalAppointments.toString()}
+            description="En período"
+            icon={Calendar}
+            variant="green"
+          />
+          <StatsCard
+            title="Tasa de Completitud"
+            value={`${data?.kpis?.completion_rate?.toFixed(1) || '0'}%`}
+            description="Citas completadas"
+            icon={TrendingUp}
+            variant="blue"
+          />
+          <StatsCard
+            title="Ingresos Totales"
+            value={formatCurrency(data?.revenueAnalytics?.total_revenue || 0)}
+            description="Facturado"
+            icon={DollarSign}
+            variant="purple"
+          />
+          <StatsCard
+            title="Ticket Promedio"
+            value={formatCurrency(data?.revenueAnalytics?.average_ticket || 0)}
+            description={`${data?.revenueAnalytics?.total_invoices || 0} facturas`}
+            icon={Receipt}
+            variant="orange"
+          />
+        </div>
+
+        {/* Fila 2: Mejores y Peores Períodos */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <StatsCard
+            title="Día con Más Citas"
+            value={getDayFullName(maxWeekday.day_name)}
+            description={`${maxWeekday.appointment_count} citas`}
+            icon={TrendingUp}
+            variant="green"
+          />
+          <StatsCard
+            title="Día con Menos Citas"
+            value={getDayFullName(minWeekday.day_name)}
+            description={`${minWeekday.appointment_count} citas`}
+            icon={TrendingDown}
+            variant="red"
+          />
+          <StatsCard
+            title="Mes con Más Citas"
+            value={maxMonth.month_label}
+            description={`${maxMonth.appointment_count} citas`}
+            icon={Star}
+            variant="orange"
+          />
+          <StatsCard
+            title="Día con Más Ventas"
+            value={data?.revenueAnalytics?.best_day_label || 'N/A'}
+            description={formatCurrency(data?.revenueAnalytics?.best_day_revenue || 0)}
+            icon={DollarSign}
+            variant="blue"
+          />
+          <StatsCard
+            title="Mes con Más Ventas"
+            value={data?.revenueAnalytics?.best_month_label || 'N/A'}
+            description={formatCurrency(data?.revenueAnalytics?.best_month_revenue || 0)}
+            icon={Calendar}
+            variant="purple"
+          />
+        </div>
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TopServicesChart data={data?.topServices || []} loading={loading} />
-        <EmployeeRankingChart data={data?.employeeRanking || []} loading={loading} />
+      {/* ========================================
+          ANÁLISIS DE INGRESOS
+          ======================================== */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+          <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+            Análisis de Ingresos
+          </h2>
+        </div>
+
+        {/* Gráficos de Ingresos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <DailyRevenueLineChart 
+            data={data?.dailyRevenue || []} 
+            loading={loading} 
+            error={error}
+          />
+          <MonthlyRevenueBarChart 
+            data={data?.monthlyRevenue || []} 
+            loading={loading} 
+            error={error}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <PaymentMethodsPieChart 
+            data={data?.paymentMethods || []} 
+            loading={loading} 
+            error={error}
+          />
+          <EmployeeRevenueBarChart 
+            data={data?.employeeRevenue || []} 
+            loading={loading} 
+            error={error}
+          />
+        </div>
       </div>
 
-      {/* Monthly Appointments Chart - Full Width */}
-      <MonthlyAppointmentsChart data={data?.appointmentsByMonth || []} loading={loading} />
+      {/* ========================================
+          RENDIMIENTO DE SERVICIOS Y EQUIPO
+          ======================================== */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+          <Users className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+            Rendimiento de Servicios y Equipo
+          </h2>
+        </div>
 
-      {/* Time Slot Chart - Full Width */}
-      <TimeSlotChart data={data?.timeSlots || []} loading={loading} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TopServicesChart 
+            data={data?.topServices || []} 
+            loading={loading} 
+            error={error} 
+          />
+          <EmployeeRankingChart 
+            data={data?.employeeRanking || []} 
+            loading={loading} 
+            error={error} 
+          />
+        </div>
+      </div>
+
+      {/* ========================================
+          DISTRIBUCIÓN TEMPORAL
+          ======================================== */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+          <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
+            Distribución Temporal de Citas
+          </h2>
+        </div>
+
+        <MonthlyAppointmentsChart 
+          data={data?.appointmentsByMonth || []} 
+          loading={loading} 
+          error={error} 
+        />
+
+        <TimeSlotChart 
+          data={data?.timeSlots || []} 
+          loading={loading} 
+          error={error} 
+        />
+      </div>
     </div>
   )
 }

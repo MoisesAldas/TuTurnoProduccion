@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CalendarIcon, Filter, RefreshCw } from 'lucide-react'
 import { format, startOfToday, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -23,6 +24,33 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
   const [tempRange, setTempRange] = useState<{ from: Date; to: Date }>({
     from: filters.startDate,
     to: filters.endDate,
+  })
+
+  // Estados para mes y año específicos
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(new Date().getMonth()))
+  const [selectedYear, setSelectedYear] = useState<string>(String(new Date().getFullYear()))
+
+  // Lista de meses
+  const months = [
+    { value: '0', label: 'Enero' },
+    { value: '1', label: 'Febrero' },
+    { value: '2', label: 'Marzo' },
+    { value: '3', label: 'Abril' },
+    { value: '4', label: 'Mayo' },
+    { value: '5', label: 'Junio' },
+    { value: '6', label: 'Julio' },
+    { value: '7', label: 'Agosto' },
+    { value: '8', label: 'Septiembre' },
+    { value: '9', label: 'Octubre' },
+    { value: '10', label: 'Noviembre' },
+    { value: '11', label: 'Diciembre' },
+  ]
+
+  // Lista de años (últimos 5 años + año actual + próximo año)
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 7 }, (_, i) => {
+    const year = currentYear - 5 + i
+    return { value: String(year), label: String(year) }
   })
 
   const handlePeriodChange = (value: string) => {
@@ -47,6 +75,14 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
         startDate = startOfYear(new Date())
         endDate = endOfYear(new Date())
         break
+      case 'specific-month':
+        // Usar mes y año seleccionados
+        const monthNum = parseInt(selectedMonth)
+        const yearNum = parseInt(selectedYear)
+        startDate = startOfMonth(new Date(yearNum, monthNum, 1))
+        endDate = endOfMonth(new Date(yearNum, monthNum, 1))
+        setTempRange({ from: startDate, to: endDate })
+        return
       case 'custom':
         // Keep current range
         return
@@ -55,6 +91,26 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
         endDate = endOfMonth(new Date())
     }
 
+    setTempRange({ from: startDate, to: endDate })
+  }
+
+  const handleMonthChange = (value: string) => {
+    setSelectedMonth(value)
+    // Auto-actualizar el rango cuando cambia el mes
+    const monthNum = parseInt(value)
+    const yearNum = parseInt(selectedYear)
+    const startDate = startOfMonth(new Date(yearNum, monthNum, 1))
+    const endDate = endOfMonth(new Date(yearNum, monthNum, 1))
+    setTempRange({ from: startDate, to: endDate })
+  }
+
+  const handleYearChange = (value: string) => {
+    setSelectedYear(value)
+    // Auto-actualizar el rango cuando cambia el año
+    const monthNum = parseInt(selectedMonth)
+    const yearNum = parseInt(value)
+    const startDate = startOfMonth(new Date(yearNum, monthNum, 1))
+    const endDate = endOfMonth(new Date(yearNum, monthNum, 1))
     setTempRange({ from: startDate, to: endDate })
   }
 
@@ -107,12 +163,57 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
               Año
             </ToggleGroupItem>
             <ToggleGroupItem
+              value="specific-month"
+              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400"
+            >
+              Mes Específico
+            </ToggleGroupItem>
+            <ToggleGroupItem
               value="custom"
               className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400"
             >
               Personalizado
             </ToggleGroupItem>
           </ToggleGroup>
+
+          {/* Month and Year Selectors for Specific Month */}
+          {tempPeriod === 'specific-month' && (
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Select value={selectedMonth} onValueChange={handleMonthChange}>
+                <SelectTrigger className="w-[140px] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                  <SelectValue placeholder="Seleccionar mes" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  {months.map((month) => (
+                    <SelectItem
+                      key={month.value}
+                      value={month.value}
+                      className="dark:text-gray-200 dark:focus:bg-gray-700"
+                    >
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedYear} onValueChange={handleYearChange}>
+                <SelectTrigger className="w-[100px] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                  <SelectValue placeholder="Año" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  {years.map((year) => (
+                    <SelectItem
+                      key={year.value}
+                      value={year.value}
+                      className="dark:text-gray-200 dark:focus:bg-gray-700"
+                    >
+                      {year.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Custom Date Range Picker */}
           {tempPeriod === 'custom' && (
