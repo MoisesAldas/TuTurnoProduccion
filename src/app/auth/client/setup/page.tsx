@@ -14,22 +14,12 @@ import { User, CheckCircle, Phone, ArrowLeft, UserCog } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import Logo from '@/components/logo'
+import { firstNameSchema, lastNameSchema, phoneSchema } from '@/lib/validation'
 
 const setupSchema = z.object({
-  firstName: z
-    .string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/, 'El nombre solo puede contener letras'),
-  lastName: z
-    .string()
-    .min(2, 'El apellido debe tener al menos 2 caracteres')
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/, 'El apellido solo puede contener letras'),
-  phone: z
-    .string()
-    .min(10, 'El teléfono debe tener al menos 10 dígitos')
-    .regex(/^[0-9+\-\s\(\)]+$/, 'Formato de teléfono inválido')
-    .optional()
-    .or(z.literal('')),
+  firstName: firstNameSchema,
+  lastName: lastNameSchema,
+  phone: phoneSchema,
 })
 
 type SetupFormData = z.infer<typeof setupSchema>
@@ -248,9 +238,13 @@ export default function ClientSetupPage() {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+593 99 123 4567"
+                  placeholder="0999123456"
                   className="pl-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                   {...register('phone')}
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement
+                    target.value = target.value.replace(/[^0-9]/g, '')
+                  }}
                 />
               </div>
               {errors.phone && (

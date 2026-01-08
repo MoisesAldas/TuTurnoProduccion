@@ -267,6 +267,34 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
     }
   }
 
+  const handleReactivate = async () => {
+    try {
+      setUpdating(true)
+
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'confirmed' })
+        .eq('id', appointment.id)
+
+      if (error) throw error
+
+      toast({
+        title: 'Cita reactivada',
+        description: 'La cita ha sido reactivada y confirmada.',
+      })
+      onUpdate()
+    } catch (error) {
+      console.error('Error reactivating appointment:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error al reactivar',
+        description: 'No se pudo reactivar la cita.',
+      })
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   const handleCheckoutSuccess = async () => {
     // CheckoutModal now handles marking appointment as completed and creating invoice
     // Just close modals and refresh
@@ -384,7 +412,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                 )}
                 {(appointment.walk_in_client_name || appointment.walk_in_client_phone) && (
                   <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
-                    Walk-in
+                    Sin cita previa
                   </span>
                 )}
               </div>
@@ -416,7 +444,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                       ? `${appointment.users.first_name} ${appointment.users.last_name}`
                       : appointment.business_clients
                       ? `${appointment.business_clients.first_name} ${appointment.business_clients.last_name || ''}`.trim()
-                      : appointment.walk_in_client_name || 'Cliente Walk-in'}
+                      : appointment.walk_in_client_name || 'Cliente Sin cita previa'}
                   </p>
                   <div className="space-y-1 mt-2">
                     {(appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone) && (
@@ -616,6 +644,18 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                 >
                   <DollarSign className="w-4 h-4 mr-2" />
                   <span className="truncate">{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
+                </Button>
+              )}
+
+              {/* Botón Reactivar cita - Solo visible para citas canceladas */}
+              {appointment.status === 'cancelled' && (
+                <Button
+                  onClick={handleReactivate}
+                  disabled={updating}
+                  className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 text-white transition-all hover:scale-105"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  <span className="truncate">Reactivar Cita</span>
                 </Button>
               )}
 

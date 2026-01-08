@@ -155,7 +155,7 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
             {row.original.client_phone}
             {row.original.is_walk_in && (
               <Badge className="bg-orange-50 text-orange-700 border-orange-200 border text-[10px] px-1.5 py-0 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
-                Walk-in
+                Sin cita previa
               </Badge>
             )}
           </div>

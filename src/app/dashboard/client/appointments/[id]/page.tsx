@@ -143,6 +143,13 @@ export default function AppointmentDetailPage() {
       return false
     }
 
+    // NUEVO: Si la cita está pending, siempre permitir cancelar
+    // (significa que el negocio hizo cambios y el cliente debe poder responder)
+    if (appointment.status === 'pending') {
+      return true
+    }
+
+    // Validación normal de políticas de tiempo
     const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
     const now = new Date()
     const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
@@ -157,6 +164,13 @@ export default function AppointmentDetailPage() {
       return false
     }
 
+    // NUEVO: Si la cita está pending, siempre permitir reprogramar
+    // (significa que el negocio hizo cambios y el cliente debe poder responder)
+    if (appointment.status === 'pending') {
+      return true
+    }
+
+    // Validación normal de políticas de tiempo
     const appointmentDateTime = new Date(`${appointment.appointment_date}T${appointment.start_time}`)
     const now = new Date()
     const hoursUntil = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
@@ -216,6 +230,46 @@ export default function AppointmentDetailPage() {
         variant: 'destructive',
         title: 'Error al cancelar',
         description: 'No se pudo cancelar la cita. Por favor intenta nuevamente.',
+      })
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  const handleAcceptChanges = async () => {
+    if (!appointment) return
+
+    try {
+      setCancelling(true) // Reutilizamos el estado de loading
+
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'confirmed' })
+        .eq('id', appointment.id)
+
+      if (error) {
+        console.error('Error accepting changes:', error)
+        toast({
+          variant: 'destructive',
+          title: 'Error al aceptar',
+          description: 'No se pudieron aceptar los cambios. Por favor intenta nuevamente.',
+        })
+        return
+      }
+
+      toast({
+        title: 'Cambios aceptados',
+        description: 'Has aceptado los cambios. Tu cita ha sido confirmada.',
+      })
+
+      // Recargar datos de la cita
+      await fetchAppointment()
+    } catch (error) {
+      console.error('Error accepting changes:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error al aceptar',
+        description: 'No se pudieron aceptar los cambios. Por favor intenta nuevamente.',
       })
     } finally {
       setCancelling(false)
@@ -410,8 +464,26 @@ export default function AppointmentDetailPage() {
                 </Card>
               )}
 
-              {/* Policy Alert */}
-              {(!canCancelAppointment() || !canRescheduleAppointment()) && (
+              {/* Alert para citas PENDING */}
+              {appointment.status === 'pending' && (
+                <Alert className="border-2 border-yellow-300 bg-yellow-50">
+                  <AlertCircle className="h-5 w-5 text-yellow-600" />
+                  <AlertDescription className="text-sm text-yellow-800">
+                    <p className="font-semibold mb-1">⏳ Cita Pendiente de Confirmación</p>
+                    <p>
+                      El negocio ha modificado tu cita. Por favor, revisa los cambios y confirma si puedes asistir 
+                      en la nueva fecha y hora. Tienes <strong>24 horas</strong> para responder.
+                    </p>
+                    <p className="mt-2">
+                      Puedes <strong>aceptar</strong>, <strong>reprogramar</strong> o <strong>cancelar</strong> esta cita 
+                      sin restricciones de tiempo.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Alert para citas CONFIRMADAS con política cerrada */}
+              {appointment.status !== 'pending' && (!canCancelAppointment() || !canRescheduleAppointment()) && (
                 <Alert className="border-2 border-red-300 bg-red-50">
                   <AlertCircle className="h-5 w-5 text-red-600" />
                   <AlertDescription className="text-sm text-red-800">
@@ -440,6 +512,29 @@ export default function AppointmentDetailPage() {
                   <CardTitle className="text-base sm:text-lg font-semibold">¿Qué deseas hacer?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 sm:space-y-3">
+                  {/* Accept Changes Button - Solo para citas pending */}
+                  {appointment.status === 'pending' && (
+                    <Button
+                      onClick={handleAcceptChanges}
+                      disabled={cancelling}
+                      className="w-full justify-start h-auto py-4 bg-green-600 hover:bg-green-700 text-white transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                          {cancelling ? (
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-5 h-5 text-white" />
+                          )}
+                        </div>
+                        <div className="text-left flex-1">
+                          <p className="font-bold text-white">{cancelling ? 'Aceptando...' : 'Aceptar Cambios'}</p>
+                          <p className="text-xs text-white/90">Confirmar nueva fecha y hora</p>
+                        </div>
+                      </div>
+                    </Button>
+                  )}
+
                   {/* Modify Button */}
                   {appointment.business.allow_client_reschedule && canRescheduleAppointment() ? (
                     <Button

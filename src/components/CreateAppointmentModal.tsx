@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
-import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Search } from 'lucide-react'
+import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Search, UserCheck, Building2, UserCircle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -109,6 +109,17 @@ export default function CreateAppointmentModal({
   // Populate form fields when editing an appointment
   useEffect(() => {
     if (appointment) {
+      // VALIDACIÓN: No permitir editar citas pendientes
+      if (appointment.status === 'pending') {
+        toast({
+          variant: 'destructive',
+          title: 'No se puede editar',
+          description: 'Esta cita está pendiente de confirmación del cliente. Espera su respuesta antes de editarla.',
+        })
+        onClose()
+        return
+      }
+
       // Set client type and info
       if (appointment.client_id) {
         setClientType('registered')
@@ -320,6 +331,22 @@ export default function CreateAppointmentModal({
           appointment.employee_id !== selectedEmployeeIdState
 
         if (hasChanges) {
+          // NUEVO: Cambiar estado a pending cuando hay cambios significativos
+          const { error: statusError } = await supabase
+            .from('appointments')
+            .update({ 
+              status: 'pending',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', appointment.id)
+
+          if (statusError) {
+            console.error('❌ Error updating status to pending:', statusError)
+          } else {
+            console.log('✅ Appointment status changed to pending - awaiting client confirmation')
+          }
+
+          // Enviar email de reprogramación
           try {
             await fetch('/api/send-rescheduled-notification', {
               method: 'POST',
@@ -468,8 +495,15 @@ export default function CreateAppointmentModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
@@ -523,7 +557,7 @@ export default function CreateAppointmentModal({
                 </Label>
                 <div className="grid grid-cols-3 gap-3">
                   <label
-                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
                       clientType === 'walk_in'
                         ? 'border-orange-600 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -538,13 +572,15 @@ export default function CreateAppointmentModal({
                       className="sr-only"
                     />
                     <div className="text-center">
-                      <div className="text-2xl mb-2">👤</div>
-                      <p className="font-medium text-gray-900">Walk-in</p>
+                      <div className="flex justify-center mb-2">
+                        <UserCircle className="w-8 h-8 text-orange-600" />
+                      </div>
+                      <p className="font-medium text-gray-900">Sin cita previa</p>
                       <p className="text-xs text-gray-500 mt-1">Sin cuenta</p>
                     </div>
                   </label>
                   <label
-                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
                       clientType === 'registered'
                         ? 'border-orange-600 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -559,13 +595,15 @@ export default function CreateAppointmentModal({
                       className="sr-only"
                     />
                     <div className="text-center">
-                      <div className="text-2xl mb-2">✓</div>
+                      <div className="flex justify-center mb-2">
+                        <UserCheck className="w-8 h-8 text-green-600" />
+                      </div>
                       <p className="font-medium text-gray-900">Registrado</p>
                       <p className="text-xs text-gray-500 mt-1">Con cuenta</p>
                     </div>
                   </label>
                   <label
-                    className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
                       clientType === 'business_client'
                         ? 'border-orange-600 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -580,7 +618,9 @@ export default function CreateAppointmentModal({
                       className="sr-only"
                     />
                     <div className="text-center">
-                      <div className="text-2xl mb-2">🏷️</div>
+                      <div className="flex justify-center mb-2">
+                        <Building2 className="w-8 h-8 text-blue-600" />
+                      </div>
                       <p className="font-medium text-gray-900">Cliente del negocio</p>
                       <p className="text-xs text-gray-500 mt-1">Guardado por el negocio</p>
                     </div>
@@ -612,8 +652,9 @@ export default function CreateAppointmentModal({
                       className="text-base"
                     />
                   </div>
-                  <p className="text-xs text-gray-600">
-                    💡 Este cliente no necesita una cuenta. Los datos se guardan solo para esta cita.
+                  <p className="text-xs text-gray-600 flex items-start gap-2">
+                    <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <span>Este cliente no necesita una cuenta. Los datos se guardan solo para esta cita.</span>
                   </p>
                 </div>
               )}
@@ -901,7 +942,7 @@ export default function CreateAppointmentModal({
                           ? `${clients.find(c => c.id === selectedClientId)?.first_name} ${clients.find(c => c.id === selectedClientId)?.last_name}`
                           : 'No seleccionado'}
                       <span className="ml-2 text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
-                        {clientType === 'walk_in' ? 'Walk-in' : 'Registrado'}
+                        {clientType === 'walk_in' ? 'Sin cita previa' : 'Registrado'}
                       </span>
                     </p>
                   </div>
