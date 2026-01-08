@@ -28,7 +28,8 @@ import {
   Sliders,
   List,
   Pin,
-  PinOff
+  PinOff,
+  DollarSign
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -49,7 +50,7 @@ const navigation: NavItem[] = [
   { name: 'Servicios', href: '/dashboard/business/services', icon: Briefcase },
   { name: 'Empleados', href: '/dashboard/business/employees', icon: Users },
   { name: 'Horarios', href: '/dashboard/business/hours', icon: Clock },
-  
+  { name: 'Cierre de Caja', href: '/dashboard/business/cash-register', icon: DollarSign },
   { name: 'Listar', href: '/dashboard/business/listar', icon: List },
   { name: 'Configuración', href: '/dashboard/business/settings', icon: Settings },
 ]

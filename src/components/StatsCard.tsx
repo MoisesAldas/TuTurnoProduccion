@@ -31,21 +31,21 @@ export function StatsCard({
     : statsCardVariants[variant]
   return (
     <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1.5 pt-3 px-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          <CardTitle className="text-xs font-medium text-gray-600 dark:text-gray-400">
             {title}
           </CardTitle>
-          <div className={`w-8 h-8 bg-gradient-to-br ${colors.gradientFrom} ${colors.gradientTo} rounded-lg flex items-center justify-center`}>
-            <Icon className={`w-4 h-4 ${colors.iconColor}`} />
+          <div className={`w-7 h-7 bg-gradient-to-br ${colors.gradientFrom} ${colors.gradientTo} rounded-lg flex items-center justify-center`}>
+            <Icon className={`w-3.5 h-3.5 ${colors.iconColor}`} />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div className="text-2xl font-bold text-gray-900 dark:text-gray-50">
+      <CardContent className="pt-0 pb-3 px-3">
+        <div className="text-xl font-bold text-gray-900 dark:text-gray-50">
           {value}
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
           {description}
         </p>
       </CardContent>

@@ -37,7 +37,7 @@ export default function HeroSection() {
 
               <p
                 className={`text-lg md:text-xl text-gray-600 dark:text-gray-400 text-balance mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0 transition-all duration-700 ease-out delay-200 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                La plataforma todo-en-uno que automatiza tus citas, gestiona tus clientes y optimiza tus ingresos. Dedica más tiempo a lo que amas.
+                La plataforma todo en uno que automatiza tus citas, gestiona tus clientes y optimiza tus ingresos. Dedica más tiempo a lo que amas.
               </p>
 
               <div
@@ -68,7 +68,7 @@ export default function HeroSection() {
                   <Image className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-800" src="/professional-woman-spa-owner-smiling.jpg" alt="User 2" width={32} height={32} />
                   <Image className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-800" src="/mechanic-man-in-work-uniform-professional-smiling.jpg" alt="User 3" width={32} height={32} />
                 </div>
-                <p>+500 negocios ya confían en TuTurno.</p>
+                <p>+negocios ya confían en TuTurno.</p>
               </div>
             </div>
 

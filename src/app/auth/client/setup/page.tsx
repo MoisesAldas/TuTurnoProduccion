@@ -19,15 +19,15 @@ const setupSchema = z.object({
   firstName: z
     .string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$/, 'El nombre solo puede contener letras'),
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/, 'El nombre solo puede contener letras'),
   lastName: z
     .string()
     .min(2, 'El apellido debe tener al menos 2 caracteres')
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$/, 'El apellido solo puede contener letras'),
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/, 'El apellido solo puede contener letras'),
   phone: z
     .string()
     .min(10, 'El teléfono debe tener al menos 10 dígitos')
-    .regex(/^[0-9+\\-\\s\\(\\)]+$/, 'Formato de teléfono inválido')
+    .regex(/^[0-9+\-\s\(\)]+$/, 'Formato de teléfono inválido')
     .optional()
     .or(z.literal('')),
 })

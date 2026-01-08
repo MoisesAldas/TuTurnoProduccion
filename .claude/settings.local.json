@@ -15,7 +15,9 @@
       "mcp__shadcn__get_project_registries",
       "mcp__shadcn__list_items_in_registries",
       "Bash(npx tsc:*)",
-      "Bash(exit 0)"
+      "Bash(exit 0)",
+      "Bash(npm run build:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

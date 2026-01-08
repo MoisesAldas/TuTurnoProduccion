@@ -6,20 +6,26 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/useAuth'
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics'
+import { useScrollPosition } from '@/hooks/useScrollPosition'
 import { StatsCard } from '@/components/StatsCard'
 import {
-  DashboardFilters,
+  CompactFilters,
   TopServicesChart,
   EmployeeRankingChart,
   TimeSlotChart,
   MonthlyAppointmentsChart,
+  WeekdayAppointmentsChart,
   // Revenue charts (NEW)
   PaymentMethodsPieChart,
   DailyRevenueLineChart,
   MonthlyRevenueBarChart,
   EmployeeRevenueBarChart,
   formatCurrency,
+  // Export functionality
+  ExportButton,
 } from '@/components/analytics'
+import { DataProcessor } from '@/lib/export/core/DataProcessor'
+import type { BusinessInfo } from '@/lib/export/types'
 import {
   Users,
   Calendar,
@@ -30,11 +36,14 @@ import {
   AlertCircle,
   DollarSign,
   Receipt,
+  BarChart3,
 } from 'lucide-react'
-import { startOfMonth, endOfMonth } from 'date-fns'
+import { startOfMonth, endOfMonth, format } from 'date-fns'
 import type { DashboardFilters as FiltersType } from '@/types/analytics'
 import { createClient } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { translateDateLabel } from '@/lib/dateUtils'
+import { cn } from '@/lib/utils'
 
 export default function BusinessDashboard() {
   const { authState } = useAuth()
@@ -44,6 +53,7 @@ export default function BusinessDashboard() {
   // Business ID state
   const [businessId, setBusinessId] = useState<string>('')
   const [businessName, setBusinessName] = useState<string>('')
+  const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null)
   const [loadingBusiness, setLoadingBusiness] = useState(true)
 
   // Default filters: Este mes completo
@@ -61,7 +71,7 @@ export default function BusinessDashboard() {
       try {
         const { data, error } = await supabase
           .from('businesses')
-          .select('id, name')
+          .select('id, name, logo_url, address, phone, email')
           .eq('owner_id', authState.user.id)
           .single()
 
@@ -73,6 +83,19 @@ export default function BusinessDashboard() {
 
         setBusinessId(data.id)
         setBusinessName(data.name)
+
+        // Preparar BusinessInfo para exportación
+        const userName = (authState.user as any).user_metadata?.full_name || authState.user.email || 'Propietario'
+        setBusinessInfo({
+          id: data.id,
+          name: data.name,
+          category: 'Servicios Profesionales', // Default category
+          logoUrl: data.logo_url || null,
+          ownerName: userName,
+          address: data.address || undefined,
+          phone: data.phone || undefined,
+          email: data.email || undefined,
+        })
       } catch (error) {
         console.error('Error:', error)
       } finally {
@@ -86,38 +109,22 @@ export default function BusinessDashboard() {
   // Fetch analytics data
   const { data, loading, error, refetch } = useDashboardAnalytics(businessId, filters)
 
-  // Helper function to convert day abbreviations to full names
-  const getDayFullName = (abbr: string): string => {
-    const dayMap: Record<string, string> = {
-      'Dom': 'Domingo',
-      'Lun': 'Lunes',
-      'Mar': 'Martes',
-      'Mié': 'Miércoles',
-      'Jue': 'Jueves',
-      'Vie': 'Viernes',
-      'Sáb': 'Sábado',
+  // Calculate derived metrics - Daily stats (specific calendar days)
+  const maxDay = useMemo(() => {
+    if (!data?.dailyStats || data.dailyStats.length === 0) {
+      return { date_label: 'N/A', appointment_count: 0 }
     }
-    return dayMap[abbr] || abbr
-  }
+    // dailyStats is already sorted DESC by appointment_count, so first item is max
+    return data.dailyStats[0]
+  }, [data?.dailyStats])
 
-  // Calculate derived metrics
-  const maxWeekday = useMemo(() => {
-    if (!data?.appointmentsByWeekday || data.appointmentsByWeekday.length === 0) {
-      return { day_name: 'N/A', appointment_count: 0 }
+  const minDay = useMemo(() => {
+    if (!data?.dailyStats || data.dailyStats.length === 0) {
+      return { date_label: 'N/A', appointment_count: 0 }
     }
-    return data.appointmentsByWeekday.reduce((max, curr) =>
-      curr.appointment_count > max.appointment_count ? curr : max
-    )
-  }, [data?.appointmentsByWeekday])
-
-  const minWeekday = useMemo(() => {
-    if (!data?.appointmentsByWeekday || data.appointmentsByWeekday.length === 0) {
-      return { day_name: 'N/A', appointment_count: 0 }
-    }
-    return data.appointmentsByWeekday.reduce((min, curr) =>
-      curr.appointment_count < min.appointment_count ? curr : min
-    )
-  }, [data?.appointmentsByWeekday])
+    // Last item in the sorted array is min
+    return data.dailyStats[data.dailyStats.length - 1]
+  }, [data?.dailyStats])
 
   const maxMonth = useMemo(() => {
     if (!data?.appointmentsByMonth || data.appointmentsByMonth.length === 0) {
@@ -131,6 +138,21 @@ export default function BusinessDashboard() {
   const totalAppointments = useMemo(() => {
     return data?.kpis?.total_appointments || 0
   }, [data?.kpis])
+
+  // Preparar datos para exportación
+  const exportData = useMemo(() => {
+    if (!data || !businessInfo) return null
+
+    return DataProcessor.process({
+      dashboardData: data,
+      businessInfo: businessInfo,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+    })
+  }, [data, businessInfo, filters.startDate, filters.endDate])
+
+  // Use scroll position for sticky header (MUST be before any conditional returns)
+  const scrolled = useScrollPosition(80)
 
   // Loading state
   if (loadingBusiness || (loading && !data)) {
@@ -171,205 +193,263 @@ export default function BusinessDashboard() {
     )
   }
 
+
   return (
-    <div className="p-4 sm:p-6 space-y-6">
-      {/* Header and Filters - Same Level */}
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        {/* Title */}
-        <div className="flex-shrink-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 mt-3">
-            Dashboard de Análisis
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{businessName}</p>
-        </div>
+    <div className="relative min-h-screen bg-gray-50 dark:bg-gray-950">
+      {/* Sticky Header */}
+      <div className={cn(
+        "sticky top-0 z-50 transition-all duration-300 ease-in-out",
+        scrolled 
+          ? "bg-gray-900 shadow-lg py-2" 
+          : "bg-white dark:bg-gray-900 py-4 shadow-sm"
+      )}>
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Title (hidden when scrolled on mobile) */}
+            <div className={cn(
+              "transition-all duration-300",
+              scrolled ? "hidden sm:block" : "block"
+            )}>
+              <h1 className={cn(
+                "font-bold transition-all duration-300",
+                scrolled 
+                  ? "text-lg text-white" 
+                  : "text-2xl sm:text-3xl text-gray-900 dark:text-gray-50"
+              )}>
+                {scrolled ? "Dashboard" : "Dashboard de análisis"}
+              </h1>
+              {!scrolled && (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{businessName}</p>
+              )}
+            </div>
 
-        {/* Filtros con botón de actualizar integrado */}
-        <div className="flex-1 lg:max-w-5xl">
-          <DashboardFilters
-            filters={filters}
-            onFiltersChange={setFilters}
-            onRefresh={refetch}
-            loading={loading}
-          />
-        </div>
-      </div>
-
-      {/* ========================================
-          KPIs PRINCIPALES
-          ======================================== */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Indicadores Clave
-          </h2>
-        </div>
-        
-        {/* Fila 1: Métricas Generales */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <StatsCard
-            title="Total Clientes"
-            value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
-            description="Únicos en período"
-            icon={Users}
-            variant="orange"
-          />
-          <StatsCard
-            title="Total Citas"
-            value={totalAppointments.toString()}
-            description="En período"
-            icon={Calendar}
-            variant="green"
-          />
-          <StatsCard
-            title="Tasa de Completitud"
-            value={`${data?.kpis?.completion_rate?.toFixed(1) || '0'}%`}
-            description="Citas completadas"
-            icon={TrendingUp}
-            variant="blue"
-          />
-          <StatsCard
-            title="Ingresos Totales"
-            value={formatCurrency(data?.revenueAnalytics?.total_revenue || 0)}
-            description="Facturado"
-            icon={DollarSign}
-            variant="purple"
-          />
-          <StatsCard
-            title="Ticket Promedio"
-            value={formatCurrency(data?.revenueAnalytics?.average_ticket || 0)}
-            description={`${data?.revenueAnalytics?.total_invoices || 0} facturas`}
-            icon={Receipt}
-            variant="orange"
-          />
-        </div>
-
-        {/* Fila 2: Mejores y Peores Períodos */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <StatsCard
-            title="Día con Más Citas"
-            value={getDayFullName(maxWeekday.day_name)}
-            description={`${maxWeekday.appointment_count} citas`}
-            icon={TrendingUp}
-            variant="green"
-          />
-          <StatsCard
-            title="Día con Menos Citas"
-            value={getDayFullName(minWeekday.day_name)}
-            description={`${minWeekday.appointment_count} citas`}
-            icon={TrendingDown}
-            variant="red"
-          />
-          <StatsCard
-            title="Mes con Más Citas"
-            value={maxMonth.month_label}
-            description={`${maxMonth.appointment_count} citas`}
-            icon={Star}
-            variant="orange"
-          />
-          <StatsCard
-            title="Día con Más Ventas"
-            value={data?.revenueAnalytics?.best_day_label || 'N/A'}
-            description={formatCurrency(data?.revenueAnalytics?.best_day_revenue || 0)}
-            icon={DollarSign}
-            variant="blue"
-          />
-          <StatsCard
-            title="Mes con Más Ventas"
-            value={data?.revenueAnalytics?.best_month_label || 'N/A'}
-            description={formatCurrency(data?.revenueAnalytics?.best_month_revenue || 0)}
-            icon={Calendar}
-            variant="purple"
-          />
+            {/* Center/Right: Filters */}
+            <div className="flex items-center gap-2 flex-1 justify-end">
+              <CompactFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                onRefresh={refetch}
+                loading={loading}
+                compact={scrolled}
+              />
+              
+              {/* Export Button */}
+              {exportData && (
+                <ExportButton
+                  data={exportData}
+                  filename={`reporte-${businessName.toLowerCase().replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}`}
+                  variant="outline"
+                  size={scrolled ? "icon" : "default"}
+                  className={cn(
+                    "transition-all",
+                    scrolled 
+                      ? "bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700" 
+                      : "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50"
+                  )}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ========================================
-          ANÁLISIS DE INGRESOS
-          ======================================== */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-          <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Análisis de Ingresos
-          </h2>
+      {/* Main Content */}
+      <div className="container mx-auto px-4 sm:px-6 py-6">
+        {/* 5-Column Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          
+          {/* LEFT AREA: Charts (4/5 width on desktop) */}
+          <div className="lg:col-span-4 space-y-6 order-2 lg:order-1">
+            
+            {/* ========================================
+                ANÁLISIS DE INGRESOS
+                ======================================== */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+                  Análisis de Ingresos
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <DailyRevenueLineChart 
+                  data={data?.dailyRevenue || []} 
+                  loading={loading} 
+                  error={error}
+                />
+                <PaymentMethodsPieChart 
+                  data={data?.paymentMethods || []} 
+                  loading={loading} 
+                  error={error}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <MonthlyRevenueBarChart 
+                  data={data?.monthlyRevenue || []} 
+                  loading={loading} 
+                  error={error}
+                />
+                <TopServicesChart 
+                  data={data?.topServices || []} 
+                  loading={loading} 
+                  error={error}
+                />
+              </div>
+            </div>
+
+            {/* ========================================
+                RENDIMIENTO DE SERVICIOS Y EQUIPO
+                ======================================== */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <Users className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+                  Servicios y Equipo
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <EmployeeRankingChart 
+                  data={data?.employeeRanking || []} 
+                  loading={loading} 
+                  error={error} 
+                />
+                <EmployeeRevenueBarChart 
+                  data={data?.employeeRevenue || []} 
+                  loading={loading} 
+                  error={error}
+                />
+              </div>
+            </div>
+
+            {/* ========================================
+                DISTRIBUCIÓN TEMPORAL
+                ======================================== */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+                  Distribución Temporal
+                </h2>
+              </div>
+
+              {/* Weekday and Timeslot side by side */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <WeekdayAppointmentsChart 
+                  data={data?.appointmentsByWeekday || []} 
+                  loading={loading} 
+                  error={error} 
+                />
+                <TimeSlotChart 
+                  data={data?.timeSlots || []} 
+                  loading={loading} 
+                  error={error} 
+                />
+              </div>
+
+              <MonthlyAppointmentsChart 
+                data={data?.monthlyRevenue || []} 
+                loading={loading} 
+                error={error} 
+              />
+            </div>
+          </div>
+
+          {/* RIGHT SIDEBAR: KPIs (1/3 width on desktop) */}
+          <div className="lg:col-span-1 order-1 lg:order-2">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              {/* Section Header */}
+              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <BarChart3 className="w-5 h-5 text-orange-600 dark:text-orange-500" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+                  Indicadores Clave
+                </h2>
+              </div>
+
+              {/* KPIs Stack */}
+              <div className="space-y-3">
+                {/* Métricas Generales */}
+                <StatsCard
+                  title="Total Clientes"
+                  value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
+                  description="Únicos en período"
+                  icon={Users}
+                  variant="orange"
+                />
+                <StatsCard
+                  title="Total Citas"
+                  value={totalAppointments.toString()}
+                  description="En período"
+                  icon={Calendar}
+                  variant="green"
+                />
+                <StatsCard
+                  title="Tasa de Completitud"
+                  value={`${data?.kpis?.completion_rate?.toFixed(1) || '0'}%`}
+                  description="Citas completadas"
+                  icon={TrendingUp}
+                  variant="blue"
+                />
+                <StatsCard
+                  title="Ingresos Totales"
+                  value={formatCurrency(data?.revenueAnalytics?.total_revenue || 0)}
+                  description="Facturado"
+                  icon={DollarSign}
+                  variant="purple"
+                />
+                <StatsCard
+                  title="Ticket Promedio"
+                  value={formatCurrency(data?.revenueAnalytics?.average_ticket || 0)}
+                  description={`${data?.revenueAnalytics?.total_invoices || 0} facturas`}
+                  icon={Receipt}
+                  variant="orange"
+                />
+
+                {/* Divider */}
+                <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
+
+                {/* Mejores Períodos */}
+                <StatsCard
+                  title="Día con Más Citas"
+                  value={maxDay.date_label}
+                  description={`${maxDay.appointment_count} citas`}
+                  icon={TrendingUp}
+                  variant="green"
+                />
+                <StatsCard
+                  title="Día con Menos Citas"
+                  value={minDay.date_label}
+                  description={`${minDay.appointment_count} citas`}
+                  icon={TrendingDown}
+                  variant="red"
+                />
+                <StatsCard
+                  title="Mes con Más Citas"
+                  value={maxMonth.month_label}
+                  description={`${maxMonth.appointment_count} citas`}
+                  icon={Star}
+                  variant="orange"
+                />
+                <StatsCard
+                  title="Día con Más Ventas"
+                  value={translateDateLabel(data?.revenueAnalytics?.best_day_label || 'N/A')}
+                  description={formatCurrency(data?.revenueAnalytics?.best_day_revenue || 0)}
+                  icon={DollarSign}
+                  variant="blue"
+                />
+                <StatsCard
+                  title="Mes con Más Ventas"
+                  value={translateDateLabel(data?.revenueAnalytics?.best_month_label || 'N/A')}
+                  description={formatCurrency(data?.revenueAnalytics?.best_month_revenue || 0)}
+                  icon={Calendar}
+                  variant="purple"
+                />
+              </div>
+            </div>
+          </div>
         </div>
-
-        {/* Gráficos de Ingresos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <DailyRevenueLineChart 
-            data={data?.dailyRevenue || []} 
-            loading={loading} 
-            error={error}
-          />
-          <MonthlyRevenueBarChart 
-            data={data?.monthlyRevenue || []} 
-            loading={loading} 
-            error={error}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <PaymentMethodsPieChart 
-            data={data?.paymentMethods || []} 
-            loading={loading} 
-            error={error}
-          />
-          <EmployeeRevenueBarChart 
-            data={data?.employeeRevenue || []} 
-            loading={loading} 
-            error={error}
-          />
-        </div>
-      </div>
-
-      {/* ========================================
-          RENDIMIENTO DE SERVICIOS Y EQUIPO
-          ======================================== */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-          <Users className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Rendimiento de Servicios y Equipo
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TopServicesChart 
-            data={data?.topServices || []} 
-            loading={loading} 
-            error={error} 
-          />
-          <EmployeeRankingChart 
-            data={data?.employeeRanking || []} 
-            loading={loading} 
-            error={error} 
-          />
-        </div>
-      </div>
-
-      {/* ========================================
-          DISTRIBUCIÓN TEMPORAL
-          ======================================== */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-          <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-50">
-            Distribución Temporal de Citas
-          </h2>
-        </div>
-
-        <MonthlyAppointmentsChart 
-          data={data?.appointmentsByMonth || []} 
-          loading={loading} 
-          error={error} 
-        />
-
-        <TimeSlotChart 
-          data={data?.timeSlots || []} 
-          loading={loading} 
-          error={error} 
-        />
       </div>
     </div>
   )

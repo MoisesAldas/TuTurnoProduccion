@@ -48,6 +48,12 @@ export interface ServiceData {
   avg_price: number;
 }
 
+export interface DailyAppointmentStats {
+  appointment_date: string; // ISO date format
+  date_label: string; // Formatted label like "15 de Enero"
+  appointment_count: number;
+}
+
 export interface DashboardKPIs {
   total_revenue: number;
   total_appointments: number;
@@ -104,7 +110,13 @@ export interface PaymentMethodData {
 // Filter Types
 // ========================================
 
-export type PeriodType = "day" | "month" | "year" | "specific-month" | "custom";
+export type PeriodType =
+  | "day"
+  | "month"
+  | "year"
+  | "specific-month"
+  | "specific-year"
+  | "custom";
 
 export interface DashboardFilters {
   period: PeriodType;
@@ -127,6 +139,7 @@ export interface DashboardAnalyticsData {
   topServices: ServiceData[];
   employeeRanking: EmployeeAppointmentCount[];
   timeSlots: TimeSlotData[];
+  dailyStats: DailyAppointmentStats[]; // NEW: Daily appointment statistics
 
   // Revenue Analytics (NEW)
   revenueAnalytics: RevenueAnalytics | null;

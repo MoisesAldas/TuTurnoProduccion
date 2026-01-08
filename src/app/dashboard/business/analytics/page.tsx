@@ -232,7 +232,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Monthly Appointments Chart - Full Width */}
-      <MonthlyAppointmentsChart data={data?.appointmentsByMonth || []} loading={loading} />
+      <MonthlyAppointmentsChart data={data?.monthlyRevenue || []} loading={loading} />
 
       {/* Time Slot Chart - Full Width */}
       <TimeSlotChart data={data?.timeSlots || []} loading={loading} />

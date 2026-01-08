@@ -24,11 +24,16 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getSession()
 
   // Rutas protegidas que requieren autenticación
-  const protectedRoutes = ['/dashboard', '/profile', '/business']
+  const protectedRoutes = ['/dashboard', '/profile', '/business/setup']
   const authRoutes = ['/auth/login', '/auth/setup']
 
   // Rutas públicas que NO requieren autenticación
   const publicRoutes = ['/']
+
+  // Detectar si es un perfil público de negocio (/business/[id])
+  const isBusinessProfile = req.nextUrl.pathname.match(/^\/business\/[a-zA-Z0-9-]+$/)
+  // Detectar si es la ruta de reserva (/business/[id]/book)
+  const isBusinessBooking = req.nextUrl.pathname.match(/^\/business\/[a-zA-Z0-9-]+\/book/)
 
   const isProtectedRoute = protectedRoutes.some(route =>
     req.nextUrl.pathname.startsWith(route)
@@ -48,6 +53,16 @@ export async function middleware(req: NextRequest) {
   // Si es una ruta pública, permitir acceso siempre
   if (isPublicRoute) {
     return res
+  }
+
+  // Si es un perfil público de negocio (/business/[id]), permitir acceso sin autenticación
+  if (isBusinessProfile) {
+    return res
+  }
+
+  // Si es la ruta de reserva (/business/[id]/book) y no hay sesión, redirigir a login
+  if (isBusinessBooking && !session) {
+    return NextResponse.redirect(new URL('/auth/client/login', req.url))
   }
 
   // Si es una ruta protegida y no hay sesión, redirigir al login

@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, getYear } from "date-fns";
 import type {
   DashboardAnalyticsData,
   DashboardFilters,
@@ -17,6 +17,7 @@ import type {
   RevenuePeriod,
   EmployeeRevenueDetailed,
   PaymentMethodData,
+  DailyAppointmentStats,
 } from "@/types/analytics";
 
 /**
@@ -33,6 +34,12 @@ export function useDashboardAnalytics(
   const supabase = createClient();
   const { toast } = useToast();
 
+  // Cache for monthly appointments data by year
+  const monthlyDataCache = useRef<Map<number, MonthlyAppointments[]>>(
+    new Map()
+  );
+  const lastFetchedYear = useRef<number | null>(null);
+
   const fetchDashboardData = useCallback(async () => {
     if (!businessId) {
       setLoading(false);
@@ -46,6 +53,21 @@ export function useDashboardAnalytics(
       // Format dates for RPC calls
       const startDate = format(filters.startDate, "yyyy-MM-dd");
       const endDate = format(filters.endDate, "yyyy-MM-dd");
+
+      // Check if we need to fetch monthly data (only if year changed)
+      const currentYear = getYear(filters.startDate);
+      const shouldFetchMonthly = currentYear !== lastFetchedYear.current;
+
+      // Prepare monthly data promise - either fetch or use cache
+      const monthlyPromise = shouldFetchMonthly
+        ? supabase.rpc("get_appointments_by_month", {
+            p_business_id: businessId,
+            p_months_back: 12,
+          })
+        : Promise.resolve({
+            data: monthlyDataCache.current.get(currentYear) || [],
+            error: null,
+          });
 
       // Parallel RPC calls for maximum performance
       const [
@@ -62,6 +84,8 @@ export function useDashboardAnalytics(
         monthlyRevenueResult,
         employeeRevenueResult,
         paymentMethodsResult,
+        // NEW: Daily appointment statistics
+        dailyStatsResult,
       ] = await Promise.all([
         // 1. Unique clients count
         supabase.rpc("get_unique_clients_count", {
@@ -77,17 +101,15 @@ export function useDashboardAnalytics(
           p_end_date: endDate,
         }),
 
-        // 3. Appointments by weekday
-        supabase.rpc("get_appointments_by_weekday", {
+        // 3. Appointments by weekday (with date range)
+        supabase.rpc("get_appointments_by_weekday_range", {
           p_business_id: businessId,
-          p_period: "custom", // We use custom dates
+          p_start_date: startDate,
+          p_end_date: endDate,
         }),
 
-        // 4. Appointments by month (last 12 months)
-        supabase.rpc("get_appointments_by_month", {
-          p_business_id: businessId,
-          p_months_back: 12,
-        }),
+        // 4. Appointments by month (cached or fetched based on year)
+        monthlyPromise,
 
         // 5. Top 5 services
         supabase.rpc("get_top_services_dashboard", {
@@ -135,14 +157,30 @@ export function useDashboardAnalytics(
           p_period_type: "month",
         }),
 
-        // 11. Employee revenue (NEW - using existing function)
-        supabase.rpc("get_revenue_by_employee", {
-          p_business_id: businessId,
-          p_months_back: 3,
-        }),
+        // 11. Employee revenue - calculated from appointments with paid invoices
+        supabase
+          .from("appointments")
+          .select(
+            `
+            employee_id,
+            employees!inner(first_name, last_name),
+            invoices!inner(total, status)
+          `
+          )
+          .eq("business_id", businessId)
+          .gte("appointment_date", startDate)
+          .lte("appointment_date", endDate)
+          .eq("invoices.status", "paid"),
 
         // 12. Payment methods (NEW - using existing function)
         supabase.rpc("get_revenue_by_payment_method", {
+          p_business_id: businessId,
+          p_start_date: startDate,
+          p_end_date: endDate,
+        }),
+
+        // 13. Daily appointment statistics (NEW)
+        supabase.rpc("get_daily_appointment_stats", {
           p_business_id: businessId,
           p_start_date: startDate,
           p_end_date: endDate,
@@ -162,24 +200,62 @@ export function useDashboardAnalytics(
       if (monthlyRevenueResult.error) throw monthlyRevenueResult.error;
       if (employeeRevenueResult.error) throw employeeRevenueResult.error;
       if (paymentMethodsResult.error) throw paymentMethodsResult.error;
+      if (dailyStatsResult.error) throw dailyStatsResult.error;
+
+      // Transform employee revenue data from appointments query
+      const transformedEmployeeRevenue: EmployeeRevenueDetailed[] = [];
+      const revenueByEmployee = new Map<string, number>();
+
+      (employeeRevenueResult.data || []).forEach((item: any) => {
+        const empId = item.employee_id;
+        const empName = `${item.employees?.first_name || ""} ${
+          item.employees?.last_name || ""
+        }`.trim();
+        const invoiceTotal = item.invoices?.total || 0;
+
+        const current = revenueByEmployee.get(empId) || 0;
+        revenueByEmployee.set(empId, current + invoiceTotal);
+
+        // Store employee name for later
+        if (!transformedEmployeeRevenue.find((e) => e.employee_id === empId)) {
+          transformedEmployeeRevenue.push({
+            month_label: format(filters.startDate, "MMM yyyy"),
+            month_date: startDate,
+            employee_id: empId,
+            employee_name: empName,
+            total_revenue: 0, // Will be updated below
+          });
+        }
+      });
+
+      // Update totals
+      transformedEmployeeRevenue.forEach((emp) => {
+        emp.total_revenue = revenueByEmployee.get(emp.employee_id) || 0;
+      });
+
+      // Update monthly data cache if we fetched new data
+      const monthlyData = (monthlyResult.data as MonthlyAppointments[]) || [];
+      if (shouldFetchMonthly && monthlyData.length > 0) {
+        monthlyDataCache.current.set(currentYear, monthlyData);
+        lastFetchedYear.current = currentYear;
+      }
 
       // Process and set data
       const analyticsData: DashboardAnalyticsData = {
         kpis: kpisResult.data?.[0] || null,
         uniqueClients: clientsResult.data?.[0] || null,
         appointmentsByWeekday: (weekdayResult.data as WeekdayData[]) || [],
-        appointmentsByMonth:
-          (monthlyResult.data as MonthlyAppointments[]) || [],
+        appointmentsByMonth: monthlyData,
         topServices: (servicesResult.data as ServiceData[]) || [],
         employeeRanking:
           (employeeResult.data as EmployeeAppointmentCount[]) || [],
         timeSlots: (timeSlotsResult.data as TimeSlotData[]) || [],
+        dailyStats: (dailyStatsResult.data as DailyAppointmentStats[]) || [],
         // Revenue analytics (NEW)
         revenueAnalytics: revenueAnalyticsResult.data?.[0] || null,
         dailyRevenue: (dailyRevenueResult.data as RevenuePeriod[]) || [],
         monthlyRevenue: (monthlyRevenueResult.data as RevenuePeriod[]) || [],
-        employeeRevenue:
-          (employeeRevenueResult.data as EmployeeRevenueDetailed[]) || [],
+        employeeRevenue: transformedEmployeeRevenue,
         paymentMethods:
           (paymentMethodsResult.data as PaymentMethodData[]) || [],
         dateRange: {

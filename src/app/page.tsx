@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Header from '@/components/sections/Header'
 import HeroSection from '@/components/sections/HeroSection'
 import BusinessShowcase from '@/components/sections/BusinessShowcase'
-import TestimonialsSection from '@/components/sections/TestimonialsSection'
+import AboutSection from '@/components/sections/AboutSection'
 import FeaturesSection from '@/components/sections/FeaturesSection'
 import BusinessTypes from '@/components/sections/BusinessTypes'
 import CTASection from '@/components/sections/CTASection'
@@ -35,7 +35,7 @@ export default function HomePage() {
         <HeroSection />
         <BusinessShowcase />
         <FeaturesSection />
-        <TestimonialsSection />
+        <AboutSection />
         <BusinessTypes />
         <CTASection />
       </main>

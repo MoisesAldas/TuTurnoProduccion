@@ -4,6 +4,5 @@
  */
 
 export * from './types'
-export * from './exportToCSV'
 export * from './exportToExcel'
 export * from './exportToPDF'

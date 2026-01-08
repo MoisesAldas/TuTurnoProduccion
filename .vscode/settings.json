@@ -12,5 +12,16 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  "editor.inlayHints.enabled": "on"
+  "editor.inlayHints.enabled": "on",
+  "sonarlint.rules": {
+    "typescript:S1134": {
+      "level": "on"
+    },
+    "typescript:S1135": {
+      "level": "on"
+    }
+  },
+  "sonarlint.connectedMode.project": {
+    "projectKey": "tuturno_tuturno-produccion"
+  }
 }

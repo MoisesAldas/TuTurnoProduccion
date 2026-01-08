@@ -16,10 +16,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
-import { Download, FileText, FileSpreadsheet, FileBarChart, Loader2 } from 'lucide-react'
+import { Download, FileSpreadsheet, FileBarChart, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AnalyticsExportData, ExportFormat } from '@/lib/export/types'
-import { exportToCSV } from '@/lib/export/exportToCSV'
 import { exportToExcel } from '@/lib/export/exportToExcel'
 import { exportToPDF } from '@/lib/export/exportToPDF'
 
@@ -56,14 +55,11 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
       await new Promise(resolve => setTimeout(resolve, 300))
 
       switch (format) {
-        case 'csv':
-          exportToCSV(data, filename)
-          break
         case 'excel':
-          exportToExcel(data, filename)
+          await exportToExcel(data, filename)
           break
         case 'pdf':
-          exportToPDF(data, filename)
+          await exportToPDF(data, filename)
           break
         default:
           throw new Error('Formato de exportación no válido')
@@ -119,22 +115,6 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
 
         <DropdownMenuSeparator />
 
-        {/* CSV Option */}
-        <DropdownMenuItem
-          onClick={() => handleExport('csv')}
-          disabled={exporting}
-          className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors"
-        >
-          <FileText className="w-4 h-4 mr-3 text-blue-600" />
-          <div className="flex-1">
-            <p className="font-medium">CSV</p>
-            <p className="text-xs text-gray-500">Valores separados por comas</p>
-          </div>
-          {exportingFormat === 'csv' && (
-            <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
-          )}
-        </DropdownMenuItem>
-
         {/* Excel Option */}
         <DropdownMenuItem
           onClick={() => handleExport('excel')}
@@ -144,7 +124,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
           <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
           <div className="flex-1">
             <p className="font-medium">Excel</p>
-            <p className="text-xs text-gray-500">Hoja de cálculo con múltiples pestañas</p>
+            <p className="text-xs text-gray-500">Reporte completo con formato profesional</p>
           </div>
           {exportingFormat === 'excel' && (
             <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
@@ -159,8 +139,8 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
         >
           <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
           <div className="flex-1">
-            <p className="font-medium">PDF</p>
-            <p className="text-xs text-gray-500">Reporte profesional con tablas</p>
+            <p className="font-medium">PDF Gerencial</p>
+            <p className="text-xs text-gray-500">Reporte ejecutivo con insights y análisis</p>
           </div>
           {exportingFormat === 'pdf' && (
             <Loader2 className="w-4 h-4 animate-spin text-orange-600" />

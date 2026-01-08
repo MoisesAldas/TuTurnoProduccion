@@ -131,8 +131,8 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
   return (
     <Card className="dark:border-gray-700">
       <CardContent className="pt-6">
-        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
-          {/* Period Toggle */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Period Label + Toggle */}
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Período:</span>
@@ -146,31 +146,31 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
           >
             <ToggleGroupItem
               value="day"
-              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400"
+              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400 text-xs sm:text-sm px-2 sm:px-3"
             >
               Día
             </ToggleGroupItem>
             <ToggleGroupItem
               value="month"
-              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400"
+              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400 text-xs sm:text-sm px-2 sm:px-3"
             >
               Mes
             </ToggleGroupItem>
             <ToggleGroupItem
               value="year"
-              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400"
+              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400 text-xs sm:text-sm px-2 sm:px-3"
             >
               Año
             </ToggleGroupItem>
             <ToggleGroupItem
               value="specific-month"
-              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400"
+              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400 text-xs sm:text-sm px-2 sm:px-3"
             >
               Mes Específico
             </ToggleGroupItem>
             <ToggleGroupItem
               value="custom"
-              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400"
+              className="data-[state=on]:bg-orange-100 data-[state=on]:text-orange-700 dark:data-[state=on]:bg-orange-900/20 dark:data-[state=on]:text-orange-400 text-xs sm:text-sm px-2 sm:px-3"
             >
               Personalizado
             </ToggleGroupItem>
@@ -178,7 +178,7 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
 
           {/* Month and Year Selectors for Specific Month */}
           {tempPeriod === 'specific-month' && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <>
               <Select value={selectedMonth} onValueChange={handleMonthChange}>
                 <SelectTrigger className="w-[140px] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
                   <SelectValue placeholder="Seleccionar mes" />
@@ -212,7 +212,7 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </>
           )}
 
           {/* Custom Date Range Picker */}
@@ -247,32 +247,41 @@ export function DashboardFilters({ filters, onFiltersChange, onRefresh, loading 
             </Popover>
           )}
 
-          {/* Apply Button */}
+          {/* Divider vertical */}
+          <div className="hidden lg:block h-8 w-px bg-gray-300 dark:bg-gray-600" />
+
+          {/* Current Range Display */}
+          <div className="text-xs text-gray-500 dark:text-gray-400 hidden lg:block">
+            {format(tempRange.from, "dd 'de' MMM", { locale: es })} - {format(tempRange.to, "dd 'de' MMM, yyyy", { locale: es })}
+          </div>
+
+          {/* Spacer para empujar botones a la derecha */}
+          <div className="flex-1 hidden lg:block" />
+
+          {/* Action Buttons */}
           <Button
             onClick={handleApplyFilters}
-            className=" bg-orange-600 hover:bg-orange-600 text-white"
+            className="bg-orange-600 hover:bg-orange-700 text-white"
           >
             Aplicar Filtros
           </Button>
 
-          {/* Refresh Button - pegado a la derecha */}
           {onRefresh && (
             <Button
               onClick={onRefresh}
               disabled={loading}
               variant="outline"
-              className="sm:ml-auto dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Actualizar
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           )}
+        </div>
 
-          {/* Current Range Display (on mobile, show below) */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 w-full sm:w-auto">
-            {format(tempRange.from, "dd 'de' MMMM", { locale: es })} -{' '}
-            {format(tempRange.to, "dd 'de' MMMM, yyyy", { locale: es })}
-          </div>
+        {/* Mobile Range Display - Solo visible en móvil */}
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-3 lg:hidden pt-3 border-t border-gray-200 dark:border-gray-700">
+          <span className="font-medium">Rango:</span>{' '}
+          {format(tempRange.from, "dd 'de' MMMM", { locale: es })} - {format(tempRange.to, "dd 'de' MMMM, yyyy", { locale: es })}
         </div>
       </CardContent>
     </Card>

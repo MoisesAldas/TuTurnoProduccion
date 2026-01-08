@@ -9,35 +9,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ChevronLeft, ChevronRight, Download, FileText, FileSpreadsheet, FileBarChart, Loader2, Calendar, Users, Search as SearchIcon, RotateCcw, List as ListIcon, User, Clock, DollarSign, Briefcase, MoreVertical, Eye, Edit, Check, XCircle, AlertCircle, CreditCard, Building, CheckCircle2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, FileText, FileSpreadsheet, FileBarChart, Loader2, Calendar, Users, Search as SearchIcon, RotateCcw, List as ListIcon, User, Clock, DollarSign, Briefcase, MoreVertical, Eye, Edit, Check, XCircle, AlertCircle, CreditCard, Building } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import ExcelJS from 'exceljs'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
+import { DataTable } from '@/components/ui/data-table'
 import AppointmentModal from '@/components/AppointmentModal'
 import CreateAppointmentModal from '@/components/CreateAppointmentModal'
 import { parseDateString } from '@/lib/dateUtils'
-import { createColumns, type AppointmentTableCallbacks } from './columns'
-import { DataTable } from '@/components/ui/data-table'
+import type { AppointmentExportRow } from '@/lib/export/appointments/types'
+import { createColumns, type AppointmentTableCallbacks, type AppointmentRow } from './columns'
+import { exportAppointmentsExcel } from '@/lib/export/appointments/appointmentsExcel'
+import { exportAppointmentsPDF } from '@/lib/export/appointments/appointmentsPDF'
+import { exportAppointmentsCSV } from '@/lib/export/appointments/appointmentsCSV'
 
 import type { Employee, Service, Appointment } from '@/types/database'
 
-type AppointmentRow = {
-  id: string
-  appointment_date: string
-  start_time: string
-  end_time: string
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
-  total_price: number
-  employee_id: string | null
-  employee_name: string | null
-  client_id: string | null
-  client_name: string | null
-  client_phone: string | null
-  is_walk_in: boolean
-  service_names: string[] | null
-  total_count: number
-}
 
 export default function ListarPage() {
   const supabase = createClient()
@@ -240,12 +225,6 @@ export default function ListarPage() {
     }
   }
 
-  const handleRowClick = async (appointmentId: string) => {
-    const fullAppointment = await fetchFullAppointment(appointmentId)
-    if (fullAppointment) {
-      setSelectedAppointment(fullAppointment)
-    }
-  }
 
   const handleCloseModal = () => {
     setSelectedAppointment(null)
@@ -275,30 +254,14 @@ export default function ListarPage() {
       })
       return
     }
-    const header = ['Fecha','Hora Inicio','Hora Fin','Estado','Precio','Empleado','Cliente','Teléfono','Walk-in','Servicios']
-    const lines = allRows.map(r => [
-      r.appointment_date,
-      r.start_time?.substring(0,5),
-      r.end_time?.substring(0,5),
-      r.status,
-      r.total_price,
-      r.employee_name ?? '',
-      r.client_name ?? '',
-      r.client_phone ?? '',
-      r.is_walk_in ? 'Sí' : 'No',
-      (r.service_names || []).join(' | ')
-    ])
-    const csv = [header, ...lines].map(cols => cols.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'citas.csv'
-    a.click()
-    URL.revokeObjectURL(url)
+
+    await exportAppointmentsCSV({
+      data: allRows as AppointmentExportRow[]
+    })
+
     toast({
       title: 'Exportación exitosa',
-      description: `Se exportaron ${allRows.length} citas correctamente`
+      description: `Se exportaron ${allRows.length} citas a CSV correctamente`
     })
   }
 
@@ -313,172 +276,16 @@ export default function ListarPage() {
       return
     }
 
-    const workbook = new ExcelJS.Workbook()
-    const worksheet = workbook.addWorksheet('Citas')
-
-    const today = new Date()
-    const dateStr = today.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    await exportAppointmentsExcel({
+      businessName,
+      data: allRows as AppointmentExportRow[],
+      dateFrom,
+      dateTo
     })
-
-    // Calcular totales - solo citas completadas generan ingresos
-    const totalRevenue = allRows
-      .filter(r => r.status === 'completed')
-      .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
-    const totalAppointments = allRows.length
-
-    // Período de fechas (si aplica)
-    const period = (dateFrom && dateTo)
-      ? `${new Date(dateFrom + 'T00:00:00').toLocaleDateString('es-ES')} - ${new Date(dateTo + 'T00:00:00').toLocaleDateString('es-ES')}`
-      : 'Todas las fechas'
-
-    // ========================================
-    // TÍTULO PRINCIPAL (Fila 1)
-    // ========================================
-    worksheet.mergeCells('A1:J1')
-    const titleCell = worksheet.getCell('A1')
-    titleCell.value = 'LISTADO DE CITAS'
-    titleCell.font = { bold: true, size: 18, color: { argb: 'FFFFFFFF' } }
-    titleCell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFEA580C' } // orange-600
-    }
-    titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
-    worksheet.getRow(1).height = 30
-
-    // ========================================
-    // METADATA (Filas 2-5)
-    // ========================================
-    const metadataRows = [
-      `Generado el: ${dateStr}`,
-      `Período: ${period}`,
-      `Total de citas: ${totalAppointments}`,
-      `Ingresos totales (solo completadas): $${totalRevenue.toFixed(2)}`
-    ]
-
-    metadataRows.forEach((text, index) => {
-      const rowNum = index + 2
-      worksheet.mergeCells(`A${rowNum}:J${rowNum}`)
-      const cell = worksheet.getCell(`A${rowNum}`)
-      cell.value = text
-      cell.font = { bold: true, size: 11, color: { argb: 'FF78350F' } } // amber-900
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFFBBF24' } // amber-400
-      }
-      cell.alignment = { horizontal: 'left', vertical: 'middle' }
-      worksheet.getRow(rowNum).height = 20
-    })
-
-    // Línea vacía (Fila 6)
-    worksheet.getRow(6).height = 5
-
-    // ========================================
-    // HEADERS DE COLUMNAS (Fila 7)
-    // ========================================
-    const headers = ['Fecha', 'Hora Inicio', 'Hora Fin', 'Estado', 'Precio', 'Empleado', 'Cliente', 'Teléfono', 'Walk-in', 'Servicios']
-    const headerRow = worksheet.getRow(7)
-    headerRow.values = headers
-    headerRow.height = 25
-
-    headerRow.eachCell((cell) => {
-      cell.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } }
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFEA580C' } // orange-600
-      }
-      cell.alignment = { horizontal: 'center', vertical: 'middle' }
-      cell.border = {
-        top: { style: 'thin', color: { argb: 'FFD97706' } },
-        bottom: { style: 'thin', color: { argb: 'FFD97706' } },
-        left: { style: 'thin', color: { argb: 'FFD97706' } },
-        right: { style: 'thin', color: { argb: 'FFD97706' } }
-      }
-    })
-
-    // ========================================
-    // DATOS (Desde fila 8)
-    // ========================================
-    allRows.forEach((row, index) => {
-      const rowNum = index + 8
-      const dataRow = worksheet.getRow(rowNum)
-
-      dataRow.values = [
-        new Date(row.appointment_date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-        row.start_time?.substring(0,5) || '-',
-        row.end_time?.substring(0,5) || '-',
-        row.status.replace('_', ' '),
-        Number(row.total_price || 0),
-        row.employee_name || '-',
-        row.client_name || '-',
-        row.client_phone || '-',
-        row.is_walk_in ? 'Sí' : 'No',
-        (row.service_names || []).join(' | ') || '-'
-      ]
-
-      // Estilo alternado para filas
-      const isEven = index % 2 === 0
-      const fillColor = isEven ? 'FFFFFBEB' : 'FFFFFFFF' // amber-50 : white
-
-      dataRow.eachCell((cell, colNum) => {
-        cell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: fillColor }
-        }
-        cell.alignment = { vertical: 'middle' }
-
-        // Formato especial para precio (columna 5)
-        if (colNum === 5) {
-          cell.numFmt = '"$"#,##0.00'
-          cell.alignment = { horizontal: 'right', vertical: 'middle' }
-        }
-
-        // Centrar Walk-in (columna 9)
-        if (colNum === 9) {
-          cell.alignment = { horizontal: 'center', vertical: 'middle' }
-        }
-      })
-    })
-
-    // ========================================
-    // CONFIGURAR ANCHOS DE COLUMNAS
-    // ========================================
-    worksheet.columns = [
-      { width: 12 },  // Fecha
-      { width: 10 },  // Hora Inicio
-      { width: 10 },  // Hora Fin
-      { width: 14 },  // Estado
-      { width: 12 },  // Precio
-      { width: 22 },  // Empleado
-      { width: 22 },  // Cliente
-      { width: 15 },  // Teléfono
-      { width: 10 },  // Walk-in
-      { width: 45 }   // Servicios
-    ]
-
-    // ========================================
-    // EXPORTAR ARCHIVO
-    // ========================================
-    const buffer = await workbook.xlsx.writeBuffer()
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const ts = today.toISOString().split('T')[0]
-    a.download = `citas-${ts}.xlsx`
-    a.click()
-    URL.revokeObjectURL(url)
 
     toast({
       title: 'Exportación exitosa',
-      description: `Se exportaron ${allRows.length} citas correctamente`
+      description: `Se exportaron ${allRows.length} citas a Excel correctamente`
     })
   }
 
@@ -493,190 +300,16 @@ export default function ListarPage() {
       return
     }
 
-    const doc = new jsPDF('landscape', 'mm', 'a4')
-    const pageWidth = doc.internal.pageSize.width
-    const pageHeight = doc.internal.pageSize.height
-
-    // ========================================
-    // PROFESSIONAL HEADER - Orange Gradient
-    // ========================================
-    doc.setFillColor(234, 88, 12) // orange-600
-    doc.rect(0, 0, pageWidth, 35, 'F')
-
-    // Title in white
-    doc.setTextColor(255, 255, 255)
-    doc.setFontSize(22)
-    doc.setFont('helvetica', 'bold')
-    doc.text('LISTADO DE CITAS', 15, 15)
-
-    // Subtitle
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'normal')
-    const today = new Date()
-    const dateStr = today.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    await exportAppointmentsPDF({
+      businessName,
+      data: allRows as AppointmentExportRow[],
+      dateFrom,
+      dateTo
     })
-    doc.text(`Generado el ${dateStr}`, 15, 25)
-
-    // ========================================
-    // AMBER INFO BAR - Metadata
-    // ========================================
-    doc.setFillColor(251, 191, 36) // amber-400
-    doc.rect(0, 35, pageWidth, 12, 'F')
-
-    doc.setTextColor(120, 53, 15) // amber-900
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-
-    // Calculate totals - solo citas completadas generan ingresos
-    const totalRevenue = allRows
-      .filter(r => r.status === 'completed')
-      .reduce((sum, r) => sum + Number(r.total_price || 0), 0)
-    const totalAppointments = allRows.length
-
-    // Period
-    const period = (dateFrom && dateTo)
-      ? `${new Date(dateFrom + 'T00:00:00').toLocaleDateString('es-ES')} - ${new Date(dateTo + 'T00:00:00').toLocaleDateString('es-ES')}`
-      : 'Todas las fechas'
-
-    // Active filters summary
-    const filtersSummary = []
-    if (statuses.length > 0 && statuses.length < 6) {
-      filtersSummary.push(`Estados: ${statuses.map(s => s.replace('_', ' ')).join(', ')}`)
-    }
-    if (walkinFilter !== 'any') {
-      filtersSummary.push(walkinFilter === 'only' ? 'Solo Walk-in' : 'Sin Walk-in')
-    }
-
-    const infoText = `Período: ${period}  |  Total de citas: ${totalAppointments}  |  Ingresos totales: $${totalRevenue.toFixed(2)}`
-    doc.text(infoText, 15, 42)
-
-    // ========================================
-    // PROFESSIONAL TABLE
-    // ========================================
-    autoTable(doc, {
-      startY: 52,
-      head: [[
-        'Fecha',
-        'Inicio',
-        'Fin',
-        'Estado',
-        'Precio',
-        'Empleado',
-        'Cliente',
-        'Teléfono',
-        'Walk-in',
-        'Servicios'
-      ]],
-      body: allRows.map(r => [
-        new Date(r.appointment_date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-        r.start_time?.substring(0,5) || '-',
-        r.end_time?.substring(0,5) || '-',
-        r.status.replace('_',' '),
-        new Intl.NumberFormat('es-EC',{ style:'currency', currency:'USD' }).format(Number(r.total_price||0)),
-        r.employee_name || '-',
-        r.client_name || '-',
-        r.client_phone || '-',
-        r.is_walk_in ? 'Sí' : 'No',
-        (r.service_names || []).join(' • ') || '-'
-      ]),
-      styles: {
-        fontSize: 8,
-        cellPadding: 3,
-        overflow: 'linebreak',
-        halign: 'left'
-      },
-      headStyles: {
-        fillColor: [234, 88, 12], // orange-600
-        textColor: [255, 255, 255],
-        fontSize: 8,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      alternateRowStyles: {
-        fillColor: [255, 251, 235] // amber-50
-      },
-      columnStyles: {
-        0: { cellWidth: 24 },  // Fecha
-        1: { cellWidth: 15 },  // Inicio
-        2: { cellWidth: 15 },  // Fin
-        3: { cellWidth: 22 },  // Estado
-        4: { cellWidth: 20, halign: 'right' },  // Precio
-        5: { cellWidth: 30 },  // Empleado
-        6: { cellWidth: 30 },  // Cliente
-        7: { cellWidth: 24 },  // Teléfono
-        8: { cellWidth: 16, halign: 'center' },  // Walk-in
-        9: { cellWidth: 50 }   // Servicios
-      },
-      margin: { left: 10, right: 10 },
-
-      // Color-code appointment states
-      didDrawCell: (data) => {
-        if (data.column.index === 3 && data.cell.section === 'body') {
-          const status = data.cell.raw as string
-
-          // Map status to colors
-          const statusColors: Record<string, [number, number, number]> = {
-            'pending': [234, 179, 8],      // yellow-600
-            'confirmed': [22, 163, 74],    // green-600
-            'in progress': [37, 99, 235],  // blue-600
-            'completed': [107, 114, 128],  // gray-500
-            'cancelled': [220, 38, 38],    // red-600
-            'no show': [234, 88, 12]       // orange-600
-          }
-
-          const color = statusColors[status.toLowerCase()] || [107, 114, 128]
-          doc.setTextColor(color[0], color[1], color[2])
-          doc.setFontSize(8)
-          doc.setFont('helvetica', 'bold')
-        }
-      }
-    })
-
-    // ========================================
-    // FOOTER - Page numbers and decorative line
-    // ========================================
-    const totalPages = (doc as any).internal.pages.length - 1
-
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i)
-
-      // Orange decorative line
-      doc.setDrawColor(234, 88, 12) // orange-600
-      doc.setLineWidth(0.5)
-      doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15)
-
-      // Page numbers
-      doc.setTextColor(107, 114, 128) // gray-500
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.text(
-        `Página ${i} de ${totalPages}`,
-        pageWidth / 2,
-        pageHeight - 10,
-        { align: 'center' }
-      )
-
-      // Generated by TuTurno
-      doc.setFontSize(8)
-      doc.setTextColor(156, 163, 175) // gray-400
-      doc.text(
-        'Generado por TuTurno',
-        pageWidth - 15,
-        pageHeight - 10,
-        { align: 'right' }
-      )
-    }
-
-    const ts = new Date().toISOString().split('T')[0]
-    doc.save(`citas-${ts}.pdf`)
 
     toast({
       title: 'Exportación exitosa',
-      description: `Se exportaron ${allRows.length} citas correctamente`
+      description: `Se exportaron ${allRows.length} citas a PDF correctamente`
     })
   }
 
@@ -1291,7 +924,7 @@ export default function ListarPage() {
 
                               {/* Ver detalles */}
                               <DropdownMenuItem
-                                onClick={() => handleRowClick(row.id)}
+                                onClick={() => handleView(row.id)}
                                 className="cursor-pointer"
                               >
                                 <Eye className="w-4 h-4 mr-2 text-blue-600" />
@@ -1301,10 +934,7 @@ export default function ListarPage() {
                               {/* Editar */}
                               {row.status !== 'completed' && row.status !== 'cancelled' && (
                                 <DropdownMenuItem
-                                  onClick={async () => {
-                                    const apt = await fetchFullAppointment(row.id)
-                                    if (apt) setEditingAppointment(apt)
-                                  }}
+                                  onClick={() => handleEdit(row.id)}
                                   className="cursor-pointer"
                                 >
                                   <Edit className="w-4 h-4 mr-2 text-orange-600" />
@@ -1317,16 +947,7 @@ export default function ListarPage() {
                               {/* Finalizar y Cobrar */}
                               {['confirmed', 'in_progress'].includes(row.status) && (
                                 <DropdownMenuItem
-                                  onClick={async () => {
-                                    const apt = await fetchFullAppointment(row.id)
-                                    if (apt) {
-                                      setSelectedAppointment(apt)
-                                      setTimeout(() => {
-                                        const checkoutBtn = document.querySelector('[data-checkout-trigger]') as HTMLButtonElement
-                                        checkoutBtn?.click()
-                                      }, 100)
-                                    }
-                                  }}
+                                  onClick={() => handleCheckout(row.id)}
                                   className="cursor-pointer"
                                 >
                                   <CreditCard className="w-4 h-4 mr-2 text-green-600" />
@@ -1337,16 +958,7 @@ export default function ListarPage() {
                               {/* Confirmar */}
                               {row.status === 'pending' && (
                                 <DropdownMenuItem
-                                  onClick={async () => {
-                                    try {
-                                      await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', row.id)
-
-                                      toast({ title: 'Cita confirmada' })
-                                      fetchData()
-                                    } catch (error) {
-                                      toast({ title: 'Error', variant: 'destructive' })
-                                    }
-                                  }}
+                                  onClick={() => handleConfirm(row.id)}
                                   className="cursor-pointer"
                                 >
                                   <Check className="w-4 h-4 mr-2 text-green-600" />
@@ -1357,15 +969,7 @@ export default function ListarPage() {
                               {/* En Progreso */}
                               {row.status === 'confirmed' && (
                                 <DropdownMenuItem
-                                  onClick={async () => {
-                                    try {
-                                      await supabase.from('appointments').update({ status: 'in_progress' }).eq('id', row.id)
-                                      toast({ title: 'En progreso' })
-                                      fetchData()
-                                    } catch (error) {
-                                      toast({ title: 'Error', variant: 'destructive' })
-                                    }
-                                  }}
+                                  onClick={() => handleInProgress(row.id)}
                                   className="cursor-pointer"
                                 >
                                   <Clock className="w-4 h-4 mr-2 text-blue-600" />
@@ -1378,22 +982,7 @@ export default function ListarPage() {
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                    onClick={async () => {
-                                      try {
-                                        await supabase.from('appointments').update({ status: 'no_show' }).eq('id', row.id)
-                                        try {
-                                          await fetch('/api/send-no-show-notification', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ appointmentId: row.id })
-                                          })
-                                        } catch (e) {}
-                                        toast({ title: 'No asistió' })
-                                        fetchData()
-                                      } catch (error) {
-                                        toast({ title: 'Error', variant: 'destructive' })
-                                      }
-                                    }}
+                                    onClick={() => handleNoShow(row.id)}
                                     className="cursor-pointer"
                                   >
                                     <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
@@ -1407,30 +996,7 @@ export default function ListarPage() {
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                    onClick={async () => {
-                                      try {
-                                        await supabase.from('appointments').update({ status: 'cancelled' }).eq('id', row.id)
-
-                                        // Send cancellation email
-                                        try {
-                                          await fetch('/api/send-cancellation-notification', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                              appointmentId: row.id,
-                                              cancellationReason: 'Cancelada por el negocio'
-                                            })
-                                          })
-                                        } catch (e) {
-                                          console.warn('Failed to send cancellation email')
-                                        }
-
-                                        toast({ title: 'Cita cancelada' })
-                                        fetchData()
-                                      } catch (error) {
-                                        toast({ title: 'Error', variant: 'destructive' })
-                                      }
-                                    }}
+                                    onClick={() => handleCancel(row.id)}
                                     className="cursor-pointer text-red-600"
                                   >
                                     <XCircle className="w-4 h-4 mr-2" />

@@ -27,12 +27,14 @@ export const ChartEmptyState = ({ message }: { message: string }) => (
 )
 
 // Custom tooltip para Recharts
-export const CustomTooltip = ({ active, payload, label, formatter }: any) => {
+export const CustomTooltip = ({ active, payload, label, formatter, labelFormatter }: any) => {
   if (!active || !payload?.length) return null
   
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
-      <p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">{label}</p>
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-2">
+        {labelFormatter ? labelFormatter(label) : label}
+      </p>
       {payload.map((entry: any, index: number) => (
         <div key={index} className="flex items-center gap-2">
           <div 
@@ -54,3 +56,21 @@ export const formatCurrency = (value: number) =>
 
 export const formatPercentage = (value: number) => 
   `${value.toFixed(1)}%`
+
+export const formatNumber = (value: number) => 
+  value.toLocaleString('es-EC')
+
+export const capitalizeFirstLetter = (string: string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+export const formatMonthDateSpanish = (dateStr: string) => {
+  try {
+    const date = new Date(dateStr);
+    const month = date.toLocaleDateString('es-ES', { month: 'short' });
+    const year = date.getFullYear();
+    return `${capitalizeFirstLetter(month)} ${year}`;
+  } catch (e) {
+    return dateStr;
+  }
+}
