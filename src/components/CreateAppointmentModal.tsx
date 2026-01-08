@@ -290,7 +290,7 @@ export default function CreateAppointmentModal({
         client_notes: clientNotes || null
       }
 
-      // Only set status on creation
+      // Only set status on creation more
       if (!appointment) {
         appointmentData.status = 'confirmed'
       }
