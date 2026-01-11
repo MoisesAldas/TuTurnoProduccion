@@ -21,6 +21,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Toaster } from '@/components/ui/toaster'
+import NotificationBell from '@/components/NotificationBell'
 
 
 type NavItem = {
@@ -207,7 +208,10 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <Logo color="black" size="sm" />
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            {/* Notification Bell */}
+            <NotificationBell userId={authState.user?.id} />
+            
             {/* User Avatar */}
             <Avatar className="w-9 h-9 border-2 border-slate-600 cursor-pointer">
               <AvatarImage src={authState.user?.avatar_url} />

@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import Logo from '@/components/logo'
+import { getEmployeesForMultipleServices } from '@/lib/employeeServicesApi'
 
 interface Business {
   id: string
@@ -66,7 +67,9 @@ export default function BookingPage() {
   const [business, setBusiness] = useState<Business | null>(null)
   const [services, setServices] = useState<Service[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]) // Todos los empleados del negocio
   const [loading, setLoading] = useState(true)
+  const [loadingEmployees, setLoadingEmployees] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // Booking state
@@ -136,6 +139,37 @@ export default function BookingPage() {
     }
   }, [selectedDate, selectedEmployee, selectedServices, specialHourForDate])
 
+  // Filtrar empleados cuando cambian los servicios seleccionados
+  useEffect(() => {
+    if (selectedServices.length > 0) {
+      filterEmployeesByServices()
+    } else {
+      // Si no hay servicios seleccionados, mostrar todos los empleados
+      setEmployees(allEmployees)
+    }
+  }, [selectedServices, allEmployees])
+
+  const filterEmployeesByServices = async () => {
+    try {
+      setLoadingEmployees(true)
+      const serviceIds = selectedServices.map(s => s.id)
+      const { data, error } = await getEmployeesForMultipleServices(serviceIds)
+      
+      if (error) {
+        console.error('Error filtering employees:', error)
+        // En caso de error, mostrar todos los empleados
+        setEmployees(allEmployees)
+      } else {
+        setEmployees(data || [])
+      }
+    } catch (error) {
+      console.error('Error filtering employees:', error)
+      setEmployees(allEmployees)
+    } finally {
+      setLoadingEmployees(false)
+    }
+  }
+
   const fetchData = async () => {
     try {
       setLoading(true)
@@ -192,7 +226,8 @@ export default function BookingPage() {
         .order('first_name')
 
       if (!employeesError) {
-        setEmployees(employeesData || [])
+        setAllEmployees(employeesData || [])
+        // No establecer employees aquí - se filtrará por servicios seleccionados
       }
 
     } catch (error) {
@@ -1020,6 +1055,50 @@ export default function BookingPage() {
                 </div>
               </div>
 
+              {/* Loading state */}
+              {loadingEmployees && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
+                    <p className="text-sm text-gray-600">Filtrando empleados disponibles...</p>
+                  </div>
+                </div>
+              )}
+
+              {/* No employees available */}
+              {!loadingEmployees && employees.length === 0 && selectedServices.length > 0 && (
+                <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <AlertTitle className="text-amber-900 dark:text-amber-200 font-semibold">
+                    No hay empleados disponibles
+                  </AlertTitle>
+                  <AlertDescription className="text-amber-800 dark:text-amber-300 mt-2">
+                    <p className="mb-3">
+                      Los servicios seleccionados no pueden ser realizados por el mismo empleado:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 mb-4">
+                      {selectedServices.map(service => (
+                        <li key={service.id} className="font-medium">{service.name}</li>
+                      ))}
+                    </ul>
+                    <p className="text-sm">
+                      Por favor, modifica tu selección de servicios o reserva por separado.
+                    </p>
+                    <Button
+                      onClick={goBackToService}
+                      variant="outline"
+                      className="mt-4 border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/50"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Volver a Servicios
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Employees list */}
+              {!loadingEmployees && employees.length > 0 && (
+                <div className="space-y-4">
               {employees.map((employee) => (
                 <Card
                   key={employee.id}
@@ -1054,8 +1133,14 @@ export default function BookingPage() {
                 </Card>
               ))}
               </div>
+              )}
+            </div>
             </div>
           )}
+            
+
+          
+
 
           {/* Date and Time Selection */}
           {currentStep === 'datetime' && (
@@ -1321,7 +1406,9 @@ export default function BookingPage() {
             </div>
           )}
             </div>
+          
           </div>
+          
         
         
         
@@ -1447,8 +1534,13 @@ export default function BookingPage() {
             </div>
           </div>
         </div>
-  )}  
-      </div>
+
+
+                  )}
+                  
     </div>
-  )
-}
+    
+    </div>
+
+    
+  )}

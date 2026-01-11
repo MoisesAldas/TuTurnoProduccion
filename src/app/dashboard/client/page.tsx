@@ -40,6 +40,7 @@ import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
 import { StatsCard } from '@/components/StatsCard'
 import { Pagination } from '@/components/Pagination'
+import NotificationBell from '@/components/NotificationBell'
 
 // NOTE: All data fetching and state logic from the original file is preserved.
 
@@ -336,6 +337,7 @@ export default function ClientDashboard() {
                   Nueva Reserva
                 </Link>
               </Button>
+              <NotificationBell userId={authState.user?.id} />
             </div>
           </div>
         </div>

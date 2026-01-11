@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X, CheckCircle2, Phone, Mail, FileText, CalendarDays } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X, CheckCircle2, Phone, Mail, FileText, CalendarDays, Briefcase } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -25,6 +25,8 @@ import type { Business } from '@/types/database'
 import CreateEmployeeModal from '@/components/CreateEmployeeModal'
 import EditEmployeeModal from '@/components/EditEmployeeModal'
 import EmployeeAbsencesModal from '@/components/EmployeeAbsencesModal'
+import EmployeeServicesModal from '@/components/EmployeeServicesModal'
+import EmployeeServicesBadge from '@/components/EmployeeServicesBadge'
 import { StatsCard } from '@/components/StatsCard'
 
 // Tipo para empleados
@@ -51,6 +53,7 @@ export default function EmployeesPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [absencesModalOpen, setAbsencesModalOpen] = useState(false)
+  const [servicesModalOpen, setServicesModalOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null)
@@ -355,11 +358,16 @@ export default function EmployeesPage() {
                       <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{employee.bio}</span>
                     </div>
                   )}
+
+                  {/* Services Badge */}
+                  <div className="pt-2">
+                    <EmployeeServicesBadge employeeId={employee.id} />
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -367,7 +375,7 @@ export default function EmployeesPage() {
                         setSelectedEmployee(employee)
                         setEditModalOpen(true)
                       }}
-                      className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800"
+                      className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Editar
@@ -379,12 +387,24 @@ export default function EmployeesPage() {
                         setSelectedEmployee(employee)
                         setAbsencesModalOpen(true)
                       }}
-                      className="flex-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-colors shadow-sm hover:shadow-md dark:hover:bg-blue-900/50 dark:hover:text-blue-400 dark:hover:border-blue-700"
+                      className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-colors shadow-sm hover:shadow-md dark:hover:bg-blue-900/50 dark:hover:text-blue-400 dark:hover:border-blue-700"
                     >
                       <CalendarDays className="w-4 h-4 mr-2" />
                       Ausencias
                     </Button>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedEmployee(employee)
+                      setServicesModalOpen(true)
+                    }}
+                    className="w-full hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 transition-colors shadow-sm hover:shadow-md dark:hover:bg-purple-900/50 dark:hover:text-purple-400 dark:hover:border-purple-700"
+                  >
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    Servicios
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -430,6 +450,18 @@ export default function EmployeesPage() {
           onOpenChange={setAbsencesModalOpen}
           employeeId={selectedEmployee.id}
           employeeName={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
+        />
+      )}
+
+      {/* Employee Services Modal */}
+      {selectedEmployee && business && (
+        <EmployeeServicesModal
+          open={servicesModalOpen}
+          onOpenChange={setServicesModalOpen}
+          employeeId={selectedEmployee.id}
+          employeeName={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
+          businessId={business.id}
+          onSuccess={fetchData}
         />
       )}
 

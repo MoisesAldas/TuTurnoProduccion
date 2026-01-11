@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, Clock, User, CheckCircle, Loader2 } from 'lucide-react'
+import { Calendar, Clock, User, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { parseDateString } from '@/lib/dateUtils'
@@ -36,6 +37,8 @@ interface Appointment {
   appointment_date: string
   start_time: string
   end_time: string
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
+  pending_reason?: 'business_edited' | 'business_closed'
   business: {
     id: string
   }
@@ -385,15 +388,24 @@ export default function ModifyAppointmentDialog({
       const selectedDateStr = formatDateForDB(selectedDate)
 
       // Update appointment
+      // Si la cita está pending (por business_closed o business_edited), al reprogramar se confirma automáticamente
+      const updateData: any = {
+        employee_id: selectedEmployee,
+        appointment_date: selectedDateStr,
+        start_time: `${startTime}:00`,
+        end_time: endTime,
+        total_price: totalPrice
+      }
+
+      // Si está pending, confirmarla automáticamente al reprogramar
+      if (appointment.status === 'pending') {
+        updateData.status = 'confirmed'
+        updateData.pending_reason = null
+      }
+
       const { error: appointmentError } = await supabase
         .from('appointments')
-        .update({
-          employee_id: selectedEmployee,
-          appointment_date: selectedDateStr,
-          start_time: `${startTime}:00`,
-          end_time: endTime,
-          total_price: totalPrice
-        })
+        .update(updateData)
         .eq('id', appointment.id)
 
       if (appointmentError) {
@@ -475,9 +487,28 @@ export default function ModifyAppointmentDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Modificar Cita</DialogTitle>
-          <DialogDescription>Paso {currentStep} de 3</DialogDescription>
+          <DialogTitle className="text-2xl font-bold">
+            {appointment.status === 'pending' && appointment.pending_reason === 'business_closed' 
+              ? '🔄 Reprogramar Cita Requerida' 
+              : 'Modificar Cita'}
+          </DialogTitle>
+          <DialogDescription>
+            {appointment.status === 'pending' && appointment.pending_reason === 'business_closed'
+              ? 'El negocio estará cerrado - Elige una nueva fecha'
+              : `Paso ${currentStep} de 3`}
+          </DialogDescription>
         </DialogHeader>
+
+        {/* Alert para business_closed */}
+        {appointment.status === 'pending' && appointment.pending_reason === 'business_closed' && (
+          <Alert className="border-2 border-orange-400 bg-orange-50 mx-6">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            <AlertDescription className="text-sm text-orange-900">
+              <p className="font-semibold">El negocio estará cerrado el día de tu cita original.</p>
+              <p className="mt-1">Por favor, selecciona una nueva fecha y hora disponible. Los servicios y profesional ya están pre-seleccionados.</p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Progress Indicator */}
         <div className="flex gap-2 my-4">

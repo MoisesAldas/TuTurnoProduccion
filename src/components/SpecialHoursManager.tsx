@@ -169,10 +169,24 @@ export default function SpecialHoursManager({
         if (error) throw error
       }
 
-      toast({
-        title: editingId ? '¡Horario especial actualizado!' : '¡Horario especial creado!',
-        description: `La configuración para ${data.special_date} ha sido guardada.`,
-      })
+      // NUEVO: Si es un día cerrado, marcar citas como pending
+      let affectedCount = 0
+      if (data.is_closed) {
+        affectedCount = await markAffectedAppointmentsAsPending(data.special_date)
+      }
+
+      // Toast con información completa
+      if (data.is_closed && affectedCount > 0) {
+        toast({
+          title: editingId ? '¡Horario especial actualizado!' : '¡Horario especial creado!',
+          description: `${affectedCount} cita(s) requieren reprogramación. Los clientes serán notificados por email.`,
+        })
+      } else {
+        toast({
+          title: editingId ? '¡Horario especial actualizado!' : '¡Horario especial creado!',
+          description: `La configuración para ${data.special_date} ha sido guardada.`,
+        })
+      }
       closeDialog()
       onUpdate()
     } catch (error: any) {
@@ -216,6 +230,84 @@ export default function SpecialHoursManager({
         title: 'Error al eliminar',
         description: 'No se pudo eliminar el horario especial. Intenta de nuevo.',
       })
+    }
+  }
+
+  const markAffectedAppointmentsAsPending = async (specialDate: string): Promise<number> => {
+    try {
+      // 1. Obtener citas afectadas (solo confirmed)
+      const { data: affectedAppointments, error: fetchError } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          appointment_date,
+          start_time,
+          users(email, first_name, last_name),
+          appointment_services(service:services(name))
+        `)
+        .eq('appointment_date', specialDate)
+        .eq('business_id', businessId)
+        .eq('status', 'confirmed')
+
+      if (fetchError) throw fetchError
+      
+      if (!affectedAppointments || affectedAppointments.length === 0) {
+        console.log('No hay citas confirmadas para ese día')
+        return 0
+      }
+
+      // 2. Actualizar status a pending
+      const { error: updateError } = await supabase
+        .from('appointments')
+        .update({ 
+          status: 'pending',
+          pending_reason: 'business_closed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('appointment_date', specialDate)
+        .eq('business_id', businessId)
+        .eq('status', 'confirmed')
+
+      if (updateError) throw updateError
+
+      console.log(`✅ ${affectedAppointments.length} cita(s) marcadas como pending`)
+
+      // 3. Encolar mensajes para envío de emails (usando sistema PGMQ existente)
+      for (const appointment of affectedAppointments) {
+        try {
+          // Encolar mensaje en la cola de emails
+          const { error: queueError } = await supabase.rpc('pgmq_send', {
+            queue_name: 'email_reschedule_required',
+            msg: {
+              appointment_id: appointment.id,
+              type: 'reschedule_required',
+              closed_date: specialDate,
+              reason: 'business_closed'
+            }
+          })
+
+          if (queueError) {
+            console.error(`Error encolando email para cita ${appointment.id}:`, queueError)
+          } else {
+            console.log(`📧 Email encolado para cita ${appointment.id}`)
+          }
+        } catch (emailError) {
+          console.error('Error encolando email:', emailError)
+          // Continuar con los demás emails aunque uno falle
+        }
+      }
+
+      console.log(`✅ ${affectedAppointments.length} cita(s) marcadas como pending y notificadas`)
+      return affectedAppointments.length
+
+    } catch (error) {
+      console.error('Error marking appointments as pending:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudieron marcar las citas para reprogramación.',
+      })
+      return 0
     }
   }
 

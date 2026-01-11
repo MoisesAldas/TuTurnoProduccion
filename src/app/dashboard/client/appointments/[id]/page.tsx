@@ -38,6 +38,7 @@ interface Appointment {
   end_time: string
   total_price: number
   status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
+  pending_reason?: 'business_edited' | 'business_closed'
   client_notes?: string
   business: {
     id: string
@@ -464,8 +465,8 @@ export default function AppointmentDetailPage() {
                 </Card>
               )}
 
-              {/* Alert para citas PENDING */}
-              {appointment.status === 'pending' && (
+              {/* Alert para citas PENDING - Edición de negocio */}
+              {appointment.status === 'pending' && appointment.pending_reason === 'business_edited' && (
                 <Alert className="border-2 border-yellow-300 bg-yellow-50">
                   <AlertCircle className="h-5 w-5 text-yellow-600" />
                   <AlertDescription className="text-sm text-yellow-800">
@@ -477,6 +478,27 @@ export default function AppointmentDetailPage() {
                     <p className="mt-2">
                       Puedes <strong>aceptar</strong>, <strong>reprogramar</strong> o <strong>cancelar</strong> esta cita 
                       sin restricciones de tiempo.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Alert para citas PENDING - Negocio cerrado */}
+              {appointment.status === 'pending' && appointment.pending_reason === 'business_closed' && (
+                <Alert className="border-2 border-orange-400 bg-orange-50">
+                  <AlertCircle className="h-5 w-5 text-orange-600" />
+                  <AlertDescription className="text-sm text-orange-900">
+                    <p className="font-semibold mb-1">🔄 Reprogramación Requerida</p>
+                    <p>
+                      El negocio estará <strong>cerrado</strong> el día de tu cita. Necesitas reprogramar 
+                      para otra fecha disponible.
+                    </p>
+                    <p className="mt-2">
+                      Tienes <strong>7 días</strong> para reprogramar o cancelar. Si no respondes, 
+                      la cita se cancelará automáticamente.
+                    </p>
+                    <p className="mt-2 font-semibold">
+                      ⚠️ No podrás aceptar esta cita - debes elegir una nueva fecha.
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -512,8 +534,8 @@ export default function AppointmentDetailPage() {
                   <CardTitle className="text-base sm:text-lg font-semibold">¿Qué deseas hacer?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 sm:space-y-3">
-                  {/* Accept Changes Button - Solo para citas pending */}
-                  {appointment.status === 'pending' && (
+                  {/* Accept Changes Button - Solo para citas pending por edición (NO para business_closed) */}
+                  {appointment.status === 'pending' && appointment.pending_reason === 'business_edited' && (
                     <Button
                       onClick={handleAcceptChanges}
                       disabled={cancelling}

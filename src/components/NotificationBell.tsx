@@ -87,6 +87,16 @@ const getNotificationStyles = (type: string) => {
         badgeText: 'text-orange-700',
         badgeLabel: 'Cancelado'
       }
+    case 'appointment_rescheduled':
+      return {
+        icon: CalendarClock,
+        iconColor: 'text-orange-600',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-l-orange-500',
+        badgeBg: 'bg-orange-100',
+        badgeText: 'text-orange-700',
+        badgeLabel: 'Reprogramación'
+      }
     default:
       return {
         icon: Bell,

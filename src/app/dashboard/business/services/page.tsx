@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation'
 import type { Service, Business } from '@/types/database'
 import CreateServiceModal from '@/components/CreateServiceModal'
 import EditServiceModal from '@/components/EditServiceModal'
+import ServiceEmployeesBadge from '@/components/ServiceEmployeesBadge'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
@@ -215,6 +216,15 @@ const formatDuration = (minutes: number) => {
           >
             {isActive ? 'Activo' : 'Inactivo'}
           </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: 'employees',
+      header: 'Empleados',
+      cell: ({ row }) => {
+        return (
+          <ServiceEmployeesBadge serviceId={row.original.id} variant="compact" />
         )
       },
     },
@@ -457,6 +467,10 @@ const formatDuration = (minutes: number) => {
                       {service.description}
                     </p>
                   )}
+                  {/* Employees Badge */}
+                  <div className="mt-3">
+                    <ServiceEmployeesBadge serviceId={service.id} variant="compact" />
+                  </div>
                 </CardHeader>
 
                 <CardContent className="pt-0 space-y-4">
