@@ -90,12 +90,18 @@ export async function GET(request: NextRequest) {
 
     if (sessionError) {
       console.error("Error exchanging code for session:", sessionError);
+      console.error("Error message:", sessionError.message);
+      console.error("Error status:", sessionError.status);
 
-      // Detectar error de PKCE (código usado en diferente dispositivo)
+      // Detectar error de PKCE o código usado en diferente dispositivo
       const isPKCEError =
         sessionError.message?.includes("PKCE") ||
         sessionError.message?.includes("code_verifier") ||
-        sessionError.message?.includes("invalid_grant");
+        sessionError.message?.includes("invalid_grant") ||
+        sessionError.message?.includes("Code exchange failed") ||
+        sessionError.message?.includes("Invalid code") ||
+        sessionError.status === 400 || // Bad request típico de PKCE
+        sessionError.status === 401; // Unauthorized típico de código inválido
 
       if (isPKCEError) {
         const loginPath =
@@ -103,7 +109,7 @@ export async function GET(request: NextRequest) {
             ? "/auth/business/login"
             : "/auth/client/login";
         const errorMessage =
-          "Por favor abre el enlace de confirmación en el mismo dispositivo donde iniciaste el registro.";
+          "El enlace de confirmación debe abrirse en el mismo dispositivo y navegador donde iniciaste el registro. Por favor, vuelve a tu dispositivo original o solicita un nuevo enlace.";
         const res = NextResponse.redirect(
           `${origin}${loginPath}?error=device_mismatch&message=${encodeURIComponent(
             errorMessage
@@ -118,7 +124,9 @@ export async function GET(request: NextRequest) {
           ? "/auth/business/login"
           : "/auth/client/login";
       const res = NextResponse.redirect(
-        `${origin}${loginPath}?error=session_error`
+        `${origin}${loginPath}?error=session_error&message=${encodeURIComponent(
+          sessionError.message || "Error al crear la sesión"
+        )}`
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
       return res;
