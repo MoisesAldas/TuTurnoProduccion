@@ -422,6 +422,7 @@ export default function CreateEmployeeModal({
                 <Input
                   id="phone"
                   type="tel"
+                  maxLength={10}
                   {...register('phone')}
                   className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
                     touchedFields.phone && !errors.phone ? 'border-green-500' : ''
@@ -429,6 +430,10 @@ export default function CreateEmployeeModal({
                     errors.phone ? 'border-red-500' : ''
                   }`}
                   placeholder="0999123456"
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement
+                    target.value = target.value.replace(/[^0-9]/g, '').slice(0, 10)
+                  }}
                 />
                 {touchedFields.phone && !errors.phone && (
                   <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />

@@ -239,11 +239,12 @@ export default function ClientSetupPage() {
                   id="phone"
                   type="tel"
                   placeholder="0999123456"
+                  maxLength={10}
                   className="pl-10 h-10 border-gray-300 focus:border-slate-500 focus:ring-slate-500"
                   {...register('phone')}
                   onInput={(e) => {
                     const target = e.target as HTMLInputElement
-                    target.value = target.value.replace(/[^0-9]/g, '')
+                    target.value = target.value.replace(/[^0-9]/g, '').slice(0, 10)
                   }}
                 />
               </div>

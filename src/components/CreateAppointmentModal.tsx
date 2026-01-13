@@ -646,9 +646,13 @@ export default function CreateAppointmentModal({
                     <Input
                       id="walk-in-phone"
                       type="tel"
-                      placeholder="Ej: 0991234567"
+                      placeholder="0999123456"
+                      maxLength={10}
                       value={walkInPhone}
-                      onChange={(e) => setWalkInPhone(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10)
+                        setWalkInPhone(value)
+                      }}
                       className="text-base"
                     />
                   </div>

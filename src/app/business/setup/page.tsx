@@ -16,33 +16,14 @@ import { MapPin, Building2, ArrowRight, ArrowLeft, Phone, Mail, Globe, Check, In
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
+import { businessNameSchema, phoneSchema, emailSchema, websiteSchema, mediumTextSchema } from '@/lib/validation'
 
 const businessSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'Máximo 100 caracteres')
-    .regex(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s&.-]+$/, 'Solo letras, números y caracteres básicos'),
-  description: z
-    .string()
-    .max(500, 'Máximo 500 caracteres')
-    .optional(),
-  phone: z
-    .string()
-    .optional()
-    .refine((val) => !val || /^[+]?[0-9\s-()]{10,15}$/.test(val), {
-      message: 'Formato de teléfono inválido'
-    }),
-  email: z
-    .string()
-    .email('Email inválido')
-    .optional()
-    .or(z.literal('')),
-  website: z
-    .string()
-    .url('URL inválida (debe incluir https://)')
-    .optional()
-    .or(z.literal('')),
+  name: businessNameSchema,
+  description: mediumTextSchema,
+  phone: phoneSchema,
+  email: emailSchema,
+  website: websiteSchema,
   business_category_id: z.string().min(1, 'Selecciona una categoría'),
 })
 
@@ -546,9 +527,14 @@ export default function BusinessSetupPage() {
                         <Input
                           id="phone"
                           type="tel"
-                          placeholder="+593 99 123 4567"
+                          placeholder="0999123456"
+                          maxLength={10}
                           className="pl-10 h-10"
                           {...register('phone')}
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement
+                            target.value = target.value.replace(/[^0-9]/g, '').slice(0, 10)
+                          }}
                         />
                       </div>
                       {errors.phone && (

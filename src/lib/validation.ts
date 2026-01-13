@@ -416,34 +416,20 @@ export const serviceFormSchema = z.object({
  *
  * Features:
  * ✅ Names auto-uppercase
- * ✅ At least ONE contact method required (phone OR email)
+ * ✅ Email and phone REQUIRED
  * ✅ Cannot submit until valid
  *
  * Usage:
  * import { clientFormSchema, type ClientFormData } from '@/lib/validation'
  */
-export const clientFormSchema = z
-  .object({
-    first_name: firstNameSchema,
-    last_name: lastNameSchema,
-    email: emailSchema,
-    phone: phoneSchema,
-    notes: longTextSchema,
-    is_active: z.boolean(),
-  })
-  .refine(
-    (data) => {
-      // Al menos uno de los dos debe tener valor
-      const hasPhone = data.phone && data.phone.trim().length > 0;
-      const hasEmail = data.email && data.email.trim().length > 0;
-      return hasPhone || hasEmail;
-    },
-    {
-      message:
-        "Debe proporcionar al menos un método de contacto (teléfono o email)",
-      path: ["phone"], // Mostrar error en el campo phone
-    }
-  );
+export const clientFormSchema = z.object({
+  first_name: firstNameSchema,
+  last_name: lastNameSchema,
+  email: requiredEmailSchema,
+  phone: requiredPhoneSchema,
+  notes: longTextSchema,
+  is_active: z.boolean(),
+});
 
 /**
  * Walk-in client schema (Appointment modal)

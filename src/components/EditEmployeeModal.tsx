@@ -506,9 +506,14 @@ export default function EditEmployeeModal({
                 <Input
                   id="phone"
                   type="tel"
+                  maxLength={10}
                   {...register('phone')}
                   className="pl-10 h-10 focus:border-orange-500 focus:ring-orange-500"
-                  placeholder="+593 99 123 4567"
+                  placeholder="0999123456"
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement
+                    target.value = target.value.replace(/[^0-9]/g, '').slice(0, 10)
+                  }}
                 />
               </div>
               {errors.phone && (

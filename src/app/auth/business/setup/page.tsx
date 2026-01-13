@@ -15,22 +15,12 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import Logo from '@/components/logo'
 import AuthProgressSteps from '@/components/AuthProgressSteps'
+import { firstNameSchema, lastNameSchema, phoneSchema } from '@/lib/validation'
 
 const setupSchema = z.object({
-  firstName: z
-    .string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$/, 'El nombre solo puede contener letras'),
-  lastName: z
-    .string()
-    .min(2, 'El apellido debe tener al menos 2 caracteres')
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s]+$/, 'El apellido solo puede contener letras'),
-  phone: z
-    .string()
-    .min(10, 'El teléfono debe tener al menos 10 dígitos')
-    .regex(/^[0-9+\\-\\s\\(\\)]+$/, 'Formato de teléfono inválido')
-    .optional()
-    .or(z.literal('')),
+  firstName: firstNameSchema,
+  lastName: lastNameSchema,
+  phone: phoneSchema,
 })
 
 type SetupFormData = z.infer<typeof setupSchema>
@@ -249,9 +239,14 @@ export default function BusinessSetupPage() {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+593 99 123 4567"
+                  placeholder="0999123456"
+                  maxLength={10}
                   className="pl-10 h-10 border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-orange-500 dark:focus:border-orange-400 focus:ring-orange-500 dark:focus:ring-orange-400"
                   {...register('phone')}
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement
+                    target.value = target.value.replace(/[^0-9]/g, '').slice(0, 10)
+                  }}
                 />
               </div>
               {errors.phone && (
