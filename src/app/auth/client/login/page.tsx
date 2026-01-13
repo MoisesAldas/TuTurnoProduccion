@@ -260,35 +260,14 @@ export default function ClientLoginPage() {
                     <Mail className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <h3 className="font-semibold text-orange-900 text-sm mb-1">
-                        ¿Necesitas un nuevo enlace?
+                        ¿Problemas con la confirmación?
                       </h3>
                       <p className="text-xs text-orange-700 mb-3">
-                        Ingresa tu email para recibir un nuevo enlace de confirmación
+                        Si ya confirmaste tu email anteriormente, intenta <Link href="/auth/client/login" className="font-semibold underline">iniciar sesión</Link>. Si es tu primera vez, <Link href="/auth/client/register" className="font-semibold underline">regístrate aquí</Link>.
                       </p>
-                      <div className="flex gap-2">
-                        <Input
-                          type="email"
-                          placeholder="tu@email.com"
-                          value={resendEmail}
-                          onChange={(e) => setResendEmail(e.target.value)}
-                          className="h-9 text-sm border-orange-300 focus:border-orange-500 focus:ring-orange-500"
-                        />
-                        <Button
-                          onClick={handleResendConfirmation}
-                          disabled={resendingEmail || !resendEmail}
-                          size="sm"
-                          className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap"
-                        >
-                          {resendingEmail ? (
-                            <>
-                              <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                              Enviando...
-                            </>
-                          ) : (
-                            'Reenviar'
-                          )}
-                        </Button>
-                      </div>
+                      <p className="text-xs text-orange-600 font-medium">
+                        💡 Tip: Abre el enlace de confirmación en el mismo dispositivo donde te registraste.
+                      </p>
                     </div>
                   </div>
                 </div>
