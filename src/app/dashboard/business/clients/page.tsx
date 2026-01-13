@@ -927,9 +927,7 @@ export default function ClientsPage() {
                       )}
                     </div>
                     <div className="sm:col-span-2">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                        * Debe proporcionar al menos un método de contacto (teléfono o email)
-                      </p>
+                  
                     </div>
                     <div className="sm:col-span-2 space-y-2">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">

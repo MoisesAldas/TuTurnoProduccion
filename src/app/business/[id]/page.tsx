@@ -878,7 +878,7 @@ export default function BusinessProfilePage() {
             {/* Main Content - 2/3 width on desktop */}
             <div className="lg:col-span-2 space-y-8 sm:space-y-12">
 
-              {/* Services Section */}
+              {/* Services Section - CTA to Booking Page */}
               <section id="services">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Servicios</h2>
 
@@ -919,10 +919,10 @@ export default function BusinessProfilePage() {
                       {filteredServices.map((service) => (
                         <div
                           key={service.id}
-                          className="group flex flex-col sm:flex-row sm:items-start sm:justify-between p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-slate-300 active:scale-[0.995] transition-all duration-200"
+                          className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-slate-300 transition-all duration-200"
                         >
                           {/* Service Info */}
-                          <div className="flex-1 mb-4 sm:mb-0 sm:mr-4">
+                          <div className="flex-1">
                             <h3 className="font-semibold text-gray-900 mb-2 text-base sm:text-lg">
                               {service.name}
                             </h3>
@@ -941,16 +941,6 @@ export default function BusinessProfilePage() {
                               </div>
                             </div>
                           </div>
-
-                          {/* Reservar Button - Full width on mobile, auto on desktop */}
-                          <Button
-                            className="bg-black hover:bg-neutral-800 text-white font-medium shadow-sm hover:shadow-md transition-all duration-150 w-full sm:w-auto sm:px-6 py-3 sm:py-2.5 h-auto rounded-xl text-base sm:text-sm"
-                            onClick={() => handleBookAppointment(service.id)}
-                            style={{ minHeight: '44px' }} // Touch target size
-                          >
-                            <Calendar className="w-4 h-4 mr-2 sm:hidden" />
-                            Reservar
-                          </Button>
                         </div>
                       ))}
                     </div>
