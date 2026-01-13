@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Si es un error de reset password, redirigir a forgot-password
-    if (action === "reset-password" || errorCode === "otp_expired") {
+    if (action === "reset-password") {
       const forgotPath =
         type === "business_owner"
           ? "/auth/business/forgot-password"
@@ -44,6 +44,23 @@ export async function GET(request: NextRequest) {
       const res = NextResponse.redirect(
         `${origin}${forgotPath}?error=link_expired&message=${encodeURIComponent(
           decodeURIComponent(finalError)
+        )}`
+      );
+      res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
+      return res;
+    }
+
+    // Si es un enlace de confirmación de email expirado
+    if (errorCode === "otp_expired" || errorParam === "access_denied") {
+      const loginPath =
+        type === "business_owner"
+          ? "/auth/business/login"
+          : "/auth/client/login";
+      const expiredMessage =
+        "El enlace de confirmación ha expirado. Por favor, solicita un nuevo enlace de confirmación o intenta registrarte nuevamente.";
+      const res = NextResponse.redirect(
+        `${origin}${loginPath}?error=link_expired&message=${encodeURIComponent(
+          expiredMessage
         )}`
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });

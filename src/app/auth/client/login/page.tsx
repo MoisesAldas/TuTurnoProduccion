@@ -37,6 +37,7 @@ const ERROR_MESSAGES = {
   invalid_type: 'Esta cuenta no es de tipo cliente.',
   unexpected_error: 'Ocurrió un error inesperado.',
   device_mismatch: 'Por favor abre el enlace de confirmación en el mismo dispositivo donde iniciaste el registro.',
+  link_expired: 'El enlace ha expirado. Por favor, solicita un nuevo enlace.',
 }
 
 export default function ClientLoginPage() {
