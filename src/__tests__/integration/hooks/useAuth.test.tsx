@@ -169,7 +169,7 @@ describe('Hook: useAuth', () => {
         phone: '0999888777'
       }
 
-      mockSupabaseClient.from('users').update().eq().select().single().mockResolvedValue({
+      mockSupabaseClient.single.mockResolvedValue({
         data: { ...usuariosPrueba[0], ...datosActualizados },
         error: null
       })
@@ -180,7 +180,7 @@ describe('Hook: useAuth', () => {
     it('debería actualizar avatar', async () => {
       const nuevoAvatar = 'https://storage.supabase.co/avatars/user-1.jpg'
 
-      mockSupabaseClient.from('users').update().eq().select().single().mockResolvedValue({
+      mockSupabaseClient.single.mockResolvedValue({
         data: { ...usuariosPrueba[0], avatar_url: nuevoAvatar },
         error: null
       })

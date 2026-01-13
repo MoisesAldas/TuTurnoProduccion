@@ -36,6 +36,7 @@ const ERROR_MESSAGES = {
   user_not_found: 'No existe una cuenta con este email.',
   invalid_type: 'Esta cuenta no es de tipo cliente.',
   unexpected_error: 'Ocurrió un error inesperado.',
+  device_mismatch: 'Por favor abre el enlace de confirmación en el mismo dispositivo donde iniciaste el registro.',
 }
 
 export default function ClientLoginPage() {
@@ -43,12 +44,15 @@ export default function ClientLoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const { signInWithGoogle, signInWithEmail } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const errorParam = searchParams.get('error')
+  const successParam = searchParams.get('success')
   const returnUrl = searchParams.get('returnUrl')
+  const customMessage = searchParams.get('message')
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100)
@@ -56,10 +60,17 @@ export default function ClientLoginPage() {
   }, [])
 
   useEffect(() => {
-    if (errorParam) {
+    if (customMessage) {
+      // Si hay un mensaje personalizado, determinar si es éxito o error
+      if (successParam) {
+        setSuccessMessage(decodeURIComponent(customMessage))
+      } else {
+        setError(decodeURIComponent(customMessage))
+      }
+    } else if (errorParam) {
       setError(ERROR_MESSAGES[errorParam as keyof typeof ERROR_MESSAGES] || 'Ocurrió un error inesperado')
     }
-  }, [errorParam])
+  }, [errorParam, successParam, customMessage])
 
   const {
     register,
@@ -190,6 +201,15 @@ export default function ClientLoginPage() {
             <Alert variant="destructive" className="border-red-200 bg-red-50">
               <AlertDescription className="text-red-700">
                 {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Success Alert */}
+          {successMessage && (
+            <Alert className="border-green-200 bg-green-50">
+              <AlertDescription className="text-green-700 font-medium">
+                {successMessage}
               </AlertDescription>
             </Alert>
           )}

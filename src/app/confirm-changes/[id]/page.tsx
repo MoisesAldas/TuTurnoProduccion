@@ -205,9 +205,9 @@ export default function ConfirmChangesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">{error || 'No se pudo cargar la cita'}</p>
-            <Link href="/dashboard/client/appointments">
+            <Link href="/auth/client/login">
               <Button className="w-full bg-slate-900 hover:bg-slate-800">
-                Volver a mis citas
+                Iniciar sesión
               </Button>
             </Link>
           </CardContent>
@@ -228,9 +228,9 @@ export default function ConfirmChangesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">Este enlace no es válido o ha expirado.</p>
-            <Link href="/dashboard/client/appointments">
+            <Link href="/auth/client/login">
               <Button className="w-full bg-slate-900 hover:bg-slate-800">
-                Volver a mis citas
+                Iniciar sesión
               </Button>
             </Link>
           </CardContent>

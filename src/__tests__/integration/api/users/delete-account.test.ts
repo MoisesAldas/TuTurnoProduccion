@@ -25,14 +25,11 @@ describe("API: Eliminar Cuenta (/api/delete-account)", () => {
       const clienteId = usuariosPrueba[0].id;
 
       // Mock: Verificar que no hay citas activas
-      mockSupabaseClient
-        .from("appointments")
-        .select()
-        .eq()
-        .in.mockResolvedValue({
-          data: [],
-          error: null,
-        });
+      mockSupabaseClient.from("appointments").select().eq();
+      mockSupabaseClient.in.mockResolvedValue({
+        data: [],
+        error: null,
+      });
 
       // Mock: Eliminar usuario
       mockSupabaseClient.from("users").delete().eq.mockResolvedValue({
@@ -56,14 +53,11 @@ describe("API: Eliminar Cuenta (/api/delete-account)", () => {
       );
 
       // Mock: Hay citas pendientes
-      mockSupabaseClient
-        .from("appointments")
-        .select()
-        .eq()
-        .in.mockResolvedValue({
-          data: citasPendientes,
-          error: null,
-        });
+      mockSupabaseClient.from("appointments").select().eq();
+      mockSupabaseClient.in.mockResolvedValue({
+        data: citasPendientes,
+        error: null,
+      });
 
       expect(citasPendientes.length).toBeGreaterThan(0);
     });
@@ -74,14 +68,11 @@ describe("API: Eliminar Cuenta (/api/delete-account)", () => {
         (c) => c.client_id === clienteId && c.status === "confirmed"
       );
 
-      mockSupabaseClient
-        .from("appointments")
-        .select()
-        .eq()
-        .in.mockResolvedValue({
-          data: citasConfirmadas,
-          error: null,
-        });
+      mockSupabaseClient.from("appointments").select().eq();
+      mockSupabaseClient.in.mockResolvedValue({
+        data: citasConfirmadas,
+        error: null,
+      });
 
       expect(citasConfirmadas.length).toBeGreaterThan(0);
     });
@@ -94,14 +85,11 @@ describe("API: Eliminar Cuenta (/api/delete-account)", () => {
           (c.status === "completed" || c.status === "cancelled")
       );
 
-      mockSupabaseClient
-        .from("appointments")
-        .select()
-        .eq()
-        .in.mockResolvedValue({
-          data: citasFinalizadas,
-          error: null,
-        });
+      mockSupabaseClient.from("appointments").select().eq();
+      mockSupabaseClient.in.mockResolvedValue({
+        data: citasFinalizadas,
+        error: null,
+      });
 
       mockSupabaseClient.from("users").delete().eq.mockResolvedValue({
         data: null,
@@ -136,14 +124,11 @@ describe("API: Eliminar Cuenta (/api/delete-account)", () => {
           (c.status === "pending" || c.status === "confirmed")
       );
 
-      mockSupabaseClient
-        .from("appointments")
-        .select()
-        .eq()
-        .in.mockResolvedValue({
-          data: citasActivas,
-          error: null,
-        });
+      mockSupabaseClient.from("appointments").select().eq();
+      mockSupabaseClient.in.mockResolvedValue({
+        data: citasActivas,
+        error: null,
+      });
 
       expect(citasActivas.length).toBeGreaterThan(0);
     });
@@ -175,14 +160,11 @@ describe("API: Eliminar Cuenta (/api/delete-account)", () => {
         });
 
       // Mock: Sin citas activas
-      mockSupabaseClient
-        .from("appointments")
-        .select()
-        .eq()
-        .in.mockResolvedValue({
-          data: [],
-          error: null,
-        });
+      mockSupabaseClient.from("appointments").select().eq();
+      mockSupabaseClient.in.mockResolvedValue({
+        data: [],
+        error: null,
+      });
 
       // Mock: Sin empleados
       mockSupabaseClient.from("employees").select().eq.mockResolvedValue({
@@ -204,14 +186,11 @@ describe("API: Eliminar Cuenta (/api/delete-account)", () => {
       // 3. Eliminar usuario de DB
       // 4. Eliminar usuario de Auth
 
-      mockSupabaseClient
-        .from("appointments")
-        .select()
-        .eq()
-        .in.mockResolvedValue({
-          data: [],
-          error: null,
-        });
+      mockSupabaseClient.from("appointments").select().eq();
+      mockSupabaseClient.in.mockResolvedValue({
+        data: [],
+        error: null,
+      });
 
       mockSupabaseClient.from("users").delete().eq.mockResolvedValue({
         data: null,

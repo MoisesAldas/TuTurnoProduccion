@@ -97,8 +97,9 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        message: "Cita confirmada exitosamente",
-        redirectUrl: "/dashboard/client/appointments",
+        message:
+          "Cita confirmada exitosamente. Por favor inicia sesión para ver tus citas.",
+        redirectUrl: "/auth/client/login",
       });
     }
 
@@ -135,8 +136,9 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        message: "Cita cancelada exitosamente",
-        redirectUrl: "/dashboard/client/appointments",
+        message:
+          "Cita cancelada exitosamente. Por favor inicia sesión para ver tus citas.",
+        redirectUrl: "/auth/client/login",
       });
     }
 
@@ -144,8 +146,8 @@ export async function POST(
       // Redirigir a la página de modificación de cita
       return NextResponse.json({
         success: true,
-        message: "Redirigiendo a reprogramación",
-        redirectUrl: `/dashboard/client/appointments/${appointmentId}`,
+        message: "Por favor inicia sesión para reprogramar tu cita",
+        redirectUrl: "/auth/client/login",
       });
     }
 

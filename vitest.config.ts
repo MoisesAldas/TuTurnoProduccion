@@ -18,17 +18,15 @@ export default defineConfig({
     ],
     coverage: {
       provider: "v8",
+      reportsDirectory: "coverage",
       reporter: ["text", "json", "html"],
       clean: false, // ✅ NO limpiar coverage
-      cleanOnRerun: false, // ✅ NO limpiar al re-ejecutar
       exclude: [
-        "node_modules/",
-        "src/__tests__/",
+        "node_modules/**",
+        "src/__tests__/**",
         "**/*.d.ts",
-        "**/*.config.*",
-        "**/mockData",
-        "dist",
-        ".next",
+        "dist/**",
+        ".next/**",
       ],
       thresholds: {
         lines: 50,

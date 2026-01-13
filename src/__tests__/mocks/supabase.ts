@@ -1,28 +1,30 @@
 import { vi } from "vitest";
 
 // Mock del cliente de Supabase
-export const mockSupabaseClient = {
-  from: vi.fn(() => mockSupabaseClient),
-  select: vi.fn(() => mockSupabaseClient),
-  insert: vi.fn(() => mockSupabaseClient),
-  update: vi.fn(() => mockSupabaseClient),
-  delete: vi.fn(() => mockSupabaseClient),
-  upsert: vi.fn(() => mockSupabaseClient),
-  eq: vi.fn(() => mockSupabaseClient),
-  neq: vi.fn(() => mockSupabaseClient),
-  gt: vi.fn(() => mockSupabaseClient),
-  gte: vi.fn(() => mockSupabaseClient),
-  lt: vi.fn(() => mockSupabaseClient),
-  lte: vi.fn(() => mockSupabaseClient),
-  like: vi.fn(() => mockSupabaseClient),
-  ilike: vi.fn(() => mockSupabaseClient),
-  in: vi.fn(() => mockSupabaseClient),
-  contains: vi.fn(() => mockSupabaseClient),
-  order: vi.fn(() => mockSupabaseClient),
-  limit: vi.fn(() => mockSupabaseClient),
-  range: vi.fn(() => mockSupabaseClient),
+export const mockSupabaseClient: any = {
+  from: vi.fn().mockReturnThis(),
+  select: vi.fn().mockReturnThis(),
+  insert: vi.fn().mockReturnThis(),
+  update: vi.fn().mockReturnThis(),
+  delete: vi.fn().mockReturnThis(),
+  upsert: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  neq: vi.fn().mockReturnThis(),
+  gt: vi.fn().mockReturnThis(),
+  gte: vi.fn().mockReturnThis(),
+  lt: vi.fn().mockReturnThis(),
+  lte: vi.fn().mockReturnThis(),
+  like: vi.fn().mockReturnThis(),
+  ilike: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),
+  contains: vi.fn().mockReturnThis(),
+  order: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
+  range: vi.fn().mockReturnThis(),
+  // Terminal methods - estos NO deben hacer mockReturnThis para que mockResolvedValue funcione
   single: vi.fn(),
   maybeSingle: vi.fn(),
+  csv: vi.fn().mockReturnThis(),
   auth: {
     getSession: vi.fn(),
     getUser: vi.fn(),
@@ -35,6 +37,12 @@ export const mockSupabaseClient = {
     })),
     updateUser: vi.fn(),
     resetPasswordForEmail: vi.fn(),
+    admin: {
+      deleteUser: vi.fn(),
+      createUser: vi.fn(),
+      updateUserById: vi.fn(),
+      listUsers: vi.fn(),
+    },
   },
   storage: {
     from: vi.fn(() => ({
@@ -47,23 +55,49 @@ export const mockSupabaseClient = {
   },
   rpc: vi.fn(),
   channel: vi.fn(() => ({
-    on: vi.fn(() => ({
-      subscribe: vi.fn(),
-    })),
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn().mockReturnThis(),
     unsubscribe: vi.fn(),
   })),
 };
 
 // Función helper para resetear todos los mocks
 export const resetSupabaseMocks = () => {
-  Object.values(mockSupabaseClient).forEach((mock) => {
-    if (typeof mock === "function" && "mockClear" in mock) {
-      mock.mockClear();
+  const resetAllMocks = (obj: any) => {
+    for (const key in obj) {
+      if (typeof obj[key] === "function" && obj[key].mockClear) {
+        obj[key].mockClear();
+        // Restaurar mockReturnThis para métodos de cadena
+        if (
+          [
+            "from",
+            "select",
+            "insert",
+            "update",
+            "delete",
+            "upsert",
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "in",
+            "order",
+            "limit",
+            "range",
+            "like",
+            "ilike",
+            "contains",
+            "csv",
+          ].includes(key)
+        ) {
+          obj[key].mockReturnThis();
+        }
+      } else if (typeof obj[key] === "object" && obj[key] !== null) {
+        resetAllMocks(obj[key]);
+      }
     }
-  });
-  Object.values(mockSupabaseClient.auth).forEach((mock) => {
-    if (typeof mock === "function" && "mockClear" in mock) {
-      mock.mockClear();
-    }
-  });
+  };
+  resetAllMocks(mockSupabaseClient);
 };
