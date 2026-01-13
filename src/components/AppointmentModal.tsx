@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@/lib/supabaseClient'
 import { formatSpanishDate } from '@/lib/dateUtils'
 import ReceiptViewer from './ReceiptViewer'
+import { useAppointmentStarted } from '@/hooks/useAppointmentStarted'
+import { AppointmentActionTooltip } from './AppointmentActionTooltip'
 
 // Lazy load CheckoutModal
 const CheckoutModal = dynamic(() => import('./CheckoutModal'), {
@@ -80,6 +82,12 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
   const [paymentReceipt, setPaymentReceipt] = useState<{url: string, reference: string} | null>(null)
   const supabase = createClient()
   const { toast } = useToast()
+
+  // Verificar si la cita ya ha comenzado
+  const canTakeAction = useAppointmentStarted(
+    appointment.appointment_date,
+    appointment.start_time
+  )
 
   // Check if appointment needs payment (confirmed, in_progress, or completed without payment)
   useEffect(() => {
@@ -594,13 +602,21 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
 
                   {/* En Progreso */}
                   {appointment.status === 'confirmed' && (
-                    <DropdownMenuItem
-                      onClick={() => handleUpdateStatus('in_progress')}
-                      className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50 transition-colors"
-                    >
-                      <Clock className="w-4 h-4 mr-2 text-blue-600" />
-                      <span>En Progreso</span>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => handleUpdateStatus('in_progress')}
+                        disabled={!canTakeAction}
+                        className={`cursor-pointer transition-colors ${
+                          canTakeAction
+                            ? 'hover:bg-blue-50 focus:bg-blue-50'
+                            : 'opacity-50 cursor-not-allowed'
+                        }`}
+                      >
+                        <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                        <span>En Progreso</span>
+                      </DropdownMenuItem>
+                      <AppointmentActionTooltip isAvailable={canTakeAction} />
+                    </>
                   )}
 
                   {/* No Asistió */}
@@ -609,11 +625,17 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleUpdateStatus('no_show')}
-                        className="cursor-pointer hover:bg-orange-50 focus:bg-orange-50 transition-colors"
+                        disabled={!canTakeAction}
+                        className={`cursor-pointer transition-colors ${
+                          canTakeAction
+                            ? 'hover:bg-orange-50 focus:bg-orange-50'
+                            : 'opacity-50 cursor-not-allowed'
+                        }`}
                       >
                         <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
                         <span>No Asistió</span>
                       </DropdownMenuItem>
+                      <AppointmentActionTooltip isAvailable={canTakeAction} />
                     </>
                   )}
                 </DropdownMenuContent>
@@ -636,15 +658,22 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
 
               {/* Botón principal: Finalizar y Cobrar / Registrar Pago */}
               {hasPendingPayment && !checkingPayment && ['confirmed', 'in_progress', 'completed'].includes(appointment.status) && (
-                <Button
-                  onClick={handleOpenCheckout}
-                  disabled={updating}
-                  data-checkout-trigger
-                  className="w-full sm:flex-1 bg-gray-900 hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  <span className="truncate">{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
-                </Button>
+                <div className="w-full sm:flex-1">
+                  <Button
+                    onClick={handleOpenCheckout}
+                    disabled={updating || !canTakeAction}
+                    data-checkout-trigger
+                    className={`w-full shadow-lg transition-all duration-300 ${
+                      canTakeAction && !updating
+                        ? 'bg-gray-900 hover:bg-gray-800 text-white hover:shadow-xl hover:scale-105'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    <span className="truncate">{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
+                  </Button>
+                  <AppointmentActionTooltip isAvailable={canTakeAction} className="px-2" />
+                </div>
               )}
 
               {/* Botón Reactivar cita - Solo visible para citas canceladas */}
