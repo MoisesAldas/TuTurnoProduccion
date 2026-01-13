@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Card, CardContent } from '@/components/ui/card'
 import { ArrowLeft, Eye, EyeOff, Mail, Lock, Sparkles } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
@@ -47,6 +48,8 @@ export default function ClientLoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isVisible, setIsVisible] = useState(false)
+  const [resendingEmail, setResendingEmail] = useState(false)
+  const [resendEmail, setResendEmail] = useState('')
   const { signInWithGoogle, signInWithEmail } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -119,6 +122,39 @@ export default function ClientLoginPage() {
       setError('Error al iniciar sesión con Google. Inténtalo de nuevo.')
     } finally {
       setGoogleLoading(false)
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!resendEmail) {
+      setError('Por favor ingresa tu email')
+      return
+    }
+
+    try {
+      setResendingEmail(true)
+      setError(null)
+      setSuccessMessage(null)
+
+      const response = await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resendEmail })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccessMessage(data.message)
+        setResendEmail('')
+      } else {
+        setError(data.error || 'Error al enviar el email')
+      }
+    } catch (err) {
+      console.error('Error resending confirmation:', err)
+      setError('Error al enviar el email. Inténtalo de nuevo.')
+    } finally {
+      setResendingEmail(false)
     }
   }
 
@@ -213,6 +249,51 @@ export default function ClientLoginPage() {
                 {successMessage}
               </AlertDescription>
             </Alert>
+          )}
+
+          {/* Resend Confirmation Email - Show when link expired or device mismatch */}
+          {(errorParam === 'link_expired' || errorParam === 'device_mismatch') && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="pt-6">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Mail className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-orange-900 text-sm mb-1">
+                        ¿Necesitas un nuevo enlace?
+                      </h3>
+                      <p className="text-xs text-orange-700 mb-3">
+                        Ingresa tu email para recibir un nuevo enlace de confirmación
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="tu@email.com"
+                          value={resendEmail}
+                          onChange={(e) => setResendEmail(e.target.value)}
+                          className="h-9 text-sm border-orange-300 focus:border-orange-500 focus:ring-orange-500"
+                        />
+                        <Button
+                          onClick={handleResendConfirmation}
+                          disabled={resendingEmail || !resendEmail}
+                          size="sm"
+                          className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap"
+                        >
+                          {resendingEmail ? (
+                            <>
+                              <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                              Enviando...
+                            </>
+                          ) : (
+                            'Reenviar'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Login Form */}
