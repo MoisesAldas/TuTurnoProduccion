@@ -275,15 +275,21 @@ export default function SpecialHoursManager({
       // 3. Encolar mensajes para envío de emails (usando sistema PGMQ existente)
       for (const appointment of affectedAppointments) {
         try {
+          console.log('🔍 SPECIAL HOURS DEBUG: Processing appointment:', appointment)
+          
+          const messageData = {
+            appointment_id: appointment.id,
+            type: 'reschedule_required',
+            closed_date: specialDate,
+            reason: 'business_closed'
+          }
+          console.log('🔍 SPECIAL HOURS DEBUG: messageData:', messageData)
+          console.log('🔍 SPECIAL HOURS DEBUG: Calling pgmq_send with queue: email_reschedule_required')
+          
           // Encolar mensaje en la cola de emails
           const { error: queueError } = await supabase.rpc('pgmq_send', {
             queue_name: 'email_reschedule_required',
-            msg: {
-              appointment_id: appointment.id,
-              type: 'reschedule_required',
-              closed_date: specialDate,
-              reason: 'business_closed'
-            }
+            msg: messageData
           })
 
           if (queueError) {

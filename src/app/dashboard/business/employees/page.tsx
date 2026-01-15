@@ -57,6 +57,7 @@ export default function EmployeesPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const { authState } = useAuth()
   const { toast } = useToast()
   const supabase = createClient()
@@ -109,30 +110,89 @@ export default function EmployeesPage() {
   }
 
   const handleDeleteEmployee = async () => {
-    if (!employeeToDelete) return
+    if (!employeeToDelete || !business) return
 
     try {
+      setIsDeleting(true)
+
+      // 1. Llamar a Edge Function para marcar citas como pending y crear notificaciones
+      const { data: affectedData, error: edgeError } = await supabase.functions.invoke(
+        'notify-employee-changes',
+        {
+          body: {
+            type: 'employee_deleted',
+            employee_id: employeeToDelete,
+            business_id: business.id
+          }
+        }
+      )
+
+      if (edgeError) {
+        console.error('Error notifying clients:', edgeError)
+        toast({
+          variant: 'destructive',
+          title: 'Advertencia',
+          description: 'No se pudo notificar a todos los clientes afectados'
+        })
+      }
+
+      // 2. Encolar emails desde el frontend (patrón Special Hours)
+      const affectedAppointments = affectedData?.affected_appointments_data || []
+      let emailsQueued = 0
+
+      for (const appointment of affectedAppointments) {
+        if (!appointment.client_email) continue
+
+        try {
+          const { error: queueError } = await supabase.rpc('pgmq_send', {
+            queue_name: 'email_cancellations',
+            msg: {
+              appointment_id: appointment.id,
+              type: 'employee_deleted',
+              employee_name: appointment.employee_name,
+              reason: 'El empleado ya no forma parte del equipo'
+            }
+          })
+
+          if (queueError) {
+            console.error(`Error encolando email para cita ${appointment.id}:`, queueError)
+          } else {
+            emailsQueued++
+          }
+        } catch (emailError) {
+          console.error('Error encolando email:', emailError)
+        }
+      }
+
+      // 3. Eliminar empleado
       const { error } = await supabase
         .from('employees')
         .delete()
         .eq('id', employeeToDelete)
 
-      if (error) {
-        console.error('Error deleting employee:', error)
+      if (error) throw error
+
+      // 4. Mostrar resumen
+      const affectedCount = affectedData?.affected_appointments || 0
+      
+      setEmployees(employees.filter(e => e.id !== employeeToDelete))
+      
+      if (affectedCount > 0) {
         toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Error al eliminar el empleado'
+          title: 'Empleado eliminado',
+          description: `${affectedCount} citas fueron marcadas como pendientes. Se programaron ${emailsQueued} notificaciones por email.`,
+          duration: 6000
         })
       } else {
-        setEmployees(employees.filter(employee => employee.id !== employeeToDelete))
         toast({
-          title: 'Éxito',
-          description: 'Empleado eliminado correctamente'
+          title: 'Empleado eliminado',
+          description: 'El empleado fue eliminado correctamente'
         })
-        setDeleteDialogOpen(false)
-        setEmployeeToDelete(null)
       }
+
+      setDeleteDialogOpen(false)
+      setEmployeeToDelete(null)
+
     } catch (error) {
       console.error('Error deleting employee:', error)
       toast({
@@ -140,6 +200,8 @@ export default function EmployeesPage() {
         title: 'Error',
         description: 'Error al eliminar el empleado'
       })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -483,9 +545,10 @@ export default function EmployeesPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteEmployee}
+              disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              Eliminar
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

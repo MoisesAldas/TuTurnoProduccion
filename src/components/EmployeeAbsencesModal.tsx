@@ -21,6 +21,7 @@ import {
 import { Calendar, Plus, Trash2, CalendarX, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/hooks/useAuth'
 
 interface EmployeeAbsencesModalProps {
   open: boolean
@@ -59,6 +60,7 @@ export default function EmployeeAbsencesModal({
   const [saving, setSaving] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [absenceToDelete, setAbsenceToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -71,6 +73,7 @@ export default function EmployeeAbsencesModal({
   })
 
   const { toast } = useToast()
+  const { authState } = useAuth()
   const supabase = createClient()
 
   useEffect(() => {
@@ -150,6 +153,7 @@ export default function EmployeeAbsencesModal({
         notes: formData.notes || null
       }
 
+      // 1. Insertar ausencia
       const { error } = await supabase
         .from('employee_absences')
         .insert([absenceData])
@@ -172,7 +176,104 @@ export default function EmployeeAbsencesModal({
         return
       }
 
-      // Reset form
+      // 1. Llamar a Edge Function para marcar citas y crear notificaciones
+      if (authState.user) {
+        // Obtener business_id del usuario
+        const { data: businessData } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', authState.user.id)
+          .single()
+
+        if (businessData) {
+          const { data: affectedData, error: edgeError } = await supabase.functions.invoke(
+            'notify-employee-changes',
+            {
+              body: {
+                type: 'employee_absence',
+                employee_id: employeeId,
+                business_id: businessData.id,
+                absence_date: formData.absence_date,
+                reason: formData.reason,
+                is_full_day: formData.is_full_day,
+                start_time: formData.start_time,
+                end_time: formData.end_time
+              }
+            }
+          )
+
+          if (edgeError) {
+            console.error('Error notifying clients:', edgeError)
+          }
+
+          // 3. Encolar emails desde el frontend (patrón Special Hours)
+          const affectedAppointments = affectedData?.affected_appointments_data || []
+          console.log('🔍 DEBUG: affectedData:', affectedData)
+          console.log('🔍 DEBUG: affectedAppointments:', affectedAppointments)
+          let emailsQueued = 0
+
+          for (const appointment of affectedAppointments) {
+            console.log('🔍 DEBUG: Processing appointment:', appointment)
+            if (!appointment.client_email) continue
+
+            const messageData = {
+              appointment_id: appointment.id,
+              type: 'employee_absence',
+              employee_name: appointment.employee_name,
+              absence_date: formData.absence_date,
+              reason: formData.reason
+            }
+            console.log('🔍 DEBUG: messageData:', messageData)
+
+            try {
+              console.log('🔍 EMPLOYEE ABSENCE: Calling pgmq_send with queue: email_cancellations')
+              const { error: queueError } = await supabase.rpc('pgmq_send', {
+                queue_name: 'email_cancellations',
+                msg: messageData
+              })
+
+              if (queueError) {
+                console.error(`Error encolando email para cita ${appointment.id}:`, queueError)
+              } else {
+                emailsQueued++
+              }
+            } catch (emailError) {
+              console.error('Error encolando email:', emailError)
+            }
+          }
+
+          const affectedCount = affectedData?.affected_appointments || 0
+
+          // 4. Reset form y mostrar resultado
+          setFormData({
+            absence_date: '',
+            reason: '',
+            is_full_day: true,
+            start_time: '',
+            end_time: '',
+            notes: ''
+          })
+
+          setShowForm(false)
+          fetchAbsences()
+
+          if (affectedCount > 0) {
+            toast({
+              title: 'Ausencia registrada',
+              description: `${affectedCount} citas fueron marcadas como pendientes. Se programaron ${emailsQueued} notificaciones.`,
+              duration: 6000
+            })
+          } else {
+            toast({
+              title: 'Ausencia registrada',
+              description: 'La ausencia se registró correctamente'
+            })
+          }
+          return
+        }
+      }
+
+      // Fallback si no hay business_id
       setFormData({
         absence_date: '',
         reason: '',
@@ -181,10 +282,8 @@ export default function EmployeeAbsencesModal({
         end_time: '',
         notes: ''
       })
-
       setShowForm(false)
       fetchAbsences()
-
       toast({
         title: 'Ausencia registrada',
         description: 'La ausencia se registró correctamente'
@@ -206,6 +305,16 @@ export default function EmployeeAbsencesModal({
     if (!absenceToDelete) return
 
     try {
+      setIsDeleting(true)
+
+      // 1. Obtener datos de la ausencia antes de eliminar
+      const { data: absence } = await supabase
+        .from('employee_absences')
+        .select('*')
+        .eq('id', absenceToDelete)
+        .single()
+
+      // 2. Eliminar ausencia
       const { error } = await supabase
         .from('employee_absences')
         .delete()
@@ -221,10 +330,28 @@ export default function EmployeeAbsencesModal({
         return
       }
 
+      // 3. Reactivar citas que fueron marcadas como pending por esta ausencia
+      if (absence) {
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({ 
+            status: 'confirmed',
+            pending_reason: null
+          })
+          .eq('employee_id', absence.employee_id)
+          .eq('appointment_date', absence.absence_date)
+          .eq('status', 'pending')
+          .eq('pending_reason', 'employee_absence')
+
+        if (updateError) {
+          console.error('Error reactivating appointments:', updateError)
+        }
+      }
+
       fetchAbsences()
       toast({
         title: 'Ausencia eliminada',
-        description: 'La ausencia se eliminó correctamente'
+        description: 'La ausencia se eliminó y las citas fueron reactivadas'
       })
 
     } catch (error) {
@@ -237,6 +364,7 @@ export default function EmployeeAbsencesModal({
     } finally {
       setDeleteDialogOpen(false)
       setAbsenceToDelete(null)
+      setIsDeleting(false)
     }
   }
 
@@ -490,9 +618,10 @@ export default function EmployeeAbsencesModal({
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              Eliminar
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
