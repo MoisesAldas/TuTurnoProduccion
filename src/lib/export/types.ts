@@ -25,7 +25,7 @@ export interface BusinessInfo {
 export interface ReportMetadata {
   reportPeriod: string // "Enero 2026", "01/01/2026 - 31/01/2026"
   generatedDate: string // "02 de Enero, 2026"
-  generatedBy: string // "TuTurno Analytics Engine v1.0"
+  generatedBy: string // "TuTurno"
   startDate: string // ISO format
   endDate: string // ISO format
 }

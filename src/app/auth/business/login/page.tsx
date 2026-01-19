@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Eye, EyeOff, Mail, Lock, Building2 } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Mail, Lock, Building2, ShieldX } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import Logo from '@/components/logo'
@@ -43,6 +43,7 @@ export default function BusinessLoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showBannedAlert, setShowBannedAlert] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const { signInWithGoogle, signInWithEmail } = useAuth()
   const router = useRouter()
@@ -59,7 +60,13 @@ export default function BusinessLoginPage() {
     if (errorParam) {
       setError(ERROR_MESSAGES[errorParam as keyof typeof ERROR_MESSAGES] || 'Ocurrió un error inesperado')
     }
-  }, [errorParam])
+    
+    // Verificar si viene de un redirect por baneo (OAuth)
+    const bannedParam = searchParams.get('banned')
+    if (bannedParam === 'true') {
+      setShowBannedAlert(true)
+    }
+  }, [errorParam, searchParams])
 
   const {
     register,
@@ -80,7 +87,10 @@ export default function BusinessLoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err)
-      if (err.message?.includes('Invalid login credentials')) {
+      if (err.message === 'USER_BANNED') {
+        setShowBannedAlert(true)
+        setError(null)
+      } else if (err.message?.includes('Invalid login credentials')) {
         setError('Email o contraseña incorrectos')
       } else if (err.message?.includes('Email not confirmed')) {
         setError('Por favor confirma tu email antes de iniciar sesión')
@@ -199,6 +209,16 @@ export default function BusinessLoginPage() {
                     </Button>
                   </Link>
                 )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Banned User Alert */}
+          {showBannedAlert && (
+            <Alert variant="destructive" className="border-red-300 bg-red-50">
+              <ShieldX className="h-4 w-4" />
+              <AlertDescription className="text-red-800">
+                <span className="font-semibold">Tu cuenta ha sido suspendida.</span> Por favor revisa tu correo electrónico para más información y ponte en contacto con soporte si tienes dudas.
               </AlertDescription>
             </Alert>
           )}

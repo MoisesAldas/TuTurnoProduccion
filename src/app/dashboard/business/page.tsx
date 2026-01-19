@@ -25,7 +25,7 @@ import {
   ExportButton,
 } from '@/components/analytics'
 import { DataProcessor } from '@/lib/export/core/DataProcessor'
-import type { BusinessInfo } from '@/lib/export/types'
+import type { BusinessInfo, AnalyticsExportData } from '@/lib/export/types'
 import {
   Users,
   Calendar,
@@ -55,6 +55,7 @@ export default function BusinessDashboard() {
   const [businessName, setBusinessName] = useState<string>('')
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null)
   const [loadingBusiness, setLoadingBusiness] = useState(true)
+  const [exportData, setExportData] = useState<AnalyticsExportData | null>(null)
 
   // Default filters: Este mes completo
   const [filters, setFilters] = useState<FiltersType>({
@@ -139,16 +140,29 @@ export default function BusinessDashboard() {
     return data?.kpis?.total_appointments || 0
   }, [data?.kpis])
 
-  // Preparar datos para exportación
-  const exportData = useMemo(() => {
-    if (!data || !businessInfo) return null
+  // Preparar datos para exportación (async)
+  useEffect(() => {
+    const prepareExportData = async () => {
+      if (!data || !businessInfo) {
+        setExportData(null)
+        return
+      }
 
-    return DataProcessor.process({
-      dashboardData: data,
-      businessInfo: businessInfo,
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-    })
+      try {
+        const exportResult = await DataProcessor.process({
+          dashboardData: data,
+          businessInfo: businessInfo,
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+        })
+        setExportData(exportResult)
+      } catch (error) {
+        console.error('Error preparing export data:', error)
+        setExportData(null)
+      }
+    }
+
+    prepareExportData()
   }, [data, businessInfo, filters.startDate, filters.endDate])
 
   // Use scroll position for sticky header (MUST be before any conditional returns)
@@ -161,7 +175,7 @@ export default function BusinessDashboard() {
         <div className="flex items-center justify-center h-[60vh]">
           <div className="text-center space-y-4">
             <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto dark:border-orange-900 dark:border-t-orange-500"></div>
-            <p className="text-gray-600 dark:text-gray-400">Cargando analytics...</p>
+            <p className="text-gray-600 dark:text-gray-400">Cargando Dashboard...</p>
           </div>
         </div>
       </div>
@@ -400,7 +414,7 @@ export default function BusinessDashboard() {
                   variant="purple"
                 />
                 <StatsCard
-                  title="Ticket Promedio"
+                  title="Precio Promedio Servicio"
                   value={formatCurrency(data?.revenueAnalytics?.average_ticket || 0)}
                   description={`${data?.revenueAnalytics?.total_invoices || 0} facturas`}
                   icon={Receipt}

@@ -320,4 +320,58 @@ export async function getEmployeesForMultipleServices(serviceIds: string[]) {
     console.error("Error in getEmployeesForMultipleServices:", error);
     return { data: null, error };
   }
+  
+
 }
+
+export async function getServicesOnlyByEmployee(employeeId: string) {
+  const supabase = createClient();
+
+  try {
+    // 1. Obtener todos los servicios de este empleado
+    const { data: employeeServices, error: empError } = await supabase
+      .from("employee_services")
+      .select("service_id")
+      .eq("employee_id", employeeId);
+
+    if (empError) throw empError;
+
+    const serviceIds = (employeeServices || []).map((es: any) => es.service_id);
+
+    if (serviceIds.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // 2. Para cada servicio, contar cuántos empleados lo tienen
+    const { data: serviceCounts, error: countError } = await supabase
+      .from("employee_services")
+      .select("service_id, services(id, name, is_active)")
+      .in("service_id", serviceIds);
+
+    if (countError) throw countError;
+
+    // 3. Agrupar por servicio y contar
+    const serviceMap = new Map();
+    serviceCounts?.forEach((item: any) => {
+      const serviceId = item.service_id;
+      if (!serviceMap.has(serviceId)) {
+        serviceMap.set(serviceId, {
+          service: item.services,
+          count: 0,
+        });
+      }
+      serviceMap.get(serviceId).count++;
+    });
+
+    // 4. Filtrar solo servicios con count === 1 (solo este empleado) y activos
+    const orphanedServices = Array.from(serviceMap.values())
+      .filter((item: any) => item.count === 1 && item.service?.is_active)
+      .map((item: any) => item.service);
+
+    return { data: orphanedServices, error: null };
+  } catch (error) {
+    console.error("Error in getServicesOnlyByEmployee:", error);
+    return { data: null, error };
+  }
+}
+

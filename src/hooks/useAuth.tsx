@@ -39,7 +39,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Evitar múltiples inicializaciones
-    if (isInitialized) {
+    if (isInitialized) {
+
       return
     }
     
@@ -47,7 +48,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Obtener sesión inicial
     const initializeAuth = async () => {
-      try {
+      try {
+
         setIsInitialized(true)
         
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -58,12 +60,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.error('Error getting session:', error)
           setAuthState({ user: null, session: null, loading: false })
           return
-        }
+        }
+
         setAuthState(prev => ({ ...prev, session }))
         
-        if (session?.user) {
+        if (session?.user) {
+
           await fetchUserProfile(session.user.id)
-        } else {
+        } else {
+
           setAuthState(prev => ({ ...prev, loading: false }))
         }
       } catch (error) {
@@ -77,7 +82,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth()
 
     // Timeout de seguridad para evitar loading infinito
-    const loadingTimeout = setTimeout(() => {
+    const loadingTimeout = setTimeout(() => {
+
       if (isMounted) {
         setAuthState(prev => ({ ...prev, loading: false }))
       }
@@ -90,21 +96,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Escuchar cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event, session) => {
+
         
         if (!isMounted) return // Evitar actualizaciones si el componente se desmontó
         
         setAuthState(prev => ({ ...prev, session }))
         
-        if (event === 'SIGNED_IN' && session?.user) {
+        if (event === 'SIGNED_IN' && session?.user) {
+
           await fetchUserProfile(session.user.id)
-        } else if (event === 'SIGNED_OUT') {
+        } else if (event === 'SIGNED_OUT') {
+
           setAuthState({
             user: null,
             session: null,
             loading: false,
           })
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+
           await fetchUserProfile(session.user.id)
         }
       }
@@ -114,7 +124,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const fetchUserProfile = async (userId: string) => {
-    try {
+    try {
+
       
       const { data, error } = await supabase
         .from('users')
@@ -122,12 +133,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('id', userId)
         .single()
 
-      if (error) {
+      if (error) {
+
+
         // Usuario no existe en la tabla users, necesita completar perfil
         setAuthState(prev => ({ ...prev, user: null, loading: false }))
         return
-      }
-      setAuthState(prev => ({ ...prev, user: data, loading: false }))
+      }
+
+      // Verificar si el usuario está baneado
+      if (data.is_banned) {
+        // Cerrar sesión inmediatamente
+        await supabase.auth.signOut()
+        // Redirigir a login con parámetro para mostrar alerta de baneo
+        const userType = data.is_business_owner ? 'business' : 'client'
+        router.push(`/auth/${userType}/login?banned=true`)
+        setAuthState({ user: null, session: null, loading: false })
+        return
+      }
+
+
+      setAuthState(prev => ({ ...prev, user: data, loading: false }))
+
     } catch (error) {
       console.error('💥 Error fetching user profile:', error)
       setAuthState(prev => ({ ...prev, user: null, loading: false }))
@@ -136,14 +163,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Método para verificar y actualizar el estado después de completar perfil
   const checkAndUpdateUserState = async () => {
-    try {
+    try {
+
       
       // Obtener sesión actual
       const { data: { session } } = await supabase.auth.getSession()
       
-      if (!session?.user) {
+      if (!session?.user) {
+
         return false
-      }
+      }
+
       
       // Verificar si el usuario existe en la base de datos
       const { data: user, error } = await supabase
@@ -152,11 +182,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('id', session.user.id)
         .single()
 
-      if (error) {
+      if (error) {
+
         return false
       }
 
-      if (user) {
+      if (user) {
+
         setAuthState(prev => ({ ...prev, user, loading: false }))
         return true
       }
@@ -169,7 +201,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signInWithGoogle = async (userType: 'client' | 'business_owner') => {
-    try {
+    try {
+
       
       // Persist the intended user type in a short-lived cookie as a fallback
       // for cases where the provider/Supabase loses our "type" query param and returns to root.
@@ -218,7 +251,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (!authState.session?.user) {
         throw new Error('No authenticated user')
-      }
+      }
+
 
       // Verificar que el email no esté siendo usado para otro tipo de usuario
       const { data: existingUser } = await supabase
@@ -251,7 +285,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (error) {
         console.error('Error updating profile:', error)
         throw error
-      }
+      }
+
       setAuthState(prev => ({ ...prev, user }))
       return user
     } catch (error) {
@@ -261,20 +296,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const refreshUser = async (force: boolean = false) => {
-    if (authState.session?.user) {
+    if (authState.session?.user) {
+
       await fetchUserProfile(authState.session.user.id)
     }
   }
 
   // Método para forzar la actualización del estado después de completar perfil
   const forceRefreshUser = async (): Promise<void> => {
-    try {
+    try {
+
       
       // Usar el nuevo método que verifica y actualiza el estado
       const success = await checkAndUpdateUserState()
       
-      if (success) {
-      } else {
+      if (success) {
+
+      } else {
+
       }
       
       // No return value to match Promise<void>
@@ -286,7 +325,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Nuevo método para validar y redirigir después de completar perfil
   const handleProfileCompleted = async () => {
-    try {
+    try {
+
       
       // Forzar actualización del estado
       if (authState.session?.user) {
@@ -298,7 +338,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (authState.user) {
           const redirectPath = authState.user.is_business_owner
             ? '/dashboard/business'
-            : '/dashboard/client'
+            : '/dashboard/client'
+
           router.replace(redirectPath)
         }
       }, 100)
@@ -313,7 +354,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signInWithEmail = async (email: string, password: string, userType: 'client' | 'business_owner') => {
-    try {
+    try {
+
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -325,7 +367,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw error
       }
 
-      if (data.user) {
+      if (data.user) {
+
         // Verificar que el usuario sea del tipo correcto
         const { data: user, error: userError } = await supabase
           .from('users')
@@ -333,7 +376,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .eq('id', data.user.id)
           .single()
 
-        if (userError) {
+        if (userError) {
+
           // Usuario autenticado pero sin perfil, redirigir a setup
           router.push(`/auth/${userType}/setup`)
           return
@@ -344,6 +388,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!isCorrectType) {
           await supabase.auth.signOut()
           throw new Error(`Esta cuenta no es de tipo ${userType === 'client' ? 'cliente' : 'negocio'}`)
+        }
+
+        // Verificar si el usuario está baneado
+        if (user.is_banned) {
+          await supabase.auth.signOut()
+          throw new Error('USER_BANNED')
         }
 
         // IMPORTANTE: Actualizar el estado de autenticación con el usuario y sesión
@@ -374,7 +424,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signUpWithEmail = async (email: string, password: string, metadata: { first_name: string; last_name: string }, userType: 'client' | 'business_owner') => {
-    try {
+    try {
+
 
       // Verificar si el email ya existe ANTES de hacer signUp
       const { data: emailExists, error: checkError } = await supabase.rpc('check_email_exists', {
@@ -413,10 +464,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw error
       }
 
-      if (data.user) {
+      if (data.user) {
+
 
         // Si el usuario necesita confirmar email, mostrar mensaje
-        if (!data.session) {
+        if (!data.session) {
+
           // Redirigir a página de confirmación de email
           const authPath = userType === 'business_owner' ? 'business' : 'client'
           router.push(`/auth/${authPath}/verify-email?email=${encodeURIComponent(email)}`)

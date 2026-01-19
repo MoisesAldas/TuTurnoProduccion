@@ -197,7 +197,7 @@ async function createSummarySheet(
       format: NUMBER_FORMATS.INTEGER,
     },
     {
-      indicator: "Ticket Promedio",
+      indicator: "Precio Promedio Servicio",
       value: data.summary.averageTicket,
       detail: "Por cita",
       format: NUMBER_FORMATS.CURRENCY,
@@ -432,14 +432,14 @@ async function createEmployeesSheet(
     "Total Citas",
     "Completadas",
     "Ingresos",
-    "Ticket Prom.",
-    "Tasa Complet.",
+    "Precio Promedio Servicio",
+    "Tasa Completitud",
   ];
   headerRow.font = FONTS.TABLE_HEADER;
   headerRow.fill = FILLS.TABLE_HEADER;
-  headerRow.alignment = ALIGNMENTS.CENTER;
+  headerRow.alignment = { ...ALIGNMENTS.CENTER, wrapText: true };
   headerRow.border = BORDERS.ALL_THIN;
-  headerRow.height = ROW_HEIGHTS.TABLE_HEADER;
+  headerRow.height = 35; // Increased height to accommodate wrapped text
   currentRow++;
 
   // Datos
@@ -492,7 +492,7 @@ async function createEmployeesSheet(
     ...data.employees.map((e) => e.total_revenue),
   ];
   const empTicket = [
-    "Ticket Prom.",
+    "Precio Promedio Servicio",
     ...data.employees.map((e) => e.average_ticket),
   ];
   const empRate = [
@@ -771,7 +771,7 @@ function generateInsights(data: AnalyticsExportData): string[] {
     insights.push(
       `Los ingresos totales alcanzaron ${formatCurrency(
         data.summary.totalRevenue
-      )} con un ticket promedio de ${formatCurrency(
+      )} con un precio promedio de servicio de ${formatCurrency(
         data.summary.averageTicket
       )}.`
     );

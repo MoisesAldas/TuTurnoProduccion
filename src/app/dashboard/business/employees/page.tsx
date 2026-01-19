@@ -28,6 +28,8 @@ import EmployeeAbsencesModal from '@/components/EmployeeAbsencesModal'
 import EmployeeServicesModal from '@/components/EmployeeServicesModal'
 import EmployeeServicesBadge from '@/components/EmployeeServicesBadge'
 import { StatsCard } from '@/components/StatsCard'
+import DeleteEmployeeWarningDialog from '@/components/employees/DeleteEmployeeWarningDialog'
+import { getServicesOnlyByEmployee } from '@/lib/employeeServicesApi'
 
 // Tipo para empleados
 interface Employee {
@@ -58,11 +60,17 @@ export default function EmployeesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  
+  // Estados para validación de eliminación con servicios huérfanos
+  const [deleteWarningOpen, setDeleteWarningOpen] = useState(false)
+  const [employeeToDeleteObj, setEmployeeToDeleteObj] = useState<Employee | null>(null)
+  const [orphanedServices, setOrphanedServices] = useState<any[]>([])
+  
   const { authState } = useAuth()
   const { toast } = useToast()
   const supabase = createClient()
   const router = useRouter()
-
+  
   useEffect(() => {
     if (authState.user) {
       fetchData()
@@ -107,6 +115,32 @@ export default function EmployeesPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Nueva función: Validar antes de eliminar (verifica servicios huérfanos)
+  const handleDeleteClick = async (employee: Employee) => {
+    // Verificar si hay servicios que solo este empleado puede realizar
+    const { data: services } = await getServicesOnlyByEmployee(employee.id)
+    
+    setEmployeeToDeleteObj(employee)
+    setOrphanedServices(services || [])
+    setDeleteWarningOpen(true)
+  }
+
+  // Función de confirmación desde el dialog
+  const confirmDeleteFromWarning = async () => {
+    if (!employeeToDeleteObj) return
+    
+    // Usar la función existente de eliminación
+    setEmployeeToDelete(employeeToDeleteObj.id)
+    setDeleteWarningOpen(false)
+    
+    // Ejecutar eliminación
+    await handleDeleteEmployee()
+    
+    // Limpiar estados
+    setEmployeeToDeleteObj(null)
+    setOrphanedServices([])
   }
 
   const handleDeleteEmployee = async () => {
@@ -470,10 +504,7 @@ export default function EmployeesPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setEmployeeToDelete(employee.id)
-                      setDeleteDialogOpen(true)
-                    }}
+                    onClick={() => handleDeleteClick(employee)}
                     className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -553,6 +584,17 @@ export default function EmployeesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+    
+    
+    {/* Delete Employee Warning Dialog - Con validación de servicios huérfanos */}
+    <DeleteEmployeeWarningDialog
+      open={deleteWarningOpen}
+      onOpenChange={setDeleteWarningOpen}
+      employeeName={employeeToDeleteObj ? `${employeeToDeleteObj.first_name} ${employeeToDeleteObj.last_name}` : ''}
+      orphanedServices={orphanedServices}
+      onConfirmDelete={confirmDeleteFromWarning}
+    />
     </div>
   )
 }

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
-import { ArrowLeft, Eye, EyeOff, Mail, Lock, Sparkles } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Mail, Lock, Sparkles, ShieldX } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import Logo from '@/components/logo'
@@ -47,6 +47,7 @@ export default function ClientLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showBannedAlert, setShowBannedAlert] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [resendingEmail, setResendingEmail] = useState(false)
   const [resendEmail, setResendEmail] = useState('')
@@ -74,7 +75,13 @@ export default function ClientLoginPage() {
     } else if (errorParam) {
       setError(ERROR_MESSAGES[errorParam as keyof typeof ERROR_MESSAGES] || 'Ocurrió un error inesperado')
     }
-  }, [errorParam, successParam, customMessage])
+    
+    // Verificar si viene de un redirect por baneo (OAuth)
+    const bannedParam = searchParams.get('banned')
+    if (bannedParam === 'true') {
+      setShowBannedAlert(true)
+    }
+  }, [errorParam, successParam, customMessage, searchParams])
 
   const {
     register,
@@ -95,7 +102,10 @@ export default function ClientLoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err)
-      if (err.message?.includes('Invalid login credentials')) {
+      if (err.message === 'USER_BANNED') {
+        setShowBannedAlert(true)
+        setError(null)
+      } else if (err.message?.includes('Invalid login credentials')) {
         setError('Email o contraseña incorrectos')
       } else if (err.message?.includes('Email not confirmed')) {
         setError('Por favor confirma tu email antes de iniciar sesión')
@@ -247,6 +257,16 @@ export default function ClientLoginPage() {
             <Alert className="border-green-200 bg-green-50">
               <AlertDescription className="text-green-700 font-medium">
                 {successMessage}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Banned User Alert */}
+          {showBannedAlert && (
+            <Alert variant="destructive" className="border-red-300 bg-red-50">
+              <ShieldX className="h-4 w-4" />
+              <AlertDescription className="text-red-800">
+                <span className="font-semibold">Tu cuenta ha sido suspendida.</span> Por favor revisa tu correo electrónico para más información y ponte en contacto con soporte si tienes dudas.
               </AlertDescription>
             </Alert>
           )}

@@ -19,7 +19,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import Logo from '@/components/logo'
-import { getEmployeesForMultipleServices } from '@/lib/employeeServicesApi'
+import { useEmployeeFiltering } from '@/hooks/useEmployeeFiltering'
+import NoEmployeesAvailableAlert from '@/components/booking/NoEmployeesAvailableAlert'
 
 interface Business {
   id: string
@@ -66,10 +67,8 @@ type BookingStep = 'service' | 'employee' | 'datetime' | 'details' | 'confirmati
 export default function BookingPage() {
   const [business, setBusiness] = useState<Business | null>(null)
   const [services, setServices] = useState<Service[]>([])
-  const [employees, setEmployees] = useState<Employee[]>([])
   const [allEmployees, setAllEmployees] = useState<Employee[]>([]) // Todos los empleados del negocio
   const [loading, setLoading] = useState(true)
-  const [loadingEmployees, setLoadingEmployees] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // Booking state
@@ -139,36 +138,12 @@ export default function BookingPage() {
     }
   }, [selectedDate, selectedEmployee, selectedServices, specialHourForDate])
 
-  // Filtrar empleados cuando cambian los servicios seleccionados
-  useEffect(() => {
-    if (selectedServices.length > 0) {
-      filterEmployeesByServices()
-    } else {
-      // Si no hay servicios seleccionados, mostrar todos los empleados
-      setEmployees(allEmployees)
-    }
-  }, [selectedServices, allEmployees])
-
-  const filterEmployeesByServices = async () => {
-    try {
-      setLoadingEmployees(true)
-      const serviceIds = selectedServices.map(s => s.id)
-      const { data, error } = await getEmployeesForMultipleServices(serviceIds)
-      
-      if (error) {
-        console.error('Error filtering employees:', error)
-        // En caso de error, mostrar todos los empleados
-        setEmployees(allEmployees)
-      } else {
-        setEmployees(data || [])
-      }
-    } catch (error) {
-      console.error('Error filtering employees:', error)
-      setEmployees(allEmployees)
-    } finally {
-      setLoadingEmployees(false)
-    }
-  }
+  // Usar hook de filtrado de empleados
+  const {
+    filteredEmployees: employees,
+    isLoading: loadingEmployees,
+    hasNoEmployees
+  } = useEmployeeFiltering(selectedServices, allEmployees)
 
   const fetchData = async () => {
     try {
@@ -1035,7 +1010,7 @@ export default function BookingPage() {
               </div>
 
               <div className="space-y-4">
-              <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <div className="lg:hidden mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
                 <h3 className="font-medium text-indigo-900 mb-3">
                   Servicios seleccionados ({selectedServices.length})
                 </h3>
@@ -1066,36 +1041,13 @@ export default function BookingPage() {
               )}
 
               {/* No employees available */}
-              {!loadingEmployees && employees.length === 0 && selectedServices.length > 0 && (
-                <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
-                  <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  <AlertTitle className="text-amber-900 dark:text-amber-200 font-semibold">
-                    No hay empleados disponibles
-                  </AlertTitle>
-                  <AlertDescription className="text-amber-800 dark:text-amber-300 mt-2">
-                    <p className="mb-3">
-                      Los servicios seleccionados no pueden ser realizados por el mismo empleado:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 mb-4">
-                      {selectedServices.map(service => (
-                        <li key={service.id} className="font-medium">{service.name}</li>
-                      ))}
-                    </ul>
-                    <p className="text-sm">
-                      Por favor, modifica tu selección de servicios o reserva por separado.
-                    </p>
-                    <Button
-                      onClick={goBackToService}
-                      variant="outline"
-                      className="mt-4 border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-900/50"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Volver a Servicios
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              )}
-
+            {/* No employees available */}
+{hasNoEmployees && (
+  <NoEmployeesAvailableAlert
+    selectedServices={selectedServices}
+    onGoBack={goBackToService}
+  />
+)}
               {/* Employees list */}
               {!loadingEmployees && employees.length > 0 && (
                 <div className="space-y-4">
@@ -1423,7 +1375,7 @@ export default function BookingPage() {
                   <CardContent className="p-6 space-y-4">
                     {/* Services */}
                     {selectedServices.length > 0 && (
-                      <div>
+                      <div >
                         <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                           <CheckCircle className="w-4 h-4 text-blue-600" />
                           Servicios ({selectedServices.length})

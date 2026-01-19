@@ -37,8 +37,16 @@ export class DataProcessor {
   /**
    * Procesa todos los datos y retorna el formato de exportación
    */
-  static process(input: ProcessorInput): AnalyticsExportData {
+  static async process(input: ProcessorInput): Promise<AnalyticsExportData> {
     const { dashboardData, businessInfo, startDate, endDate } = input;
+
+    // Fetch all services for export (not just top 5)
+    const services = await this.buildServicePerformance(
+      dashboardData,
+      businessInfo.id,
+      startDate,
+      endDate
+    );
 
     return {
       business: businessInfo,
@@ -48,7 +56,7 @@ export class DataProcessor {
       monthlyRevenue: this.buildMonthlyRevenue(dashboardData),
       weekdayRevenue: this.buildWeekdayRevenue(dashboardData),
       employees: this.buildEmployeePerformance(dashboardData),
-      services: this.buildServicePerformance(dashboardData),
+      services,
       timeSlots: this.buildTimeSlots(dashboardData),
       payments: this.buildPayments(dashboardData),
     };
@@ -66,7 +74,7 @@ export class DataProcessor {
     return {
       reportPeriod,
       generatedDate,
-      generatedBy: "TuTurno Analytics Engine v1.0",
+      generatedBy: "TuTurno Análisis y Desempeño",
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
     };
@@ -223,19 +231,61 @@ export class DataProcessor {
 
   /**
    * Construye performance de servicios
+   * Fetches ALL services for export (not just top 5 from dashboard)
    */
-  private static buildServicePerformance(
-    data: DashboardAnalyticsData
-  ): ServicePerformance[] {
-    const totalRevenue = data.revenueAnalytics?.total_revenue || 1;
+  private static async buildServicePerformance(
+    data: DashboardAnalyticsData,
+    businessId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<ServicePerformance[]> {
+    // Import supabase client dynamically to avoid circular dependencies
+    const { createClient } = await import("@/lib/supabaseClient");
+    const { format } = await import("date-fns");
+    const supabase = createClient();
 
-    return data.topServices.map((service) => ({
+    // Fetch ALL services for export (not limited to top 5)
+    const { data: allServices, error } = await supabase.rpc(
+      "get_top_services_dashboard",
+      {
+        p_business_id: businessId,
+        p_start_date: format(startDate, "yyyy-MM-dd"),
+        p_end_date: format(endDate, "yyyy-MM-dd"),
+        p_limit: 1000, // Get all services
+      }
+    );
+
+    if (error || !allServices || allServices.length === 0) {
+      console.error("Error fetching all services for export:", error);
+      // Fallback to dashboard data if fetch fails
+      const totalRevenue = data.revenueAnalytics?.total_revenue || 1;
+      return data.topServices.map((service) => ({
+        service_id: service.service_id,
+        service_name: service.service_name,
+        times_sold: service.booking_count,
+        total_revenue: service.total_revenue,
+        average_price: service.avg_price,
+        percentage_of_total: (service.total_revenue / totalRevenue) * 100,
+      }));
+    }
+
+    // Calculate total revenue from ALL services (not total business revenue)
+    const totalServicesRevenue = allServices.reduce(
+      (sum: number, s: any) => sum + (s.total_revenue || 0),
+      0
+    );
+
+    // Map all services with correct percentage calculation
+    return allServices.map((service: any) => ({
       service_id: service.service_id,
       service_name: service.service_name,
       times_sold: service.booking_count,
       total_revenue: service.total_revenue,
       average_price: service.avg_price,
-      percentage_of_total: (service.total_revenue / totalRevenue) * 100,
+      percentage_of_total:
+        totalServicesRevenue > 0
+          ? (service.total_revenue / totalServicesRevenue) * 100
+          : 0,
     }));
   }
 

@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
           : "/auth/client/forgot-password";
       const res = NextResponse.redirect(
         `${origin}${forgotPath}?error=link_expired&message=${encodeURIComponent(
-          decodeURIComponent(finalError)
-        )}`
+          decodeURIComponent(finalError),
+        )}`,
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
       return res;
@@ -60,8 +60,8 @@ export async function GET(request: NextRequest) {
         "El enlace de confirmación ha expirado. Por favor, solicita un nuevo enlace de confirmación o intenta registrarte nuevamente.";
       const res = NextResponse.redirect(
         `${origin}${loginPath}?error=link_expired&message=${encodeURIComponent(
-          expiredMessage
-        )}`
+          expiredMessage,
+        )}`,
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
       return res;
@@ -72,8 +72,8 @@ export async function GET(request: NextRequest) {
       type === "business_owner" ? "/auth/business/login" : "/auth/client/login";
     const res = NextResponse.redirect(
       `${origin}${loginPath}?error=auth_error&message=${encodeURIComponent(
-        decodeURIComponent(finalError)
-      )}`
+        decodeURIComponent(finalError),
+      )}`,
     );
     res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
     return res;
@@ -129,8 +129,8 @@ export async function GET(request: NextRequest) {
           "El enlace de confirmación debe abrirse en el mismo dispositivo y navegador donde iniciaste el registro. Por favor, vuelve a tu dispositivo original o solicita un nuevo enlace.";
         const res = NextResponse.redirect(
           `${origin}${loginPath}?error=device_mismatch&message=${encodeURIComponent(
-            errorMessage
-          )}`
+            errorMessage,
+          )}`,
         );
         res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
         return res;
@@ -142,8 +142,8 @@ export async function GET(request: NextRequest) {
           : "/auth/client/login";
       const res = NextResponse.redirect(
         `${origin}${loginPath}?error=session_error&message=${encodeURIComponent(
-          sessionError.message || "Error al crear la sesión"
-        )}`
+          sessionError.message || "Error al crear la sesión",
+        )}`,
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
       return res;
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
     console.log(
       "✅ Session created for user:",
       session.user.id,
-      session.user.email
+      session.user.email,
     );
 
     // Si no hay tipo en URL/cookie, intentar recuperar desde metadatos del usuario
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
       } else {
         console.error("❌ Invalid or missing user type in metadata");
         const res = NextResponse.redirect(
-          `${origin}/auth/client/login?error=invalid_type`
+          `${origin}/auth/client/login?error=invalid_type`,
         );
         res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
         return res;
@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
     // Si es una acción de reset password, redirigir a la página de reset
     if (action === "reset-password") {
       console.log(
-        "🔄 Password reset action detected, redirecting to reset page"
+        "🔄 Password reset action detected, redirecting to reset page",
       );
       const resetPath =
         type === "business_owner"
@@ -219,7 +219,7 @@ export async function GET(request: NextRequest) {
           ? "/auth/business/login"
           : "/auth/client/login";
       const res = NextResponse.redirect(
-        `${origin}${loginPath}?error=database_error`
+        `${origin}${loginPath}?error=database_error`,
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
       return res;
@@ -241,8 +241,21 @@ export async function GET(request: NextRequest) {
             ? "/auth/client/login"
             : "/auth/business/login";
         const res = NextResponse.redirect(
-          `${origin}${suggestionPath}?error=email_different_type`
+          `${origin}${suggestionPath}?error=email_different_type`,
         );
+        res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
+        return res;
+      }
+
+      // NUEVO: Verificar si el usuario está baneado
+      if (existingUser.is_banned) {
+        console.log("⛔ User is banned, signing out and redirecting to login");
+        await supabase.auth.signOut();
+        const loginPath =
+          type === "business_owner"
+            ? "/auth/business/login"
+            : "/auth/client/login";
+        const res = NextResponse.redirect(`${origin}${loginPath}?banned=true`);
         res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
         return res;
       }
@@ -285,7 +298,7 @@ export async function GET(request: NextRequest) {
           ? "/auth/business/login"
           : "/auth/client/login";
       const res = NextResponse.redirect(
-        `${origin}${loginPath}?error=email_exists`
+        `${origin}${loginPath}?error=email_exists`,
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
       return res;
@@ -294,7 +307,7 @@ export async function GET(request: NextRequest) {
     // Usuario nuevo, redirigir a setup de perfil
     console.log(
       "👤 New user detected, redirecting to profile setup with type:",
-      type
+      type,
     );
 
     // Detectar si es una confirmación de email (no es OAuth)
@@ -305,7 +318,7 @@ export async function GET(request: NextRequest) {
     if (isEmailConfirmation) {
       // Si es confirmación de email, mostrar mensaje de éxito y redirigir a login
       console.log(
-        "📧 Email confirmation detected, redirecting to login with success message"
+        "📧 Email confirmation detected, redirecting to login with success message",
       );
       const loginPath =
         type === "business_owner"
@@ -315,8 +328,8 @@ export async function GET(request: NextRequest) {
         "¡Email confirmado exitosamente! Por favor inicia sesión para continuar.";
       const res = NextResponse.redirect(
         `${origin}${loginPath}?success=email_confirmed&message=${encodeURIComponent(
-          successMessage
-        )}`
+          successMessage,
+        )}`,
       );
       res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
       return res;
@@ -333,7 +346,7 @@ export async function GET(request: NextRequest) {
     const loginPath =
       type === "business_owner" ? "/auth/business/login" : "/auth/client/login";
     const res = NextResponse.redirect(
-      `${origin}${loginPath}?error=unexpected_error`
+      `${origin}${loginPath}?error=unexpected_error`,
     );
     res.cookies.set("auth_user_type", "", { maxAge: 0, path: "/" });
     return res;

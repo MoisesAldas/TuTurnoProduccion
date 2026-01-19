@@ -225,6 +225,7 @@ export default function MarketplacePage() {
         .from('businesses')
         .select(`*, business_categories (*), business_hours (day_of_week, open_time, close_time, is_closed)`)
         .eq('is_active', true)
+        .eq('is_suspended', false)
         .order('created_at', { ascending: false })
 
       if (businessError) throw businessError
@@ -317,7 +318,18 @@ export default function MarketplacePage() {
                     <div className="w-full md:w-auto">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full h-12 border-gray-300 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200">
+                                <Button   variant="outline"
+  className="
+    w-full h-12
+    border-gray-300
+    text-gray-700
+    hover:border-slate-400
+    hover:bg-slate-100
+    hover:text-gray-900
+    transition-all
+    duration-300
+    ease-out
+  ">
                                     {selectedCategory 
                                         ? categories.find(c => c.id === selectedCategory)?.name 
                                         : 'Todas las categorías'}
@@ -354,7 +366,18 @@ export default function MarketplacePage() {
                     </div>
                     {/* Filter Button */}
                     <div className="w-full md:w-auto relative">
-                        <Button variant="outline" className="w-full h-12 border-gray-300 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => setIsFilterSheetOpen(true)}>
+                        <Button  variant="outline"
+  className="
+    w-full h-12
+    border-gray-300
+    text-gray-700
+    hover:border-slate-400
+    hover:bg-slate-100
+    hover:text-gray-900
+    transition-all
+    duration-300
+    ease-out
+  " onClick={() => setIsFilterSheetOpen(true)}>
                             <Filter className="w-4 h-4 mr-2" />
                             Filtros
                             {activeFiltersCount > 0 && (

@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import StarRating from '@/components/StarRating'
 import Logo from '@/components/logo'
+import BusinessSuspendedPage from '@/components/BusinessSuspendedPage'
 
 // Lazy load map modal (includes Mapbox)
 const LocationMapModal = dynamic(() => import('@/components/LocationMapModal'), {
@@ -129,6 +130,7 @@ export default function BusinessProfilePage() {
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
   const [submittingReply, setSubmittingReply] = useState(false)
+  const [isSuspended, setIsSuspended] = useState(false)
 
   const params = useParams()
   const router = useRouter()
@@ -335,6 +337,15 @@ export default function BusinessProfilePage() {
       }
 
       const businessData = businessRes.data
+      
+      // NUEVO: Verificar si el negocio está suspendido
+      if (businessData.is_suspended) {
+        console.log('⛔ Business is suspended, showing suspended page')
+        setIsSuspended(true)
+        setLoading(false)
+        return
+      }
+      
       setBusiness(businessData)
 
       // Check if current user is owner
@@ -544,6 +555,11 @@ export default function BusinessProfilePage() {
         </div>
       </div>
     )
+  }
+
+  // NUEVO: Mostrar página de negocio suspendido
+  if (isSuspended) {
+    return <BusinessSuspendedPage />
   }
 
   if (!business) {

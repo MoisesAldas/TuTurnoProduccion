@@ -1,5 +1,5 @@
 /**
- * PDF Export - Professional Gerencial Report Generator
+ * PDF Export - Professional Managerial Report Generator
  * Generates multi-page executive reports with business branding
  * Architecture: Modular functions for each page/section
  */
@@ -17,7 +17,7 @@ import {
   PDF_COLORS,
   FONT_SIZES,
   MARGINS,
-  PAGE_LAYOUT,
+  PAGE_LAYOUT,  // ¡Añade esto!
   TABLE_STYLES,
   formatPDFCurrency,
   formatPDFPercentage,
@@ -26,7 +26,6 @@ import {
 import {
   addPage,
   checkPageBreak,
-  getSafeY,
   addAllFooters,
   addSectionHeader,
   addSubsectionHeader,
@@ -84,32 +83,56 @@ export const exportToPDF = async (
   await createCoverPage(doc, data, logoBase64);
 
   // ==================================================================
-  // PAGE 2: EXECUTIVE SUMMARY
+  // PAGE 2: MANAGERIAL REPORT (Compact 1-2 Pages)
   // ==================================================================
   addPage(doc);
-  await createExecutiveSummary(doc, data);
 
-  // ==================================================================
-  // PAGE 3+: DETAILED SECTIONS
-  // ==================================================================
-  if (data.dailyRevenue.length > 0 || data.monthlyRevenue.length > 0) {
-    addPage(doc);
-    await createRevenueSection(doc, data);
+  // 1. Managerial Header Grid
+  let currentY = await createManagerialHeader(doc, data);
+
+  // 2. Executive Summary (KPIs as Grid)
+  currentY = await createExecutiveSummary(doc, data, currentY);
+
+  // 3. Revenue Section (Monthly Table)
+  // SIEMPRE usar monthlyRevenue (nunca dailyRevenue) para mantener PDF compacto
+  if (data.monthlyRevenue.length > 0) {
+    currentY = await createRevenueSection(doc, data, currentY);
   }
 
-  if (data.employees.length > 0) {
-    addPage(doc);
-    await createEmployeesSection(doc, data);
+  // 4. Operational Performance (Employees + Services)
+  if (data.employees.length > 0 || data.services.length > 0) {
+    // Check if we need a page break because of low space
+    if (currentY > 220) {
+      addPage(doc);
+      currentY = MARGINS.PAGE_TOP;
+    } else {
+      currentY += 5; // Small gap
+    }
+
+    if (data.employees.length > 0) {
+      currentY = await createEmployeesSection(doc, data, currentY);
+    }
+
+    if (data.services.length > 0) {
+      // Small gap between sections if on same page
+      if (data.employees.length > 0 && currentY < 220) {
+        currentY += 5;
+      }
+      currentY = await createServicesSection(doc, data, currentY);
+    }
   }
 
-  if (data.services.length > 0) {
-    addPage(doc);
-    await createServicesSection(doc, data);
-  }
-
+  // 5. Payments
   if (data.payments.length > 0) {
-    addPage(doc);
-    await createPaymentsSection(doc, data);
+    // Check page break
+    if (currentY > 220) {
+      addPage(doc);
+      currentY = MARGINS.PAGE_TOP;
+    } else {
+      currentY += 5;
+    }
+
+    await createPaymentsSection(doc, data, currentY);
   }
 
   // ==================================================================
@@ -138,16 +161,16 @@ async function createCoverPage(
   const centerX = pageWidth / 2;
 
   // Orange gradient background (simulated with rectangles)
-  doc.setFillColor(...PDF_COLORS.ORANGE_PRIMARY);
+  doc.setFillColor(...PDF_COLORS.GRAY_900);
   doc.rect(0, 0, pageWidth, 100, "F");
 
-  doc.setFillColor(...PDF_COLORS.ORANGE_DARK);
+  doc.setFillColor(...PDF_COLORS.GRAY_700);
   doc.rect(0, 100, pageWidth, 30, "F");
 
   // Logo centered at top
   const logoSize = 60;
   addLogo(doc, logoBase64, centerX - logoSize / 2, 30, logoSize);
-
+let currentY = 30;
   // Business Name
   doc.setFontSize(FONT_SIZES.TITLE);
   doc.setFont("helvetica", "bold");
@@ -179,7 +202,7 @@ async function createCoverPage(
   });
 
   // Divider
-  doc.setDrawColor(...PDF_COLORS.ORANGE_PRIMARY);
+  doc.setDrawColor(...PDF_COLORS.GRAY_900);
   doc.setLineWidth(1);
   doc.line(centerX - 40, 180, centerX + 40, 180);
 
@@ -191,7 +214,7 @@ async function createCoverPage(
 
   doc.setFontSize(FONT_SIZES.BODY_LARGE);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...PDF_COLORS.ORANGE_PRIMARY);
+  doc.setTextColor(...PDF_COLORS.GRAY_900);
   doc.text(data.metadata.reportPeriod, centerX, 210, { align: "center" });
 
   // Generated info
@@ -208,7 +231,7 @@ async function createCoverPage(
   doc.setFontSize(FONT_SIZES.SMALL);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...PDF_COLORS.GRAY_600);
-  doc.text("Powered by TuTurno", centerX, pageHeight - 20, { align: "center" });
+  doc.text("Desarrollado por TuTurno", centerX, pageHeight - 20, { align: "center" });
 
   doc.setFontSize(FONT_SIZES.TINY);
   doc.setFont("helvetica", "normal");
@@ -221,129 +244,200 @@ async function createCoverPage(
 }
 
 // ========================================
-// PAGE 2: EXECUTIVE SUMMARY
+// MANAGERIAL HEADER GRID
+// ========================================
+
+async function createManagerialHeader(
+  doc: jsPDF,
+  data: AnalyticsExportData
+): Promise<number> {
+  let y = MARGINS.PAGE_TOP;
+
+  // Title "Reporte de Gestión"
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...PDF_COLORS.GRAY_900);
+  doc.text("Reporte de Gestión", MARGINS.PAGE_LEFT, y);
+
+  // Right side business name
+  doc.setFontSize(14);
+  doc.setTextColor(...PDF_COLORS.GRAY_600);
+  doc.text(data.business.name, PAGE_LAYOUT.WIDTH - MARGINS.PAGE_RIGHT, y, {
+    align: "right",
+  });
+
+  y += 5;
+
+  // Header Grid using autoTable for perfect alignment
+  autoTable(doc, {
+    startY: y,
+    head: [
+      [
+        "Negocio / Sede",
+        "Período de Reporte",
+        "Fecha de Emisión",
+        "Solicitado Por",
+      ],
+    ],
+    body: [
+      [
+        data.business.name,
+        data.metadata.reportPeriod,
+        data.metadata.generatedDate,
+        data.metadata.generatedBy,
+      ],
+    ],
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+      cellPadding: 3,
+      lineColor: [100, 100, 100],
+      lineWidth: 0.1,
+    },
+    headStyles: {
+      fillColor: PDF_COLORS.GRAY_900,
+      textColor: PDF_COLORS.WHITE,
+      fontStyle: "bold",
+      halign: "left",
+    },
+    bodyStyles: {
+      textColor: PDF_COLORS.GRAY_900,
+      fillColor: PDF_COLORS.WHITE,
+    },
+    margin: { left: MARGINS.PAGE_LEFT, right: MARGINS.PAGE_RIGHT },
+    tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
+  });
+
+  return (doc as any).lastAutoTable.finalY + 10;
+}
+
+// ========================================
+// EXECUTIVE SUMMARY (KPI GRID)
 // ========================================
 
 async function createExecutiveSummary(
   doc: jsPDF,
-  data: AnalyticsExportData
-): Promise<void> {
-  let y = MARGINS.PAGE_TOP;
+  data: AnalyticsExportData,
+  startY: number
+): Promise<number> {
+  let y = startY;
 
-  // Page Title
-  doc.setFontSize(FONT_SIZES.TITLE);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...PDF_COLORS.GRAY_900);
-  doc.text("Resumen Ejecutivo", MARGINS.PAGE_LEFT, y);
-  y += 15;
-
-  // Intro text
-  y = addWrappedText(
-    doc,
-    `Este reporte presenta un análisis completo del desempeño de ${data.business.name} durante el período seleccionado. A continuación se muestran los indicadores clave de rendimiento (KPIs) y hallazgos principales.`,
-    MARGINS.PAGE_LEFT,
-    y,
-    PAGE_LAYOUT.CONTENT_WIDTH,
-    FONT_SIZES.BODY
-  );
-
+  doc.text("Indicadores Clave de Riesgo y Desempeño", MARGINS.PAGE_LEFT, y);
   y += 5;
 
-  // KPIs Grid
-  const kpis = [
+  // KPI Table Grid
+  const kpiData = [
     {
-      title: "Ingresos Totales",
+      label: "Ingresos Totales",
       value: formatPDFCurrency(data.summary.totalRevenue),
     },
     {
-      title: "Total de Citas",
+      label: "Total Citas",
       value: formatPDFInteger(data.summary.totalAppointments),
     },
     {
-      title: "Citas Completadas",
+      label: "Citas Completadas",
       value: formatPDFInteger(data.summary.completedAppointments),
     },
     {
-      title: "Citas Canceladas",
-      value: formatPDFInteger(data.summary.cancelledAppointments),
+      label: "Tasa Completitud",
+      value: formatPDFPercentage(data.summary.completionRate),
     },
+  ];
+
+  const kpiData2 = [
     {
-      title: "Ticket Promedio",
+      label: "Ticket Promedio",
       value: formatPDFCurrency(data.summary.averageTicket),
     },
     {
-      title: "Clientes Únicos",
+      label: "Clientes Únicos",
       value: formatPDFInteger(data.summary.uniqueClients),
     },
     {
-      title: "Tasa de Finalización",
-      value: formatPDFPercentage(data.summary.completionRate),
+      label: "Citas Canceladas",
+      value: formatPDFInteger(data.summary.cancelledAppointments),
     },
     {
-      title: "Tasa de Cancelación",
+      label: "Tasa Cancelación",
       value: formatPDFPercentage(data.summary.cancellationRate),
     },
   ];
 
-  y = renderKPIGrid(doc, kpis, y);
-  y += MARGINS.SECTION_SPACING;
+  autoTable(doc, {
+    startY: y,
+    head: [["Métrica", "Estado", "Métrica", "Estado"]],
+    body: [
+      [
+        kpiData[0].label,
+        kpiData[0].value,
+        kpiData2[0].label,
+        kpiData2[0].value,
+      ],
+      [
+        kpiData[1].label,
+        kpiData[1].value,
+        kpiData2[1].label,
+        kpiData2[1].value,
+      ],
+      [
+        kpiData[2].label,
+        kpiData[2].value,
+        kpiData2[2].label,
+        kpiData2[2].value,
+      ],
+      [
+        kpiData[3].label,
+        kpiData[3].value,
+        kpiData2[3].label,
+        kpiData2[3].value,
+      ],
+    ],
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+      cellPadding: 2.5,
+      lineColor: [200, 200, 200],
+      lineWidth: 0.1,
+    },
+    headStyles: {
+      fillColor: PDF_COLORS.GRAY_900,
+      textColor: PDF_COLORS.WHITE,
+      fontStyle: "bold",
+      halign: "center",
+    },
+  columnStyles: {
+  0: { halign: "left", fontStyle: "bold", cellWidth: 60 },
+  1: { halign: "center", cellWidth: 40 },
+  2: { halign: "center", cellWidth: 40 },
+  3: { halign: "center", cellWidth: 35 },
+},
+    margin: { left: MARGINS.PAGE_LEFT, right: MARGINS.PAGE_RIGHT },
+    tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
+  });
 
-  // Divider
-  y = addDivider(doc, y);
-
-  // Key Insights Section
-  y = addSectionHeader(doc, "Hallazgos Clave", y);
-
-  const insights = generateInsights(data);
-  y = addBulletList(
-    doc,
-    insights,
-    MARGINS.PAGE_LEFT,
-    y,
-    PAGE_LAYOUT.CONTENT_WIDTH
-  );
-
-  y += MARGINS.SECTION_SPACING;
-
-  // Recommendations
-  y = addSectionHeader(doc, "Recomendaciones", y);
-
-  const recommendations = generateRecommendations(data);
-  y = addBulletList(
-    doc,
-    recommendations,
-    MARGINS.PAGE_LEFT,
-    y,
-    PAGE_LAYOUT.CONTENT_WIDTH
-  );
+  return (doc as any).lastAutoTable.finalY + 8;
 }
 
 // ========================================
-// PAGE 3: REVENUE SECTION
+// REVENUE SECTION (COMPACT - MONTHLY ONLY)
 // ========================================
 
 async function createRevenueSection(
   doc: jsPDF,
-  data: AnalyticsExportData
-): Promise<void> {
-  let y = MARGINS.PAGE_TOP;
+  data: AnalyticsExportData,
+  startY: number
+): Promise<number> {
+  let y = startY;
 
-  y = addSectionHeader(doc, "Análisis de Ingresos", y);
-
-  // Monthly Revenue Table
+  // Monthly Revenue Table (SOLO MENSUAL - nunca diario)
   if (data.monthlyRevenue.length > 0) {
-    y = addSubsectionHeader(doc, "Ingresos Mensuales", y);
-
     autoTable(doc, {
       startY: y,
-      head: [
-        [
-          "Mes del Reporte",
-          "Ingresos Totales",
-          "Citas Totales",
-          "Ticket Promedio",
-        ],
-      ],
+      head: [["Mes", "Ingresos", "Citas Facturadas", "Promedio/Cita"]],
       body: data.monthlyRevenue.map((m) => [
         m.period_label,
         formatPDFCurrency(m.revenue),
@@ -367,38 +461,7 @@ async function createRevenueSection(
     y = (doc as any).lastAutoTable.finalY + MARGINS.SECTION_SPACING;
   }
 
-  // Daily Revenue Table
-  if (data.dailyRevenue.length > 0) {
-    y = checkPageBreak(doc, 60);
-     y += 10;
-    y = addSubsectionHeader(doc, "Desglose de Ingresos Diarios", y);
-
-    const allDays = [...data.dailyRevenue].sort(
-      (a, b) =>
-        new Date(a.period_label).getTime() - new Date(b.period_label).getTime()
-    );
-
-    autoTable(doc, {
-      startY: y,
-      head: [["Fecha del Período", "Ingresos Diarios", "Total Citas"]],
-      body: allDays.map((d) => [
-        d.period_label,
-        formatPDFCurrency(d.revenue),
-        formatPDFInteger(d.appointment_count),
-      ]),
-      theme: "striped",
-      headStyles: TABLE_STYLES.HEADER,
-      bodyStyles: TABLE_STYLES.BODY,
-      alternateRowStyles: TABLE_STYLES.ALTERNATING_ROW,
-      columnStyles: {
-        0: { halign: "left" },
-        1: { halign: "center" },
-        2: { halign: "center" },
-      },
-      margin: { left: MARGINS.PAGE_LEFT, right: MARGINS.PAGE_RIGHT },
-      tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
-    });
-  }
+  return y; // Return current Y position for stacking sections
 }
 
 // ========================================
@@ -407,31 +470,21 @@ async function createRevenueSection(
 
 async function createEmployeesSection(
   doc: jsPDF,
-  data: AnalyticsExportData
-): Promise<void> {
-  let y = MARGINS.PAGE_TOP;
+  data: AnalyticsExportData,
+  startY: number
+): Promise<number> {
+  let y = startY;
 
-  y = addSectionHeader(doc, "Desempeño de Empleados", y);
-
-  y = addWrappedText(
-    doc,
-    "Análisis del rendimiento individual de cada empleado basado en citas completadas, ingresos generados y tasas de finalización.",
-    MARGINS.PAGE_LEFT,
-    y,
-    PAGE_LAYOUT.CONTENT_WIDTH,
-    FONT_SIZES.BODY
-  );
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...PDF_COLORS.GRAY_900);
+  doc.text("Desempeño Operativo - Empleados", MARGINS.PAGE_LEFT, y);
+  y += 3;
 
   autoTable(doc, {
     startY: y,
     head: [
-      [
-        "Empleado",
-        "Total Citas",
-        "Citas Completadas",
-        "Ingresos Generados",
-        "Tasa de Finalización",
-      ],
+      ["Empleado", "Total Citas", "Completadas", "Ingresos", "Finalización"],
     ],
     body: data.employees.map((e) => [
       e.employee_name,
@@ -455,29 +508,7 @@ async function createEmployeesSection(
     tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
   });
 
-  y = (doc as any).lastAutoTable.finalY + MARGINS.SECTION_SPACING + 5;
-
-  // Top Performer Highlight
-  if (data.employees.length > 0) {
-    const topEmployee = [...data.employees].sort(
-      (a, b) => b.total_revenue - a.total_revenue
-    )[0];
-
-    y = checkPageBreak(doc, 30);
-    y += 10;
-    y = addSubsectionHeader(doc, "Empleado Destacado", y);
-
-    doc.setFontSize(FONT_SIZES.BODY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...PDF_COLORS.GRAY_900);
-    doc.text(
-      `${topEmployee.employee_name} generó ${formatPDFCurrency(
-        topEmployee.total_revenue
-      )} con ${topEmployee.completed_appointments} citas completadas.`,
-      MARGINS.PAGE_LEFT,
-      y
-    );
-  }
+  return (doc as any).lastAutoTable.finalY + MARGINS.SECTION_SPACING;
 }
 
 // ========================================
@@ -486,20 +517,16 @@ async function createEmployeesSection(
 
 async function createServicesSection(
   doc: jsPDF,
-  data: AnalyticsExportData
-): Promise<void> {
-  let y = MARGINS.PAGE_TOP;
+  data: AnalyticsExportData,
+  startY: number
+): Promise<number> {
+  let y = startY;
 
-  y = addSectionHeader(doc, "Servicios Más Vendidos", y);
-
-  y = addWrappedText(
-    doc,
-    "Ranking de servicios por ingresos generados, frecuencia de venta y precio promedio.",
-    MARGINS.PAGE_LEFT,
-    y,
-    PAGE_LAYOUT.CONTENT_WIDTH,
-    FONT_SIZES.BODY
-  );
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...PDF_COLORS.GRAY_900);
+  doc.text("Desempeño Comercial - Servicios Top", MARGINS.PAGE_LEFT, y);
+  y += 3;
 
   // Calculate percentages
   const totalRevenue = data.services.reduce(
@@ -509,15 +536,7 @@ async function createServicesSection(
 
   autoTable(doc, {
     startY: y,
-    head: [
-      [
-        "Nombre del Servicio",
-        "Veces Vendido",
-        "Ingresos Totales",
-        "Precio Promedio",
-        "Porcentaje de Ingresos",
-      ],
-    ],
+    head: [["Servicio", "Ventas", "Ingresos", "Precio Prom.", "% Total"]],
     body: data.services.map((s) => [
       s.service_name,
       formatPDFInteger(s.times_sold),
@@ -539,6 +558,9 @@ async function createServicesSection(
     margin: { left: MARGINS.PAGE_LEFT, right: MARGINS.PAGE_RIGHT },
     tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
   });
+
+  y = (doc as any).lastAutoTable.finalY + MARGINS.SECTION_SPACING;
+  return y; // Return current Y position for stacking sections
 }
 
 // ========================================
@@ -547,31 +569,20 @@ async function createServicesSection(
 
 async function createPaymentsSection(
   doc: jsPDF,
-  data: AnalyticsExportData
-): Promise<void> {
-  let y = MARGINS.PAGE_TOP;
+  data: AnalyticsExportData,
+  startY: number
+): Promise<number> {
+  let y = startY;
 
-  y = addSectionHeader(doc, "Métodos de Pago", y);
-
-  y = addWrappedText(
-    doc,
-    "Distribución de ingresos por método de pago utilizado.",
-    MARGINS.PAGE_LEFT,
-    y,
-    PAGE_LAYOUT.CONTENT_WIDTH,
-    FONT_SIZES.BODY
-  );
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...PDF_COLORS.GRAY_900);
+  doc.text("Desglose de Facturación", MARGINS.PAGE_LEFT, y);
+  y += 3;
 
   autoTable(doc, {
     startY: y,
-    head: [
-      [
-        "Método de Pago Seleccionado",
-        "Monto Total Recaudado",
-        "Número de Transacciones",
-        "Porcentaje del Período",
-      ],
-    ],
+    head: [["Método", "Total", "Transacciones", "% Part."]],
     body: data.payments.map((p) => [
       p.payment_method === "cash" ? "Efectivo" : "Transferencia",
       formatPDFCurrency(p.total_amount),
@@ -592,40 +603,7 @@ async function createPaymentsSection(
     tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
   });
 
-  y = (doc as any).lastAutoTable.finalY + MARGINS.SECTION_SPACING + 5;
-
-  // Visual progress bars for payment methods
-  y = checkPageBreak(doc, 40);
-  y += 8;
-  y = addSubsectionHeader(doc, "Distribución Visual", y);
-   y += 3;
-  data.payments.forEach((payment) => {
-    const label =
-      payment.payment_method === "cash" ? "Efectivo" : "Transferencia";
-
-    doc.setFontSize(FONT_SIZES.BODY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...PDF_COLORS.GRAY_900);
-    doc.text(label, MARGINS.PAGE_LEFT, y);
-
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      formatPDFPercentage(payment.percentage),
-      MARGINS.PAGE_LEFT + 50,
-      y
-    );
-
-    renderProgressBar(
-      doc,
-      MARGINS.PAGE_LEFT + 70,
-      y - 3,
-      90,
-      payment.percentage,
-      payment.payment_method === "cash" ? PDF_COLORS.GREEN : PDF_COLORS.BLUE
-    );
-
-    y += 12;
-  });
+  return (doc as any).lastAutoTable.finalY + MARGINS.SECTION_SPACING + 5;
 }
 
 // ========================================
@@ -640,7 +618,7 @@ function generateInsights(data: AnalyticsExportData): string[] {
     insights.push(
       `Los ingresos totales alcanzaron ${formatPDFCurrency(
         data.summary.totalRevenue
-      )} con un ticket promedio de ${formatPDFCurrency(
+      )} con un precio promedio de servicio de ${formatPDFCurrency(
         data.summary.averageTicket
       )}.`
     );

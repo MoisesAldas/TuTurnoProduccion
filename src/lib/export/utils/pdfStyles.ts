@@ -77,41 +77,68 @@ export const PAGE_LAYOUT = {
 // TABLE STYLES (for autoTable)
 // ========================================
 
+// ========================================
+// TABLE STYLES (Managerial Grid Style)
+// ========================================
+
 export const TABLE_STYLES = {
   HEADER: {
-    fillColor: PDF_COLORS.ORANGE_PRIMARY,
+    fillColor: PDF_COLORS.GRAY_900, // Dark header
     textColor: PDF_COLORS.WHITE,
     fontStyle: "bold",
-    fontSize: FONT_SIZES.SMALL,
+    fontSize: 9, // Slightly larger for readability
     halign: "center" as const,
     valign: "middle" as const,
-    cellPadding: 5,
+    cellPadding: 3,
+    lineWidth: 0.1,
+    lineColor: PDF_COLORS.GRAY_600, // Visible grid lines
   },
   BODY: {
-    fontSize: FONT_SIZES.SMALL,
+    fontSize: 8,
     textColor: PDF_COLORS.GRAY_900,
-    cellPadding: 4,
+    cellPadding: 2,
+    lineWidth: 0.1,
+    lineColor: PDF_COLORS.GRAY_200, // Lighter grid lines for body
   },
   ALTERNATING_ROW: {
-    fillColor: PDF_COLORS.GRAY_50,
+    fillColor: PDF_COLORS.WHITE, // No alternating background for strict grid look, or very subtle
   },
   BORDER: {
-    lineColor: PDF_COLORS.GRAY_200,
+    lineColor: PDF_COLORS.GRAY_600,
     lineWidth: 0.1,
   },
 } as const;
 
 // ========================================
-// KPI CARD STYLES
+// MANAGERIAL LAYOUT STYLES
+// ========================================
+
+export const MANAGERIAL = {
+  // Grid Information Header
+  INFO_HEADER_BG: PDF_COLORS.GRAY_900,
+  INFO_HEADER_TEXT: PDF_COLORS.WHITE,
+  INFO_LABEL_BG: [40, 50, 65] as [number, number, number], // Slightly lighter than header
+  
+  // KPI Grid
+  KPI_HEADER_BG: PDF_COLORS.ORANGE_PRIMARY, // Accent for KPIs
+  KPI_VALUE_SIZE: 10,
+  KPI_LABEL_SIZE: 7,
+  
+  // Section Spacing (Compact)
+  SECTION_GAP: 8,
+} as const;
+
+// ========================================
+// KPI CARD STYLES (Deprecated for Managerial, kept for compatibility if needed)
 // ========================================
 
 export const KPI_CARD = {
   WIDTH: 80,
-  HEIGHT: 30,
-  PADDING: 5,
-  BORDER_RADIUS: 2,
-  BORDER_COLOR: PDF_COLORS.GRAY_200,
-  BACKGROUND: PDF_COLORS.GRAY_50,
+  HEIGHT: 20,
+  PADDING: 4,
+  BORDER_RADIUS: 0, // Squared corners
+  BORDER_COLOR: PDF_COLORS.GRAY_600,
+  BACKGROUND: PDF_COLORS.WHITE,
   TITLE_SIZE: FONT_SIZES.SMALL,
   VALUE_SIZE: FONT_SIZES.HEADING,
   TITLE_COLOR: PDF_COLORS.GRAY_600,

@@ -117,7 +117,7 @@ export const PaymentMethodsPieChart = ({
                     <span className="font-medium">{method.count}</span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                    <span>Ticket Promedio:</span>
+                    <span>Precio Promedio Servicio:</span>
                     <span className="font-medium">
                       {formatCurrency(method.value / method.count)}
                     </span>
