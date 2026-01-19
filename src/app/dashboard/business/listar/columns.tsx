@@ -21,6 +21,10 @@ import {
   CreditCard,
   AlertCircle,
   XCircle,
+  CheckCircle,
+  Calendar,
+  Phone,
+  User,
 } from 'lucide-react'
 
 // ============================================
@@ -77,32 +81,44 @@ const formatPrice = (price: number) => {
 const getStatusBadge = (status: AppointmentRow['status']) => {
   const statusConfig = {
     pending: {
-      className: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-400 dark:border-yellow-800',
+      className: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-400 dark:border-yellow-800',
       label: 'Pendiente',
+      icon: AlertCircle,
     },
     confirmed: {
-      className: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-400 dark:border-green-800',
+      className: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800',
       label: 'Confirmada',
+      icon: CheckCircle,
     },
     in_progress: {
-      className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800',
+      className: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/50 dark:text-purple-400 dark:border-purple-800',
       label: 'En Progreso',
+      icon: Clock,
     },
     completed: {
-      className: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700',
+      className: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-400 dark:border-green-800',
       label: 'Completada',
+      icon: CheckCircle,
     },
     cancelled: {
-      className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-400 dark:border-red-800',
+      className: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/50 dark:text-red-400 dark:border-red-800',
       label: 'Cancelada',
+      icon: XCircle,
     },
     no_show: {
-      className: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800',
-      label: 'No Asistió',
+      className: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
+      label: 'No asistió',
+      icon: XCircle,
     },
   }
   const config = statusConfig[status] || statusConfig.pending
-  return <Badge className={`${config.className} border`}>{config.label}</Badge>
+  const Icon = config.icon
+  return (
+    <Badge className={`${config.className} gap-1`}>
+      <Icon className="h-3 w-3" />
+      {config.label}
+    </Badge>
+  )
 }
 
 // ============================================
@@ -115,27 +131,18 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
   // ========================================
   {
     accessorKey: 'appointment_date',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
+    header: 'Fecha y Hora',
     cell: ({ row }) => {
       return (
-        <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          {formatDate(row.original.appointment_date)}
-        </div>
-      )
-    },
-  },
-
-  // ========================================
-  // COLUMNA: HORA
-  // ========================================
-  {
-    accessorKey: 'start_time',
-    header: 'Hora',
-    cell: ({ row }) => {
-      return (
-        <div className="text-sm">
-          <div className="text-gray-900 dark:text-gray-50">{row.original.start_time?.substring(0, 5)}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">{row.original.end_time?.substring(0, 5)}</div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Calendar className="h-3 w-3 text-muted-foreground" />
+            {formatDate(row.original.appointment_date)}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            {row.original.start_time?.substring(0, 5)} - {row.original.end_time?.substring(0, 5)}
+          </div>
         </div>
       )
     },
@@ -150,15 +157,18 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
     cell: ({ row }) => {
       return (
         <div>
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{row.original.client_name}</div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {row.original.client_phone}
-            {row.original.is_walk_in && (
-              <Badge className="bg-orange-50 text-orange-700 border-orange-200 border text-[10px] px-1.5 py-0 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
-                Sin cita previa
-              </Badge>
-            )}
-          </div>
+          <div className="font-medium">{row.original.client_name}</div>
+          {row.original.client_phone && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+              <Phone className="h-3 w-3" />
+              <span>{row.original.client_phone}</span>
+            </div>
+          )}
+          {row.original.is_walk_in && (
+            <Badge className="bg-orange-50 text-orange-700 border-orange-200 border text-[10px] px-1.5 py-0 mt-1 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
+              Sin cita previa
+            </Badge>
+          )}
         </div>
       )
     },
@@ -169,9 +179,16 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
   // ========================================
   {
     accessorKey: 'employee_name',
-    header: 'Empleado',
+    header: 'Profesional',
     cell: ({ row }) => {
-      return <div className="text-sm text-gray-900 dark:text-gray-50">{row.original.employee_name}</div>
+      return row.original.employee_name ? (
+        <div className="flex items-center gap-2">
+          <User className="h-3 w-3 text-muted-foreground" />
+          <span className="text-sm">{row.original.employee_name}</span>
+        </div>
+      ) : (
+        <span className="text-sm text-muted-foreground">Sin asignar</span>
+      )
     },
   },
 
@@ -185,11 +202,10 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
       const services = row.original.service_names || []
       const servicesText = services.join(', ')
       return (
-        <div
-          className="text-sm text-gray-900 dark:text-gray-50 max-w-xs truncate"
-          title={servicesText}
-        >
-          {servicesText || '-'}
+        <div className="max-w-[200px]">
+          <span className="text-sm line-clamp-2">
+            {servicesText || '-'}
+          </span>
         </div>
       )
     },
@@ -211,10 +227,10 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
   // ========================================
   {
     accessorKey: 'total_price',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Precio" />,
+    header: 'Total',
     cell: ({ row }) => {
       return (
-        <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 text-right">
+        <div className="font-semibold">
           {formatPrice(Number(row.original.total_price || 0))}
         </div>
       )
@@ -226,18 +242,18 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
   // ========================================
   {
     id: 'actions',
-    header: () => <div className="text-center">Acciones</div>,
+    header: () => <div className="text-right">Acciones</div>,
     cell: ({ row }) => {
       const appointment = row.original
 
       return (
-        <div className="flex justify-center">
+        <div className="text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="h-8 w-8 p-0"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>

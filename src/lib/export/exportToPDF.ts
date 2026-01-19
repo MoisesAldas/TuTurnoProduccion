@@ -9,6 +9,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AnalyticsExportData } from "./types";
+import { translateMonthToSpanish } from "./exportToExcel";
 import {
   fetchImageAsBase64,
   createLogoPlaceholder,
@@ -17,7 +18,7 @@ import {
   PDF_COLORS,
   FONT_SIZES,
   MARGINS,
-  PAGE_LAYOUT,  // ¡Añade esto!
+  PAGE_LAYOUT, // ¡Añade esto!
   TABLE_STYLES,
   formatPDFCurrency,
   formatPDFPercentage,
@@ -54,7 +55,7 @@ declare module "jspdf" {
  */
 export const exportToPDF = async (
   data: AnalyticsExportData,
-  filename?: string
+  filename?: string,
 ): Promise<void> => {
   const timestamp = format(new Date(), "yyyy-MM-dd", { locale: es });
   const defaultFilename = `reporte-gerencial-${data.business.name
@@ -154,7 +155,7 @@ export const exportToPDF = async (
 async function createCoverPage(
   doc: jsPDF,
   data: AnalyticsExportData,
-  logoBase64: string
+  logoBase64: string,
 ): Promise<void> {
   const pageWidth = PAGE_LAYOUT.WIDTH;
   const pageHeight = PAGE_LAYOUT.HEIGHT;
@@ -170,7 +171,7 @@ async function createCoverPage(
   // Logo centered at top
   const logoSize = 60;
   addLogo(doc, logoBase64, centerX - logoSize / 2, 30, logoSize);
-let currentY = 30;
+  let currentY = 30;
   // Business Name
   doc.setFontSize(FONT_SIZES.TITLE);
   doc.setFont("helvetica", "bold");
@@ -231,7 +232,9 @@ let currentY = 30;
   doc.setFontSize(FONT_SIZES.SMALL);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...PDF_COLORS.GRAY_600);
-  doc.text("Desarrollado por TuTurno", centerX, pageHeight - 20, { align: "center" });
+  doc.text("Desarrollado por TuTurno", centerX, pageHeight - 20, {
+    align: "center",
+  });
 
   doc.setFontSize(FONT_SIZES.TINY);
   doc.setFont("helvetica", "normal");
@@ -239,7 +242,7 @@ let currentY = 30;
     "Sistema Profesional de Gestión de Citas",
     centerX,
     pageHeight - 15,
-    { align: "center" }
+    { align: "center" },
   );
 }
 
@@ -249,7 +252,7 @@ let currentY = 30;
 
 async function createManagerialHeader(
   doc: jsPDF,
-  data: AnalyticsExportData
+  data: AnalyticsExportData,
 ): Promise<number> {
   let y = MARGINS.PAGE_TOP;
 
@@ -318,7 +321,7 @@ async function createManagerialHeader(
 async function createExecutiveSummary(
   doc: jsPDF,
   data: AnalyticsExportData,
-  startY: number
+  startY: number,
 ): Promise<number> {
   let y = startY;
 
@@ -409,12 +412,12 @@ async function createExecutiveSummary(
       fontStyle: "bold",
       halign: "center",
     },
-  columnStyles: {
-  0: { halign: "left", fontStyle: "bold", cellWidth: 60 },
-  1: { halign: "center", cellWidth: 40 },
-  2: { halign: "center", cellWidth: 40 },
-  3: { halign: "center", cellWidth: 35 },
-},
+    columnStyles: {
+      0: { halign: "left", fontStyle: "bold", cellWidth: 60 },
+      1: { halign: "center", cellWidth: 40 },
+      2: { halign: "center", cellWidth: 40 },
+      3: { halign: "center", cellWidth: 35 },
+    },
     margin: { left: MARGINS.PAGE_LEFT, right: MARGINS.PAGE_RIGHT },
     tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
   });
@@ -429,7 +432,7 @@ async function createExecutiveSummary(
 async function createRevenueSection(
   doc: jsPDF,
   data: AnalyticsExportData,
-  startY: number
+  startY: number,
 ): Promise<number> {
   let y = startY;
 
@@ -439,7 +442,7 @@ async function createRevenueSection(
       startY: y,
       head: [["Mes", "Ingresos", "Citas Facturadas", "Promedio/Cita"]],
       body: data.monthlyRevenue.map((m) => [
-        m.period_label,
+        translateMonthToSpanish(m.period_label),
         formatPDFCurrency(m.revenue),
         formatPDFInteger(m.appointment_count),
         formatPDFCurrency(m.revenue / (m.appointment_count || 1)),
@@ -471,7 +474,7 @@ async function createRevenueSection(
 async function createEmployeesSection(
   doc: jsPDF,
   data: AnalyticsExportData,
-  startY: number
+  startY: number,
 ): Promise<number> {
   let y = startY;
 
@@ -518,7 +521,7 @@ async function createEmployeesSection(
 async function createServicesSection(
   doc: jsPDF,
   data: AnalyticsExportData,
-  startY: number
+  startY: number,
 ): Promise<number> {
   let y = startY;
 
@@ -531,7 +534,7 @@ async function createServicesSection(
   // Calculate percentages
   const totalRevenue = data.services.reduce(
     (sum, s) => sum + s.total_revenue,
-    0
+    0,
   );
 
   autoTable(doc, {
@@ -570,7 +573,7 @@ async function createServicesSection(
 async function createPaymentsSection(
   doc: jsPDF,
   data: AnalyticsExportData,
-  startY: number
+  startY: number,
 ): Promise<number> {
   let y = startY;
 
@@ -617,10 +620,10 @@ function generateInsights(data: AnalyticsExportData): string[] {
   if (data.summary.totalRevenue > 0) {
     insights.push(
       `Los ingresos totales alcanzaron ${formatPDFCurrency(
-        data.summary.totalRevenue
+        data.summary.totalRevenue,
       )} con un precio promedio de servicio de ${formatPDFCurrency(
-        data.summary.averageTicket
-      )}.`
+        data.summary.averageTicket,
+      )}.`,
     );
   }
 
@@ -628,14 +631,14 @@ function generateInsights(data: AnalyticsExportData): string[] {
   if (data.summary.completionRate >= 80) {
     insights.push(
       `Excelente tasa de finalización del ${formatPDFPercentage(
-        data.summary.completionRate
-      )}, indicando alta satisfacción del cliente.`
+        data.summary.completionRate,
+      )}, indicando alta satisfacción del cliente.`,
     );
   } else if (data.summary.completionRate < 70) {
     insights.push(
       `La tasa de finalización del ${formatPDFPercentage(
-        data.summary.completionRate
-      )} puede mejorarse. Considere revisar procesos de confirmación.`
+        data.summary.completionRate,
+      )} puede mejorarse. Considere revisar procesos de confirmación.`,
     );
   }
 
@@ -643,21 +646,21 @@ function generateInsights(data: AnalyticsExportData): string[] {
   if (data.services.length > 0) {
     const topService = data.services[0];
     insights.push(
-      `El servicio más demandado es "${topService.service_name}" con ${topService.times_sold} ventas.`
+      `El servicio más demandado es "${topService.service_name}" con ${topService.times_sold} ventas.`,
     );
   }
 
   // Payment method insight
   if (data.payments.length > 0) {
     const topPayment = [...data.payments].sort(
-      (a, b) => b.total_amount - a.total_amount
+      (a, b) => b.total_amount - a.total_amount,
     )[0];
     const method =
       topPayment.payment_method === "cash" ? "efectivo" : "transferencia";
     insights.push(
       `El ${formatPDFPercentage(
-        topPayment.percentage
-      )} de los pagos se realizan en ${method}.`
+        topPayment.percentage,
+      )} de los pagos se realizan en ${method}.`,
     );
   }
 
@@ -674,14 +677,14 @@ function generateRecommendations(data: AnalyticsExportData): string[] {
   // Low completion rate
   if (data.summary.completionRate < 75) {
     recommendations.push(
-      "Implementar recordatorios automáticos 24h antes de cada cita para reducir no-shows."
+      "Implementar recordatorios automáticos 24h antes de cada cita para reducir no-shows.",
     );
   }
 
   // High cancellation rate
   if (data.summary.cancellationRate > 15) {
     recommendations.push(
-      "Revisar política de cancelaciones y considerar depósito inicial para reducir cancelaciones."
+      "Revisar política de cancelaciones y considerar depósito inicial para reducir cancelaciones.",
     );
   }
 
@@ -691,7 +694,7 @@ function generateRecommendations(data: AnalyticsExportData): string[] {
     data.services[0].total_revenue > data.summary.totalRevenue * 0.5
   ) {
     recommendations.push(
-      "Diversificar portafolio de servicios para no depender excesivamente de un solo servicio."
+      "Diversificar portafolio de servicios para no depender excesivamente de un solo servicio.",
     );
   }
 
@@ -699,14 +702,14 @@ function generateRecommendations(data: AnalyticsExportData): string[] {
   const cashPayment = data.payments.find((p) => p.payment_method === "cash");
   if (cashPayment && cashPayment.percentage > 70) {
     recommendations.push(
-      "Incentivar pagos digitales para mejorar trazabilidad y reducir manejo de efectivo."
+      "Incentivar pagos digitales para mejorar trazabilidad y reducir manejo de efectivo.",
     );
   }
 
   // Default recommendation if none generated
   if (recommendations.length === 0) {
     recommendations.push(
-      "Continuar monitoreando métricas clave y mantener los estándares actuales de servicio."
+      "Continuar monitoreando métricas clave y mantener los estándares actuales de servicio.",
     );
   }
 

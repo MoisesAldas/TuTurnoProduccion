@@ -152,7 +152,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         onMouseLeave={() => !isPinned && setCollapsed(true)}
         className={`
         ${collapsed ? 'lg:w-20' : 'lg:w-64'}
-        absolute lg:relative inset-y-0 left-0 z-50
+        absolute lg:relative inset-y-0 left-0 z-40
         w-64 lg:w-auto
         bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white
         transition-all duration-500 ease-in-out

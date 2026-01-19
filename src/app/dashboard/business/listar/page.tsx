@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { DataTable } from '@/components/ui/data-table'
 import AppointmentModal from '@/components/AppointmentModal'
 import CreateAppointmentModal from '@/components/CreateAppointmentModal'
+import AppointmentDetailModal from '@/components/AppointmentDetailModal'
 import { parseDateString } from '@/lib/dateUtils'
 import type { AppointmentExportRow } from '@/lib/export/appointments/types'
 import { createColumns, type AppointmentTableCallbacks, type AppointmentRow } from './columns'
@@ -61,7 +62,8 @@ export default function ListarPage() {
   // Appointment management
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
-
+const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
   useEffect(() => {
     if (authState.user) {
       loadBusiness()
@@ -203,7 +205,8 @@ export default function ListarPage() {
         .select(`
           *,
           users(first_name, last_name, phone, avatar_url, email),
-          employees(first_name, last_name),
+          business_clients(first_name, last_name, phone, email),
+          employees(first_name, last_name, avatar_url, position),
           appointment_services(
             service_id,
             price,
@@ -317,12 +320,15 @@ export default function ListarPage() {
   // CALLBACKS FOR TABLE ACTIONS (BEFORE EARLY RETURNS!)
   // ============================================
 
-  const handleView = useCallback(async (id: string) => {
-    const fullAppointment = await fetchFullAppointment(id)
-    if (fullAppointment) {
-      setSelectedAppointment(fullAppointment)
-    }
-  }, [fetchFullAppointment])
+const handleView = useCallback(async (id: string) => {
+  const fullAppointment = await fetchFullAppointment(id)
+  if (fullAppointment) {
+    setDetailAppointment(fullAppointment)
+    setDetailModalOpen(true)
+  }
+}, [fetchFullAppointment])
+
+  
 
   const handleEdit = useCallback(async (id: string) => {
     const fullAppointment = await fetchFullAppointment(id)
@@ -533,7 +539,7 @@ export default function ListarPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Sticky Header */}
-      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-[5]">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             {/* Título */}
@@ -1130,6 +1136,17 @@ export default function ListarPage() {
           appointment={editingAppointment}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+        />
+      )}
+
+      {/* AppointmentDetailModal - solo cuando está abierto */}
+      {detailModalOpen && (
+        <AppointmentDetailModal
+          appointment={detailAppointment}
+          clientName={detailAppointment?.walk_in_client_name}
+          clientPhone={detailAppointment?.walk_in_client_phone}
+          open={detailModalOpen}
+          onOpenChange={setDetailModalOpen}
         />
       )}
     </div>
