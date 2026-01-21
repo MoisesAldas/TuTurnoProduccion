@@ -573,7 +573,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-48 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+                  className="w-48 z-[70] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
                 >
                   {/* Editar */}
                   {onEdit && appointment.status !== 'completed' && (
