@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from 'framer-motion'
 import SplashScreen from '@/components/SplashScreen'
 import Header from '@/components/sections/Header'
 import HeroSection from '@/components/sections/HeroSection'
@@ -14,7 +15,16 @@ export default function HomePage() {
   return (
     <>
       <SplashScreen />
-      <div className="min-h-screen bg-white dark:bg-gray-950">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ 
+          duration: 1.2,
+          delay: 3.5,
+          ease: "easeIn"
+        }}
+        className="min-h-screen bg-white dark:bg-gray-950"
+      >
         <Header />
         <main>
           <HeroSection />
@@ -25,7 +35,7 @@ export default function HomePage() {
           <CTASection />
         </main>
         <Footer />
-      </div>
+      </motion.div>
     </>
   )
 }
