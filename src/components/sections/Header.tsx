@@ -17,6 +17,19 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('')
 
+  // Determine user role and theme colors
+  const isClient = authState.user?.is_client && !authState.user?.is_business_owner
+  const isBusinessOwner = authState.user?.is_business_owner
+  
+  // Theme configuration based on user role
+  const themeColors = {
+    primary: isClient ? 'slate' : 'orange',
+    buttonBg: isClient ? 'bg-slate-900' : 'bg-orange-600',
+    buttonHover: isClient ? 'hover:bg-slate-800' : 'hover:bg-orange-700',
+    textColor: isClient ? 'text-slate-900' : 'text-orange-600',
+    hoverTextColor: isClient ? 'hover:text-slate-900' : 'hover:text-orange-600',
+  }
+
   // Original logic from user
   const handleReserveClick = () => {
     setIsMenuOpen(false)
@@ -139,27 +152,32 @@ export default function Header() {
           <div className="hidden lg:flex items-center gap-2 xl:gap-3">
             {authState.user ? (
               <>
-                <Button 
-                  variant="ghost" 
-                  onClick={handleReserveClick} 
-                  className="dark:text-gray-300 dark:hover:bg-gray-800 hover:text-orange-600 dark:hover:text-orange-500"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Marketplace
-                </Button>
-                {authState.user.is_business_owner && (
+                {/* Show Marketplace only for clients */}
+                {isClient && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleReserveClick} 
+                    className="dark:text-gray-300 dark:hover:bg-gray-800 hover:text-slate-900 dark:hover:text-slate-500"
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Marketplace
+                  </Button>
+                )}
+                {/* Dashboard button for business owners */}
+                {isBusinessOwner && (
                   <Button 
                     onClick={() => router.push('/dashboard/business')}
                     className="bg-orange-600 hover:bg-orange-700 text-white"
                   >
-                    <Briefcase className="w-4 h-4 mr-2"/>
-                    Mi Negocio
+                    <LayoutDashboard className="w-4 h-4 mr-2"/>
+                    Mi Dashboard
                   </Button>
                 )}
-                {authState.user.is_client && !authState.user.is_business_owner && (
+                {/* Dashboard button for clients */}
+                {isClient && (
                   <Button 
                     onClick={() => router.push('/dashboard/client')}
-                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                    className="bg-slate-900 hover:bg-slate-800 text-white"
                   >
                     <LayoutDashboard className="w-4 h-4 mr-2"/>
                     Mi Dashboard
@@ -228,30 +246,35 @@ export default function Header() {
             <div className="flex flex-col space-y-3 pt-6 border-t border-gray-200 dark:border-gray-800">
               {authState.user ? (
                  <>
-                  <Button 
-                    size="lg" 
-                    variant="outline" 
-                    onClick={handleReserveClick} 
-                    className="w-full justify-start dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Ir al Marketplace
-                  </Button>
-                  {authState.user.is_business_owner && (
+                  {/* Show Marketplace only for clients */}
+                  {isClient && (
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      onClick={handleReserveClick} 
+                      className="w-full justify-start dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    >
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Ir al Marketplace
+                    </Button>
+                  )}
+                  {/* Dashboard button for business owners */}
+                  {isBusinessOwner && (
                     <Button 
                       size="lg" 
                       onClick={() => router.push('/dashboard/business')}
                       className="w-full justify-start bg-orange-600 hover:bg-orange-700 text-white"
                     >
-                      <Briefcase className="w-5 h-5 mr-2"/>
-                      Mi Negocio
+                      <LayoutDashboard className="w-5 h-5 mr-2"/>
+                      Mi Dashboard
                     </Button>
                   )}
-                  {authState.user.is_client && !authState.user.is_business_owner && (
+                  {/* Dashboard button for clients */}
+                  {isClient && (
                     <Button 
                       size="lg" 
                       onClick={() => router.push('/dashboard/client')}
-                      className="w-full justify-start bg-orange-600 hover:bg-orange-700 text-white"
+                      className="w-full justify-start bg-slate-900 hover:bg-slate-800 text-white"
                     >
                       <LayoutDashboard className="w-5 h-5 mr-2"/>
                       Mi Dashboard
