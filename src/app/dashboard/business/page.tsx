@@ -393,6 +393,13 @@ export default function BusinessDashboard() {
                   variant="orange"
                 />
                 <StatsCard
+                  title="Total Citas (Todos los Estados)"
+                  value={data?.totalAppointmentsAllStatuses?.toString() || '0'}
+                  description="Incluye canceladas y no asistio"
+                  icon={Calendar}
+                  variant="purple"
+                />
+                <StatsCard
                   title="Total Citas"
                   value={totalAppointments.toString()}
                   description="En período"

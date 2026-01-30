@@ -174,22 +174,19 @@ export default function ModifyAppointmentDialog({
   }
 
   const handleServiceToggle = (service: Service) => {
-    const isOriginalService = appointment.appointment_services.some(
-      as => as.service.id === service.id
-    )
-
-    if (isOriginalService) {
-      toast({
-        variant: 'destructive',
-        title: 'No se puede quitar',
-        description: 'No puedes quitar servicios que ya tienes reservados. Solo puedes agregar nuevos servicios.',
-      })
-      return
-    }
-
     setSelectedServices(prev => {
       const isSelected = prev.some(s => s.id === service.id)
+      
       if (isSelected) {
+        // ✅ Validar que al menos 1 servicio esté seleccionado
+        if (prev.length === 1) {
+          toast({
+            variant: 'destructive',
+            title: 'Servicio requerido',
+            description: 'Debes tener al menos un servicio seleccionado para tu cita.',
+          })
+          return prev
+        }
         return prev.filter(s => s.id !== service.id)
       } else {
         return [...prev, service]
@@ -387,6 +384,21 @@ export default function ModifyAppointmentDialog({
 
       const selectedDateStr = formatDateForDB(selectedDate)
 
+      // Guardar datos ANTIGUOS antes de actualizar (para el email)
+      const oldData = {
+        oldDate: appointment.appointment_date,
+        oldTime: appointment.start_time,
+        oldEndTime: appointment.end_time,
+        oldEmployeeId: appointment.employee.id,
+        // NUEVO: Servicios originales para comparar
+        oldServices: appointment.appointment_services.map(as => ({
+          service_id: as.service.id,
+          service_name: as.service.name,
+          price: as.price,
+          duration: 0 // No tenemos la duración aquí, se calculará en el backend
+        }))
+      }
+
       // Update appointment
       // Si la cita está pending (por business_closed o business_edited), al reprogramar se confirma automáticamente
       const updateData: any = {
@@ -440,6 +452,22 @@ export default function ModifyAppointmentDialog({
         await supabase
           .from('appointment_services')
           .insert(appointmentServicesData)
+      }
+
+      // Enviar notificaciones de modificación al cliente y al negocio
+      try {
+        await fetch('/api/send-rescheduled-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: appointment.id,
+            changes: oldData
+          })
+        })
+        console.log('✅ Rescheduled emails sent')
+      } catch (emailError) {
+        console.error('⚠️ Error sending rescheduled emails:', emailError)
+        // No bloqueamos el flujo si falla el envío de correos
       }
 
       toast({
@@ -537,19 +565,11 @@ export default function ModifyAppointmentDialog({
               {/* Step 1: Services */}
               {currentStep === 1 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-gray-900">Selecciona servicios</h3>
-
-                  {/* Current Services */}
                   <div>
-                    <p className="text-sm font-semibold text-gray-700 mb-2">Servicios actuales</p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {appointment.appointment_services.map((appService, index) => (
-                        <div key={index} className="inline-flex items-center gap-2 bg-slate-100 border border-slate-300 px-3 py-2 rounded-lg">
-                          <CheckCircle className="w-4 h-4 text-slate-600" />
-                          <span className="text-sm font-medium text-slate-700">{appService.service.name}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Selecciona servicios</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Puedes agregar nuevos servicios o quitar los existentes. Debe haber al menos un servicio seleccionado.
+                    </p>
                   </div>
 
                   {/* Available Services */}
@@ -558,33 +578,47 @@ export default function ModifyAppointmentDialog({
                       const isOriginal = appointment.appointment_services.some(as => as.service.id === service.id)
                       const isSelected = selectedServices.some(s => s.id === service.id)
                       const isNewlyAdded = isSelected && !isOriginal
+                      const willBeRemoved = isOriginal && !isSelected
 
                       return (
                         <div
                           key={service.id}
                           className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
-                            isOriginal
-                              ? 'opacity-50 cursor-not-allowed border-slate-300 bg-slate-50'
-                              : isNewlyAdded
+                            isSelected
                               ? 'border-slate-900 bg-slate-50'
+                              : willBeRemoved
+                              ? 'border-red-300 bg-red-50'
                               : 'border-slate-200 hover:border-slate-400'
                           }`}
-                          onClick={() => !isOriginal && handleServiceToggle(service)}
+                          onClick={() => handleServiceToggle(service)}
                         >
                           <div className="flex items-start gap-4">
                             <div className="pt-1">
-                              {isOriginal ? (
-                                <CheckCircle className="w-6 h-6 text-slate-400" />
-                              ) : (
-                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
-                                  isNewlyAdded ? 'bg-slate-900 border-slate-900' : 'border-slate-300'
-                                }`}>
-                                  {isNewlyAdded && <CheckCircle className="w-5 h-5 text-white" />}
-                                </div>
-                              )}
+                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
+                                isSelected ? 'bg-slate-900 border-slate-900' : 'border-slate-300'
+                              }`}>
+                                {isSelected && <CheckCircle className="w-5 h-5 text-white" />}
+                              </div>
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-bold text-gray-900">{service.name}</h4>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-bold text-gray-900">{service.name}</h4>
+                                {isOriginal && isSelected && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    Original
+                                  </span>
+                                )}
+                                {isNewlyAdded && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                     Nuevo
+                                  </span>
+                                )}
+                                {willBeRemoved && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                    ❌ Se quitará
+                                  </span>
+                                )}
+                              </div>
                               {service.description && <p className="text-sm text-gray-600 mt-1">{service.description}</p>}
                               <div className="flex items-center gap-4 mt-2">
                                 <div className="flex items-center gap-2 text-sm text-gray-600">

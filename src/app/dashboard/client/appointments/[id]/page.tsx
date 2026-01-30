@@ -217,6 +217,22 @@ export default function AppointmentDetailPage() {
         return
       }
 
+      // Enviar notificaciones de cancelación al cliente y al negocio
+      try {
+        await fetch('/api/send-cancellation-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            appointmentId: appointment.id,
+            cancellationReason: 'Cancelado por el cliente'
+          })
+        })
+        console.log('✅ Cancellation emails sent')
+      } catch (emailError) {
+        console.error('⚠️ Error sending cancellation emails:', emailError)
+        // No bloqueamos el flujo si falla el envío de correos
+      }
+
       toast({
         title: 'Cita cancelada',
         description: 'Tu cita ha sido cancelada exitosamente.',
@@ -504,27 +520,7 @@ export default function AppointmentDetailPage() {
                 </Alert>
               )}
 
-              {/* Alert para citas CONFIRMADAS con política cerrada */}
-              {appointment.status !== 'pending' && (!canCancelAppointment() || !canRescheduleAppointment()) && (
-                <Alert className="border-2 border-red-300 bg-red-50">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <AlertDescription className="text-sm text-red-800">
-                    <p className="font-semibold mb-1">Ventana de modificación cerrada</p>
-                    <p>
-                      Tu cita es en <strong>{Math.floor(getHoursUntilAppointment())} horas</strong>. Se requieren{' '}
-                      <strong>{appointment.business.cancellation_policy_hours}h</strong> de anticipación para modificar o cancelar.
-                    </p>
-                    {appointment.business.phone && (
-                      <p className="mt-2">
-                        Contacta al negocio:{' '}
-                        <a href={`tel:${appointment.business.phone}`} className="font-bold underline">
-                          {appointment.business.phone}
-                        </a>
-                      </p>
-                    )}
-                  </AlertDescription>
-                </Alert>
-              )}
+
             </div>
 
             {/* Right Column: Actions */}
@@ -667,6 +663,47 @@ export default function AppointmentDetailPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Alert para citas CONFIRMADAS con política cerrada */}
+              {appointment.status !== 'pending' && (!canCancelAppointment() || !canRescheduleAppointment()) && (
+                <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2 mb-2">
+                    <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                    <p className="font-semibold text-red-900 text-sm">Ventana de modificación cerrada</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    {/* Columna 1: Tiempo */}
+                    <div className="flex gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-orange-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-gray-700">
+                          Tu cita es en <span className="font-semibold text-orange-700">{Math.floor(getHoursUntilAppointment())}h</span>
+                        </p>
+                        <p className="text-gray-500 mt-0.5">
+                          Se requieren {appointment.business.cancellation_policy_hours}h
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Columna 2: Contacto */}
+                    {appointment.business.phone && (
+                      <div className="flex gap-1.5">
+                        <Phone className="h-3.5 w-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-gray-700 mb-0.5">Contacta al negocio:</p>
+                          <a 
+                            href={`tel:${appointment.business.phone}`} 
+                            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            {appointment.business.phone}
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -26,7 +26,7 @@ import type {
  */
 export function useDashboardAnalytics(
   businessId: string | undefined,
-  filters: DashboardFilters
+  filters: DashboardFilters,
 ): UseDashboardAnalyticsReturn {
   const [data, setData] = useState<DashboardAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ export function useDashboardAnalytics(
 
   // Cache for monthly appointments data by year
   const monthlyDataCache = useRef<Map<number, MonthlyAppointments[]>>(
-    new Map()
+    new Map(),
   );
   const lastFetchedYear = useRef<number | null>(null);
 
@@ -86,6 +86,8 @@ export function useDashboardAnalytics(
         paymentMethodsResult,
         // NEW: Daily appointment statistics
         dailyStatsResult,
+        // NEW: Total appointments all statuses
+        totalAppointmentsAllStatusesResult,
       ] = await Promise.all([
         // 1. Unique clients count
         supabase.rpc("get_unique_clients_count", {
@@ -165,7 +167,7 @@ export function useDashboardAnalytics(
             employee_id,
             employees!inner(first_name, last_name),
             invoices!inner(total, status)
-          `
+          `,
           )
           .eq("business_id", businessId)
           .gte("appointment_date", startDate)
@@ -181,6 +183,13 @@ export function useDashboardAnalytics(
 
         // 13. Daily appointment statistics (NEW)
         supabase.rpc("get_daily_appointment_stats", {
+          p_business_id: businessId,
+          p_start_date: startDate,
+          p_end_date: endDate,
+        }),
+
+        // 14. Total appointments all statuses (NEW)
+        supabase.rpc("get_total_appointments_all_statuses", {
           p_business_id: businessId,
           p_start_date: startDate,
           p_end_date: endDate,
@@ -201,6 +210,8 @@ export function useDashboardAnalytics(
       if (employeeRevenueResult.error) throw employeeRevenueResult.error;
       if (paymentMethodsResult.error) throw paymentMethodsResult.error;
       if (dailyStatsResult.error) throw dailyStatsResult.error;
+      if (totalAppointmentsAllStatusesResult.error)
+        throw totalAppointmentsAllStatusesResult.error;
 
       // Transform employee revenue data from appointments query
       const transformedEmployeeRevenue: EmployeeRevenueDetailed[] = [];
@@ -244,6 +255,9 @@ export function useDashboardAnalytics(
       const analyticsData: DashboardAnalyticsData = {
         kpis: kpisResult.data?.[0] || null,
         uniqueClients: clientsResult.data?.[0] || null,
+        totalAppointmentsAllStatuses:
+          totalAppointmentsAllStatusesResult.data?.[0]
+            ?.total_appointments_all_statuses || 0,
         appointmentsByWeekday: (weekdayResult.data as WeekdayData[]) || [],
         appointmentsByMonth: monthlyData,
         topServices: (servicesResult.data as ServiceData[]) || [],

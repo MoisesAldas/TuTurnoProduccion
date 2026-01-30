@@ -132,6 +132,7 @@ export interface DashboardAnalyticsData {
   // KPIs
   kpis: DashboardKPIs | null;
   uniqueClients: UniqueClientsCount | null;
+  totalAppointmentsAllStatuses: number; // NEW: Total appointments including all statuses
 
   // Charts Data
   appointmentsByWeekday: WeekdayData[];

@@ -48,7 +48,8 @@ import {
   Building,
   CheckCircle2,
   Clock,
-  Trash2
+  Trash2,
+  Calendar
 } from 'lucide-react'
 import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
@@ -76,6 +77,7 @@ interface BusinessClient {
   created_at: string
   updated_at: string
   total_count?: number
+  appointment_count?: number
 }
 
 export default function ClientsPage() {
@@ -102,6 +104,7 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true)
   const [fetching, setFetching] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [appointmentCounts, setAppointmentCounts] = useState<Record<string, number>>({})
 
   // Dialog state
   const [openDialog, setOpenDialog] = useState(false)
@@ -179,6 +182,11 @@ export default function ClientsPage() {
       })
       if (error) throw error
       setRows((data as any) || [])
+      
+      // Fetch appointment counts for the loaded clients
+      if (data && data.length > 0) {
+        await fetchAppointmentCounts(data.map((client: any) => client.id))
+      }
     } catch (e) {
       toast({
         title: 'Error',
@@ -187,6 +195,35 @@ export default function ClientsPage() {
       })
     } finally {
       setFetching(false)
+    }
+  }
+
+  const fetchAppointmentCounts = async (clientIds: string[]) => {
+    try {
+      // Query appointments table to get counts for each business_client_id
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('business_client_id')
+        .eq('business_id', businessId)
+        .in('business_client_id', clientIds)
+        .not('business_client_id', 'is', null)
+
+      if (error) throw error
+
+      // Count appointments per client
+      const counts: Record<string, number> = {}
+      clientIds.forEach(id => counts[id] = 0) // Initialize all to 0
+      
+      data?.forEach((appointment: any) => {
+        if (appointment.business_client_id) {
+          counts[appointment.business_client_id] = (counts[appointment.business_client_id] || 0) + 1
+        }
+      })
+
+      setAppointmentCounts(counts)
+    } catch (e) {
+      console.error('Error fetching appointment counts:', e)
+      // Don't show error toast for counts - it's not critical
     }
   }
 
@@ -634,14 +671,21 @@ export default function ClientsPage() {
         <DataTableColumnHeader column={column} title="Cliente" />
       ),
       cell: ({ row }) => {
+        const count = appointmentCounts[row.original.id] ?? 0
         return (
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-orange-600" />
             </div>
-            <div className="min-w-0">
-              <div className="font-medium text-gray-900">
-                {row.getValue('first_name')} {row.original.last_name || ''}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <div className="font-medium text-gray-900">
+                  {row.getValue('first_name')} {row.original.last_name || ''}
+                </div>
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium">
+                  <Calendar className="w-3 h-3" />
+                  <span>{count}</span>
+                </div>
               </div>
               {row.original.notes && (
                 <div className="text-xs text-gray-500 truncate max-w-xs">
@@ -1139,7 +1183,9 @@ export default function ClientsPage() {
 
             {/* Mobile Cards */}
             <div className="md:hidden space-y-3">
-              {rows.map((row) => (
+              {rows.map((row) => {
+                const count = appointmentCounts[row.id] ?? 0
+                return (
                 <Card
                   key={row.id}
                   className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow flex flex-col"
@@ -1154,14 +1200,20 @@ export default function ClientsPage() {
                           <h3 className="font-semibold text-gray-900 dark:text-gray-50 truncate">
                             {row.first_name} {row.last_name || ''}
                           </h3>
-                          <Badge
-                            className={row.is_active
-                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800'
-                              : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
-                            }
-                          >
-                            {row.is_active ? 'Activo' : 'Inactivo'}
-                          </Badge>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <Badge
+                              className={row.is_active
+                                ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800'
+                                : 'bg-gray-200 text-gray-600 border-gray-300 text-xs dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                              }
+                            >
+                              {row.is_active ? 'Activo' : 'Inactivo'}
+                            </Badge>
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400 rounded-full text-xs font-medium">
+                              <Calendar className="w-3 h-3" />
+                              <span>{count}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1208,12 +1260,15 @@ export default function ClientsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                )
+              })}
             </div>
           </>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {rows.map((row) => (
+            {rows.map((row) => {
+              const count = appointmentCounts[row.id] ?? 0
+              return (
               <Card
                 key={row.id}
                 className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col"
@@ -1228,14 +1283,20 @@ export default function ClientsPage() {
                         <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-50 truncate">
                           {row.first_name} {row.last_name || ''}
                         </h3>
-                        <Badge
-                          className={row.is_active
-                            ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs mt-1 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800'
-                            : 'bg-gray-200 text-gray-600 border-gray-300 text-xs mt-1 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
-                          }
-                        >
-                          {row.is_active ? 'Activo' : 'Inactivo'}
-                        </Badge>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge
+                            className={row.is_active
+                              ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800'
+                              : 'bg-gray-200 text-gray-600 border-gray-300 text-xs dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                            }
+                          >
+                            {row.is_active ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                          <div className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-400 rounded-full text-xs font-medium">
+                            <Calendar className="w-3 h-3" />
+                            <span>{count}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1282,7 +1343,8 @@ export default function ClientsPage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -1367,4 +1429,5 @@ export default function ClientsPage() {
       </AlertDialog>
     </div>
   )
+  
 }

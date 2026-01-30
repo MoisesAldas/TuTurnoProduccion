@@ -43,14 +43,14 @@ export async function POST(request: NextRequest) {
     if (!appointmentId) {
       return NextResponse.json(
         { error: "appointmentId es requerido" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!changes) {
       return NextResponse.json(
         { error: "changes es requerido" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
           autoRefreshToken: false,
           persistSession: false,
         },
-      }
+      },
     );
 
     // Obtener datos NUEVOS de la cita (después del cambio)
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
           last_name,
           phone
         )
-      `
+      `,
       )
       .eq("id", appointmentId)
       .single();
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       console.error("Error fetching appointment:", appointmentError);
       return NextResponse.json(
         { error: "Cita no encontrada" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
           success: true,
           message: "Walk-in client, no email sent",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
           name,
           duration_minutes
         )
-      `
+      `,
       )
       .eq("appointment_id", appointmentId);
 
@@ -143,15 +143,56 @@ export async function POST(request: NextRequest) {
       console.error("Error fetching appointment services:", servicesError);
       return NextResponse.json(
         { error: "Servicios no encontrados" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    // Convertir arrays a objetos individuales
-    const service = Array.isArray(appointmentServices[0]?.services)
-      ? (appointmentServices[0]?.services[0] as Service)
-      : (appointmentServices[0]?.services as Service);
+    // Preparar array de servicios con sus precios
+    const services = appointmentServices.map((as) => {
+      const service = Array.isArray(as.services) ? as.services[0] : as.services;
+      return {
+        name: service.name,
+        price: as.price,
+        duration: service.duration_minutes,
+      };
+    });
 
+    // Calcular totales
+    const totalPrice = services.reduce((sum, s) => sum + s.price, 0);
+    const totalDuration = services.reduce((sum, s) => sum + s.duration, 0);
+
+    // NUEVO: Obtener servicios ORIGINALES (antes del cambio) desde changes.oldServices
+    // Si changes incluye oldServices, usarlos; si no, asumir que no hubo cambios
+    let addedServices: any[] = [];
+    let removedServices: any[] = [];
+    let servicesChanged = false;
+
+    if (changes.oldServices && Array.isArray(changes.oldServices)) {
+      // Comparar servicios originales con servicios actuales
+      const originalServiceIds = changes.oldServices.map(
+        (s: any) => s.service_id,
+      );
+      const newServiceIds = appointmentServices.map((as) => as.service_id);
+
+      // Servicios agregados (están en new pero no en original)
+      addedServices = services.filter(
+        (s, index) =>
+          !originalServiceIds.includes(appointmentServices[index].service_id),
+      );
+
+      // Servicios quitados (están en original pero no en new)
+      removedServices = changes.oldServices
+        .filter((os: any) => !newServiceIds.includes(os.service_id))
+        .map((os: any) => ({
+          name: os.service_name,
+          price: os.price,
+          duration: os.duration,
+        }));
+
+      servicesChanged = addedServices.length > 0 || removedServices.length > 0;
+    }
+
+    // Convertir arrays a objetos individuales
     const business = Array.isArray(appointment.businesses)
       ? (appointment.businesses[0] as Business)
       : (appointment.businesses as Business);
@@ -167,7 +208,7 @@ export async function POST(request: NextRequest) {
     // Verificar datos necesarios
     if (
       !business?.name ||
-      !service?.name ||
+      services.length === 0 ||
       !newEmployee?.first_name ||
       !client?.email
     ) {
@@ -204,7 +245,7 @@ export async function POST(request: NextRequest) {
     };
 
     const newAppointmentDate = formatDateToSpanish(
-      appointment.appointment_date
+      appointment.appointment_date,
     );
     const oldAppointmentDate = changes.oldDate
       ? formatDateToSpanish(changes.oldDate)
@@ -229,9 +270,13 @@ export async function POST(request: NextRequest) {
       data: {
         businessName: business.name,
         businessAddress: business.address || "",
-        serviceName: service.name,
-        servicePrice: appointmentServices[0].price,
-        serviceDuration: service.duration_minutes,
+        services, // Array de todos los servicios
+        totalPrice, // Precio total calculado
+        totalDuration, // Duración total calculada
+        // NUEVO: Información de cambios de servicios
+        servicesChanged,
+        addedServices,
+        removedServices,
         // Datos NUEVOS
         newAppointmentDate,
         newAppointmentTime: appointment.start_time.substring(0, 5),
@@ -271,7 +316,7 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
         },
         body: JSON.stringify(emailData),
-      }
+      },
     );
 
     let clientEmailSuccess = false;
@@ -302,7 +347,7 @@ export async function POST(request: NextRequest) {
     if (businessOwner) {
       console.log(
         "📧 Sending rescheduled notification to BUSINESS:",
-        businessOwner.email
+        businessOwner.email,
       );
 
       const businessEmailData = {
@@ -311,9 +356,13 @@ export async function POST(request: NextRequest) {
         data: {
           businessName: business.name,
           businessAddress: business.address || "",
-          serviceName: service.name,
-          servicePrice: appointmentServices[0].price,
-          serviceDuration: service.duration_minutes,
+          services, // Array de todos los servicios
+          totalPrice, // Precio total calculado
+          totalDuration, // Duración total calculada
+          // NUEVO: Información de cambios de servicios
+          servicesChanged,
+          addedServices,
+          removedServices,
           // NEW data
           newAppointmentDate,
           newAppointmentTime: appointment.start_time.substring(0, 5),
@@ -354,14 +403,14 @@ export async function POST(request: NextRequest) {
             Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
           },
           body: JSON.stringify(businessEmailData),
-        }
+        },
       );
 
       if (businessEmailResponse.ok) {
         const businessResult = await businessEmailResponse.json();
         console.log(
           "✅ Business notification email sent successfully:",
-          businessResult
+          businessResult,
         );
         businessEmailSuccess = true;
       } else {
@@ -370,7 +419,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       console.warn(
-        "⚠️ Business owner not found, skipping business notification email"
+        "⚠️ Business owner not found, skipping business notification email",
       );
     }
 
@@ -384,7 +433,7 @@ export async function POST(request: NextRequest) {
           businessEmail: businessEmailSuccess ? "sent" : "failed",
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("💥 Error in send-rescheduled-notification:", error);
@@ -393,7 +442,7 @@ export async function POST(request: NextRequest) {
         error: "Error al enviar la notificación",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

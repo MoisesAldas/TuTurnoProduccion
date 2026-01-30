@@ -597,6 +597,9 @@ export default function AppointmentsPage() {
                       setCalendarOpen(false)
                     }
                   }}
+                  captionLayout="dropdown"
+                  fromYear={2020}
+                  toYear={2030}
                   initialFocus
                   locale={es}
                 />
