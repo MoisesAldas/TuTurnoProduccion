@@ -55,15 +55,15 @@ export default function SplashScreen() {
         initial={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.6 }}
-        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black overflow-hidden"
+        className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white overflow-hidden"
       >
         {/* Animated grid background */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" 
             style={{
               backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)
               `,
               backgroundSize: '50px 50px',
               animation: 'grid-move 20s linear infinite'
@@ -97,14 +97,14 @@ export default function SplashScreen() {
                 delay: delay,
                 ease: "easeOut" 
               }}
-              className="absolute bg-white rounded-full pointer-events-none"
+              className="absolute bg-black rounded-full pointer-events-none"
               style={{
                 width: `${size}px`,
                 height: `${size}px`,
                 left: particle.x,
                 top: particle.y,
                 transform: 'translate(-50%, -50%)',
-                boxShadow: '0 0 8px rgba(255, 255, 255, 0.6)'
+                boxShadow: '0 0 8px rgba(0, 0, 0, 0.3)'
               }}
             />
           )
@@ -139,7 +139,7 @@ export default function SplashScreen() {
             style={{
               width: 20 + Math.random() * 40,
               height: 20 + Math.random() * 40,
-              border: '2px solid rgba(255, 255, 255, 0.2)',
+              border: '2px solid rgba(0, 0, 0, 0.15)',
               borderRadius: i % 3 === 0 ? '50%' : i % 3 === 1 ? '0%' : '10%',
             }}
           />
@@ -176,9 +176,9 @@ export default function SplashScreen() {
                 repeat: Infinity,
                 repeatDelay: 1
               }}
-              className="absolute w-2 h-2 bg-white rounded-full"
+              className="absolute w-2 h-2 bg-black rounded-full"
               style={{
-                boxShadow: '0 0 10px rgba(255, 255, 255, 0.8)'
+                boxShadow: '0 0 10px rgba(0, 0, 0, 0.4)'
               }}
             />
           ))}
@@ -206,9 +206,9 @@ export default function SplashScreen() {
               <motion.div
                 animate={{
                   textShadow: [
-                    '0 0 20px rgba(255, 255, 255, 0.3)',
-                    '0 0 40px rgba(255, 255, 255, 0.6)',
-                    '0 0 20px rgba(255, 255, 255, 0.3)'
+                    '0 0 20px rgba(0, 0, 0, 0.1)',
+                    '0 0 40px rgba(0, 0, 0, 0.2)',
+                    '0 0 20px rgba(0, 0, 0, 0.1)'
                   ]
                 }}
                 transition={{
@@ -217,7 +217,7 @@ export default function SplashScreen() {
                   ease: "easeInOut"
                 }}
               >
-                <Logo color="white" size="lg" className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black" />
+                <Logo color="black" size="lg" className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black" />
               </motion.div>
             </motion.div>
           </motion.div>
@@ -230,14 +230,14 @@ export default function SplashScreen() {
           transition={{ delay: 1.5, duration: 0.5 }}
           className="absolute bottom-20 sm:bottom-28 md:bottom-32 w-48 sm:w-56 md:w-64"
         >
-          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1 bg-black/10 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: '0%' }}
               animate={{ width: '100%' }}
               transition={{ duration: 3, ease: "easeInOut" }}
-              className="h-full bg-white rounded-full"
+              className="h-full bg-black rounded-full"
               style={{
-                boxShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+                boxShadow: '0 0 10px rgba(0, 0, 0, 0.3)'
               }}
             />
           </div>
@@ -248,7 +248,7 @@ export default function SplashScreen() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 0.5 }}
-          className="absolute bottom-12 sm:bottom-16 md:bottom-20 text-white/70 text-xs sm:text-sm tracking-[0.2em] sm:tracking-[0.3em] font-light px-4 text-center"
+          className="absolute bottom-12 sm:bottom-16 md:bottom-20 text-black/90 text-xs sm:text-sm tracking-[0.2em] sm:tracking-[0.3em] font-medium px-4 text-center"
         >
           <motion.span
             animate={{
@@ -269,7 +269,7 @@ export default function SplashScreen() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 0.5 }}
-          className="absolute bottom-24 sm:bottom-32 md:bottom-40 text-white/50 text-xs font-mono"
+          className="absolute bottom-24 sm:bottom-32 md:bottom-40 text-black/70 text-xs font-mono"
         >
           <motion.span
             initial={{ opacity: 0 }}
