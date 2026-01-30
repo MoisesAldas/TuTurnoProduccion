@@ -181,7 +181,7 @@ export default function LocationMapModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-[95vw] sm:w-full h-[95vh] sm:h-[90vh] p-0 gap-0 overflow-hidden bg-white flex flex-col">
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full h-[95vh] sm:h-[90vh] p-0 gap-0 overflow-hidden bg-white flex flex-col [&>button]:text-white [&>button]:hover:text-white/80">
         {/* DialogTitle y DialogDescription ocultos pero presentes para accesibilidad */}
         <DialogHeader className="sr-only">
           <DialogTitle>Ubicación de {businessName}</DialogTitle>
@@ -239,7 +239,15 @@ export default function LocationMapModal({
               className="w-full border-2 border-gray-300 text-gray-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-200"
             >
               <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              <span className="text-sm sm:text-base">Google Maps</span>
+              <span className="text-sm sm:text-base font-medium">
+                <span style={{ color: '#4285F4' }}>G</span>
+                <span style={{ color: '#EA4335' }}>o</span>
+                <span style={{ color: '#FBBC04' }}>o</span>
+                <span style={{ color: '#4285F4' }}>g</span>
+                <span style={{ color: '#34A853' }}>l</span>
+                <span style={{ color: '#EA4335' }}>e</span>
+                <span className="text-gray-700"> Maps</span>
+              </span>
             </Button>
             <Button
               onClick={openInWaze}
