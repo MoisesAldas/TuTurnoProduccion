@@ -85,7 +85,7 @@ export const phoneSchema = z
   .string()
   .regex(
     /^09\d{8}$/,
-    "Debe ser un teléfono válido de Ecuador (10 dígitos, inicia con 09)"
+    "Debe ser un teléfono válido de Ecuador (10 dígitos, inicia con 09)",
   )
   .optional()
   .or(z.literal(""));
@@ -101,7 +101,7 @@ export const requiredPhoneSchema = z
   .min(1, "El teléfono es requerido")
   .regex(
     /^09\d{8}$/,
-    "Debe ser un teléfono válido de Ecuador (10 dígitos, inicia con 09)"
+    "Debe ser un teléfono válido de Ecuador (10 dígitos, inicia con 09)",
   );
 
 // ========================================
@@ -167,7 +167,7 @@ export const timeSchema = z
   .string()
   .regex(
     /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-    "Formato de hora inválido (HH:MM)"
+    "Formato de hora inválido (HH:MM)",
   );
 
 /**
@@ -196,7 +196,7 @@ export const passwordSchema = z
   .min(8, "La contraseña debe tener al menos 8 caracteres")
   .regex(
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    "Debe contener al menos: 1 minúscula, 1 mayúscula y 1 número"
+    "Debe contener al menos: 1 minúscula, 1 mayúscula y 1 número",
   );
 
 /**
@@ -337,6 +337,11 @@ export const advancedSettingsSchema = z.object({
   require_deposit: z.boolean(),
   deposit_percentage: z.number().min(0, "Mínimo 0%").max(100, "Máximo 100%"),
   auto_confirm_appointments: z.boolean(),
+  max_monthly_cancellations: z
+    .number()
+    .min(1, "Mínimo 1 cancelación")
+    .max(10, "Máximo 10 cancelaciones"),
+  enable_cancellation_blocking: z.boolean(),
 });
 
 // ========================================

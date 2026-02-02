@@ -24,6 +24,7 @@ import BusinessPhotoGallery from '@/components/BusinessPhotoGallery'
 import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
 import SpecialHoursManager from '@/components/SpecialHoursManager'
 import InvoiceConfigSection from '@/components/InvoiceConfigSection'
+import CancellationLimitSettings from '@/components/business/CancellationLimitSettings'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Business } from '@/types/database'
@@ -1044,7 +1045,7 @@ export default function UnifiedSettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {/* Horas de anticipación */}
                       <div className="space-y-1.5">
                         <Label htmlFor="cancellation_policy_hours" className="text-sm dark:text-gray-50">
@@ -1075,34 +1076,52 @@ export default function UnifiedSettingsPage() {
                         )}
                       </div>
 
-                      {/* Checkboxes en la segunda columna */}
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
+                      {/* Permitir cancelación */}
+                      <div className="space-y-1.5">
+                        <Label className="text-sm dark:text-gray-50 flex items-center gap-2">
+                          Cancelación por clientes
+                          <Badge variant="secondary" className="text-xs">Próximamente</Badge>
+                        </Label>
+                        <div className="flex items-center gap-2 opacity-50 cursor-not-allowed">
                           <input
                             type="checkbox"
                             id="allow_client_cancellation"
-                            {...registerAdvanced('allow_client_cancellation')}
+                            disabled
                             className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                           />
-                          <Label htmlFor="allow_client_cancellation" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                            Permitir cancelación por clientes
+                          <Label htmlFor="allow_client_cancellation" className="cursor-not-allowed text-sm font-medium dark:text-gray-50">
+                            Permitir cancelación
                           </Label>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Función en desarrollo
+                        </p>
+                      </div>
+
+                      {/* Permitir reagendar */}
+                      <div className="space-y-1.5">
+                        <Label className="text-sm dark:text-gray-50 flex items-center gap-2">
+                          Reagendar por clientes
+                          <Badge variant="secondary" className="text-xs">Próximamente</Badge>
+                        </Label>
+                        <div className="flex items-center gap-2 opacity-50 cursor-not-allowed">
                           <input
                             type="checkbox"
                             id="allow_client_reschedule"
-                            {...registerAdvanced('allow_client_reschedule')}
+                            disabled
                             className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                           />
-                          <Label htmlFor="allow_client_reschedule" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                            Permitir reagendar por clientes
+                          <Label htmlFor="allow_client_reschedule" className="cursor-not-allowed text-sm font-medium dark:text-gray-50">
+                            Permitir reagendar
                           </Label>
                         </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Función en desarrollo
+                        </p>
                       </div>
 
                       {/* Texto de política - Full Width */}
-                      <div className="lg:col-span-2 space-y-1.5">
+                      <div className="md:col-span-2 lg:col-span-3 space-y-1.5">
                         <Label htmlFor="cancellation_policy_text" className="text-sm dark:text-gray-50">
                           Texto de la política
                         </Label>
@@ -1128,76 +1147,14 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Additional Settings */}
-                <Card className="dark:border-gray-700">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Settings className="w-5 h-5 text-orange-600" />
-                      Configuraciones Adicionales
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
-                      {/* Auto-confirmar */}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="auto_confirm_appointments"
-                          {...registerAdvanced('auto_confirm_appointments')}
-                          className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                        />
-                        <Label htmlFor="auto_confirm_appointments" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                          Auto-confirmar citas
-                        </Label>
-                      </div>
-
-                      {/* Requerir depósito */}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="require_deposit"
-                          {...registerAdvanced('require_deposit')}
-                          className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                        />
-                        <Label htmlFor="require_deposit" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                          Requerir depósito
-                        </Label>
-                      </div>
-
-                      {/* Porcentaje de depósito - Condicional */}
-                      {requireDeposit && (
-                        <div className="lg:col-span-2 space-y-1.5">
-                          <Label htmlFor="deposit_percentage" className="text-sm dark:text-gray-50">
-                            Porcentaje de depósito (%)
-                          </Label>
-                          <div className="relative max-w-xs">
-                            <Input
-                              id="deposit_percentage"
-                              type="number"
-                              min="0"
-                              max="100"
-                              className={`h-9 ${
-                                touchedAdvanced.deposit_percentage && !errorsAdvanced.deposit_percentage ? 'border-green-500' : ''
-                              } ${
-                                errorsAdvanced.deposit_percentage ? 'border-red-500' : ''
-                              }`}
-                              {...registerAdvanced('deposit_percentage', { valueAsNumber: true })}
-                            />
-                            {touchedAdvanced.deposit_percentage && !errorsAdvanced.deposit_percentage && (
-                              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Porcentaje del precio total del servicio
-                          </p>
-                          {errorsAdvanced.deposit_percentage && (
-                            <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.deposit_percentage.message}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Cancellation Limit Settings */}
+                {business && (
+                  <CancellationLimitSettings 
+                    businessId={business.id}
+                    onLimitChange={(limit) => setValueAdvanced('max_monthly_cancellations', limit)}
+                    onEnabledChange={(enabled) => setValueAdvanced('enable_cancellation_blocking', enabled)}
+                  />
+                )}
 
                 <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
                   <Button

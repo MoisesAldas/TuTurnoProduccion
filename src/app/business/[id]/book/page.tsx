@@ -21,6 +21,9 @@ import Link from 'next/link'
 import Logo from '@/components/logo'
 import { useEmployeeFiltering } from '@/hooks/useEmployeeFiltering'
 import NoEmployeesAvailableAlert from '@/components/booking/NoEmployeesAvailableAlert'
+// Client blocking check
+import { useClientBookingStatus } from '@/hooks/useClientBookingStatus'
+import { BlockedBookingMessage } from '@/components/BlockedBookingMessage'
 
 interface Business {
   id: string
@@ -96,6 +99,12 @@ export default function BookingPage() {
   const businessId = params.id as string
   const preSelectedServiceId = searchParams.get('service')
   const supabase = createClient()
+
+  // Check if client is blocked from booking
+  const { status: bookingStatus, loading: checkingBlockStatus } = useClientBookingStatus(
+    authState?.user?.id || null,
+    businessId
+  )
 
   useEffect(() => {
     if (businessId) {
@@ -797,6 +806,18 @@ export default function BookingPage() {
           </div>
         </div>
 
+        {/* Blocked Booking Message - Show if client is blocked */}
+        {bookingStatus?.is_blocked && authState?.user && (
+          <div className="mb-6">
+            <BlockedBookingMessage
+              businessName={business?.name || 'este negocio'}
+              businessPhone={business?.phone}
+              cancellationsThisMonth={bookingStatus.cancellations_this_month}
+              maxAllowed={bookingStatus.max_allowed}
+            />
+          </div>
+        )}
+
         {/* Step Content - 2 Column Layout on Desktop (except confirmation) */}
         {currentStep === 'confirmation' ? (
           /* Confirmation - Full Width Centered */
@@ -916,7 +937,8 @@ export default function BookingPage() {
                 <div className="lg:hidden sticky bottom-4 z-10">
                   <Button
                     onClick={handleContinueToEmployee}
-                    className="w-full bg-black hover:bg-neutral-800 text-white shadow-lg hover:shadow-xl h-12"
+                    disabled={bookingStatus?.is_blocked}
+                    className="w-full bg-black hover:bg-neutral-800 text-white shadow-lg hover:shadow-xl h-12 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Continuar con {selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''}
                   </Button>
@@ -932,8 +954,8 @@ export default function BookingPage() {
                     key={service.id}
                     className={`cursor-pointer transition-all hover:shadow-md h-full flex flex-col ${
                       isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''
-                    }`}
-                    onClick={() => handleServiceSelect(service)}
+                    } ${bookingStatus?.is_blocked ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                    onClick={() => !bookingStatus?.is_blocked && handleServiceSelect(service)}
                   >
                     <CardContent className="p-6 flex-1 flex flex-col">
                       <div className="flex items-start gap-4 flex-1">
@@ -1339,8 +1361,8 @@ export default function BookingPage() {
                 <Button
                   onClick={handleBookingSubmit}
                   size="lg"
-                  disabled={submitting}
-                  className="w-full md:w-auto px-8 bg-slate-900 hover:bg-slate-800 text-white"
+                  disabled={submitting || bookingStatus?.is_blocked}
+                  className="w-full md:w-auto px-8 bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>

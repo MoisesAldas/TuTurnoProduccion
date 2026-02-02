@@ -27,6 +27,9 @@ import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
 import ClientAppointmentDetailsModal from '@/components/ClientAppointmentDetailsModal'
 import LocationMapModal from '@/components/LocationMapModal'
+// Modular cancellation components
+import { handleClientCancellation } from '@/lib/appointments/clientCancellationAdapter'
+import { CancelAppointmentDialog } from '@/components/CancelAppointmentDialog'
 
 // NOTE: All data fetching and state logic from the original file is preserved.
 // Only the JSX for the appointment cards has been restructured to be mobile-first.
@@ -177,60 +180,30 @@ export default function ClientAppointmentsPage() {
     }
   }
 
-  const handleCancelAppointment = async () => {
-    if (!selectedAppointment) return
-    try {
-      // 1. Actualizar estado de la cita en DB
-      const { error } = await supabase
-        .from('appointments')
-        .update({
-          status: 'cancelled',
-          client_notes: `${selectedAppointment.client_notes || ''}\nMotivo de cancelación: ${cancelReason}`.trim()
-        })
-        .eq('id', selectedAppointment.id)
+  const handleCancelAppointment = async (reason: string) => {
+    if (!selectedAppointment || !authState.user) return
 
-      if (error) {
-        console.error('Error canceling appointment:', error)
+    await handleClientCancellation({
+      appointmentId: selectedAppointment.id,
+      clientId: authState.user.id,
+      cancelReason: reason,
+      onSuccess: () => {
+        fetchAppointments()
+        setShowCancelDialog(false)
+        setSelectedAppointment(null)
+        toast({
+          title: 'Cita cancelada',
+          description: 'Tu cita ha sido cancelada exitosamente.',
+        })
+      },
+      onError: (error) => {
         toast({
           variant: 'destructive',
           title: 'Error al cancelar',
-          description: 'No pudimos cancelar tu cita. Por favor intenta nuevamente.',
+          description: error.message || 'No pudimos cancelar tu cita. Por favor intenta nuevamente.',
         })
-        return
       }
-
-      // 2. Enviar notificaciones (cliente + negocio)
-      try {
-        await fetch('/api/send-cancellation-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            appointmentId: selectedAppointment.id,
-            cancellationReason: cancelReason
-          })
-        })
-      } catch (emailError) {
-        console.error('Error sending cancellation emails:', emailError)
-        // No bloqueamos la operación si el email falla
-      }
-
-      // 3. Actualizar UI
-      await fetchAppointments()
-      setShowCancelDialog(false)
-      setSelectedAppointment(null)
-      setCancelReason('')
-      toast({
-        title: 'Cita cancelada',
-        description: 'Tu cita ha sido cancelada exitosamente.',
-      })
-    } catch (error) {
-      console.error('Error canceling appointment:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Error al cancelar',
-        description: 'Ocurrió un error inesperado. Por favor intenta nuevamente.',
-      })
-    }
+    })
   }
 
   const handleRescheduleAppointment = async () => {
@@ -829,6 +802,18 @@ export default function ClientAppointmentsPage() {
           />
         )
       })()}
+
+      {/* Cancel Appointment Dialog - Modular Component */}
+      <CancelAppointmentDialog
+        isOpen={showCancelDialog}
+        onClose={() => setShowCancelDialog(false)}
+        onConfirm={handleCancelAppointment}
+        appointmentDetails={selectedAppointment ? {
+          businessName: selectedAppointment.business?.name,
+          date: formatDate(selectedAppointment.appointment_date),
+          time: selectedAppointment.start_time.slice(0, 5)
+        } : undefined}
+      />
     </>
   )
 }

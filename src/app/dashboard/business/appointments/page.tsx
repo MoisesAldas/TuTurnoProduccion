@@ -195,7 +195,7 @@ export default function AppointmentsPage() {
           .from('appointments')
           .select(`
             *,
-            users(first_name, last_name, phone, avatar_url, email),
+            users!appointments_client_id_fkey(first_name, last_name, phone, avatar_url, email),
             business_clients(first_name, last_name, phone, email),
             employees(first_name, last_name),
             appointment_services(
@@ -229,7 +229,7 @@ export default function AppointmentsPage() {
           .from('appointments')
           .select(`
             *,
-            users(first_name, last_name, phone, avatar_url, email),
+            users!appointments_client_id_fkey(first_name, last_name, phone, avatar_url, email),
             business_clients(first_name, last_name, phone, email),
             employees(first_name, last_name),
             appointment_services(
@@ -255,7 +255,7 @@ export default function AppointmentsPage() {
           .from('appointments')
           .select(`
             *,
-            users(first_name, last_name, phone, avatar_url, email),
+            users!appointments_client_id_fkey(first_name, last_name, phone, avatar_url, email),
             business_clients(first_name, last_name, phone, email),
             employees(first_name, last_name),
             appointment_services(
@@ -288,7 +288,7 @@ export default function AppointmentsPage() {
         .from('appointments')
         .select(`
           *,
-          users(first_name, last_name, phone, avatar_url, email),
+          users!appointments_client_id_fkey(first_name, last_name, phone, avatar_url, email),
           business_clients(first_name, last_name, phone, email),
           employees(first_name, last_name),
           appointment_services(

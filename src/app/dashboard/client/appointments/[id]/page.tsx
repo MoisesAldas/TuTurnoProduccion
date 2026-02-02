@@ -30,6 +30,8 @@ import { formatSpanishDate } from '@/lib/dateUtils'
 import Link from 'next/link'
 import LocationMapModal from '@/components/LocationMapModal'
 import ModifyAppointmentDialog from '@/components/ModifyAppointmentDialog'
+// Modular cancellation components
+import { handleClientCancellation } from '@/lib/appointments/clientCancellationAdapter'
 
 interface Appointment {
   id: string
@@ -187,7 +189,7 @@ export default function AppointmentDetailPage() {
   }
 
   const handleCancelAppointment = async () => {
-    if (!appointment) return
+    if (!appointment || !authState.user) return
 
     if (!canCancelAppointment()) {
       const hoursUntil = getHoursUntilAppointment()
@@ -202,45 +204,28 @@ export default function AppointmentDetailPage() {
     try {
       setCancelling(true)
 
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'cancelled' })
-        .eq('id', appointment.id)
-
-      if (error) {
-        console.error('Error cancelling appointment:', error)
-        toast({
-          variant: 'destructive',
-          title: 'Error al cancelar',
-          description: 'No se pudo cancelar la cita. Por favor intenta nuevamente.',
-        })
-        return
-      }
-
-      // Enviar notificaciones de cancelación al cliente y al negocio
-      try {
-        await fetch('/api/send-cancellation-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            appointmentId: appointment.id,
-            cancellationReason: 'Cancelado por el cliente'
+      // Use modular cancellation adapter
+      await handleClientCancellation({
+        appointmentId: appointment.id,
+        clientId: authState.user.id,
+        cancelReason: 'Cancelado por el cliente',
+        onSuccess: () => {
+          toast({
+            title: 'Cita cancelada',
+            description: 'Tu cita ha sido cancelada exitosamente.',
           })
-        })
-        console.log('✅ Cancellation emails sent')
-      } catch (emailError) {
-        console.error('⚠️ Error sending cancellation emails:', emailError)
-        // No bloqueamos el flujo si falla el envío de correos
-      }
-
-      toast({
-        title: 'Cita cancelada',
-        description: 'Tu cita ha sido cancelada exitosamente.',
+          setTimeout(() => {
+            router.push('/dashboard/client')
+          }, 1000)
+        },
+        onError: (error) => {
+          toast({
+            variant: 'destructive',
+            title: 'Error al cancelar',
+            description: error.message || 'No se pudo cancelar la cita. Por favor intenta nuevamente.',
+          })
+        }
       })
-
-      setTimeout(() => {
-        router.push('/dashboard/client')
-      }, 1000)
     } catch (error) {
       console.error('Error cancelling appointment:', error)
       toast({

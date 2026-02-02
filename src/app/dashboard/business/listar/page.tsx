@@ -21,6 +21,8 @@ import { createColumns, type AppointmentTableCallbacks, type AppointmentRow } fr
 import { exportAppointmentsExcel } from '@/lib/export/appointments/appointmentsExcel'
 import { exportAppointmentsPDF } from '@/lib/export/appointments/appointmentsPDF'
 import { exportAppointmentsCSV } from '@/lib/export/appointments/appointmentsCSV'
+// Modular cancellation components
+import { handleBusinessCancellation, getBusinessOwnerId } from '@/lib/appointments/businessCancellationAdapter'
 
 import type { Employee, Service, Appointment } from '@/types/database'
 
@@ -204,7 +206,7 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
         .from('appointments')
         .select(`
           *,
-          users(first_name, last_name, phone, avatar_url, email),
+          users!appointments_client_id_fkey(first_name, last_name, phone, avatar_url, email),
           business_clients(first_name, last_name, phone, email),
           employees(first_name, last_name, avatar_url, position),
           appointment_services(
@@ -431,32 +433,32 @@ const handleView = useCallback(async (id: string) => {
 
   const handleCancel = useCallback(async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'cancelled' })
-        .eq('id', id)
-
-      if (error) throw error
-
-      // Send cancellation email
-      try {
-        await fetch('/api/send-cancellation-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            appointmentId: id,
-            cancellationReason: 'Cancelada por el negocio',
-          }),
-        })
-      } catch (e) {
-        console.warn('Failed to send cancellation email')
+      // Get business owner ID
+      const ownerId = await getBusinessOwnerId(businessId)
+      if (!ownerId) {
+        throw new Error('No se pudo obtener el ID del propietario del negocio')
       }
 
-      toast({
-        title: 'Cita cancelada',
-        description: 'La cita fue cancelada correctamente',
+      // Use modular cancellation adapter
+      await handleBusinessCancellation({
+        appointmentId: id,
+        businessOwnerId: ownerId,
+        cancelReason: 'Cancelada por el negocio',
+        onSuccess: () => {
+          toast({
+            title: 'Cita cancelada',
+            description: 'La cita fue cancelada correctamente',
+          })
+          fetchData()
+        },
+        onError: (error) => {
+          toast({
+            title: 'Error',
+            description: error.message || 'No se pudo cancelar la cita',
+            variant: 'destructive',
+          })
+        }
       })
-      fetchData()
     } catch (error) {
       toast({
         title: 'Error',
@@ -464,7 +466,7 @@ const handleView = useCallback(async (id: string) => {
         variant: 'destructive',
       })
     }
-  }, [supabase, toast, fetchData])
+  }, [businessId, toast, fetchData])
 
   // Memoize callbacks object
   const callbacks: AppointmentTableCallbacks = useMemo(

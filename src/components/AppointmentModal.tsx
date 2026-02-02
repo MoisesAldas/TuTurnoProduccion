@@ -12,6 +12,8 @@ import { formatSpanishDate } from '@/lib/dateUtils'
 import ReceiptViewer from './ReceiptViewer'
 import { useAppointmentStarted } from '@/hooks/useAppointmentStarted'
 import { AppointmentActionTooltip } from './AppointmentActionTooltip'
+// Modular cancellation components
+import { handleBusinessCancellation, getBusinessOwnerId } from '@/lib/appointments/businessCancellationAdapter'
 
 // Lazy load CheckoutModal
 const CheckoutModal = dynamic(() => import('./CheckoutModal'), {
@@ -236,33 +238,32 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
     try {
       setUpdating(true)
 
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'cancelled' })
-        .eq('id', appointment.id)
-
-      if (error) throw error
-
-      // Send cancellation email
-      try {
-        await fetch('/api/send-cancellation-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            appointmentId: appointment.id,
-            cancellationReason: 'Cancelada por el negocio'
-          })
-        })
-      } catch (emailError) {
-        console.warn('⚠️ Failed to send cancellation email:', emailError)
-        // Don't block the operation if email fails
+      // Get business owner ID
+      const ownerId = await getBusinessOwnerId(appointment.business_id)
+      if (!ownerId) {
+        throw new Error('No se pudo obtener el ID del propietario del negocio')
       }
 
-      toast({
-        title: 'Cita cancelada',
-        description: 'La cita ha sido cancelada correctamente.',
+      // Use modular cancellation adapter
+      await handleBusinessCancellation({
+        appointmentId: appointment.id,
+        businessOwnerId: ownerId,
+        cancelReason: 'Cancelada por el negocio',
+        onSuccess: () => {
+          toast({
+            title: 'Cita cancelada',
+            description: 'La cita ha sido cancelada correctamente.',
+          })
+          onUpdate()
+        },
+        onError: (error) => {
+          toast({
+            variant: 'destructive',
+            title: 'Error al cancelar',
+            description: error.message || 'No se pudo cancelar la cita.',
+          })
+        }
       })
-      onUpdate()
     } catch (error) {
       console.error('Error canceling appointment:', error)
       toast({

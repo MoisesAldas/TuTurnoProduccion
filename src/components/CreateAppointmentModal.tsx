@@ -187,7 +187,7 @@ export default function CreateAppointmentModal({
 
       const { data: appointmentsData } = await supabase
         .from('appointments')
-        .select('client_id, users(id, first_name, last_name, phone, email)')
+        .select('client_id, users!appointments_client_id_fkey(id, first_name, last_name, phone, email)')
         .eq('business_id', businessId)
 
       if (appointmentsData) {
