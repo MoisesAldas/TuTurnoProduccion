@@ -167,7 +167,7 @@ export default function ClientRegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-dvh flex flex-col lg:flex-row">
       {/* Left Panel - Visual */}
       <div className="hidden lg:flex lg:w-1/2 bg-slate-900  hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
@@ -205,7 +205,7 @@ export default function ClientRegisterPage() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto flex-1">
         <div className="w-full max-w-md space-y-4 py-2">
           {/* Mobile back button */}
           <div className="lg:hidden">

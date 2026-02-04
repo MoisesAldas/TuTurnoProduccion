@@ -144,7 +144,7 @@ export default function BusinessRegisterPage() {
 
     return (
 
-      <div className="min-h-screen flex">
+      <div className="min-h-dvh flex flex-col lg:flex-row">
 
         {/* Left Panel - Visual */}
 
@@ -221,7 +221,7 @@ export default function BusinessRegisterPage() {
 
         {/* Right Panel - Form */}
 
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto">
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto flex-1">
 
           <div className="w-full max-w-md space-y-4 py-2">
 
