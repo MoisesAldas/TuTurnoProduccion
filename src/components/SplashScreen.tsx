@@ -8,6 +8,33 @@ export default function SplashScreen() {
   const [isVisible, setIsVisible] = useState(true)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number }>>([])
+  const [isMounted, setIsMounted] = useState(false)
+  const [shapes, setShapes] = useState<Array<{
+    x: number
+    y: number
+    rotate: number
+    width: number
+    height: number
+    borderRadius: string
+    duration: number
+    delay: number
+  }>>([])
+
+  // Initialize shapes only on client side to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true)
+    const newShapes = [...Array(15)].map((_, i) => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      rotate: Math.random() * 360,
+      width: 20 + Math.random() * 40,
+      height: 20 + Math.random() * 40,
+      borderRadius: i % 3 === 0 ? '50%' : i % 3 === 1 ? '0%' : '10%',
+      duration: 5 + Math.random() * 5,
+      delay: Math.random() * 2
+    }))
+    setShapes(newShapes)
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -110,37 +137,34 @@ export default function SplashScreen() {
           )
         })}
 
-        {/* Floating geometric shapes */}
-        {[...Array(15)].map((_, i) => (
+        {/* Floating geometric shapes - only render after mount to prevent hydration mismatch */}
+        {isMounted && shapes.map((shape, i) => (
           <motion.div
             key={`shape-${i}`}
             initial={{ 
               opacity: 0,
-              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
-              rotate: Math.random() * 360
+              x: shape.x,
+              y: shape.y,
+              rotate: shape.rotate
             }}
             animate={{
               opacity: [0, 0.2, 0],
-              y: [
-                Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
-                Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000) - 200
-              ],
-              rotate: [Math.random() * 360, Math.random() * 360 + 360],
+              y: [shape.y, shape.y - 200],
+              rotate: [shape.rotate, shape.rotate + 360],
               scale: [0.5, 1, 0.5]
             }}
             transition={{
-              duration: 5 + Math.random() * 5,
-              delay: Math.random() * 2,
+              duration: shape.duration,
+              delay: shape.delay,
               repeat: Infinity,
               ease: "easeInOut"
             }}
             className="absolute"
             style={{
-              width: 20 + Math.random() * 40,
-              height: 20 + Math.random() * 40,
+              width: shape.width,
+              height: shape.height,
               border: '2px solid rgba(0, 0, 0, 0.15)',
-              borderRadius: i % 3 === 0 ? '50%' : i % 3 === 1 ? '0%' : '10%',
+              borderRadius: shape.borderRadius,
             }}
           />
         ))}

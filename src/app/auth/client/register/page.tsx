@@ -167,9 +167,9 @@ export default function ClientRegisterPage() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col lg:flex-row">
+    <div className="min-h-screen min-h-dvh flex flex-col lg:flex-row">
       {/* Left Panel - Visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-slate-900  hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 lg:hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
     
         {/* Back button */}
@@ -205,7 +205,7 @@ export default function ClientRegisterPage() {
       </div>
 
       {/* Right Panel - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto flex-1">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto flex-1 [-webkit-overflow-scrolling:touch] [overscroll-behavior:contain]">
         <div className="w-full max-w-md space-y-4 py-2">
           {/* Mobile back button */}
           <div className="lg:hidden">
@@ -219,9 +219,6 @@ export default function ClientRegisterPage() {
 
           {/* Header */}
           <div className="text-center space-y-1">
-            <div className="lg:hidden mb-2">
-              <Logo color="black" size="lg" />
-            </div>
             <h2 className="text-2xl font-bold text-gray-900">Crear Cuenta</h2>
             <p className="text-sm text-gray-600">Únete a miles de usuarios satisfechos</p>
           </div>

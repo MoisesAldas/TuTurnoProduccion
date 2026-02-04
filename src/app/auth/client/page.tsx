@@ -34,10 +34,10 @@ export default function ClientAuthPage() {
   }, [])
 
   return (
-    <div className="min-h-dvh flex flex-col lg:flex-row">
+    <div className="min-h-screen min-h-dvh flex flex-col lg:flex-row">
       {/* Left Panel - Visual */}
-      <div className={`hidden lg:flex lg:w-1/2 bg-slate-900 hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden transition-all duration-1000 ${
-        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'
+      <div className={`hidden lg:flex lg:w-1/2 bg-slate-900 lg:hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden lg:transition-all lg:duration-1000 ${
+        isVisible ? 'lg:opacity-100 lg:translate-x-0' : 'lg:opacity-0 lg:-translate-x-8'
       }`}>
         {/* Decorative elements */}
  
@@ -90,8 +90,8 @@ export default function ClientAuthPage() {
       </div>
 
       {/* Right Panel - Options */}
-      <div className={`w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto flex-1 transition-all duration-1000 ${
-        isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+      <div className={`w-full lg:w-1/2 flex items-center justify-center p-6 bg-white overflow-y-auto flex-1 [-webkit-overflow-scrolling:touch] [overscroll-behavior:contain] lg:transition-all lg:duration-1000 ${
+        isVisible ? 'lg:opacity-100 lg:translate-x-0' : 'lg:opacity-0 lg:translate-x-8'
       }`}>
         <div className="w-full max-w-md space-y-6">
           {/* Mobile back button */}
@@ -106,9 +106,6 @@ export default function ClientAuthPage() {
 
           {/* Header */}
           <div className="text-center space-y-2">
-            <div className="lg:hidden mb-4">
-              <Logo color="black" size="lg" />
-            </div>
             <h2 className="text-3xl font-bold text-gray-900">¡Bienvenido!</h2>
             <p className="text-gray-600">Selecciona una opción para continuar</p>
           </div>
