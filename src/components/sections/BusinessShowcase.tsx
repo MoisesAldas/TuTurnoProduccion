@@ -52,7 +52,7 @@ export default function BusinessShowcase() {
               {/* Application Screenshot */}
               <div className="p-2 bg-slate-100 dark:bg-slate-900">
                               <Image
-                                src="/dashboardanalisis.png"
+                                src="/newdashboard.png"
                                 alt="Dashboard de TuTurno"
                                 width={1200}
                                 height={800}
