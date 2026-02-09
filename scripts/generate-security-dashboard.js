@@ -329,7 +329,7 @@ const html = `<!DOCTYPE html>
         <span>🔒</span>
         Dashboard de Seguridad
       </h1>
-      <div class="subtitle">Sistema de Evaluación ISTLA - Análisis Integral Actualizado</div>
+      <div class="subtitle">Tu Turno - Análisis Integral Actualizado</div>
     </div>
     
     <div class="score-section">
