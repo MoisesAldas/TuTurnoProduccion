@@ -18,7 +18,6 @@ import {
   Briefcase,
   Settings,
   LogOut,
-  Search,
   ChevronLeft,
   ChevronRight,
   BarChart3,
@@ -375,11 +374,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Search */}
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Search className="w-5 h-5 text-gray-600" />
-              </button>
-
               {/* Notifications - Solo renderizar cuando hay userId */}
               {authState.user?.id && <NotificationBell userId={authState.user.id} />}
 

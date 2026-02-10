@@ -219,7 +219,7 @@ export default function InvoiceConfigSection() {
         )}
 
         {/* Grid: Configuración */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
           {/* Prefijo */}
           <div className="space-y-1.5">
             <Label htmlFor="invoice_prefix" className="text-sm dark:text-gray-50">
@@ -285,7 +285,7 @@ export default function InvoiceConfigSection() {
 
         {/* Vista Previa Compacta */}
         {previewNumber && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <FileText className="w-4 h-4 text-green-600" />
             <span>Primera factura:</span>
             <Badge variant="secondary" className="font-mono text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20">
@@ -305,7 +305,7 @@ export default function InvoiceConfigSection() {
         )}
 
         {/* Reglas Compactas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
           <div className="flex items-center gap-1.5">
             <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
             <span>Solo A-Z y 0-9 (2-10 caracteres)</span>
@@ -322,18 +322,18 @@ export default function InvoiceConfigSection() {
 
         {/* Estadísticas */}
         {invoiceCount > 0 && (
-          <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
             <FileText className="w-4 h-4" />
             <span>Has emitido <strong>{invoiceCount}</strong> factura{invoiceCount !== 1 ? 's' : ''} con prefijo <strong>{invoicePrefix}</strong></span>
           </div>
         )}
 
         {/* Botones de Acción */}
-        <div className="flex gap-3 pt-3">
+        <div className="flex flex-col sm:flex-row gap-3 pt-3">
           <Button
             onClick={handleSave}
             disabled={saving || prefixLocked || !invoicePrefix || !!prefixError}
-            className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
+            className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
           >
             {saving ? (
               <>
@@ -353,7 +353,7 @@ export default function InvoiceConfigSection() {
                 setSequentialStart(1)
                 setPrefixError('')
               }}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="w-full sm:w-auto hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               Limpiar
             </Button>

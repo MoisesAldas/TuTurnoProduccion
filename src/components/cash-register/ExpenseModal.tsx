@@ -150,8 +150,8 @@ export function ExpenseModal({ sessionId, onClose, onSuccess }: ExpenseModalProp
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
-              <TrendingDown className="w-5 h-5 text-red-600" />
+            <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+              <TrendingDown className="w-5 h-5 text-orange-600 dark:text-orange-400" />
             </div>
             Registrar Gasto
           </DialogTitle>
@@ -254,7 +254,7 @@ export function ExpenseModal({ sessionId, onClose, onSuccess }: ExpenseModalProp
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              className="flex-1 bg-orange-600 text-white"
             >
               {isLoading ? (
                 <>

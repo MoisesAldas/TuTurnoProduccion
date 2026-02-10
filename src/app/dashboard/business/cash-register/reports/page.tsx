@@ -24,11 +24,13 @@ import {
   AlertCircle,
   CheckCircle2,
   BarChart3,
+  ArrowLeft,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { DailyPerformanceReport } from '@/types/cash-register'
+import Link from 'next/link'
 
 export default function CashRegisterReportsPage() {
   const { authState } = useAuth()
@@ -87,32 +89,20 @@ export default function CashRegisterReportsPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reportes de Caja</h1>
-          <p className="text-gray-600 mt-1">Análisis detallado de sesiones y rendimiento</p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={handleExportExcel}
-            variant="outline"
-            size="sm"
-            className="border-green-200 hover:bg-green-50"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Excel
-          </Button>
-          <Button
-            onClick={handleExportPDF}
-            variant="outline"
-            size="sm"
-            className="border-red-200 hover:bg-red-50"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            PDF
-          </Button>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <Link href="/dashboard/business/cash-register">
+              <Button variant="outline" size="sm" className="border-gray-300 hover:bg-gray-50">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Volver</span>
+              </Button>
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Reportes de Caja</h1>
+          </div>
+          <p className="text-gray-600 text-sm sm:text-base">Análisis detallado de sesiones y rendimiento</p>
         </div>
       </div>
 

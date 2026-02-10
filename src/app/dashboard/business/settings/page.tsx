@@ -852,11 +852,11 @@ export default function UnifiedSettingsPage() {
                 </Card>
 
                 {/* Save Button */}
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className=" bg-orange-600 hover:bg-orange-700"
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
                   >
                     {submitting ? (
                       <>
@@ -952,11 +952,11 @@ export default function UnifiedSettingsPage() {
                   <BusinessPhotoGallery businessId={business.id} />
                 )}
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-4 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className=" bg-orange-600 hover:bg-orange-700"
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
                   >
                     {submitting ? (
                       <>
@@ -1009,11 +1009,11 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className=" bg-orange-600 hover:bg-orange-700"
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
                   >
                     {submitting ? (
                       <>
@@ -1045,7 +1045,7 @@ export default function UnifiedSettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {/* Horas de anticipación */}
                       <div className="space-y-1.5">
                         <Label htmlFor="cancellation_policy_hours" className="text-sm dark:text-gray-50">
@@ -1156,11 +1156,11 @@ export default function UnifiedSettingsPage() {
                   />
                 )}
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className=" bg-orange-600 hover:bg-orange-700"
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
                   >
                     {submitting ? (
                       <>
@@ -1193,7 +1193,7 @@ export default function UnifiedSettingsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                         {/* Anticipación mínima */}
                         <div className="space-y-1.5">
                           <Label htmlFor="min_booking_hours" className="text-sm dark:text-gray-50">
@@ -1256,7 +1256,7 @@ export default function UnifiedSettingsPage() {
                       </div>
 
                       {/* Vista previa con Badge */}
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <Info className="w-4 h-4" />
                         <span>Reservas desde</span>
                         <Badge variant="secondary" className="font-mono">
@@ -1272,11 +1272,11 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className=" bg-orange-600 hover:bg-orange-700"
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
                   >
                     {submitting ? (
                       <>
@@ -1363,7 +1363,7 @@ export default function UnifiedSettingsPage() {
                       {enableReminders && (
                         <div className="space-y-3">
                           {/* Grid: Horas antes + Canales */}
-                          <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr] gap-x-6 gap-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-x-6 gap-y-3">
                             {/* Horas antes */}
                             <div className="space-y-1.5">
                               <Label htmlFor="reminder_hours_before" className="text-sm dark:text-gray-50">
@@ -1398,7 +1398,7 @@ export default function UnifiedSettingsPage() {
                             <div className="space-y-2">
                               <Label className="text-sm dark:text-gray-50">Canales de notificación</Label>
 
-                              <div className="flex items-center gap-6">
+                              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                                 {/* Email */}
                                 <div className="flex items-center gap-2">
                                   <input
@@ -1451,7 +1451,7 @@ export default function UnifiedSettingsPage() {
                           </div>
 
                           {/* Vista previa con Badge */}
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 pt-2">
+                          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400 pt-2">
                             <Bell className="w-4 h-4" />
                             <span>Recordatorio</span>
                             <Badge variant="secondary" className="font-mono">
@@ -1472,11 +1472,11 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 border-t dark:bg-gray-900/95 dark:border-gray-800">
+                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className=" bg-orange-600 hover:bg-orange-700"
+                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
                   >
                     {submitting ? (
                       <>

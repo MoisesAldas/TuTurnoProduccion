@@ -212,33 +212,33 @@ export default function BusinessDashboard() {
     <div className="relative min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Sticky Header */}
       <div className={cn(
-        "sticky top-0 z-50 transition-all duration-300 ease-in-out",
+        "sticky top-0 z-10 transition-all duration-300 ease-in-out",
         scrolled 
           ? "bg-gray-900 shadow-lg py-2" 
           : "bg-white dark:bg-gray-900 py-4 shadow-sm"
       )}>
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between gap-4">
-            {/* Left: Title (hidden when scrolled on mobile) */}
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            {/* Left: Title */}
             <div className={cn(
-              "transition-all duration-300",
+              "transition-all duration-300 flex-shrink-0",
               scrolled ? "hidden sm:block" : "block"
             )}>
               <h1 className={cn(
                 "font-bold transition-all duration-300",
                 scrolled 
                   ? "text-lg text-white" 
-                  : "text-2xl sm:text-3xl text-gray-900 dark:text-gray-50"
+                  : "text-xl sm:text-2xl lg:text-3xl text-gray-900 dark:text-gray-50"
               )}>
                 {scrolled ? "Dashboard" : "Dashboard de análisis"}
               </h1>
               {!scrolled && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{businessName}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{businessName}</p>
               )}
             </div>
 
-            {/* Center/Right: Filters */}
-            <div className="flex items-center gap-2 flex-1 justify-end">
+            {/* Right: Filters + Export */}
+            <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1 sm:justify-end flex-wrap sm:flex-nowrap">
               <CompactFilters
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -255,7 +255,7 @@ export default function BusinessDashboard() {
                   variant="outline"
                   size={scrolled ? "icon" : "default"}
                   className={cn(
-                    "transition-all",
+                    "transition-all flex-shrink-0",
                     scrolled 
                       ? "bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700" 
                       : "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50"
@@ -268,7 +268,7 @@ export default function BusinessDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
         {/* 5-Column Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           

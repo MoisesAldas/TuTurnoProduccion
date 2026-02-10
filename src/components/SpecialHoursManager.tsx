@@ -335,11 +335,11 @@ export default function SpecialHoursManager({
             return (
               <div
                 key={hour.id}
-                className="border dark:border-gray-700 rounded-lg p-4 flex items-start justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="border dark:border-gray-700 rounded-lg p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <p className="font-medium text-gray-900 dark:text-gray-50">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <p className="font-medium text-gray-900 dark:text-gray-50 text-sm sm:text-base">
                       {format(date, 'PPP', { locale: es })}
                     </p>
                     <Badge className={currentReasonColors}>
@@ -361,7 +361,7 @@ export default function SpecialHoursManager({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-auto">
                   <Button
                     type="button"
                     variant="outline"
@@ -448,7 +448,7 @@ export default function SpecialHoursManager({
               {/* Estado: Cerrado o con horario */}
               <div className="space-y-2">
                 <Label className="dark:text-gray-300">Estado</Label>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
                     onClick={() => {

@@ -123,7 +123,7 @@ export function OpenCashModal({ onClose, onSuccess }: OpenCashModalProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg  bg-orange-600 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
             Abrir Caja
@@ -198,7 +198,7 @@ export function OpenCashModal({ onClose, onSuccess }: OpenCashModalProps) {
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1 bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 hover:from-orange-700 hover:via-amber-700 hover:to-yellow-700 text-white"
+              className="flex-1 bg-gradient-to-r  bg-orange-600 text-white"
             >
               {isLoading ? (
                 <>

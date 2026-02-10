@@ -321,9 +321,7 @@ export default function ClientsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12  bg-orange-600 hover:bg-orange-700 rounded-xl flex items-center justify-center">
-              <Building className="w-6 h-6 text-white" />
-            </div>
+     
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Clientes</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
