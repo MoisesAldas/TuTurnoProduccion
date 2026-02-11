@@ -592,13 +592,14 @@ export default function MarketplacePage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {filteredBusinesses.map(business => (
+                            {filteredBusinesses.map((business, index) => (
                                 <div
                                     key={business.id}
                                     ref={el => { cardRefs.current[business.id] = el }}
                                 >
                                     <BusinessCard
                                         business={business}
+                                        index={index}
                                         isHovered={hoveredBusinessId === business.id || clickedBusinessId === business.id}
                                         onMouseEnter={() => setHoveredBusinessId(business.id)}
                                         onMouseLeave={() => setHoveredBusinessId(null)}
@@ -677,7 +678,7 @@ export default function MarketplacePage() {
   )
 }
 
-const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLeave }: { business: Business, isHovered: boolean, onMouseEnter: () => void, onMouseLeave: () => void }) => {
+const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLeave, index }: { business: Business, isHovered: boolean, onMouseEnter: () => void, onMouseLeave: () => void, index: number }) => {
     const CategoryIcon = useMemo(
         () => getCategoryIcon(business.business_categories?.name),
         [business.business_categories?.name]
@@ -687,6 +688,9 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
         () => getBusinessStatus(business.business_hours),
         [business.business_hours]
     )
+
+    // Priorizar primeras 6 imágenes (above the fold)
+    const shouldPrioritize = index < 6
 
     return (
       <Link href={`/business/${business.id}`}>
@@ -706,7 +710,17 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
                 <AspectRatio ratio={16 / 10}>
                     {business.cover_image_url ? (
                         <>
-                            <Image src={business.cover_image_url} alt={business.name} layout="fill" className="object-cover transition-transform duration-500 ease-out group-hover:scale-105" unoptimized={true} />
+                            <Image 
+                                src={business.cover_image_url} 
+                                alt={business.name}
+                                fill
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                                priority={shouldPrioritize}
+                                loading={shouldPrioritize ? undefined : 'lazy'}
+                                placeholder="blur"
+                                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
+                            />
                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
                         </>
                     ) : (

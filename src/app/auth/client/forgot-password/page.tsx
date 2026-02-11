@@ -153,10 +153,10 @@ export default function ForgotPasswordPage() {
         <div className="absolute top-1/4 left-10 animate-bounce delay-1000">
           <div className="w-4 h-4 bg-emerald-400 rounded-full opacity-60"></div>
         </div>
-        <div className="absolute top-1/3 right-20 animate-bounce delay-[1500ms]">
+        <div className="absolute top-1/3 right-20 animate-bounce" style={{animationDelay: '1500ms'}}>
           <div className="w-6 h-6 bg-teal-400 rounded-full opacity-40"></div>
         </div>
-        <div className="absolute bottom-1/3 left-1/4 animate-bounce delay-[2000ms]">
+        <div className="absolute bottom-1/3 left-1/4 animate-bounce" style={{animationDelay: '2000ms'}}>
           <div className="w-5 h-5 bg-cyan-400 rounded-full opacity-50"></div>
         </div>
       </div>

@@ -102,9 +102,9 @@ export default function BusinessTypes() {
                   <Image
                     src={type.image}
                     alt={type.name}
-                    layout="fill"
-                    objectFit="cover"
-                    className="group-hover:scale-110 transition-transform duration-500 ease-in-out"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover group-hover:scale-110 transition-transform duration-500 ease-in-out"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 p-6 flex items-center gap-3">
