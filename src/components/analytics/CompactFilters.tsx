@@ -255,6 +255,9 @@ export function CompactFilters({
               locale={es}
               numberOfMonths={1}
               className="sm:block"
+              captionLayout="dropdown-buttons"
+              fromYear={2020}
+              toYear={2030}
             />
           </PopoverContent>
         </Popover>

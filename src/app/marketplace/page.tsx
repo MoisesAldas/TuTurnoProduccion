@@ -23,6 +23,9 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 
+// SEO Metadata (Note: This needs to be in a Server Component in layout.tsx or a wrapper)
+// For client components, we'll add meta tags via next/head in useEffect
+
 // Lazy load Mapbox to save 500KB on initial bundle
 const MarketplaceMap = dynamic(() => import('@/components/MarketplaceMap'), {
   ssr: false,
@@ -48,6 +51,12 @@ interface BusinessHours {
   is_closed: boolean
 }
 
+interface BusinessRatingSummary {
+  business_id: string
+  average_rating: number
+  review_count: number
+}
+
 interface Business {
   id: string
   name: string
@@ -59,6 +68,7 @@ interface Business {
   cover_image_url?: string
   business_categories?: BusinessCategory
   business_hours?: BusinessHours[]
+  business_ratings_summary?: BusinessRatingSummary
   average_rating?: number
   review_count?: number
 }
@@ -208,9 +218,31 @@ export default function MarketplacePage() {
 
   const fetchCategories = async () => {
     try {
+      // Check localStorage cache first (1 hour expiry)
+      const CACHE_KEY = 'marketplace_categories'
+      const CACHE_EXPIRY = 60 * 60 * 1000 // 1 hour in milliseconds
+      
+      const cachedData = localStorage.getItem(CACHE_KEY)
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData)
+        const isExpired = Date.now() - timestamp > CACHE_EXPIRY
+        
+        if (!isExpired) {
+          setCategories(data)
+          return // Use cached data
+        }
+      }
+
+      // Fetch from database if no cache or expired
       const { data, error } = await supabase.from('business_categories').select('*').order('name', { ascending: true })
       if (error) throw error
+      
+      // Update state and cache
       setCategories(data || [])
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data: data || [],
+        timestamp: Date.now()
+      }))
     } catch (error) {
       console.error('Error fetching categories:', error)
     }
@@ -221,29 +253,43 @@ export default function MarketplacePage() {
       setLoading(true)
       setError(null)
 
-      const { data, error: businessError } = await supabase
-        .from('businesses')
-        .select(`*, business_categories (*), business_hours (day_of_week, open_time, close_time, is_closed)`)
-        .eq('is_active', true)
-        .eq('is_suspended', false)
-        .order('created_at', { ascending: false })
+      // Fetch businesses and ratings in parallel (2 queries instead of 100+)
+      const [businessesRes, ratingsRes] = await Promise.all([
+        supabase
+          .from('businesses')
+          .select(`
+            *, 
+            business_categories (*), 
+            business_hours (day_of_week, open_time, close_time, is_closed)
+          `)
+          .eq('is_active', true)
+          .eq('is_suspended', false)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('business_ratings_summary')
+          .select('business_id, average_rating, review_count')
+      ])
 
-      if (businessError) throw businessError
+      if (businessesRes.error) throw businessesRes.error
 
-      // Optimización: Fetch ratings en paralelo
-      const businessesWithReviews = await Promise.all(
-        (data || []).map(async (business) => {
-          const [avgResult, countResult] = await Promise.all([
-            supabase.rpc('get_business_average_rating', { p_business_id: business.id }),
-            supabase.rpc('get_business_review_count', { p_business_id: business.id })
-          ])
-          return {
-            ...business,
-            average_rating: avgResult.data || 0,
-            review_count: countResult.data || 0
-          }
-        })
-      )
+      // Crear un objeto de ratings por business_id para acceso rápido
+      const ratingsMap: Record<string, { average_rating: number; review_count: number }> = {}
+      for (const rating of ratingsRes.data || []) {
+        ratingsMap[rating.business_id] = {
+          average_rating: rating.average_rating,
+          review_count: rating.review_count
+        }
+      }
+
+      // Combinar businesses con sus ratings
+      const businessesWithReviews = (businessesRes.data || []).map(business => {
+        const ratings = ratingsMap[business.id]
+        return {
+          ...business,
+          average_rating: ratings?.average_rating || 0,
+          review_count: ratings?.review_count || 0
+        }
+      })
 
       setBusinesses(businessesWithReviews)
     } catch (err) {
