@@ -46,3 +46,44 @@ export const formatEcuadorianPhone = (phone: string | null): string => {
   // Si no cumple ningún patrón, retornar el número limpio
   return cleaned;
 };
+
+/**
+ * Convierte un número de teléfono ecuatoriano al formato internacional para WhatsApp
+ * @param phone - Número de teléfono (puede ser 0969380735, +593969380735, etc.)
+ * @returns Número en formato WhatsApp (593969380735) o null si inválido
+ *
+ * @example
+ * formatPhoneForWhatsApp("0969380735") // "593969380735"
+ * formatPhoneForWhatsApp("+593969380735") // "593969380735"
+ * formatPhoneForWhatsApp("593969380735") // "593969380735"
+ * formatPhoneForWhatsApp("969380735") // "593969380735"
+ */
+export const formatPhoneForWhatsApp = (phone: string | null): string | null => {
+  if (!phone) return null;
+
+  // Limpiar el número (remover espacios, guiones, paréntesis)
+  let cleaned = phone.replace(/[\s\-\(\)]/g, "");
+
+  // Si ya tiene +593, remover el +
+  if (cleaned.startsWith("+593")) {
+    return cleaned.substring(1); // Retorna 593XXXXXXXXX
+  }
+
+  // Si ya tiene 593 al inicio
+  if (cleaned.startsWith("593")) {
+    return cleaned; // Ya está en formato correcto
+  }
+
+  // Si empieza con 0 (formato local ecuatoriano: 0969380735)
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    return "593" + cleaned.substring(1); // 593969380735
+  }
+
+  // Si tiene 9 dígitos y empieza con 9 (falta el 0)
+  if (cleaned.startsWith("9") && cleaned.length === 9) {
+    return "593" + cleaned; // 593969380735
+  }
+
+  // Si no coincide con ningún patrón válido
+  return null;
+};

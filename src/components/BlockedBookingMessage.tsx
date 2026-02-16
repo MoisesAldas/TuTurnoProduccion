@@ -2,6 +2,8 @@ import React from 'react'
 import { AlertTriangle, Phone, MessageCircle, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { formatPhoneForWhatsApp } from '@/lib/export/utils/phoneUtils'
+
 
 interface BlockedBookingMessageProps {
   businessName: string
@@ -30,13 +32,18 @@ export function BlockedBookingMessage({
 
   const handleWhatsApp = () => {
     if (businessPhone) {
-      const cleanPhone = businessPhone.replace(/\D/g, '')
+      const whatsappPhone = formatPhoneForWhatsApp(businessPhone)
+      if (!whatsappPhone) {
+        console.error('Invalid phone number for WhatsApp:', businessPhone)
+        return
+      }
       const message = encodeURIComponent(
         `Hola, me gustaría consultar sobre mis reservas en ${businessName}.`
       )
-      window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank')
+      window.open(`https://wa.me/${whatsappPhone}?text=${message}`, '_blank')
     }
   }
+
 
   return (
     <div className={`w-full rounded-lg border border-red-600 p-5 dark:border-red-500 ${className}`}>
