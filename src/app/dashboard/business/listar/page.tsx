@@ -19,8 +19,10 @@ import { parseDateString } from '@/lib/dateUtils'
 import type { AppointmentExportRow } from '@/lib/export/appointments/types'
 import { createColumns, type AppointmentTableCallbacks, type AppointmentRow } from './columns'
 import { exportAppointmentsExcel } from '@/lib/export/appointments/appointmentsExcel'
-import { exportAppointmentsPDF } from '@/lib/export/appointments/appointmentsPDF'
+import { generateAppointmentsPDF, exportAppointmentsPDF } from '@/lib/export/appointments/appointmentsPDF'
 import { exportAppointmentsCSV } from '@/lib/export/appointments/appointmentsCSV'
+import { PDFPreviewModal } from '@/components/pdf'
+import jsPDF from 'jspdf'
 // Modular cancellation components
 import { handleBusinessCancellation, getBusinessOwnerId } from '@/lib/appointments/businessCancellationAdapter'
 
@@ -66,6 +68,10 @@ export default function ListarPage() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
+
+  // PDF Preview state
+  const [showPDFPreview, setShowPDFPreview] = useState(false)
+  const [pdfDocument, setPdfDocument] = useState<jsPDF | null>(null)
   useEffect(() => {
     if (authState.user) {
       loadBusiness()
@@ -305,17 +311,37 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
       return
     }
 
-    await exportAppointmentsPDF({
+    // Generate PDF and show preview
+    const doc = generateAppointmentsPDF({
       businessName,
       data: allRows as AppointmentExportRow[],
       dateFrom,
       dateTo
     })
+    
+    setPdfDocument(doc)
+    setShowPDFPreview(true)
+  }
 
-    toast({
-      title: 'Exportación exitosa',
-      description: `Se exportaron ${allRows.length} citas a PDF correctamente`
-    })
+  const handlePDFDownload = () => {
+    if (!pdfDocument) return
+
+    try {
+      const today = new Date()
+      const ts = today.toISOString().split('T')[0]
+      pdfDocument.save(`citas-${ts}.pdf`)
+      
+      toast({
+        title: 'Descarga exitosa',
+        description: 'El PDF de citas se descargó correctamente',
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo descargar el PDF',
+        variant: 'destructive',
+      })
+    }
   }
 
   // ============================================
@@ -1151,6 +1177,19 @@ const handleView = useCallback(async (id: string) => {
           onOpenChange={setDetailModalOpen}
         />
       )}
+
+      {/* PDF Preview Modal */}
+      <PDFPreviewModal
+        isOpen={showPDFPreview}
+        onClose={() => {
+          setShowPDFPreview(false)
+          setPdfDocument(null)
+        }}
+        pdfDocument={pdfDocument}
+        filename="citas"
+        onDownload={handlePDFDownload}
+        title="Previsualización de Citas"
+      />
     </div>
   </div>
   )

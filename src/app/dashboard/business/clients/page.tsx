@@ -28,9 +28,11 @@ import { clientFormSchema, type ClientFormData } from '@/lib/validation'
 import BusinessClientsTab from '@/components/clients/BusinessClientsTab'
 import RegisteredClientsTab from '@/components/clients/RegisteredClientsTab'
 import UnblockClientDialog from '@/components/UnblockClientDialog'
+import { PDFPreviewModal } from '@/components/pdf'
 import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { PDF_COLORS } from '@/lib/export/utils/pdfStyles'
 
 interface BusinessClient {
   id: string
@@ -214,6 +216,10 @@ export default function ClientsPage() {
     }
   }
 
+  // PDF Preview state
+  const [showPDFPreview, setShowPDFPreview] = useState(false)
+  const [pdfDocument, setPdfDocument] = useState<jsPDF | null>(null)
+
   const handleExport = async (format: 'excel' | 'pdf') => {
     try {
       // Fetch all clients for export
@@ -231,18 +237,39 @@ export default function ClientsPage() {
 
       if (format === 'excel') {
         await exportToExcel(data as any)
+        toast({
+          title: 'Exportación exitosa',
+          description: 'Los clientes se exportaron a Excel',
+        })
       } else {
-        await exportToPDF(data as any)
+        // Generate PDF and show preview
+        const doc = generateClientsPDF(data as any)
+        setPdfDocument(doc)
+        setShowPDFPreview(true)
       }
-
-      toast({
-        title: 'Exportación exitosa',
-        description: `Los clientes se exportaron a ${format.toUpperCase()}`,
-      })
     } catch (e: any) {
       toast({
         title: 'Error',
         description: 'No se pudo exportar',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handlePDFDownload = () => {
+    if (!pdfDocument) return
+
+    try {
+      pdfDocument.save(`clientes-${businessName}-${new Date().toISOString().split('T')[0]}.pdf`)
+      
+      toast({
+        title: 'Descarga exitosa',
+        description: 'El PDF de clientes se descargó correctamente',
+      })
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo descargar el PDF',
         variant: 'destructive',
       })
     }
@@ -283,25 +310,175 @@ export default function ClientsPage() {
     a.click()
   }
 
-  const exportToPDF = async (clients: any[]) => {
+  const generateClientsPDF = (clients: any[]): jsPDF => {
     const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.width
+    const pageHeight = doc.internal.pageSize.height
 
+    // ========================================
+    // MAIN HEADER - Gray
+    // ========================================
+    doc.setFillColor(...PDF_COLORS.GRAY_900)
+    doc.rect(0, 0, pageWidth, 30, 'F')
+
+    // Title in white with business name
+    doc.setTextColor(255, 255, 255)
     doc.setFontSize(18)
-    doc.text(`Clientes - ${businessName}`, 14, 20)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`LISTADO DE CLIENTES - ${businessName}`, 15, 18)
+
+    // Date
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    const today = new Date()
+    const dateStr = today.toLocaleDateString('es-EC', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    doc.text(`Generado el ${dateStr}`, 15, 25)
+
+    let currentY = 30
+
+    // ========================================
+    // INFORMATION SECTION
+    // ========================================
+    doc.setFillColor(...PDF_COLORS.GRAY_900)
+    doc.rect(0, currentY, pageWidth, 10, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('INFORMACIÓN DEL REPORTE', pageWidth / 2, currentY + 6.5, {
+      align: 'center',
+    })
+
+    currentY += 10
+
+    // Summary info
+    const totalClients = clients.length
+    const activeClients = clients.filter(c => c.is_active).length
 
     autoTable(doc, {
-      startY: 30,
+      startY: currentY,
+      margin: { left: 0, right: 0 },
+      tableWidth: pageWidth,
+      head: [['Total de clientes', 'Clientes activos', 'Clientes inactivos']],
+      body: [
+        [
+          String(totalClients),
+          String(activeClients),
+          String(totalClients - activeClients),
+        ],
+      ],
+      theme: 'grid',
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
+        halign: 'center',
+        valign: 'middle',
+        lineColor: [209, 213, 219],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [229, 231, 235],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+      },
+      bodyStyles: {
+        fillColor: [255, 255, 255],
+        textColor: [31, 41, 55],
+      },
+    })
+
+    currentY = (doc as any).lastAutoTable.finalY + 8
+
+    // ========================================
+    // CLIENT DETAILS HEADER
+    // ========================================
+    doc.setFillColor(...PDF_COLORS.GRAY_900)
+    doc.rect(0, currentY, pageWidth, 10, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('DETALLE DE CLIENTES', pageWidth / 2, currentY + 6.5, {
+      align: 'center',
+    })
+
+    currentY += 10
+
+    // ========================================
+    // CLIENTS TABLE
+    // ========================================
+    autoTable(doc, {
+      startY: currentY,
       head: [['Nombre', 'Apellido', 'Teléfono', 'Email', 'Estado']],
       body: clients.map((c) => [
         c.first_name,
-        c.last_name || '',
-        c.phone || '',
-        c.email || '',
+        c.last_name || '-',
+        c.phone || '-',
+        c.email || '-',
         c.is_active ? 'Activo' : 'Inactivo',
       ]),
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+        overflow: 'linebreak',
+        halign: 'left',
+        valign: 'middle',
+        lineColor: [209, 213, 219],
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [243, 244, 246],
+        textColor: [31, 41, 55],
+        fontSize: 8,
+        fontStyle: 'bold',
+        halign: 'center',
+      },
+      alternateRowStyles: {
+        fillColor: [243, 244, 246],
+      },
+      columnStyles: {
+        0: { cellWidth: 35 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 60 },
+        4: { cellWidth: 25, halign: 'center' },
+      },
+      margin: { left: 15, right: 15 },
     })
 
-    doc.save(`clientes-${businessName}-${new Date().toISOString().split('T')[0]}.pdf`)
+    // ========================================
+    // FOOTER
+    // ========================================
+    const totalPages = (doc as any).internal.getNumberOfPages()
+
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i)
+
+      // Gray decorative line
+      doc.setDrawColor(...PDF_COLORS.GRAY_700)
+      doc.setLineWidth(0.5)
+      doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15)
+
+      // Page numbers
+      doc.setTextColor(107, 114, 128)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, {
+        align: 'center',
+      })
+
+      // Generated by TuTurno
+      doc.setFontSize(8)
+      doc.setTextColor(156, 163, 175)
+      doc.text('Generado por TuTurno', pageWidth - 15, pageHeight - 10, {
+        align: 'right',
+      })
+    }
+
+    return doc
   }
 
   if (loading) {
@@ -498,6 +675,19 @@ export default function ClientsPage() {
           }}
         />
       )}
+
+      {/* PDF Preview Modal */}
+      <PDFPreviewModal
+        isOpen={showPDFPreview}
+        onClose={() => {
+          setShowPDFPreview(false)
+          setPdfDocument(null)
+        }}
+        pdfDocument={pdfDocument}
+        filename={`clientes-${businessName}`}
+        onDownload={handlePDFDownload}
+        title="Previsualización de Clientes"
+      />
     </div>
   )
 }

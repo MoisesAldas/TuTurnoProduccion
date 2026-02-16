@@ -131,20 +131,21 @@ export default function EmployeesPage() {
   const confirmDeleteFromWarning = async () => {
     if (!employeeToDeleteObj) return
     
-    // Usar la función existente de eliminación
-    setEmployeeToDelete(employeeToDeleteObj.id)
     setDeleteWarningOpen(false)
     
-    // Ejecutar eliminación
-    await handleDeleteEmployee()
+    // Ejecutar eliminación pasando directamente el ID
+    await handleDeleteEmployee(employeeToDeleteObj.id)
     
     // Limpiar estados
     setEmployeeToDeleteObj(null)
     setOrphanedServices([])
   }
 
-  const handleDeleteEmployee = async () => {
-    if (!employeeToDelete || !business) return
+  const handleDeleteEmployee = async (employeeId?: string) => {
+    // Usar el parámetro si se pasa, sino usar el estado
+    const idToDelete = employeeId || employeeToDelete
+    
+    if (!idToDelete || !business) return
 
     try {
       setIsDeleting(true)
@@ -155,7 +156,7 @@ export default function EmployeesPage() {
         {
           body: {
             type: 'employee_deleted',
-            employee_id: employeeToDelete,
+            employee_id: idToDelete,
             business_id: business.id
           }
         }
@@ -202,14 +203,14 @@ export default function EmployeesPage() {
       const { error } = await supabase
         .from('employees')
         .delete()
-        .eq('id', employeeToDelete)
+        .eq('id', idToDelete)
 
       if (error) throw error
 
       // 4. Mostrar resumen
       const affectedCount = affectedData?.affected_appointments || 0
       
-      setEmployees(employees.filter(e => e.id !== employeeToDelete))
+      setEmployees(employees.filter(e => e.id !== idToDelete))
       
       if (affectedCount > 0) {
         toast({
@@ -575,7 +576,7 @@ export default function EmployeesPage() {
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteEmployee}
+              onClick={() => handleDeleteEmployee()}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >

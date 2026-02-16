@@ -1,7 +1,7 @@
 /**
  * ExportButton Component
  * Reusable button with dropdown for exporting analytics data
- * Supports CSV, Excel, and PDF formats
+ * Supports Excel and PDF formats with PDF preview
  */
 
 'use client'
@@ -20,7 +20,11 @@ import { Download, FileSpreadsheet, FileBarChart, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AnalyticsExportData, ExportFormat } from '@/lib/export/types'
 import { exportToExcel } from '@/lib/export/exportToExcel'
-import { exportToPDF } from '@/lib/export/exportToPDF'
+import { generatePDFDocument } from '@/lib/export/exportToPDF'
+import { PDFPreviewModal } from '@/components/pdf'
+import jsPDF from 'jspdf'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 interface ExportButtonProps {
   data: AnalyticsExportData
@@ -41,6 +45,8 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
 }) => {
   const [exporting, setExporting] = useState(false)
   const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null)
+  const [showPDFPreview, setShowPDFPreview] = useState(false)
+  const [pdfDocument, setPdfDocument] = useState<jsPDF | null>(null)
   const { toast } = useToast()
 
   /**
@@ -57,18 +63,21 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
       switch (format) {
         case 'excel':
           await exportToExcel(data, filename)
+          toast({
+            title: '¡Exportación exitosa!',
+            description: `El reporte ha sido exportado en formato Excel.`,
+          })
           break
         case 'pdf':
-          await exportToPDF(data, filename)
+          // Generate PDF and show preview instead of direct download
+          const doc = await generatePDFDocument(data)
+          setPdfDocument(doc)
+          setShowPDFPreview(true)
+          // Don't show success toast here - it will show after download from preview
           break
         default:
           throw new Error('Formato de exportación no válido')
       }
-
-      toast({
-        title: '¡Exportación exitosa!',
-        description: `El reporte ha sido exportado en formato ${format.toUpperCase()}.`,
-      })
     } catch (error) {
       console.error('Error exporting data:', error)
       toast({
@@ -82,77 +91,120 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
     }
   }
 
+  /**
+   * Handles PDF download from preview modal
+   */
+  const handlePDFDownload = () => {
+    if (!pdfDocument) return
+
+    try {
+      const timestamp = format(new Date(), 'yyyy-MM-dd', { locale: es })
+      const defaultFilename = `reporte-gerencial-${data.business.name
+        .toLowerCase()
+        .replace(/\s+/g, '-')}-${timestamp}.pdf`
+
+      pdfDocument.save(filename || defaultFilename)
+
+      toast({
+        title: '¡Descarga exitosa!',
+        description: 'El reporte PDF ha sido descargado correctamente.',
+      })
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error al descargar',
+        description: 'No se pudo descargar el PDF. Por favor intenta nuevamente.',
+      })
+    }
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          className={`transition-all duration-300 hover:scale-105 hover:shadow-md ${className}`}
-          disabled={disabled || exporting}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant={variant}
+            size={size}
+            className={`transition-all duration-300 hover:scale-105 hover:shadow-md ${className}`}
+            disabled={disabled || exporting}
+          >
+            {exporting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                {exportingFormat === 'pdf' ? 'Generando PDF...' : 'Exportando...'}
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          align="end"
+          className="w-56 animate-in slide-in-from-top-2 duration-200"
         >
-          {exporting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Exportando...
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
+          <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
+            Formato de Exportación
+          </DropdownMenuLabel>
 
-      <DropdownMenuContent
-        align="end"
-        className="w-56 animate-in slide-in-from-top-2 duration-200"
-      >
-        <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
-          Formato de Exportación
-        </DropdownMenuLabel>
+          <DropdownMenuSeparator />
 
-        <DropdownMenuSeparator />
+          {/* Excel Option */}
+          <DropdownMenuItem
+            onClick={() => handleExport('excel')}
+            disabled={exporting}
+            className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors"
+          >
+            <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
+            <div className="flex-1">
+              <p className="font-medium">Excel</p>
+              <p className="text-xs text-gray-500">Reporte completo con formato profesional</p>
+            </div>
+            {exportingFormat === 'excel' && (
+              <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
+            )}
+          </DropdownMenuItem>
 
-        {/* Excel Option */}
-        <DropdownMenuItem
-          onClick={() => handleExport('excel')}
-          disabled={exporting}
-          className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors"
-        >
-          <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
-          <div className="flex-1">
-            <p className="font-medium">Excel</p>
-            <p className="text-xs text-gray-500">Reporte completo con formato profesional</p>
+          {/* PDF Option with Preview */}
+          <DropdownMenuItem
+            onClick={() => handleExport('pdf')}
+            disabled={exporting}
+            className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors"
+          >
+            <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
+            <div className="flex-1">
+              <p className="font-medium">PDF Gerencial</p>
+              <p className="text-xs text-gray-500">Vista previa antes de descargar</p>
+            </div>
+            {exportingFormat === 'pdf' && (
+              <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
+            )}
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <div className="px-2 py-1.5 text-xs text-gray-400 text-center">
+            Excel descarga directo • PDF con previsualización
           </div>
-          {exportingFormat === 'excel' && (
-            <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
-          )}
-        </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        {/* PDF Option */}
-        <DropdownMenuItem
-          onClick={() => handleExport('pdf')}
-          disabled={exporting}
-          className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors"
-        >
-          <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
-          <div className="flex-1">
-            <p className="font-medium">PDF Gerencial</p>
-            <p className="text-xs text-gray-500">Reporte ejecutivo con insights y análisis</p>
-          </div>
-          {exportingFormat === 'pdf' && (
-            <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
-          )}
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <div className="px-2 py-1.5 text-xs text-gray-400 text-center">
-          Los datos se descargarán automáticamente
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      {/* PDF Preview Modal */}
+      <PDFPreviewModal
+        isOpen={showPDFPreview}
+        onClose={() => {
+          setShowPDFPreview(false)
+          setPdfDocument(null)
+        }}
+        pdfDocument={pdfDocument}
+        filename={filename || `reporte-${data.business.name}`}
+        onDownload={handlePDFDownload}
+        title="Previsualización del Reporte Gerencial"
+      />
+    </>
   )
 }

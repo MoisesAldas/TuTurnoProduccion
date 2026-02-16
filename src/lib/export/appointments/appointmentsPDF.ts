@@ -10,25 +10,26 @@ import {
 } from "../exportToExcel";
 import { formatEcuadorianPhone } from "../utils/phoneUtils";
 import { AppointmentExportParams } from "./types";
+import { PDF_COLORS } from "../utils/pdfStyles";
 
 /**
- * Genera y descarga el archivo PDF de citas
+ * Genera el documento PDF sin descargarlo (para preview)
  */
-export const exportAppointmentsPDF = async ({
+export const generateAppointmentsPDF = ({
   businessName,
   data: allRows,
   dateFrom,
   dateTo,
-}: AppointmentExportParams): Promise<void> => {
+}: AppointmentExportParams): jsPDF => {
   const doc = new jsPDF("landscape", "mm", "a4");
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
   const margin = 15;
 
   // ========================================
-  // MAIN HEADER - Black
+  // MAIN HEADER - Gray
   // ========================================
-  doc.setFillColor(0, 0, 0); // Negro
+  doc.setFillColor(...PDF_COLORS.GRAY_900);
   doc.rect(0, 0, pageWidth, 30, "F");
 
   // Title in white with business name
@@ -47,7 +48,7 @@ export const exportAppointmentsPDF = async ({
       year: "numeric",
       month: "long",
       day: "numeric",
-    })
+    }),
   );
   doc.text(`Reporte  generado el ${dateStr}`, margin, 25);
 
@@ -56,7 +57,7 @@ export const exportAppointmentsPDF = async ({
   // ========================================
   // INFORMACIÓN DEL REPORTE
   // ========================================
-  doc.setFillColor(0, 0, 0);
+  doc.setFillColor(...PDF_COLORS.GRAY_900);
   doc.rect(0, currentY, pageWidth, 10, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(11);
@@ -77,8 +78,8 @@ export const exportAppointmentsPDF = async ({
     dateFrom && dateTo
       ? translateMonthToSpanish(
           `${new Date(dateFrom + "T00:00:00").toLocaleDateString(
-            "es-ES"
-          )} - ${new Date(dateTo + "T00:00:00").toLocaleDateString("es-ES")}`
+            "es-ES",
+          )} - ${new Date(dateTo + "T00:00:00").toLocaleDateString("es-ES")}`,
         )
       : "Todas las fechas";
 
@@ -123,7 +124,7 @@ export const exportAppointmentsPDF = async ({
   // ========================================
   // DETALLE DE CITAS HEADER
   // ========================================
-  doc.setFillColor(0, 0, 0);
+  doc.setFillColor(...PDF_COLORS.GRAY_900);
   doc.rect(0, currentY, pageWidth, 10, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(11);
@@ -159,7 +160,7 @@ export const exportAppointmentsPDF = async ({
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
-        })
+        }),
       ),
       r.start_time?.substring(0, 5) || "-",
       r.end_time?.substring(0, 5) || "-",
@@ -216,8 +217,8 @@ export const exportAppointmentsPDF = async ({
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
 
-    // Black decorative line
-    doc.setDrawColor(0, 0, 0); // Negro
+    // Gray decorative line
+    doc.setDrawColor(...PDF_COLORS.GRAY_700);
     doc.setLineWidth(0.5);
     doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
 
@@ -237,6 +238,17 @@ export const exportAppointmentsPDF = async ({
     });
   }
 
+  return doc;
+};
+
+/**
+ * Genera y descarga el archivo PDF de citas
+ */
+export const exportAppointmentsPDF = async (
+  params: AppointmentExportParams,
+): Promise<void> => {
+  const doc = generateAppointmentsPDF(params);
+  const today = new Date();
   const ts = today.toISOString().split("T")[0];
   doc.save(`citas-${ts}.pdf`);
 };

@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { toDateString } from '@/lib/dateUtils'
 import OverlappingAppointmentsDialog from './OverlappingAppointmentsDialog'
+import AppointmentCard from './calendar/AppointmentCard'
+import AppointmentTooltip from './calendar/AppointmentTooltip'
 
 import type { Employee, Appointment } from '@/types/database'
 
@@ -38,6 +40,8 @@ interface CalendarViewProps {
   employees: CalendarEmployee[]
   viewType: 'day' | 'week'
   businessId: string
+  businessStartHour?: number // Default 7 AM
+  businessEndHour?: number   // Default 21 PM (9 PM)
   onRefresh: () => void
   onCreateAppointment: (date?: Date, time?: string, employeeId?: string) => void
   onEditAppointment: (appointment: CalendarAppointment) => void
@@ -45,20 +49,18 @@ interface CalendarViewProps {
 
 // Configuración del calendario
 const HOUR_HEIGHT = 60 // px por hora
-const START_HOUR = 8 // 8:00 AM
-const END_HOUR = 20 // 8:00 PM
-const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
+// START_HOUR y END_HOUR ahora son dinámicos, se pasan como props
 
-// Helper functions moved outside component for better performance (pure functions)
-const getTimePosition = (time: string) => {
+// Helper functions - now accept startHour parameter
+const getTimePosition = (time: string, startHour: number) => {
   const [hours, minutes] = time.split(':').map(Number)
-  const totalMinutes = (hours - START_HOUR) * 60 + minutes
+  const totalMinutes = (hours - startHour) * 60 + minutes
   return (totalMinutes / 60) * HOUR_HEIGHT
 }
 
-const getAppointmentHeight = (startTime: string, endTime: string) => {
-  const start = getTimePosition(startTime)
-  const end = getTimePosition(endTime)
+const getAppointmentHeight = (startTime: string, endTime: string, startHour: number) => {
+  const start = getTimePosition(startTime, startHour)
+  const end = getTimePosition(endTime, startHour)
   return end - start
 }
 
@@ -157,10 +159,16 @@ export default function CalendarView({
   employees,
   viewType,
   businessId,
+  businessStartHour = 7,
+  businessEndHour = 21,
   onRefresh,
   onCreateAppointment,
   onEditAppointment
 }: CalendarViewProps) {
+  // Calculate HOURS array dynamically based on business hours
+  const HOURS = Array.from({ length: businessEndHour - businessStartHour + 1 }, (_, i) => businessStartHour + i)
+  const START_HOUR = businessStartHour
+  const END_HOUR = businessEndHour
   const [absences, setAbsences] = useState<EmployeeAbsence[]>([])
   const [selectedAppointment, setSelectedAppointment] = useState<CalendarAppointment | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -252,7 +260,7 @@ export default function CalendarView({
     }
   }, [employees, viewType, weekDates, selectedDate, supabase])
 
-  // Helper functions that depend on appointment data
+  // Helper functions that depend on appointment data AND NOW business hours
   const getClientName = useCallback((appointment: CalendarAppointment) => {
     // 1. Cliente registrado (con cuenta TuTurno)
     if (appointment.users) {
@@ -266,6 +274,11 @@ export default function CalendarView({
     // 3. Walk-in (temporal)
     return appointment.walk_in_client_name || 'Cliente'
   }, [])
+
+  // Memoized helper functions for positioning (now use dynamic hours)
+  const getTimePositionMemo = useCallback((time: string) => getTimePosition(time, START_HOUR), [START_HOUR])
+  const getAppointmentHeightMemo = useCallback((startTime: string, endTime: string) => 
+    getAppointmentHeight(startTime, endTime, START_HOUR), [START_HOUR])
 
   const getClientPhone = useCallback((appointment: CalendarAppointment) => {
     return appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone
@@ -428,105 +441,20 @@ export default function CalendarView({
     }
   }
 
-  // Tooltip component
-  const AppointmentTooltip = () => {
+  // Render tooltip using modular component
+  const renderTooltip = () => {
     if (!hoveredAppointment) return null
 
     const { appointment, position } = hoveredAppointment
     const employee = employees.find(e => e.id === appointment.employee_id)
-    const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
-    const statusLabels = {
-      pending: 'Pendiente',
-      confirmed: 'Confirmada',
-      in_progress: 'En Progreso',
-      completed: 'Completada',
-      cancelled: 'Cancelada',
-      no_show: 'No Asistió'
-    }
 
     return (
-      <div
-        className="fixed z-50 pointer-events-none animate-tooltip"
-        style={{
-          left: `${position.x}px`,
-          top: `${position.y - 10}px`,
-          transform: 'translate(-50%, -100%)',
-          animation: 'tooltipFadeIn 0.2s ease-out'
-        }}
-      >
-        <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden max-w-xs">
-          {/* Header con gradiente */}
-          <div className="bg-orange-600 hover:bg-orange-700 px-4 py-2">
-            <div className="flex items-center justify-between text-white">
-              <span className="text-sm font-semibold">
-                {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
-              </span>
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                {formatDuration(appointment.start_time, appointment.end_time)}
-              </span>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="px-4 py-3 space-y-2 text-sm">
-            {/* Cliente */}
-            <div className="flex items-start gap-2">
-              <span className="text-gray-400 text-xs">👤</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500">Cliente</p>
-                <p className="font-medium text-gray-900 truncate">{getClientName(appointment)}</p>
-              </div>
-            </div>
-
-            {/* Empleado */}
-            {employee && (
-              <div className="flex items-start gap-2">
-                <span className="text-gray-400 text-xs">👨‍💼</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500">Empleado</p>
-                  <p className="font-medium text-gray-900 truncate">
-                    {employee.first_name} {employee.last_name}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Servicio */}
-            <div className="flex items-start gap-2">
-              <span className="text-gray-400 text-xs">📋</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500">Servicio</p>
-                <p className="font-medium text-gray-900 truncate">{serviceName}</p>
-              </div>
-            </div>
-
-            {/* Estado y Precio */}
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              <div className="flex items-center gap-1">
-                <span className={`inline-block w-2 h-2 rounded-full ${
-                  appointment.status === 'confirmed' ? 'bg-green-500' :
-                  appointment.status === 'pending' ? 'bg-yellow-500' :
-                  appointment.status === 'in_progress' ? 'bg-blue-500' :
-                  appointment.status === 'completed' ? 'bg-gray-500' :
-                  appointment.status === 'cancelled' ? 'bg-red-500' :
-                  'bg-orange-500'
-                }`} />
-                <span className="text-xs text-gray-600">
-                  {statusLabels[appointment.status as keyof typeof statusLabels]}
-                </span>
-              </div>
-              <span className="text-lg font-bold bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
-                ${appointment.total_price}
-              </span>
-            </div>
-          </div>
-        </div>
-        {/* Arrow */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
-          <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white"
-               style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
-        </div>
-      </div>
+      <AppointmentTooltip
+        appointment={appointment}
+        position={position}
+        clientName={getClientName(appointment)}
+        employee={employee}
+      />
     )
   }
 
@@ -659,67 +587,43 @@ export default function CalendarView({
                         // Si solo hay una cita en el grupo, renderizar normalmente
                         if (group.length === 1) {
                           const appointment = group[0]
-                          const top = getTimePosition(appointment.start_time)
-                          const height = getAppointmentHeight(appointment.start_time, appointment.end_time)
+                          const top = getTimePositionMemo(appointment.start_time)
+                          const height = getAppointmentHeightMemo(appointment.start_time, appointment.end_time)
                           const employee = employees.find(e => e.id === appointment.employee_id)
                           const isDragging = draggingAppointment?.id === appointment.id
 
                           return (
-                            <div
+                            <AppointmentCard
                               key={appointment.id}
-                              draggable={appointment.status !== 'completed' && appointment.status !== 'cancelled'}
-                              onDragStart={(e) => handleDragStart(e, appointment)}
-                              onDragEnd={handleDragEnd}
+                              appointment={appointment}
+                              top={top}
+                              height={height}
+                              clientName={getClientName(appointment)}
+                              employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
+                              isDragging={isDragging}
                               onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
                               onMouseLeave={handleAppointmentLeave}
-                              className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-move hover:shadow-md transition-all z-20 overflow-hidden ${getStatusColor(
-                                appointment.status
-                              )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
-                              style={{
-                                top: `${top}px`,
-                                height: `${height}px`
-                              }}
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleAppointmentClick(appointment)
                               }}
-                            >
-                              <div className="p-2 h-full overflow-hidden">
-                                <p className="text-xs font-semibold truncate">
-                                  🕐 {appointment.start_time.substring(0, 5)}
-                                </p>
-                                <p className="text-xs truncate mt-0.5">
-                                  <span className="font-medium">👤</span> {getClientName(appointment)}
-                                  {!appointment.client_id && (
-                                    <span className="ml-1 text-orange-600 font-semibold">W</span>
-                                  )}
-                                </p>
-                                {employee && (
-                                  <p className="text-xs font-medium truncate mt-0.5 border-t border-gray-300/50 pt-0.5">
-                                    👨‍💼 {employee.first_name} {employee.last_name}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
+                              onDragStart={(e) => handleDragStart(e, appointment)}
+                              onDragEnd={handleDragEnd}
+                            />
                           )
                         }
 
                         // Si hay múltiples citas superpuestas, renderizar con Popover
                         const firstAppointment = group[0]
-                        const top = getTimePosition(firstAppointment.start_time)
-                        const height = getAppointmentHeight(firstAppointment.start_time, firstAppointment.end_time)
+                        const top = getTimePositionMemo(firstAppointment.start_time)
+                        const height = getAppointmentHeightMemo(firstAppointment.start_time, firstAppointment.end_time)
                         const employee = employees.find(e => e.id === firstAppointment.employee_id)
                         const isDragging = draggingAppointment?.id === firstAppointment.id
 
                         return (
                           <div
                             key={`week-${dateStr}-${groupIndex}`}
-                            draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
-                            onDragStart={(e) => handleDragStart(e, firstAppointment)}
-                            onDragEnd={handleDragEnd}
-                            className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
-                              firstAppointment.status
-                            )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                            className="absolute inset-x-0"
                             style={{
                               top: `${top}px`,
                               height: `${height}px`
@@ -730,27 +634,21 @@ export default function CalendarView({
                               setOverlappingDialogOpen(true)
                             }}
                           >
-                                <div className="p-2 h-full overflow-hidden relative">
-                                  <p className="text-xs font-semibold truncate">
-                                    🕐 {firstAppointment.start_time.substring(0, 5)}
-                                  </p>
-                                  <p className="text-xs truncate mt-0.5">
-                                    <span className="font-medium">👤</span> {getClientName(firstAppointment)}
-                                    {!firstAppointment.client_id && (
-                                      <span className="ml-1 text-orange-600 font-semibold">W</span>
-                                    )}
-                                  </p>
-                                  {employee && (
-                                    <p className="text-xs font-medium truncate mt-0.5 border-t border-gray-300/50 pt-0.5">
-                                      👨‍💼 {employee.first_name} {employee.last_name}
-                                    </p>
-                                  )}
-
-                                  {/* Badge de citas adicionales */}
-                                  <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white">
-                                    +{group.length - 1}
-                                  </div>
-                                </div>
+                            <AppointmentCard
+                              appointment={firstAppointment}
+                              height={height}
+                              clientName={getClientName(firstAppointment)}
+                              employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
+                              isDragging={isDragging}
+                              onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                              onDragEnd={handleDragEnd}
+                              draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                            />
+                            
+                            {/* Badge de citas adicionales */}
+                            <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white z-30">
+                              +{group.length - 1}
+                            </div>
                           </div>
                         )
                       })
@@ -761,7 +659,7 @@ export default function CalendarView({
                       <div
                         className="absolute inset-x-1 rounded-lg border-2 border-dashed border-blue-400 bg-blue-100/30 z-10 pointer-events-none"
                         style={{
-                          top: `${getTimePosition(dropTarget.time)}px`,
+                          top: `${getTimePositionMemo(dropTarget.time)}px`,
                           height: `${(draggingAppointment.appointment_services?.[0]?.services?.duration_minutes || 60) * (HOUR_HEIGHT / 60)}px`
                         }}
                       >
@@ -774,7 +672,7 @@ export default function CalendarView({
                     )}
 
                     {/* Línea de hora actual (si es hoy) */}
-                    {isToday && <CurrentTimeLine />}
+                    {isToday && <CurrentTimeLine startHour={START_HOUR} endHour={END_HOUR} />}
                   </div>
                 )
               })}
@@ -799,6 +697,9 @@ export default function CalendarView({
           />
         )}
 
+        {/* Render Tooltip */}
+        {renderTooltip()}
+
         {/* Dialog de citas superpuestas */}
         <OverlappingAppointmentsDialog
           isOpen={overlappingDialogOpen}
@@ -809,7 +710,7 @@ export default function CalendarView({
         />
 
         {/* Tooltip */}
-        <AppointmentTooltip />
+        
       </>
     )
   }
@@ -827,7 +728,7 @@ export default function CalendarView({
           {employees.map((employee) => (
             <div
               key={employee.id}
-              className="flex-1 min-w-[200px] p-4 border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-[200px] py-4 border-r border-gray-200 last:border-r-0"
             >
               <div className="flex flex-col items-center gap-2">
                 <Avatar className="w-12 h-12 border-2 border-orange-500">
@@ -1006,10 +907,10 @@ export default function CalendarView({
                       style={{
                         top: employeeAbsence.is_full_day
                           ? 0
-                          : getTimePosition(employeeAbsence.start_time || '08:00'),
+                          : getTimePositionMemo(employeeAbsence.start_time || '08:00'),
                         height: employeeAbsence.is_full_day
                           ? '100%'
-                          : getAppointmentHeight(
+                          : getAppointmentHeightMemo(
                               employeeAbsence.start_time || '08:00',
                               employeeAbsence.end_time || '20:00'
                             )
@@ -1040,68 +941,42 @@ export default function CalendarView({
                       // Si solo hay una cita en el grupo, renderizar normalmente
                       if (group.length === 1) {
                         const appointment = group[0]
-                        const top = getTimePosition(appointment.start_time)
-                        const height = getAppointmentHeight(appointment.start_time, appointment.end_time)
+                        const top = getTimePositionMemo(appointment.start_time)
+                        const height = getAppointmentHeightMemo(appointment.start_time, appointment.end_time)
                         const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
                         const isDragging = draggingAppointment?.id === appointment.id
 
                         return (
-                          <div
+                          <AppointmentCard
                             key={appointment.id}
-                            draggable={appointment.status !== 'completed' && appointment.status !== 'cancelled'}
-                            onDragStart={(e) => handleDragStart(e, appointment)}
-                            onDragEnd={handleDragEnd}
+                            appointment={appointment}
+                            top={top}
+                            height={height}
+                            clientName={getClientName(appointment)}
+                            isDragging={isDragging}
                             onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
                             onMouseLeave={handleAppointmentLeave}
-                            className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-move hover:shadow-md transition-all z-20 overflow-hidden ${getStatusColor(
-                              appointment.status
-                            )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
-                            style={{
-                              top: `${top}px`,
-                              height: `${height}px`
-                            }}
                             onClick={(e) => {
                               e.stopPropagation()
                               handleAppointmentClick(appointment)
                             }}
-                          >
-                            <div className="p-2 h-full overflow-hidden">
-                              <p className="text-xs font-semibold truncate">
-                                {getClientName(appointment)}
-                                {!appointment.client_id && (
-                                  <span className="ml-1 text-xs font-normal">👤</span>
-                                )}
-                              </p>
-                              <p className="text-xs truncate mt-0.5">{serviceName}</p>
-                              <p className="text-xs font-medium mt-1">
-                                {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
-                              </p>
-                              {getClientPhone(appointment) && (
-                                <p className="text-xs text-gray-600 truncate mt-0.5">
-                                  {getClientPhone(appointment)}
-                                </p>
-                              )}
-                            </div>
-                          </div>
+                            onDragStart={(e) => handleDragStart(e, appointment)}
+                            onDragEnd={handleDragEnd}
+                          />
                         )
                       }
 
                       // Si hay múltiples citas superpuestas, renderizar con Popover
                       const firstAppointment = group[0]
-                      const top = getTimePosition(firstAppointment.start_time)
-                      const height = getAppointmentHeight(firstAppointment.start_time, firstAppointment.end_time)
-                      const serviceName = firstAppointment.appointment_services?.[0]?.services?.name || 'Servicio'
+                      const top = getTimePositionMemo(firstAppointment.start_time)
+                      const height = getAppointmentHeightMemo(firstAppointment.start_time, firstAppointment.end_time)
+                      const employee = employees.find(e => e.id === firstAppointment.employee_id)
                       const isDragging = draggingAppointment?.id === firstAppointment.id
 
                       return (
                         <div
-                          key={`day-${employee.id}-${groupIndex}`}
-                          draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
-                          onDragStart={(e) => handleDragStart(e, firstAppointment)}
-                          onDragEnd={handleDragEnd}
-                          className={`absolute inset-x-1 rounded-lg border-l-4 shadow-sm cursor-pointer hover:shadow-lg transition-all z-20 overflow-hidden ${getStatusColor(
-                            firstAppointment.status
-                          )} ${isDragging ? 'opacity-50 scale-95' : ''}`}
+                          key={`day-${employee?.id}-${groupIndex}`}
+                          className="absolute inset-x-0"
                           style={{
                             top: `${top}px`,
                             height: `${height}px`
@@ -1112,22 +987,20 @@ export default function CalendarView({
                             setOverlappingDialogOpen(true)
                           }}
                         >
-                          <div className="p-2 h-full overflow-hidden relative">
-                            <p className="text-xs font-semibold truncate">
-                              {getClientName(firstAppointment)}
-                              {!firstAppointment.client_id && (
-                                <span className="ml-1 text-xs font-normal">👤</span>
-                              )}
-                            </p>
-                            <p className="text-xs truncate mt-0.5">{serviceName}</p>
-                            <p className="text-xs font-medium mt-1">
-                              {firstAppointment.start_time.substring(0, 5)} - {firstAppointment.end_time.substring(0, 5)}
-                            </p>
-
-                            {/* Badge de citas adicionales */}
-                            <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-white">
-                              +{group.length - 1}
-                            </div>
+                          <AppointmentCard
+                            appointment={firstAppointment}
+                            height={height}
+                            clientName={getClientName(firstAppointment)}
+                            employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
+                            isDragging={isDragging}
+                            onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                            onDragEnd={handleDragEnd}
+                            draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                          />
+                          
+                          {/* Badge de citas adicionales */}
+                          <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-white z-30">
+                            +{group.length - 1}
                           </div>
                         </div>
                       )
@@ -1139,7 +1012,7 @@ export default function CalendarView({
                     <div
                       className="absolute inset-x-1 rounded-lg border-2 border-dashed border-blue-400 bg-blue-100/30 z-10 pointer-events-none"
                       style={{
-                        top: `${getTimePosition(dropTarget.time)}px`,
+                        top: `${getTimePositionMemo(dropTarget.time)}px`,
                         height: `${(draggingAppointment.appointment_services?.[0]?.services?.duration_minutes || 60) * (HOUR_HEIGHT / 60)}px`
                       }}
                     >
@@ -1153,7 +1026,7 @@ export default function CalendarView({
 
                   {/* Línea de hora actual (si es hoy) */}
                   {selectedDate.toDateString() === new Date().toDateString() && (
-                    <CurrentTimeLine />
+                    <CurrentTimeLine startHour={START_HOUR} endHour={END_HOUR} />
                   )}
                 </div>
               )
@@ -1179,6 +1052,9 @@ export default function CalendarView({
         />
       )}
 
+      {/* Render Tooltip */}
+      {renderTooltip()}
+
       {/* Dialog de citas superpuestas */}
       <OverlappingAppointmentsDialog
         isOpen={overlappingDialogOpen}
@@ -1189,13 +1065,13 @@ export default function CalendarView({
       />
 
       {/* Tooltip */}
-      <AppointmentTooltip />
+     
     </>
   )
 }
 
 // Componente para la línea de hora actual
-function CurrentTimeLine() {
+function CurrentTimeLine({ startHour, endHour }: { startHour: number; endHour: number }) {
   const [position, setPosition] = useState(0)
 
   useEffect(() => {
@@ -1204,8 +1080,8 @@ function CurrentTimeLine() {
       const hours = now.getHours()
       const minutes = now.getMinutes()
 
-      if (hours >= START_HOUR && hours <= END_HOUR) {
-        const totalMinutes = (hours - START_HOUR) * 60 + minutes
+      if (hours >= startHour && hours <= endHour) {
+        const totalMinutes = (hours - startHour) * 60 + minutes
         const pos = (totalMinutes / 60) * HOUR_HEIGHT
         setPosition(pos)
       }
@@ -1215,7 +1091,7 @@ function CurrentTimeLine() {
     const interval = setInterval(updatePosition, 60000) // Actualizar cada minuto
 
     return () => clearInterval(interval)
-  }, [])
+  }, [startHour, endHour])
 
   if (position === 0) return null
 
@@ -1230,4 +1106,8 @@ function CurrentTimeLine() {
       </div>
     </div>
   )
+
+
 }
+
+

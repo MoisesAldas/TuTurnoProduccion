@@ -57,11 +57,24 @@ export const exportToPDF = async (
   data: AnalyticsExportData,
   filename?: string,
 ): Promise<void> => {
+  const doc = await generatePDFDocument(data);
+
   const timestamp = format(new Date(), "yyyy-MM-dd", { locale: es });
   const defaultFilename = `reporte-gerencial-${data.business.name
     .toLowerCase()
     .replace(/\s+/g, "-")}-${timestamp}.pdf`;
 
+  // Save the PDF
+  doc.save(filename || defaultFilename);
+};
+
+/**
+ * Generates PDF document without downloading - for preview
+ * Returns jsPDF instance that can be previewed or downloaded later
+ */
+export const generatePDFDocument = async (
+  data: AnalyticsExportData,
+): Promise<jsPDF> => {
   // Create PDF document (A4 size)
   const doc = new jsPDF("portrait", "mm", "a4");
 
@@ -144,8 +157,7 @@ export const exportToPDF = async (
   });
   addAllFooters(doc, formattedDate);
 
-  // Save the PDF
-  doc.save(filename || defaultFilename);
+  return doc;
 };
 
 // ========================================

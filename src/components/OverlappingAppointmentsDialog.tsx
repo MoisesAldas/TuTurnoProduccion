@@ -1,7 +1,7 @@
 'use client'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Calendar, User, DollarSign } from 'lucide-react'
+import { Calendar, UserCircle, CircleDollarSign, Clock, UserCheck } from 'lucide-react'
 import type { Appointment, Employee } from '@/types/database'
 
 type CalendarEmployee = Pick<Employee, 'id' | 'first_name' | 'last_name' | 'avatar_url' | 'is_active'>
@@ -51,8 +51,8 @@ export default function OverlappingAppointmentsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] p-0 gap-0">
-        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+      <DialogContent className="max-w-2xl max-h-[80vh] p-0 gap-0 rounded-2xl overflow-hidden">
+        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Calendar className="w-5 h-5 text-orange-600" />
             <span>{appointments.length} Citas Superpuestas</span>
@@ -62,7 +62,7 @@ export default function OverlappingAppointmentsDialog({
           </p>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[60vh] px-6 py-4">
+        <div className="overflow-y-auto max-h-[60vh] px-6 py-4 rounded-b-2xl">
           <div className="space-y-3">
             {appointments.map((appointment, index) => {
               const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
@@ -71,7 +71,7 @@ export default function OverlappingAppointmentsDialog({
               return (
                 <div
                   key={appointment.id}
-                  className={`p-4 border-2 rounded-xl cursor-pointer hover:shadow-md transition-all duration-200 ${
+                  className={`p-4 border-2 rounded-2xl cursor-pointer hover:shadow-md transition-all duration-200 ${
                     index === 0 ? 'bg-orange-50/50 border-orange-200' : 'bg-white border-gray-200 hover:border-orange-300'
                   }`}
                   onClick={() => handleAppointmentClick(appointment)}
@@ -84,7 +84,7 @@ export default function OverlappingAppointmentsDialog({
                         <h4 className="font-semibold text-gray-900 truncate flex items-center gap-1">
                           {getClientName(appointment)}
                           {!appointment.client_id && !appointment.business_client_id && (
-                            <span className="text-orange-600">👤</span>
+                            <UserCircle className="w-4 h-4 text-orange-600" />
                           )}
                         </h4>
                       </div>
@@ -97,25 +97,26 @@ export default function OverlappingAppointmentsDialog({
 
                         {appointment.employees && (
                           <p className="text-sm text-gray-500 flex items-center gap-2">
-                            <User className="w-3.5 h-3.5" />
+                            <UserCheck className="w-3.5 h-3.5" />
                             {appointment.employees.first_name} {appointment.employees.last_name}
                           </p>
                         )}
 
-                        <p className="text-sm font-medium text-gray-700">
-                          ⏰ {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
+                        <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5" />
+                          {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
                         </p>
                       </div>
                     </div>
 
                     {/* Right side - Price */}
-                    <div className="flex flex-col items-end justify-between">
-                      <div className="flex items-center gap-1 text-orange-600 font-semibold text-lg">
-                        <DollarSign className="w-4 h-4" />
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-1 text-emerald-600 font-semibold text-lg">
+                        <CircleDollarSign className="w-5 h-5" />
                         {appointment.total_price}
                       </div>
                       {index === 0 && (
-                        <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full mt-2">
+                        <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-medium">
                           Primera
                         </span>
                       )}

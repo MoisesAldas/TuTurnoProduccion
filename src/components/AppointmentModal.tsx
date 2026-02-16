@@ -12,6 +12,12 @@ import { formatSpanishDate } from '@/lib/dateUtils'
 import ReceiptViewer from './ReceiptViewer'
 import { useAppointmentStarted } from '@/hooks/useAppointmentStarted'
 import { AppointmentActionTooltip } from './AppointmentActionTooltip'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 // Modular cancellation components
 import { handleBusinessCancellation, getBusinessOwnerId } from '@/lib/appointments/businessCancellationAdapter'
 
@@ -557,161 +563,189 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
         </div>
 
         {/* Actions */}
-        <div className="border-t border-gray-200 p-4 sm:p-6 bg-gray-50 rounded-b-2xl">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Menú desplegable con acciones secundarias */}
-            {appointment.status !== 'cancelled' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10 rounded-lg hover:bg-gray-100 transition-all hover:scale-105 self-start sm:self-auto"
-                    disabled={updating}
-                  >
-                    <MoreVertical className="h-5 w-5 text-gray-600" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="w-48 z-[70] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
-                >
-                  {/* Editar */}
-                  {onEdit && appointment.status !== 'completed' && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={onEdit}
-                        className="cursor-pointer hover:bg-orange-50 focus:bg-orange-50 transition-colors"
-                      >
-                        <Edit className="w-4 h-4 mr-2 text-orange-600" />
-                        <span>Editar cita</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-
-                  {/* Confirmar */}
-                  {appointment.status === 'pending' && (
-                    <DropdownMenuItem
-                      onClick={() => handleUpdateStatus('confirmed')}
-                      className="cursor-pointer hover:bg-green-50 focus:bg-green-50 transition-colors"
+        <TooltipProvider>
+          <div className="border-t border-gray-200 p-4 sm:p-6 bg-gray-50 rounded-b-2xl">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Menú desplegable con acciones secundarias */}
+              {appointment.status !== 'cancelled' && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 flex-shrink-0 rounded-lg hover:bg-gray-100 transition-all hover:scale-105"
+                      disabled={updating}
                     >
-                      <Check className="w-4 h-4 mr-2 text-green-600" />
-                      <span>Confirmar</span>
-                    </DropdownMenuItem>
-                  )}
-
-                  {/* En Progreso */}
-                  {appointment.status === 'confirmed' && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => handleUpdateStatus('in_progress')}
-                        disabled={!canTakeAction}
-                        className={`cursor-pointer transition-colors ${
-                          canTakeAction
-                            ? 'hover:bg-blue-50 focus:bg-blue-50'
-                            : 'opacity-50 cursor-not-allowed'
-                        }`}
-                      >
-                        <Clock className="w-4 h-4 mr-2 text-blue-600" />
-                        <span>En Progreso</span>
-                      </DropdownMenuItem>
-                      <AppointmentActionTooltip isAvailable={canTakeAction} />
-                    </>
-                  )}
-
-                  {/* No Asistió */}
-                  {(['confirmed', 'pending'].includes(appointment.status)) && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => handleUpdateStatus('no_show')}
-                        disabled={!canTakeAction}
-                        className={`cursor-pointer transition-colors ${
-                          canTakeAction
-                            ? 'hover:bg-orange-50 focus:bg-orange-50'
-                            : 'opacity-50 cursor-not-allowed'
-                        }`}
-                      >
-                        <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
-                        <span>No Asistió</span>
-                      </DropdownMenuItem>
-                      <AppointmentActionTooltip isAvailable={canTakeAction} />
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {/* Botones principales */}
-            <div className="flex-1 flex flex-col sm:flex-row items-stretch gap-3">
-              {/* Botón Ver Comprobante */}
-              {paymentReceipt && (
-                <Button
-                  onClick={() => setReceiptViewerOpen(true)}
-                  variant="outline"
-                  className="w-full sm:flex-1 border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-all hover:scale-105"
-                >
-                  <FileImage className="w-4 h-4 mr-2" />
-                  <span className="truncate">Ver Comprobante</span>
-                </Button>
-              )}
-
-              {/* Botón principal: Finalizar y Cobrar / Registrar Pago */}
-              {hasPendingPayment && !checkingPayment && ['confirmed', 'in_progress', 'completed'].includes(appointment.status) && (
-                <div className="w-full sm:flex-1">
-                  <Button
-                    onClick={handleOpenCheckout}
-                    disabled={updating || !canTakeAction}
-                    data-checkout-trigger
-                    className={`w-full shadow-lg transition-all duration-300 ${
-                      canTakeAction && !updating
-                        ? 'bg-gray-900 hover:bg-gray-800 text-white hover:shadow-xl hover:scale-105'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
+                      <MoreVertical className="h-5 w-5 text-gray-600" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-48 z-[70] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
                   >
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    <span className="truncate">{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
+                    {/* Editar */}
+                    {onEdit && appointment.status !== 'completed' && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={onEdit}
+                          className="cursor-pointer hover:bg-orange-50 focus:bg-orange-50 transition-colors"
+                        >
+                          <Edit className="w-4 h-4 mr-2 text-orange-600" />
+                          <span>Editar cita</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+
+                    {/* Confirmar */}
+                    {appointment.status === 'pending' && (
+                      <DropdownMenuItem
+                        onClick={() => handleUpdateStatus('confirmed')}
+                        className="cursor-pointer hover:bg-green-50 focus:bg-green-50 transition-colors"
+                      >
+                        <Check className="w-4 h-4 mr-2 text-green-600" />
+                        <span>Confirmar</span>
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* En Progreso */}
+                    {appointment.status === 'confirmed' && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <DropdownMenuItem
+                              onClick={() => canTakeAction && handleUpdateStatus('in_progress')}
+                              disabled={!canTakeAction}
+                              className={`cursor-pointer transition-colors ${
+                                canTakeAction
+                                  ? 'hover:bg-blue-50 focus:bg-blue-50'
+                                  : 'opacity-50 cursor-not-allowed'
+                              }`}
+                            >
+                              <Clock className="w-4 h-4 mr-2 text-blue-600" />
+                              <span>En Progreso</span>
+                            </DropdownMenuItem>
+                          </div>
+                        </TooltipTrigger>
+                        {!canTakeAction && (
+                          <TooltipContent side="right">
+                            <p className="text-xs">Esta acción estará disponible cuando comience la cita</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    )}
+
+                    {/* No Asistió */}
+                    {(['confirmed', 'pending'].includes(appointment.status)) && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <DropdownMenuItem
+                                onClick={() => canTakeAction && handleUpdateStatus('no_show')}
+                                disabled={!canTakeAction}
+                                className={`cursor-pointer transition-colors ${
+                                  canTakeAction
+                                    ? 'hover:bg-orange-50 focus:bg-orange-50'
+                                    : 'opacity-50 cursor-not-allowed'
+                                }`}
+                              >
+                                <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
+                                <span>No Asistió</span>
+                              </DropdownMenuItem>
+                            </div>
+                          </TooltipTrigger>
+                          {!canTakeAction && (
+                            <TooltipContent side="right">
+                              <p className="text-xs">Esta acción estará disponible cuando comience la cita</p>
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {/* Botones principales - Alineados horizontalmente con espacio igual */}
+              <div className="flex-1 flex flex-wrap gap-2">
+                {/* Botón Ver Comprobante */}
+                {paymentReceipt && (
+                  <Button
+                    onClick={() => setReceiptViewerOpen(true)}
+                    variant="outline"
+                    className="flex-1 min-w-[140px] border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-all hover:scale-105"
+                  >
+                    <FileImage className="w-4 h-4 mr-2" />
+                    <span className="truncate">Ver Comprobante</span>
                   </Button>
-                  <AppointmentActionTooltip isAvailable={canTakeAction} className="px-2" />
-                </div>
-              )}
+                )}
 
-              {/* Botón Reactivar cita - Solo visible para citas canceladas */}
-              {appointment.status === 'cancelled' && (
-                <Button
-                  onClick={handleReactivate}
-                  disabled={updating}
-                  className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 text-white transition-all hover:scale-105"
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  <span className="truncate">Reactivar Cita</span>
-                </Button>
-              )}
+                {/* Botón principal: Finalizar y Cobrar / Registrar Pago */}
+                {hasPendingPayment && !checkingPayment && ['confirmed', 'in_progress', 'completed'].includes(appointment.status) && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex-1 min-w-[160px]">
+                        <Button
+                          onClick={handleOpenCheckout}
+                          disabled={updating || !canTakeAction}
+                          data-checkout-trigger
+                          className={`w-full shadow-lg transition-all duration-300 ${
+                            canTakeAction && !updating
+                              ? 'bg-gray-900 hover:bg-gray-800 text-white hover:shadow-xl hover:scale-105'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }`}
+                        >
+                          <DollarSign className="w-4 h-4 mr-2" />
+                          <span className="truncate">{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    {!canTakeAction && (
+                      <TooltipContent>
+                        <p className="text-xs">Esta acción estará disponible cuando comience la cita</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                )}
 
-              {/* Botón Cancelar cita */}
-              {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
+                {/* Botón Reactivar cita - Solo visible para citas canceladas */}
+                {appointment.status === 'cancelled' && (
+                  <Button
+                    onClick={handleReactivate}
+                    disabled={updating}
+                    className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700 text-white transition-all hover:scale-105"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    <span className="truncate">Reactivar Cita</span>
+                  </Button>
+                )}
+
+                {/* Botón Cancelar cita */}
+                {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
+                  <Button
+                    onClick={handleCancel}
+                    disabled={updating}
+                    variant="outline"
+                    className="flex-1 min-w-[120px] text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all hover:scale-105"
+                  >
+                    <span className="truncate">Cancelar Cita</span>
+                  </Button>
+                )}
+
+                {/* Botón Cerrar */}
                 <Button
-                  onClick={handleCancel}
-                  disabled={updating}
+                  onClick={onClose}
                   variant="outline"
-                  className="w-full sm:flex-1 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all hover:scale-105"
+                  className="flex-1 min-w-[100px] hover:bg-gray-100 transition-all hover:scale-105"
                 >
-                  <span className="truncate">Cancelar Cita</span>
+                  Cerrar
                 </Button>
-              )}
-
-              {/* Botón Cerrar */}
-              <Button
-                onClick={onClose}
-                variant="outline"
-                className="w-full sm:flex-1 hover:bg-gray-100 transition-all hover:scale-105"
-              >
-                Cerrar
-              </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </TooltipProvider>
       </div>
 
       {/* Receipt Viewer Modal */}

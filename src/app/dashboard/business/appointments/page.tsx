@@ -71,6 +71,8 @@ export default function AppointmentsPage() {
   const [allowOverlapping, setAllowOverlapping] = useState(false)
   const [updatingSettings, setUpdatingSettings] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [businessStartHour, setBusinessStartHour] = useState(7) // Default 7 AM
+  const [businessEndHour, setBusinessEndHour] = useState(21) // Default 9 PM (21)
   const [createModalData, setCreateModalData] = useState<{
     date: Date
     time?: string
@@ -147,6 +149,28 @@ export default function AppointmentsPage() {
 
       setBusiness(businessData)
       setAllowOverlapping(businessData.allow_overlapping_appointments || false)
+
+      // Obtener business_hours para calcular inicio/fin dinámico del calendario
+      const { data: hoursData, error: hoursError } = await supabase
+        .from('business_hours')
+        .select('open_time, close_time, is_closed')
+        .eq('business_id', businessData.id)
+
+      if (!hoursError && hoursData && hoursData.length > 0) {
+        // Filtrar días abiertos y extraer horas
+        const openDays = hoursData.filter(h => !h.is_closed)
+        if (openDays.length > 0) {
+          const openTimes = openDays.map(h => parseInt(h.open_time.split(':')[0]))
+          const closeTimes = openDays.map(h => parseInt(h.close_time.split(':')[0]))
+          
+          // Restar 1 hora al inicio y sumar 1 al final para mejor visibilidad
+          const minOpen = Math.min(...openTimes)
+          const maxClose = Math.max(...closeTimes)
+          
+          setBusinessStartHour(Math.max(0, minOpen - 1)) // No ir antes de las 0:00
+          setBusinessEndHour(Math.min(23, maxClose + 1)) // No pasar de las 23:00
+        }
+      }
 
       // Obtener empleados activos
       const { data: employeesData, error: employeesError } = await supabase
@@ -723,6 +747,8 @@ export default function AppointmentsPage() {
             employees={employees.filter(e => selectedEmployees.includes(e.id))}
             viewType={viewType}
             businessId={business?.id || ''}
+            businessStartHour={businessStartHour}
+            businessEndHour={businessEndHour}
             onRefresh={fetchAppointments}
             onCreateAppointment={handleCreateAppointment}
             onEditAppointment={handleEditAppointment}

@@ -501,11 +501,11 @@ export default function CreateAppointmentModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 sm:p-6">
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 sm:p-6 rounded-t-2xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center">
@@ -555,9 +555,9 @@ export default function CreateAppointmentModal({
                   <UserIcon className="w-5 h-5 text-orange-600" />
                   Tipo de cliente *
                 </Label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <label
-                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition-all ${
                       clientType === 'walk_in'
                         ? 'border-orange-600 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -571,16 +571,18 @@ export default function CreateAppointmentModal({
                       onChange={(e) => setClientType(e.target.value as any)}
                       className="sr-only"
                     />
-                    <div className="text-center">
-                      <div className="flex justify-center mb-2">
+                    <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-0">
+                      <div className="flex justify-center sm:mb-2">
                         <UserCircle className="w-8 h-8 text-orange-600" />
                       </div>
-                      <p className="font-medium text-gray-900">Sin cita previa</p>
-                      <p className="text-xs text-gray-500 mt-1">Sin cuenta</p>
+                      <div className="flex-1 sm:flex-none">
+                        <p className="font-medium text-gray-900">Sin registro</p>
+                        <p className="text-xs text-gray-500 mt-1">Cliente sin cuenta</p>
+                      </div>
                     </div>
                   </label>
                   <label
-                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition-all ${
                       clientType === 'registered'
                         ? 'border-orange-600 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -594,16 +596,18 @@ export default function CreateAppointmentModal({
                       onChange={(e) => setClientType(e.target.value as any)}
                       className="sr-only"
                     />
-                    <div className="text-center">
-                      <div className="flex justify-center mb-2">
+                    <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-0">
+                      <div className="flex justify-center sm:mb-2">
                         <UserCheck className="w-8 h-8 text-green-600" />
                       </div>
-                      <p className="font-medium text-gray-900">Registrado</p>
-                      <p className="text-xs text-gray-500 mt-1">Con cuenta</p>
+                      <div className="flex-1 sm:flex-none">
+                        <p className="font-medium text-gray-900">Registrado</p>
+                        <p className="text-xs text-gray-500 mt-1">Con cuenta TuTurno</p>
+                      </div>
                     </div>
                   </label>
                   <label
-                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                    className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition-all ${
                       clientType === 'business_client'
                         ? 'border-orange-600 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
@@ -617,12 +621,14 @@ export default function CreateAppointmentModal({
                       onChange={(e) => setClientType(e.target.value as any)}
                       className="sr-only"
                     />
-                    <div className="text-center">
-                      <div className="flex justify-center mb-2">
+                    <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-0">
+                      <div className="flex justify-center sm:mb-2">
                         <Building2 className="w-8 h-8 text-blue-600" />
                       </div>
-                      <p className="font-medium text-gray-900">Cliente del negocio</p>
-                      <p className="text-xs text-gray-500 mt-1">Guardado por el negocio</p>
+                      <div className="flex-1 sm:flex-none">
+                        <p className="font-medium text-gray-900">Mis clientes</p>
+                        <p className="text-xs text-gray-500 mt-1">Guardados por ti</p>
+                      </div>
                     </div>
                   </label>
                 </div>
