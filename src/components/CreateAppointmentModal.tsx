@@ -864,7 +864,7 @@ export default function CreateAppointmentModal({
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un empleado" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     {employees.map((employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         {employee.first_name} {employee.last_name}

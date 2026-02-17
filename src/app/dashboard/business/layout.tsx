@@ -151,7 +151,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         onMouseLeave={() => !isPinned && setCollapsed(true)}
         className={`
         ${collapsed ? 'lg:w-20' : 'lg:w-64'}
-        absolute lg:relative inset-y-0 left-0 z-40
+        absolute lg:relative inset-y-0 left-0 z-30
         w-64 lg:w-auto
         bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white
         transition-all duration-500 ease-in-out
@@ -333,7 +333,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
         {/* Mobile Header - Always visible on mobile */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm lg:hidden">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm lg:hidden z-30">
           <div className="flex items-center space-x-4">
             <button
               type="button"
@@ -366,7 +366,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
         {/* Desktop Top Header - Only for non-home pages */}
         {pathname !== '/dashboard/business' && (
-          <header className="hidden lg:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm">
+          <header className="hidden lg:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-30">
             <div className="flex items-center space-x-4">
               <h1 className="text-xl font-bold text-gray-900">
                 {businessName || 'Mi Negocio'}

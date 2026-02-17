@@ -270,27 +270,21 @@ function NotificationBell({ userId }: NotificationBellProps) {
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] p-0" align="end">
+      <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] p-0 rounded-2xl overflow-hidden" align="end">
         {/* Header */}
-        <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-          <h3 className="font-semibold text-gray-900">Notificaciones</h3>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                markAllAsRead()
-              }}
-              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs h-auto py-1 px-2"
-            >
-              Marcar todas como leídas
-            </Button>
-          )}
+        <div className="px-4 py-3 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+          <h3 className="font-semibold text-gray-900 text-base">Notificaciones</h3>
+          <button
+            onClick={() => setOpen(false)}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+            aria-label="Cerrar"
+          >
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
         </div>
 
         {/* Lista de notificaciones */}
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-[400px] overflow-y-auto">
           {loading ? (
             <div className="p-8 text-center text-gray-500">
               <div className="animate-spin w-6 h-6 border-2 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2"></div>
@@ -310,60 +304,47 @@ function NotificationBell({ userId }: NotificationBellProps) {
               return (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
-                    !notification.is_read
-                      ? `${styles.bgColor} border-l-4 ${styles.borderColor}`
-                      : ''
+                  className={`px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer transition-all group ${
+                    !notification.is_read ? 'bg-gray-50/50' : ''
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex gap-3 items-start">
-                    {/* Icono tipo de notificación */}
-                    <div className="flex-shrink-0 mt-0.5">
-                      <NotificationIcon className={`w-5 h-5 ${styles.iconColor}`} />
+                    {/* Icono circular con color de fondo */}
+                    <div className="flex-shrink-0">
+                      <div className={`w-10 h-10 rounded-full ${styles.bgColor} flex items-center justify-center`}>
+                        <NotificationIcon className={`w-5 h-5 ${styles.iconColor}`} />
+                      </div>
                     </div>
 
                     {/* Contenido */}
                     <div className="flex-1 min-w-0">
-                      {/* Badge tipo + título */}
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <Badge
-                          variant="secondary"
-                          className={`${styles.badgeBg} ${styles.badgeText} text-xs font-medium px-2 py-0.5`}
-                        >
-                          {styles.badgeLabel}
-                        </Badge>
-                        {!notification.is_read && (
-                          <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse" aria-label="No leído"></span>
-                        )}
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-semibold text-sm text-gray-900">
+                          {notification.title}
+                        </h4>
+                        <span className="text-xs text-gray-400 whitespace-nowrap">
+                          {formatDate(notification.created_at)}
+                        </span>
                       </div>
-
-                      <h4 className={`font-medium text-sm ${
-                        !notification.is_read ? 'text-gray-900' : 'text-gray-700'
-                      }`}>
-                        {notification.title}
-                      </h4>
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
                         {notification.message}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {formatDate(notification.created_at)}
                       </p>
                     </div>
 
-                    {/* Acciones */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Acciones - visibles en hover */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {!notification.is_read && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             markAsRead(notification.id)
                           }}
-                          className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
                           title="Marcar como leído"
                           aria-label="Marcar como leído"
                         >
-                          <Check className="w-4 h-4 text-green-600" />
+                          <Check className="w-3.5 h-3.5 text-green-600" />
                         </button>
                       )}
                       <button
@@ -371,11 +352,11 @@ function NotificationBell({ userId }: NotificationBellProps) {
                           e.stopPropagation()
                           deleteNotification(notification.id)
                         }}
-                        className="p-1.5 hover:bg-gray-200 rounded transition-colors"
+                        className="p-1 hover:bg-gray-200 rounded transition-colors"
                         title="Eliminar"
                         aria-label="Eliminar notificación"
                       >
-                        <X className="w-4 h-4 text-gray-500" />
+                        <X className="w-3.5 h-3.5 text-gray-400" />
                       </button>
                     </div>
                   </div>
@@ -385,12 +366,17 @@ function NotificationBell({ userId }: NotificationBellProps) {
           )}
         </div>
 
-        {/* Footer (opcional - mostrar solo si hay notificaciones) */}
-        {notifications.length > 0 && (
-          <div className="p-3 border-t bg-gray-50 text-center">
-            <p className="text-xs text-gray-500">
-              Mostrando las últimas {notifications.length} notificaciones
-            </p>
+        {/* Footer - Marcar todas como leídas */}
+        {unreadCount > 0 && (
+          <div className="p-3 border-t bg-white">
+            <button
+              onClick={() => {
+                markAllAsRead()
+              }}
+              className="w-full text-center text-sm font-medium text-orange-600 hover:text-orange-700 transition-colors py-1"
+            >
+              Marcar todas como leídas
+            </button>
           </div>
         )}
       </PopoverContent>

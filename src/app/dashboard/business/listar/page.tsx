@@ -565,6 +565,7 @@ const handleView = useCallback(async (id: string) => {
 
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Sticky Header */}
       <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-[5]">
@@ -1143,9 +1144,10 @@ const handleView = useCallback(async (id: string) => {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        </div> )
+ } </div>
 
+      </div>
       {/* AppointmentModal - solo si no está editando */}
       {selectedAppointment && !editingAppointment && (
         <AppointmentModal
@@ -1190,7 +1192,10 @@ const handleView = useCallback(async (id: string) => {
         onDownload={handlePDFDownload}
         title="Previsualización de Citas"
       />
-    </div>
-  </div>
+    </>
+      
+  
+  
+
   )
 }

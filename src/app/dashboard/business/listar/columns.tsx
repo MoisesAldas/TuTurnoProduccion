@@ -258,7 +258,7 @@ export const createColumns = (callbacks: AppointmentTableCallbacks): ColumnDef<A
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 z-[50]">
               <DropdownMenuLabel className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                 Acciones
               </DropdownMenuLabel>
