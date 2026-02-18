@@ -1,23 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 export default function BusinessShowcase() {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+  const { ref: titleRef, isVisible: titleVisible } = useScrollReveal()
+  const { ref: mockupRef, isVisible: mockupVisible } = useScrollReveal({ threshold: 0.1 })
 
   return (
     <section id="showcase" className="py-16 lg:py-24 bg-slate-50 dark:bg-gray-900 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div
-            className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            ref={titleRef}
+            className={`scroll-reveal ${titleVisible ? 'revealed' : ''}`}>
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
                 TU CENTRO DE MANDO
@@ -34,7 +31,9 @@ export default function BusinessShowcase() {
           </div>
 
           <div
-            className={`transition-all duration-700 ease-out delay-200 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            ref={mockupRef}
+            className={`scroll-reveal-scale ${mockupVisible ? 'revealed' : ''}`}
+            style={{ transitionDelay: '200ms' }}>
             {/* Browser Frame */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl shadow-slate-300/60 dark:shadow-slate-900/60 border border-slate-200 dark:border-slate-700">
               {/* Browser Header */}

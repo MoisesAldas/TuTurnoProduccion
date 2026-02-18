@@ -44,19 +44,19 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --theme-50: #EDF8F3;
-    --theme-100: #CCEBDD;
-    --theme-200: #ABDEC7;
-    --theme-300: #89D1B1;
-    --theme-400: #68C49B;
-    --theme-500: #47B885;
-    --theme-600: #3B976D;
-    --theme-700: #2E7655;
-    --theme-800: #22573F;
+    --theme-50: #edf8f3;
+    --theme-100: #ccebdd;
+    --theme-200: #abdec7;
+    --theme-300: #89d1b1;
+    --theme-400: #68c49b;
+    --theme-500: #47b885;
+    --theme-600: #3b976d;
+    --theme-700: #2e7655;
+    --theme-800: #22573f;
     --theme-900: #143325;
-    --theme-950: #07120D;
+    --theme-950: #07120d;
   }
-  
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -97,18 +97,110 @@
   * {
     @apply border-border;
   }
-  html {
-    overflow: hidden;
-    height: 100%;
-  }
   body {
     @apply bg-background text-foreground;
-    height: 100%;
-    overflow: hidden;
   }
 }
 
-/* Tooltip Animation */
+/* ===== Dashboard Layout: contained scroll ===== */
+.dashboard-layout {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ===== Landing Page: the scroll container ===== */
+.landing-layout {
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* ===== Scroll Reveal Animations ===== */
+
+/* Base state: hidden before reveal */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Staggered delays for child elements */
+.scroll-reveal-stagger > *:nth-child(1) {
+  transition-delay: 0.1s;
+}
+.scroll-reveal-stagger > *:nth-child(2) {
+  transition-delay: 0.25s;
+}
+.scroll-reveal-stagger > *:nth-child(3) {
+  transition-delay: 0.4s;
+}
+.scroll-reveal-stagger > *:nth-child(4) {
+  transition-delay: 0.55s;
+}
+.scroll-reveal-stagger > *:nth-child(5) {
+  transition-delay: 0.7s;
+}
+.scroll-reveal-stagger > *:nth-child(6) {
+  transition-delay: 0.85s;
+}
+
+/* Scroll reveal from left */
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-48px);
+  transition:
+    opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scroll-reveal-left.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Scroll reveal from right */
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(48px);
+  transition:
+    opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scroll-reveal-right.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Smooth scrolling behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduced motion: instant transitions for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal,
+  .scroll-reveal-fade,
+  .scroll-reveal-left,
+  .scroll-reveal-right {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ===== Tooltip Animation ===== */
 @keyframes tooltipFadeIn {
   from {
     opacity: 0;
@@ -122,6 +214,9 @@
 
 /* Custom Scrollbar Styles for Firefox */
 @supports (scrollbar-color: auto) {
+  * {
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: #fed7aa transparent;
@@ -130,4 +225,85 @@
   .scrollbar-thin:hover {
     scrollbar-color: #fdba74 transparent;
   }
+}
+
+/* ===== Tech Stack Infinite Scroll Animation ===== */
+@keyframes infiniteScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.tech-scroll-container {
+  overflow: hidden;
+  padding: 20px 0;
+}
+
+.tech-scroll-content {
+  display: flex;
+  gap: 3rem;
+  animation: infiniteScroll 30s linear infinite;
+  width: fit-content;
+}
+
+.tech-scroll-content:hover {
+  animation-play-state: paused;
+}
+
+.tech-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+  padding: 1.5rem 1rem;
+  background: white;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .tech-card {
+  background: rgb(30 41 59);
+  border-color: rgb(51 65 85);
+}
+
+.tech-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+}
+
+/* ===== Floating Animations for Hero Badges ===== */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-delayed {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 4s ease-in-out infinite;
+  animation-delay: 0.5s;
 }

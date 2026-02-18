@@ -47,21 +47,20 @@ export const PaymentMethodsPieChart = ({
       {data.length === 0 ? (
         <ChartEmptyState message="No hay datos de pagos en este período" />
       ) : (
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div className="flex flex-col xl:flex-row items-center justify-between gap-8">
           {/* Pie Chart */}
-          <div className="relative flex-1 w-full">
+          <div className="relative flex-1 w-full min-w-0 px-4">
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={110}
+                  innerRadius="60%"
+                  outerRadius="100%"
                   paddingAngle={4}
                   dataKey="value"
-                  label={({ percentage }) => `${percentage.toFixed(1)}%`}
-                  labelLine={false}
+                
                 >
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -72,6 +71,7 @@ export const PaymentMethodsPieChart = ({
                 />
               </PieChart>
             </ResponsiveContainer>
+
             
             {/* Center Label - Positioned absolutely */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -85,7 +85,7 @@ export const PaymentMethodsPieChart = ({
           </div>
 
           {/* Legend with Details */}
-          <div className="flex-1 w-full space-y-4">
+          <div className="flex-1 w-full space-y-4 min-w-0">
             {chartData.map((method) => (
               <div key={method.name} className="space-y-2">
                 {/* Header */}
@@ -137,6 +137,7 @@ export const PaymentMethodsPieChart = ({
               </div>
             ))}
           </div>
+          
         </div>
       )}
     </BaseChartCard>

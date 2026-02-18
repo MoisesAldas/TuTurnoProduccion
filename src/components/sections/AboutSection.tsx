@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Target, Eye, Heart, Users, Zap, Shield } from "lucide-react"
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 const values = [
   {
@@ -29,12 +29,9 @@ const values = [
 ]
 
 export default function AboutSection() {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+  const { ref: headerRef, isVisible: headerVisible } = useScrollReveal()
+  const { ref: cardsRef, isVisible: cardsVisible } = useScrollReveal({ threshold: 0.1 })
+  const { ref: valuesRef, isVisible: valuesVisible } = useScrollReveal({ threshold: 0.1 })
 
   return (
     <section id="about" className="py-16 lg:py-24 bg-slate-50 dark:bg-gray-900 overflow-hidden">
@@ -42,7 +39,8 @@ export default function AboutSection() {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div
-            className={`text-center mb-16 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            ref={headerRef}
+            className={`text-center mb-16 scroll-reveal ${headerVisible ? 'revealed' : ''}`}>
             <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
               QUIÉNES SOMOS
             </Badge>
@@ -58,9 +56,9 @@ export default function AboutSection() {
           </div>
 
           {/* Mission & Vision */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+          <div ref={cardsRef} className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
             <div
-              className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              className={`scroll-reveal-left ${cardsVisible ? 'revealed' : ''}`}
               style={{ transitionDelay: '100ms' }}>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm h-full hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
                 <CardContent className="p-8">
@@ -79,8 +77,8 @@ export default function AboutSection() {
             </div>
 
             <div
-              className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-              style={{ transitionDelay: '200ms' }}>
+              className={`scroll-reveal-right ${cardsVisible ? 'revealed' : ''}`}
+              style={{ transitionDelay: '250ms' }}>
               <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm h-full hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
                 <CardContent className="p-8">
                   <div className="flex items-center mb-4">
@@ -99,10 +97,8 @@ export default function AboutSection() {
           </div>
 
           {/* Values */}
-          <div
-            className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-            style={{ transitionDelay: '300ms' }}>
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 text-center">
+          <div ref={valuesRef}>
+            <h3 className={`text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 text-center scroll-reveal ${valuesVisible ? 'revealed' : ''}`}>
               Nuestros Valores
             </h3>
 
@@ -112,8 +108,8 @@ export default function AboutSection() {
                 return (
                   <div
                     key={index}
-                    className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                    style={{ transitionDelay: `${400 + (100 * index)}ms` }}>
+                    className={`scroll-reveal ${valuesVisible ? 'revealed' : ''}`}
+                    style={{ transitionDelay: `${200 + (100 * index)}ms` }}>
                     <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm h-full hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
                       <CardContent className="p-6 text-center">
                         <div className="inline-flex p-4 bg-orange-100 dark:bg-orange-900/30 rounded-full mb-4">

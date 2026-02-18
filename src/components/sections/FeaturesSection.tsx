@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -11,6 +10,7 @@ import {
   Globe,
   BarChart3,
 } from "lucide-react"
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 const features = [
   {
@@ -46,18 +46,16 @@ const features = [
 ]
 
 export default function FeaturesSection() {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+  const { ref: titleRef, isVisible: titleVisible } = useScrollReveal()
+  const { ref: gridRef, isVisible: gridVisible } = useScrollReveal({ threshold: 0.08 })
 
   return (
     <section id="features" className="py-16 lg:py-24 bg-white dark:bg-gray-950 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
-          <div className={`text-center mb-12 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div
+            ref={titleRef}
+            className={`text-center mb-12 scroll-reveal ${titleVisible ? 'revealed' : ''}`}>
             <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
               CARACTERÍSTICAS
             </Badge>
@@ -71,14 +69,14 @@ export default function FeaturesSection() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
               const IconComponent = feature.icon
 
               return (
                 <div
                   key={index}
-                  className={`transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                  className={`scroll-reveal ${gridVisible ? 'revealed' : ''}`}
                   style={{ transitionDelay: `${100 * (index + 1)}ms` }}
                 >
                   <Card

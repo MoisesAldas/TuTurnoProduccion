@@ -2,8 +2,11 @@
 
 import Logo from "@/components/logo"
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react"
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 export default function Footer() {
+  const { ref, isVisible } = useScrollReveal({ threshold: 0.1 })
+
   const navLinks = [
     { href: '#features', label: 'Características' },
     { href: '#showcase', label: 'Producto' },
@@ -25,7 +28,9 @@ export default function Footer() {
 
   return (
     <footer className="bg-gray-900 dark:bg-gray-950 text-gray-400 dark:text-gray-500">
-      <div className="container mx-auto px-4 py-12">
+      <div
+        ref={ref}
+        className={`container mx-auto px-4 py-12 scroll-reveal-fade ${isVisible ? 'revealed' : ''}`}>
         <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-8">
           {/* Brand Column */}
           <div className="md:col-span-6 lg:col-span-5">

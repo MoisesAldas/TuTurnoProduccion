@@ -13,6 +13,7 @@ const config: Config = {
         bounce: "bounce 1s infinite",
         float: "float 4s ease-in-out infinite",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 8s ease-in-out infinite",
       },
       keyframes: {
         float: {
@@ -23,9 +24,17 @@ const config: Config = {
           "0%, 100%": { opacity: "0.3", transform: "scale(1)" },
           "50%": { opacity: "0.6", transform: "scale(1.05)" },
         },
+        "gradient-shift": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "33%": { transform: "translate(10px, -10px) scale(1.05)" },
+          "66%": { transform: "translate(-5px, 5px) scale(0.98)" },
+        },
       },
       transitionDelay: {
         "400": "400ms",
+        "600": "600ms",
+        "800": "800ms",
+        "1000": "1000ms",
         "1500": "1500ms",
         "2000": "2000ms",
       },

@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import {
@@ -12,6 +11,7 @@ import {
   Briefcase,
   LucideProps,
 } from "lucide-react"
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 // Definimos un tipo para el mapa de iconos para mayor seguridad con TypeScript
 type IconMap = {
@@ -56,25 +56,22 @@ const businessTypes = [
   },
   {
     name: "Servicios Profesionales",
-    image: "/professional-woman-spa-owner-smiling.jpg", // Corrected, less confusing image
+    image: "/professional-woman-spa-owner-smiling.jpg",
     icon: "Briefcase",
   },
 ]
 
 export default function BusinessTypes() {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+  const { ref: titleRef, isVisible: titleVisible } = useScrollReveal()
+  const { ref: gridRef, isVisible: gridVisible } = useScrollReveal({ threshold: 0.08 })
 
   return (
     <section id="business-types" className="py-16 lg:py-24 bg-white dark:bg-gray-950 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <div
-            className={`text-center mb-12 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            ref={titleRef}
+            className={`text-center mb-12 scroll-reveal ${titleVisible ? 'revealed' : ''}`}>
             <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
               PARA TODO TIPO DE NEGOCIO
             </Badge>
@@ -88,7 +85,7 @@ export default function BusinessTypes() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {businessTypes.map((type, index) => {
               const Icon = iconMap[type.icon]
               if (!Icon) return null
@@ -96,7 +93,7 @@ export default function BusinessTypes() {
               return (
                 <div
                   key={index}
-                  className={`relative h-64 rounded-lg overflow-hidden group cursor-pointer shadow-sm transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                  className={`relative h-64 rounded-lg overflow-hidden group cursor-pointer shadow-sm scroll-reveal-scale ${gridVisible ? 'revealed' : ''}`}
                   style={{ transitionDelay: `${100 * (index + 1)}ms` }}
                 >
                   <Image

@@ -348,13 +348,13 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
   // CALLBACKS FOR TABLE ACTIONS (BEFORE EARLY RETURNS!)
   // ============================================
 
-const handleView = useCallback(async (id: string) => {
-  const fullAppointment = await fetchFullAppointment(id)
-  if (fullAppointment) {
-    setDetailAppointment(fullAppointment)
-    setDetailModalOpen(true)
-  }
-}, [fetchFullAppointment])
+  const handleView = useCallback(async (id: string) => {
+    const fullAppointment = await fetchFullAppointment(id)
+    if (fullAppointment) {
+      setSelectedAppointment(fullAppointment)
+      setEditingAppointment(null)
+    }
+  }, [fetchFullAppointment])
 
   
 
@@ -652,11 +652,12 @@ const handleView = useCallback(async (id: string) => {
 
         {/* Filtros */}
         <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-900/20 dark:via-amber-900/20 dark:to-yellow-900/20 border-b border-gray-200 dark:border-gray-700">
+          <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange- via-amber-50 to-yellow-50">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center shadow-md">
-                <SearchIcon className="w-5 h-5 text-white" />
+                <Calendar className="w-5 h-5 text-white" />
               </div>
+           
               <div>
                 <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-50">Filtros Avanzados</CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Personaliza tu búsqueda de citas</CardDescription>
@@ -866,12 +867,14 @@ const handleView = useCallback(async (id: string) => {
 
       {/* Resultados */}
       <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
-        <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50">
+        <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange- via-amber-50 to-yellow-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center shadow-md">
-                <Calendar className="w-5 h-5 text-white" />
+                 <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center shadow-md">
+                <SearchIcon className="w-5 h-5 text-white" />
               </div>
+              
+           
               <div>
                 <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Resultados</CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-gray-600">

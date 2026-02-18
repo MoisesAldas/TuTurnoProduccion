@@ -387,27 +387,27 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header con gradiente */}
-        <div className="relative bg-orange-600 hover:bg-orange-700 rounded-t-2xl p-6">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
+        <div className="relative bg-orange-600  rounded-t-2xl p-6">
+          <div className="absolute top-4 right-4 flex items-center gap-3">
+            <Badge className={`${statusConfig.className} border shadow-sm`}>
+              <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${statusConfig.dotColor}`} />
+              {statusConfig.label}
+            </Badge>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-4 pr-32">
             <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
               <Calendar className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-2xl font-bold text-white">Detalles de la Cita</h2>
               <p className="text-white/90 mt-1 text-sm">{formatDate(appointment.appointment_date)}</p>
-              <div className="mt-3 flex items-center gap-2">
-                <Badge className={`${statusConfig.className} border`}>
-                  <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${statusConfig.dotColor}`} />
-                  {statusConfig.label}
-                </Badge>
-              </div>
             </div>
           </div>
         </div>

@@ -34,12 +34,12 @@ export default function StickyCTA() {
           <div>
             <h4 className="font-bold text-gray-900">¿Listo para empezar?</h4>
             <p className="text-sm text-gray-600 hidden sm:block">Lleva tu negocio al siguiente nivel hoy mismo.</p>
-          </div>
+                      </div>
           <Button
             onClick={() => router.push('/auth/business/register')}
-            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group whitespace-nowrap"
+            className="bg-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group whitespace-nowrap"
           >
-            Empieza Gratis
+            Empieza Gratis   
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>

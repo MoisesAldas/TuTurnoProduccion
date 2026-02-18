@@ -1,24 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useScrollReveal } from '@/hooks/useScrollReveal'
 
 export default function CTASection() {
   const router = useRouter()
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
+  const { ref, isVisible } = useScrollReveal({ threshold: 0.2 })
 
   return (
-    <section className="bg-gray-900 dark:bg-gray-950 overflow-hidden">
-      <div className="container mx-auto px-4 py-16 lg:py-24">
+    <section className="relative bg-gray-900 dark:bg-gray-950 overflow-hidden">
+      {/* Decorative gradient orbs */}
+      <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-600/10 rounded-full blur-3xl pointer-events-none animate-gradient-shift" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/[0.07] rounded-full blur-3xl pointer-events-none" />
+
+      <div className="container mx-auto px-4 py-16 lg:py-24 relative z-10">
         <div
-          className={`max-w-3xl mx-auto text-center transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          ref={ref}
+          className={`max-w-3xl mx-auto text-center scroll-reveal ${isVisible ? 'revealed' : ''}`}>
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
             ¿Listo para llevar tu negocio al siguiente nivel?
           </h2>
