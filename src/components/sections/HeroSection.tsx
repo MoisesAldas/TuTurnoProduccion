@@ -111,7 +111,7 @@ export default function HeroSection() {
                     <span className="ml-1.5 text-sm font-bold text-gray-800 dark:text-gray-200">5.0</span>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    +100 negocios confían en TuTurno
+                    + negocios confían en Tu Turno
                   </p>
                 </div>
               </div>

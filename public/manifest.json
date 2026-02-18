@@ -1,12 +1,14 @@
 {
+  "id": "/",
   "name": "TuTurno - Gestión de Citas Inteligente",
   "short_name": "TuTurno",
   "description": "Plataforma integral para gestionar citas y hacer crecer tu negocio",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "background_color": "#ffffff",
-  "theme_color": "#ea580c",
+  "theme_color": "#1e293b",
   "orientation": "portrait-primary",
   "icons": [
     {
