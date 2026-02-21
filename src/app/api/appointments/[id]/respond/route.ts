@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const { action, token } = await request.json();
@@ -16,7 +16,7 @@ export async function POST(
     if (!action || !token) {
       return NextResponse.json(
         { error: "Faltan parámetros requeridos" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -28,7 +28,7 @@ export async function POST(
     if (!validateAppointmentToken(appointmentId, token)) {
       return NextResponse.json(
         { error: "Token inválido o expirado" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -41,7 +41,7 @@ export async function POST(
           autoRefreshToken: false,
           persistSession: false,
         },
-      }
+      },
     );
 
     // Obtener cita con detalles
@@ -51,8 +51,8 @@ export async function POST(
         `
         *,
         business:businesses(id, name, owner_id),
-        users(email, first_name, last_name)
-      `
+        users!appointments_client_id_fkey(email, first_name, last_name)
+      `,
       )
       .eq("id", appointmentId)
       .single();
@@ -61,7 +61,7 @@ export async function POST(
       console.error("Error fetching appointment:", appointmentError);
       return NextResponse.json(
         { error: "Cita no encontrada" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -72,7 +72,7 @@ export async function POST(
           error: "Esta cita ya no está pendiente de confirmación",
           currentStatus: appointment.status,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -92,7 +92,7 @@ export async function POST(
       // TODO: Enviar email al negocio notificando que el cliente aceptó
       console.log(
         "✅ Cliente aceptó los cambios - appointmentId:",
-        appointmentId
+        appointmentId,
       );
 
       return NextResponse.json({
@@ -126,7 +126,7 @@ export async function POST(
               appointmentId,
               cancellationReason: "El cliente rechazó los cambios propuestos",
             }),
-          }
+          },
         );
       } catch (emailError) {
         console.warn("⚠️ Failed to send cancellation email:", emailError);
@@ -153,7 +153,7 @@ export async function POST(
 
     return NextResponse.json(
       { error: "Acción no implementada" },
-      { status: 400 }
+      { status: 400 },
     );
   } catch (error) {
     console.error("💥 Error in appointment respond:", error);
@@ -162,7 +162,7 @@ export async function POST(
         error: "Error al procesar la respuesta",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
