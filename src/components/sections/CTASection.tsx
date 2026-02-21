@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 
@@ -10,37 +10,53 @@ export default function CTASection() {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.2 })
 
   return (
-    <section className="relative bg-gray-900 dark:bg-gray-950 overflow-hidden">
-      {/* Decorative gradient orbs */}
-      <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-600/10 rounded-full blur-3xl pointer-events-none animate-gradient-shift" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/[0.07] rounded-full blur-3xl pointer-events-none" />
-
-      <div className="container mx-auto px-4 py-16 lg:py-24 relative z-10">
+    <section className="py-20 lg:py-32 bg-white dark:bg-gray-950 overflow-hidden">
+      <div className="container mx-auto px-4">
         <div
           ref={ref}
-          className={`max-w-3xl mx-auto text-center scroll-reveal ${isVisible ? 'revealed' : ''}`}>
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
-            ¿Listo para llevar tu negocio al siguiente nivel?
-          </h2>
+          className={`max-w-5xl mx-auto relative scroll-reveal-up ${isVisible ? 'revealed' : ''}`}>
+          
+          {/* Main Card with Gradient */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 to-amber-600 rounded-[3rem] p-8 md:p-16 text-center text-white shadow-2xl shadow-orange-500/20">
+            
+            {/* Background decorative elements */}
+            <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 right-0 w-80 h-80 bg-black/10 rounded-full blur-3xl translate-x-1/4 translate-y-1/4" />
+            
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight tracking-tight">
+                Digitaliza tu negocio hoy
+              </h2>
 
-          <p className="text-lg text-gray-300 dark:text-gray-400 mb-10 leading-relaxed">
-            Únete a cientos de negocios que ya gestionan su día a día de forma más inteligente. La configuración toma solo 2 minutos.
-          </p>
+              <p className="text-lg md:text-xl text-orange-50/90 mb-10 leading-relaxed font-medium">
+                Únete a más de 10,000 negocios que ya gestionan su día a día de forma más inteligente y profesional.
+              </p>
 
-          <div className="flex justify-center">
-            <Button
-              size="lg"
-              onClick={() => router.push('/auth/business/register')}
-              className=" bg-orange-600 hover:bg-orange-700 text-white px-10 py-7 text-lg font-semibold shadow-2xl shadow-amber-500/20 hover:shadow-amber-500/40 transition-all duration-300 transform hover:scale-105 group"
-            >
-              Empieza Gratis Ahora
-              <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </Button>
+              {/* Button Group */}
+              <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto justify-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => router.push('/auth/business/login')}
+                  className="border-2 border-white text-orange-600 hover:bg-white hover:text-orange-600 px-8 py-7 rounded-2xl text-lg font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Iniciar sesión
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={() => router.push('/auth/business/register')}
+                  className="bg-white hover:bg-orange-50 text-orange-600 px-8 py-7 rounded-2xl text-lg font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Registrarse
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </div>
+
+              <p className="mt-6 text-sm text-orange-100/70 font-medium">
+                Configuración en 2 minutos • Sin tarjeta de crédito
+              </p>
+            </div>
           </div>
-
-          <p className="mt-6 text-sm text-gray-500 dark:text-gray-600">
-            No se requiere tarjeta de crédito.
-          </p>
         </div>
       </div>
     </section>

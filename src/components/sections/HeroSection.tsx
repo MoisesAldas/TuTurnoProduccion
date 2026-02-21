@@ -17,7 +17,7 @@ export default function HeroSection() {
   }, [])
 
   return (
-    <section className="relative bg-[#f2f2f5] dark:bg-[#0d0d0f] pt-28 pb-20 md:pt-24 md:pb-28 overflow-hidden">
+    <section className="relative bg-[#ffffff] dark:bg-[#0d0d0f] pt-28 pb-20 md:pt-24 md:pb-28 overflow-hidden">
 
       {/* ─── Background Texture ─── */}
     
@@ -183,9 +183,9 @@ export default function HeroSection() {
                     <Image
                       src="/calendario.png"
                       alt="Dashboard de TuTurno"
-                      width={2000}
-                      height={1250}
-                      quality={100}
+                      width={1200}
+                      height={750}
+                      quality={80}
                       priority
                       className="w-full h-auto block"
                     />
@@ -218,9 +218,9 @@ export default function HeroSection() {
                       <Image
                         src="/mobile4.png"
                         alt="TuTurno Mobile App"
-                        width={360}
-                        height={780}
-                        quality={100}
+                        width={280}
+                        height={600}
+                        quality={80}
                         priority
                         className="w-full h-auto block"
                       />

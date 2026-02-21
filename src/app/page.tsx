@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { motion } from 'framer-motion'
-import SplashScreen from '@/components/SplashScreen'
+
 import Header from '@/components/sections/Header'
 import HeroSection from '@/components/sections/HeroSection'
 import BusinessShowcase from '@/components/sections/BusinessShowcase'
@@ -20,14 +20,13 @@ export default function HomePage() {
 
   return (
     <>
-      <SplashScreen />
+     
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ 
-          duration: 1.2,
-          delay: 3.5,
-          ease: "easeIn"
+          duration: 0.5,
+          ease: "easeOut"
         }}
         className="min-h-screen bg-white dark:bg-gray-950"
       >

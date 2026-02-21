@@ -2,131 +2,79 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Target, Eye, Heart, Users, Zap, Shield } from "lucide-react"
+import { Laptop, Clock, BarChart4 } from "lucide-react"
 import { useScrollReveal } from '@/hooks/useScrollReveal'
 
-const values = [
+const pillars = [
   {
-    icon: Zap,
-    title: "Innovación",
-    description: "Desarrollamos soluciones tecnológicas que simplifican la gestión de citas y optimizan el tiempo de nuestros clientes.",
+    icon: Laptop,
+    title: "Transformación Digital",
+    description: "Lleva tu negocio al siguiente nivel con nuestras herramientas virtuales diseñadas para la era moderna.",
   },
   {
-    icon: Users,
-    title: "Enfoque en el Cliente",
-    description: "Diseñamos cada funcionalidad pensando en las necesidades reales de los negocios y sus clientes.",
+    icon: Clock,
+    title: "Gestión Inteligente",
+    description: "Optimiza tu tiempo y el de tus clientes con un sistema automatizado que trabaja por ti 24/7.",
   },
   {
-    icon: Shield,
-    title: "Confiabilidad",
-    description: "Garantizamos un servicio estable, seguro y disponible para que tu negocio nunca se detenga.",
-  },
-  {
-    icon: Heart,
-    title: "Compromiso",
-    description: "Nos dedicamos a ayudar a los negocios ecuatorianos a crecer y profesionalizarse.",
+    icon: BarChart4,
+    title: "Control Total",
+    description: "Accede a estadísticas en tiempo real y gestiona cada detalle de tu operación desde cualquier lugar.",
   },
 ]
 
 export default function AboutSection() {
   const { ref: headerRef, isVisible: headerVisible } = useScrollReveal()
   const { ref: cardsRef, isVisible: cardsVisible } = useScrollReveal({ threshold: 0.1 })
-  const { ref: valuesRef, isVisible: valuesVisible } = useScrollReveal({ threshold: 0.1 })
 
   return (
-    <section id="about" className="py-16 lg:py-24 bg-slate-50 dark:bg-gray-900 overflow-hidden">
+    <section id="about" className="py-20 lg:py-28 bg-white dark:bg-gray-950 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div
             ref={headerRef}
             className={`text-center mb-16 scroll-reveal ${headerVisible ? 'revealed' : ''}`}>
-            <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500">
-              QUIÉNES SOMOS
+            <Badge variant="outline" className="mb-4 border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-500 px-4 py-1 text-xs font-bold tracking-wider">
+              ¿QUÉ ES TUTURNO?
             </Badge>
 
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
-              Transformando la gestión de citas en Ecuador
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+              Gestiona tu negocio de servicios de <br className="hidden md:block" />
+              <span className="text-orange-600">forma inteligente</span>
             </h2>
 
-            <p className="text-lg text-gray-600 dark:text-gray-400 text-balance max-w-3xl mx-auto leading-relaxed">
-              TuTurno nace de la necesidad de digitalizar y profesionalizar la gestión de citas en negocios ecuatorianos, 
-              ofreciendo una plataforma completa, intuitiva y accesible para todos.
+            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 text-balance max-w-3xl mx-auto leading-relaxed">
+              Dile adiós a la gestión manual. TuTurno es la plataforma integral que profesionaliza 
+              tu atención al cliente y optimiza tus ingresos automáticamente.
             </p>
           </div>
 
-          {/* Mission & Vision */}
-          <div ref={cardsRef} className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
-            <div
-              className={`scroll-reveal-left ${cardsVisible ? 'revealed' : ''}`}
-              style={{ transitionDelay: '100ms' }}>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm h-full hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-                <CardContent className="p-8">
-                  <div className="flex items-center mb-4">
-                    <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-4">
-                      <Target className="w-8 h-8 text-orange-600 dark:text-orange-500" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nuestra Misión</h3>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                    Empoderar a los negocios ecuatorianos con herramientas tecnológicas que simplifiquen la gestión de citas, 
-                    mejoren la experiencia del cliente y potencien el crecimiento empresarial a través de la digitalización.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div
-              className={`scroll-reveal-right ${cardsVisible ? 'revealed' : ''}`}
-              style={{ transitionDelay: '250ms' }}>
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm h-full hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-                <CardContent className="p-8">
-                  <div className="flex items-center mb-4">
-                    <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg mr-4">
-                      <Eye className="w-8 h-8 text-orange-600 dark:text-orange-500" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Nuestra Visión</h3>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                    Ser la plataforma líder de gestión de citas en Ecuador, reconocida por su innovación, confiabilidad y 
-                    compromiso con el éxito de cada negocio que confía en nosotros.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* Values */}
-          <div ref={valuesRef}>
-            <h3 className={`text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8 text-center scroll-reveal ${valuesVisible ? 'revealed' : ''}`}>
-              Nuestros Valores
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {values.map((value, index) => {
-                const Icon = value.icon
-                return (
-                  <div
-                    key={index}
-                    className={`scroll-reveal ${valuesVisible ? 'revealed' : ''}`}
-                    style={{ transitionDelay: `${200 + (100 * index)}ms` }}>
-                    <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm h-full hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-                      <CardContent className="p-6 text-center">
-                        <div className="inline-flex p-4 bg-orange-100 dark:bg-orange-900/30 rounded-full mb-4">
-                          <Icon className="w-8 h-8 text-orange-600 dark:text-orange-500" />
-                        </div>
-                        <h4 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                          {value.title}
-                        </h4>
-                        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                          {value.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )
-              })}
-            </div>
+          {/* Pillars Grid */}
+          <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {pillars.map((pillar, index) => {
+              const Icon = pillar.icon
+              return (
+                <div
+                  key={index}
+                  className={`scroll-reveal-up ${cardsVisible ? 'revealed' : ''}`}
+                  style={{ transitionDelay: `${150 * (index + 1)}ms` }}>
+                  <Card className="bg-slate-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 shadow-sm h-full hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group rounded-3xl overflow-hidden">
+                    <CardContent className="p-8 flex flex-col items-center text-center">
+                      <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 group-hover:bg-orange-600 transition-all duration-500">
+                        <Icon className="w-8 h-8 text-orange-600 group-hover:text-white transition-colors duration-500" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 group-hover:text-orange-600 transition-colors">
+                        {pillar.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-balance">
+                        {pillar.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

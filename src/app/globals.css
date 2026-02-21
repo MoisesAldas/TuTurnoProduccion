@@ -99,6 +99,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), sans-serif;
+  }
+
+  .font-poppins {
+    font-family: var(--font-poppins), sans-serif;
   }
 }
 

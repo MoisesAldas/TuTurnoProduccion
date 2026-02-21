@@ -1,5 +1,5 @@
 interface LogoProps {
-  color?: "emerald" | "white" | "black" | "gray" | "slate"
+  color?: "emerald" | "white" | "black" | "gray" | "slate" | "orange"
   size?: "sm" | "md" | "lg"
   className?: string
 }
@@ -27,11 +27,13 @@ export default function Logo({
       ? "text-black"
       : color === "slate"
       ? "text-slate-900"
+      : color === "orange"
+      ? "text-orange-600"
       : "text-gray-700"
 
   return (
     <span
-      className={`${sizeClass} font-black font-[Poppins] tracking-tight
+      className={`${sizeClass} font-black font-poppins tracking-tight
       ${colorClass} transition-all duration-300 hover:scale-105 hover:brightness-110 select-none ${className}`}
     >
       tuturno

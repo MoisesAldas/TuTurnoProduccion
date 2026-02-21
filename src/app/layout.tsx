@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Poppins } from "next/font/google"; // Optimized font loading 
+
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth'
 import { ThemeProvider } from "@/components/theme-provider"
-import "@fontsource/poppins/900.css"; // Black weight for Logo component (extra bold)
+// import "@fontsource/poppins/900.css"; // Removing direct fontsource import for next/font optimization
 import StickyCTA from "@/components/StickyCTA";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
@@ -17,6 +19,13 @@ const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
+});
+
+const poppins = Poppins({
+  weight: "900",
+  subsets: ["latin"],
+  variable: "--font-poppins",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -69,7 +78,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen overflow-y-auto`}
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased min-h-screen overflow-y-auto`}
       >
         <ThemeProvider
           attribute="class"
