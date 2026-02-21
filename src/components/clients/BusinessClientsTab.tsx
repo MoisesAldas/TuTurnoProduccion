@@ -373,12 +373,19 @@ export default function BusinessClientsTab({
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => onEditClient(client)}>
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  // Let DropdownMenu close naturally, then open Dialog
+                                  setTimeout(() => onEditClient(client), 50)
+                                }}
+                              >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Editar
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onClick={() => onDeleteClient(client.id)}
+                                onSelect={() => {
+                                  setTimeout(() => onDeleteClient(client.id), 50)
+                                }}
                                 className="text-red-600"
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />

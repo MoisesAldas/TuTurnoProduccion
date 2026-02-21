@@ -171,7 +171,7 @@ export default function ClientLoginPage() {
   return (
     <div className="min-h-screen min-h-dvh flex flex-col lg:flex-row">
       {/* Left Panel - Visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 lg:hover:bg-slate-800 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
    
         {/* Back button */}

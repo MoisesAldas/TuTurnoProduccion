@@ -6,7 +6,6 @@ import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth'
 import { ThemeProvider } from "@/components/theme-provider"
 // import "@fontsource/poppins/900.css"; // Removing direct fontsource import for next/font optimization
-import StickyCTA from "@/components/StickyCTA";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 
@@ -88,7 +87,6 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
-            <StickyCTA />
             <Toaster />
             <SonnerToaster position="top-right" richColors />
           </AuthProvider>

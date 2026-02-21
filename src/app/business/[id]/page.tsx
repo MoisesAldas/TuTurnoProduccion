@@ -245,11 +245,11 @@ export default function BusinessProfilePage() {
         return
       }
 
-      console.log('🔄 [FETCH] Loading fresh data for business:', businessId)
+      console.log('[FETCH] Loading fresh data for business:', businessId)
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser()
-      console.log('👤 [AUTH DEBUG] Current user:', user?.id, user?.email)
+      console.log('[AUTH DEBUG] Current user:', user?.id, user?.email)
 
       // Execute all queries in parallel with Promise.all
       const [

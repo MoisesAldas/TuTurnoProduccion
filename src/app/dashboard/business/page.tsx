@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +9,9 @@ import { useAuth } from '@/hooks/useAuth'
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics'
 import { useScrollPosition } from '@/hooks/useScrollPosition'
 import { StatsCard } from '@/components/StatsCard'
+import { Variants } from "framer-motion"
+
+
 import {
   CompactFilters,
   TopServicesChart,
@@ -44,6 +48,51 @@ import { createClient } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { translateDateLabel } from '@/lib/dateUtils'
 import { cn } from '@/lib/utils'
+
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+}
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
+}
+
+const headerVariants: Variants = {
+  hidden: { y: -50, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+}
+
+const sidebarVariants: Variants = {
+  hidden: { x: 30, opacity: 0 },
+  visible: { 
+    x: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 100, 
+      damping: 15,
+      staggerChildren: 0.05 
+    }
+  }
+}
+
 
 export default function BusinessDashboard() {
   const { authState } = useAuth()
@@ -211,21 +260,25 @@ export default function BusinessDashboard() {
   return (
     <div className="relative min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Sticky Header */}
-      <div className={cn(
-        "sticky top-0 z-10 transition-all duration-300 ease-in-out",
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={headerVariants}
+        className={cn(
+        "sticky top-0 z-20 transition-all duration-300 ease-in-out",
         scrolled 
           ? "bg-gray-900 shadow-lg py-2" 
-          : "bg-white dark:bg-gray-900 py-4 shadow-sm"
+          : "bg-white dark:bg-gray-900 py-2 sm:py-3 shadow-sm border-b border-gray-200 dark:border-gray-800"
       )}>
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="w-full px-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             {/* Left: Title */}
             <div className={cn(
-              "transition-all duration-300 flex-shrink-0",
+              "transition-all duration-300 flex-shrink-0 w-full sm:w-auto",
               scrolled ? "hidden sm:block" : "block"
             )}>
               <h1 className={cn(
-                "font-bold transition-all duration-300",
+                "font-bold transition-all duration-300 text-left",
                 scrolled 
                   ? "text-lg text-white" 
                   : "text-xl sm:text-2xl lg:text-3xl text-gray-900 dark:text-gray-50"
@@ -233,12 +286,14 @@ export default function BusinessDashboard() {
                 {scrolled ? "Dashboard" : "Dashboard de análisis"}
               </h1>
               {!scrolled && (
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{businessName}</p>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 text-left">
+                  {businessName}
+                </p>
               )}
             </div>
 
             {/* Right: Filters + Export */}
-            <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1 sm:justify-end flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto sm:flex-1 sm:justify-end justify-start flex-wrap">
               <CompactFilters
                 filters={filters}
                 onFiltersChange={setFilters}
@@ -258,17 +313,23 @@ export default function BusinessDashboard() {
                     "transition-all flex-shrink-0",
                     scrolled 
                       ? "bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700" 
-                      : "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50"
+                      : "hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50",
+                    !scrolled && "sm:w-auto h-9 sm:h-10 px-3 sm:px-4"
                   )}
                 />
               )}
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="w-full px-6 py-6"
+      >
         {/* 5-Column Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           
@@ -278,7 +339,7 @@ export default function BusinessDashboard() {
             {/* ========================================
                 ANÁLISIS DE INGRESOS
                 ======================================== */}
-            <div className="space-y-4">
+            <motion.div variants={itemVariants} className="space-y-4">
               <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                 <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-500" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
@@ -311,12 +372,12 @@ export default function BusinessDashboard() {
                   error={error}
                 />
               </div>
-            </div>
+            </motion.div>
 
             {/* ========================================
                 RENDIMIENTO DE SERVICIOS Y EQUIPO
                 ======================================== */}
-            <div className="space-y-4">
+            <motion.div variants={itemVariants} className="space-y-4">
               <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                 <Users className="w-5 h-5 text-orange-600 dark:text-orange-500" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
@@ -336,12 +397,12 @@ export default function BusinessDashboard() {
                   error={error}
                 />
               </div>
-            </div>
+            </motion.div>
 
             {/* ========================================
                 DISTRIBUCIÓN TEMPORAL
                 ======================================== */}
-            <div className="space-y-4">
+            <motion.div variants={itemVariants} className="space-y-4">
               <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
                 <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-500" />
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
@@ -368,11 +429,14 @@ export default function BusinessDashboard() {
                 loading={loading} 
                 error={error} 
               />
-            </div>
+            </motion.div>
           </div>
 
           {/* RIGHT SIDEBAR: KPIs (1/3 width on desktop) */}
-          <div className="lg:col-span-1 order-1 lg:order-2">
+          <motion.div 
+            variants={sidebarVariants}
+            className="lg:col-span-1 order-1 lg:order-2"
+          >
             <div className="lg:sticky lg:top-24 space-y-4">
               {/* Section Header */}
               <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
@@ -383,95 +447,117 @@ export default function BusinessDashboard() {
               </div>
 
               {/* KPIs Stack */}
-              <div className="space-y-3">
+              <motion.div className="space-y-3">
                 {/* Métricas Generales */}
-                <StatsCard
-                  title="Total Clientes"
-                  value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
-                  description="Únicos en período"
-                  icon={Users}
-                  variant="orange"
-                />
-                <StatsCard
-                  title="Total Citas (Todos los Estados)"
-                  value={data?.totalAppointmentsAllStatuses?.toString() || '0'}
-                  description="Incluye canceladas y no asistio"
-                  icon={Calendar}
-                  variant="purple"
-                />
-                <StatsCard
-                  title="Total Citas"
-                  value={totalAppointments.toString()}
-                  description="En período"
-                  icon={Calendar}
-                  variant="green"
-                />
-                <StatsCard
-                  title="Tasa de Completitud"
-                  value={`${data?.kpis?.completion_rate?.toFixed(1) || '0'}%`}
-                  description="Citas completadas"
-                  icon={TrendingUp}
-                  variant="blue"
-                />
-                <StatsCard
-                  title="Ingresos Totales"
-                  value={formatCurrency(data?.revenueAnalytics?.total_revenue || 0)}
-                  description="Facturado"
-                  icon={DollarSign}
-                  variant="purple"
-                />
-                <StatsCard
-                  title="Precio Promedio Servicio"
-                  value={formatCurrency(data?.revenueAnalytics?.average_ticket || 0)}
-                  description={`${data?.revenueAnalytics?.total_invoices || 0} facturas`}
-                  icon={Receipt}
-                  variant="orange"
-                />
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Total Clientes"
+                    value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
+                    description="Únicos en período"
+                    icon={Users}
+                    variant="orange"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Total Citas (Todos los Estados)"
+                    value={data?.totalAppointmentsAllStatuses?.toString() || '0'}
+                    description="Incluye canceladas y no asistio"
+                    icon={Calendar}
+                    variant="purple"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Total Citas"
+                    value={totalAppointments.toString()}
+                    description="En período"
+                    icon={Calendar}
+                    variant="green"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Tasa de Completitud"
+                    value={`${data?.kpis?.completion_rate?.toFixed(1) || '0'}%`}
+                    description="Citas completadas"
+                    icon={TrendingUp}
+                    variant="blue"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Ingresos Totales"
+                    value={formatCurrency(data?.revenueAnalytics?.total_revenue || 0)}
+                    description="Facturado"
+                    icon={DollarSign}
+                    variant="purple"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Precio Promedio Servicio"
+                    value={formatCurrency(data?.revenueAnalytics?.average_ticket || 0)}
+                    description={`${data?.revenueAnalytics?.total_invoices || 0} facturas`}
+                    icon={Receipt}
+                    variant="orange"
+                  />
+                </motion.div>
 
                 {/* Divider */}
                 <div className="border-t border-gray-200 dark:border-gray-700 my-4" />
 
                 {/* Mejores Períodos */}
-                <StatsCard
-                  title="Día con Más Citas"
-                  value={maxDay.date_label}
-                  description={`${maxDay.appointment_count} citas`}
-                  icon={TrendingUp}
-                  variant="green"
-                />
-                <StatsCard
-                  title="Día con Menos Citas"
-                  value={minDay.date_label}
-                  description={`${minDay.appointment_count} citas`}
-                  icon={TrendingDown}
-                  variant="red"
-                />
-                <StatsCard
-                  title="Mes con Más Citas"
-                  value={maxMonth.month_label}
-                  description={`${maxMonth.appointment_count} citas`}
-                  icon={Star}
-                  variant="orange"
-                />
-                <StatsCard
-                  title="Día con Más Ventas"
-                  value={translateDateLabel(data?.revenueAnalytics?.best_day_label || 'N/A')}
-                  description={formatCurrency(data?.revenueAnalytics?.best_day_revenue || 0)}
-                  icon={DollarSign}
-                  variant="blue"
-                />
-                <StatsCard
-                  title="Mes con Más Ventas"
-                  value={translateDateLabel(data?.revenueAnalytics?.best_month_label || 'N/A')}
-                  description={formatCurrency(data?.revenueAnalytics?.best_month_revenue || 0)}
-                  icon={Calendar}
-                  variant="purple"
-                />
-              </div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Día con Más Citas"
+                    value={maxDay.date_label}
+                    description={`${maxDay.appointment_count} citas`}
+                    icon={TrendingUp}
+                    variant="green"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Día con Menos Citas"
+                    value={minDay.date_label}
+                    description={`${minDay.appointment_count} citas`}
+                    icon={TrendingDown}
+                    variant="red"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Mes con Más Citas"
+                    value={maxMonth.month_label}
+                    description={`${maxMonth.appointment_count} citas`}
+                    icon={Star}
+                    variant="orange"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Día con Más Ventas"
+                    value={translateDateLabel(data?.revenueAnalytics?.best_day_label || 'N/A')}
+                    description={formatCurrency(data?.revenueAnalytics?.best_day_revenue || 0)}
+                    icon={DollarSign}
+                    variant="blue"
+                  />
+                </motion.div>
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Mes con Más Ventas"
+                    value={translateDateLabel(data?.revenueAnalytics?.best_month_label || 'N/A')}
+                    description={formatCurrency(data?.revenueAnalytics?.best_month_revenue || 0)}
+                    icon={Calendar}
+                    variant="purple"
+                  />
+                </motion.div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

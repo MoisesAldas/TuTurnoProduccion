@@ -37,7 +37,7 @@ export default function StickyCTA() {
                       </div>
           <Button
             onClick={() => router.push('/auth/business/register')}
-            className="bg-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group whitespace-nowrap"
+            className="bg-orange-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group whitespace-nowrap"
           >
             Empieza Gratis   
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />

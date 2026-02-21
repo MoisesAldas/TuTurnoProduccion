@@ -3,51 +3,193 @@
 import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { useMapRadiusLayer } from '@/app/marketplace/hooks/useMapRadiusLayer'
+
+interface BusinessHours {
+  day_of_week: number
+  open_time: string
+  close_time: string
+  is_closed: boolean
+}
 
 interface MapBusiness {
-  id: string;
-  name: string;
-  latitude?: number;
-  longitude?: number;
-  address?: string;
-  average_rating?: number;
-  review_count?: number;
+  id: string
+  name: string
+  latitude?: number
+  longitude?: number
+  address?: string
+  average_rating?: number
+  review_count?: number
+  cover_image_url?: string
+  distance_km?: number
+  business_categories?: { name: string } | null
+  business_hours?: BusinessHours[]
+}
+
+interface UserCoords {
+  lat: number
+  lon: number
 }
 
 interface MarketplaceMapProps {
-  businesses: MapBusiness[];
-  hoveredBusinessId: string | null;
-  setHoveredBusinessId: (id: string | null) => void;
-  onMarkerClick: (id: string) => void; // New prop for click events
+  businesses: MapBusiness[]
+  hoveredBusinessId: string | null
+  setHoveredBusinessId: (id: string | null) => void
+  onMarkerClick: (id: string) => void
+  userCoords?: UserCoords | null
+  radiusKm?: number
+  showRadius?: boolean
 }
 
-export default function MarketplaceMap({ businesses, hoveredBusinessId, setHoveredBusinessId, onMarkerClick }: MarketplaceMapProps) {
+// Inline status calculator for use in popup HTML generation
+function getStatusInfo(businessHours?: BusinessHours[]): { isOpen: boolean; message: string } | null {
+  if (!businessHours || businessHours.length === 0) return null
+  const now = new Date()
+  const currentDay = now.getDay()
+  const currentTime = now.toTimeString().substring(0, 5)
+
+  const formatTo12h = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number)
+    const ampm = hours >= 12 ? 'pm' : 'am'
+    const hour12 = hours % 12 || 12
+    return `${hour12}:${minutes.toString().padStart(2, '0')}${ampm}`
+  }
+
+  const todayHours = businessHours.find(h => h.day_of_week === currentDay)
+  if (!todayHours || todayHours.is_closed) {
+    for (let i = 1; i <= 7; i++) {
+      const nextDay = (currentDay + i) % 7
+      const nextDayHours = businessHours.find(h => h.day_of_week === nextDay)
+      if (nextDayHours && !nextDayHours.is_closed) {
+        return { isOpen: false, message: `Abre a las ${formatTo12h(nextDayHours.open_time.substring(0, 5))}` }
+      }
+    }
+    return { isOpen: false, message: 'Cerrado' }
+  }
+
+  const openTime = todayHours.open_time.substring(0, 5)
+  const closeTime = todayHours.close_time.substring(0, 5)
+
+  if (currentTime >= openTime && currentTime < closeTime) {
+    return { isOpen: true, message: `Abierto · cierra a las ${formatTo12h(closeTime)}` }
+  } else if (currentTime < openTime) {
+    return { isOpen: false, message: `Abre a las ${formatTo12h(openTime)}` }
+  } else {
+    const tomorrowHours = businessHours.find(h => h.day_of_week === (currentDay + 1) % 7)
+    if (tomorrowHours && !tomorrowHours.is_closed) {
+      return { isOpen: false, message: `Abre a las ${formatTo12h(tomorrowHours.open_time.substring(0, 5))}` }
+    }
+    return { isOpen: false, message: 'Cerrado' }
+  }
+}
+
+function buildPopupHTML(business: MapBusiness): string {
+  const status = getStatusInfo(business.business_hours)
+  const hasRating = (business.average_rating ?? 0) > 0
+  const categoryName = business.business_categories?.name ?? ''
+  const distanceText = business.distance_km != null ? `${business.distance_km.toFixed(1)} km` : ''
+
+  const imageSection = business.cover_image_url
+    ? `<div style="width:100%;height:130px;overflow:hidden;position:relative;flex-shrink:0;">
+        <img src="${business.cover_image_url}" alt="${business.name}"
+          style="width:100%;height:100%;object-fit:cover;display:block;" />
+        ${categoryName ? `<span style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.92);backdrop-filter:blur(4px);padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:#374151;">${categoryName}</span>` : ''}
+      </div>`
+    : categoryName
+      ? `<div style="background:#f8fafc;padding:8px 14px;border-bottom:1px solid #f1f5f9;">
+          <span style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">${categoryName}</span>
+        </div>`
+      : ''
+
+  const statusHTML = status
+    ? `<span style="font-size:11.5px;font-weight:600;color:${status.isOpen ? '#16a34a' : '#dc2626'};">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${status.isOpen ? '#16a34a' : '#dc2626'};margin-right:4px;vertical-align:middle;"></span>${status.message}
+      </span>`
+    : ''
+
+  const ratingHTML = hasRating
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#fefce8;border:1px solid #fef08a;padding:3px 8px;border-radius:99px;font-size:12px;font-weight:700;color:#854d0e;">
+        ★ ${(business.average_rating ?? 0).toFixed(1)}
+        <span style="font-weight:400;color:#a16207;">(${business.review_count})</span>
+      </span>`
+    : `<span style="font-size:12px;color:#94a3b8;">Sin reseñas</span>`
+
+  const distHTML = distanceText
+    ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#64748b;">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        ${distanceText}
+      </span>`
+    : ''
+
+  const addressHTML = business.address
+    ? `<p style="font-size:12px;color:#64748b;margin:0 0 12px 0;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${business.address}</p>`
+    : ''
+
+  return `
+    <div class="bp-card">
+      ${imageSection}
+      <div style="padding:12px 14px 14px;">
+        <h3 style="font-weight:700;font-size:15px;margin:0 0 4px 0;color:#0f172a;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${business.name}</h3>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          ${statusHTML}
+          ${distHTML}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:${addressHTML ? '8px' : '12px'};">
+          ${ratingHTML}
+        </div>
+        ${addressHTML}
+        <a href="/business/${business.id}"
+          style="display:block;width:100%;padding:9px 0;background:#0f172a;color:#fff;text-align:center;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;letter-spacing:0.01em;box-sizing:border-box;"
+          onmouseover="this.style.background='#1e293b'"
+          onmouseout="this.style.background='#0f172a'">
+          Ver detalles
+        </a>
+      </div>
+    </div>
+  `
+}
+
+export default function MarketplaceMap({
+  businesses,
+  hoveredBusinessId,
+  setHoveredBusinessId,
+  onMarkerClick,
+  userCoords,
+  radiusKm = 10,
+  showRadius = false,
+}: MarketplaceMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({})
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const hasInitializedBoundsRef = useRef(false);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null)
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const hasInitializedBoundsRef = useRef(false)
+  const [mapLoaded, setMapLoaded] = useState(false)
 
-  // Use refs to store latest callback functions to avoid recreating markers
-  const setHoveredBusinessIdRef = useRef(setHoveredBusinessId);
-  const onMarkerClickRef = useRef(onMarkerClick);
+  useMapRadiusLayer({
+    mapRef: map,
+    mapLoaded,
+    centerLon: userCoords?.lon ?? null,
+    centerLat: userCoords?.lat ?? null,
+    radiusKm,
+    visible: showRadius,
+  })
 
-  // Store previous business IDs to detect real changes
-  const prevBusinessIdsRef = useRef<string>('');
+  const setHoveredBusinessIdRef = useRef(setHoveredBusinessId)
+  const onMarkerClickRef = useRef(onMarkerClick)
+  const prevBusinessIdsRef = useRef<string>('')
 
-  // Keep refs up to date
   useEffect(() => {
-    setHoveredBusinessIdRef.current = setHoveredBusinessId;
-  }, [setHoveredBusinessId]);
+    setHoveredBusinessIdRef.current = setHoveredBusinessId
+  }, [setHoveredBusinessId])
 
   useEffect(() => {
-    onMarkerClickRef.current = onMarkerClick;
-  }, [onMarkerClick]);
+    onMarkerClickRef.current = onMarkerClick
+  }, [onMarkerClick])
 
-  // Effect for initializing the map
+  // Initialize map
   useEffect(() => {
-    if (map.current || !mapContainer.current) return;
+    if (map.current || !mapContainer.current) return
 
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
     if (!mapboxgl.accessToken) {
@@ -60,87 +202,73 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
       style: 'mapbox://styles/mapbox/streets-v12',
       center: [-78.4678, -0.1807],
       zoom: 12,
-    });
+    })
 
-    // Wait for map to be fully loaded before adding markers
     map.current.on('load', () => {
-      console.log('🗺️ MarketplaceMap: Map loaded, ready for markers');
-      setMapLoaded(true);
-    });
+      console.log('🗺️ MarketplaceMap: Map loaded, ready for markers')
+      setMapLoaded(true)
+    })
 
     return () => {
       if (map.current) {
-        map.current.remove();
-        map.current = null;
+        map.current.remove()
+        map.current = null
       }
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-      }
-      setMapLoaded(false);
-    };
-  }, []);
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+      setMapLoaded(false)
+    }
+  }, [])
 
-  // Effect for adding/updating markers when businesses change
+  // Add/update markers when businesses change
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    if (!map.current || !mapLoaded) return
 
-    // Get current marker IDs and create a hash to detect real changes
-    const currentMarkerIds = Object.keys(markersRef.current);
-    const newBusinessIds = businesses
-      .filter(b => b.latitude && b.longitude)
-      .map(b => b.id);
+    const currentMarkerIds = Object.keys(markersRef.current)
+    const newBusinessIds = businesses.filter(b => b.latitude && b.longitude).map(b => b.id)
+    const newBusinessIdsHash = newBusinessIds.sort().join(',')
 
-    // Create a sorted string hash of business IDs to detect if list actually changed
-    const newBusinessIdsHash = newBusinessIds.sort().join(',');
-
-    // If the business list hasn't actually changed, skip everything
     if (prevBusinessIdsRef.current === newBusinessIdsHash) {
-      console.log('🛑 MarketplaceMap: Business list unchanged, skipping marker recreation');
-      return;
+      console.log('🛑 MarketplaceMap: Business list unchanged, skipping marker recreation')
+      return
     }
 
-    console.log('🔄 MarketplaceMap: Business list changed, updating markers');
-    // Update the previous hash
-    prevBusinessIdsRef.current = newBusinessIdsHash;
+    console.log('🔄 MarketplaceMap: Business list changed, updating markers')
+    prevBusinessIdsRef.current = newBusinessIdsHash
 
-    // Remove markers that are no longer in the business list
     currentMarkerIds.forEach(id => {
       if (!newBusinessIds.includes(id)) {
-        markersRef.current[id].remove();
-        delete markersRef.current[id];
+        markersRef.current[id].remove()
+        delete markersRef.current[id]
       }
-    });
+    })
 
-    // Only fit bounds if markers were actually added or removed
-    let boundsChanged = false;
-    const bounds = new mapboxgl.LngLatBounds();
+    let boundsChanged = false
+    const bounds = new mapboxgl.LngLatBounds()
 
     businesses.forEach(business => {
       if (business.latitude && business.longitude) {
-        // Skip if marker already exists
         if (markersRef.current[business.id]) {
-          bounds.extend([business.longitude, business.latitude]);
-          return;
+          bounds.extend([business.longitude, business.latitude])
+          return
         }
 
-        boundsChanged = true;
+        boundsChanged = true
 
-        const el = document.createElement('div');
-        el.className = 'marker';
-        el.style.cursor = 'pointer';
+        const el = document.createElement('div')
+        el.className = 'marker'
+        el.style.cursor = 'pointer'
 
-        // Create an inner wrapper for scaling to avoid interfering with Mapbox positioning
-        const innerWrapper = document.createElement('div');
-        innerWrapper.className = 'marker-inner';
-        innerWrapper.style.transformOrigin = 'center bottom';
-        innerWrapper.style.transition = 'transform 0.2s ease-out';
+        const innerWrapper = document.createElement('div')
+        innerWrapper.className = 'marker-inner'
+        innerWrapper.style.transformOrigin = 'center bottom'
+        innerWrapper.style.transition = 'transform 0.2s ease-out'
         innerWrapper.innerHTML = `
           <svg viewBox="0 0 24 24" width="32" height="32" fill="#0f172a" stroke="#FFFFFF" stroke-width="1.5">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
             <circle cx="12" cy="10" r="3" fill="#FFFFFF"></circle>
           </svg>
-        `;
-        el.appendChild(innerWrapper);
+        `
+        el.appendChild(innerWrapper)
 
         const marker = new mapboxgl.Marker(el)
           .setLngLat([business.longitude, business.latitude])
@@ -149,88 +277,90 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
               offset: 25,
               closeButton: false,
               closeOnClick: false,
-              className: 'business-popup'
-            }).setHTML(
-              `
-              <div style="font-family: sans-serif; min-width: 220px; padding: 12px;">
-                <h3 style="font-weight: 700; font-size: 1.125rem; margin: 0 0 8px 0; color: #1f2937; line-height: 1.3;">${business.name}</h3>
-                ${business.average_rating && business.average_rating > 0 ? `
-                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.875rem; color: #4b5563; margin-bottom: 12px;">
-                  <span style="color: #f59e0b; font-size: 1rem;">★</span>
-                  <span style="font-weight: 700; color: #1f2937;">${business.average_rating.toFixed(1)}</span>
-                  <span style="color: #9ca3af;">(${business.review_count} reseñas)</span>
-                </div>
-                ` : '<p style="font-size: 0.875rem; color: #9ca3af; margin-bottom: 12px;">Sin reseñas aún</p>'}
-                ${business.address ? `<p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">${business.address}</p>` : ''}
-                <a href="/business/${business.id}" style="display: block; width: 100%; padding: 10px 16px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; text-align: center; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(15, 23, 42, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(15, 23, 42, 0.2)'">
-                  Ver Detalles →
-                </a>
-              </div>
-              `
-            )
+              className: 'business-popup',
+            }).setHTML(buildPopupHTML(business))
           )
-          .addTo(map.current!);
+          .addTo(map.current!)
 
-        const markerElement = marker.getElement();
-        const popup = marker.getPopup();
+        const markerElement = marker.getElement()
+        if (!marker.getPopup()) return
 
-        // Validar que el popup exista
-        if (!popup) return;
-
-        // Hover: solo resaltar el marcador (sin abrir popup)
         markerElement.addEventListener('mouseenter', () => {
-          setHoveredBusinessIdRef.current(business.id);
-        });
-
-        // Salir: quitar resaltado
+          setHoveredBusinessIdRef.current(business.id)
+        })
         markerElement.addEventListener('mouseleave', () => {
-          setHoveredBusinessIdRef.current(null);
-        });
+          setHoveredBusinessIdRef.current(null)
+        })
+        markerElement.addEventListener('click', e => {
+          e.stopPropagation()
+          marker.togglePopup()
+          onMarkerClickRef.current(business.id)
+        })
 
-        // Click: abrir/cerrar popup y scroll a la card
-        markerElement.addEventListener('click', (e) => {
-          e.stopPropagation();
-          // Toggle popup
-          marker.togglePopup();
-          // Scroll a la card
-          onMarkerClickRef.current(business.id);
-        });
-
-        markersRef.current[business.id] = marker;
-        bounds.extend([business.longitude, business.latitude]);
+        markersRef.current[business.id] = marker
+        bounds.extend([business.longitude, business.latitude])
       }
-    });
+    })
 
-    // Only fit bounds if markers were actually added or removed AND it's the first time
     if (boundsChanged && !bounds.isEmpty() && !hasInitializedBoundsRef.current) {
-      hasInitializedBoundsRef.current = true;
-      map.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 15,
-        duration: 1000
-      });
+      hasInitializedBoundsRef.current = true
+      map.current.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 1000 })
     }
-  }, [businesses, mapLoaded]); // Depend on businesses and mapLoaded
+  }, [businesses, mapLoaded])
 
-  // Effect for highlighting marker based on hover state
+  // User location marker
   useEffect(() => {
-    console.log('🎯 MarketplaceMap: Hover state changed to:', hoveredBusinessId);
-    Object.entries(markersRef.current).forEach(([id, marker]) => {
-      const element = marker.getElement();
-      const innerElement = element.querySelector('.marker-inner') as HTMLElement;
+    if (!map.current || !mapLoaded || !userCoords) return
 
-      if (!innerElement) return;
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove()
+      userMarkerRef.current = null
+    }
 
-      if (id === hoveredBusinessId) {
-        // Scale the inner wrapper, not the outer container (avoids Mapbox positioning conflicts)
-        innerElement.style.transform = 'scale(1.3)';
-        element.style.zIndex = '10';
-      } else {
-        innerElement.style.transform = 'scale(1)';
-        element.style.zIndex = '1';
+    const el = document.createElement('div')
+    el.style.cssText = `
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #2563eb; border: 3px solid white;
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+      animation: user-pulse 1.8s infinite;
+      cursor: default;
+    `
+
+    userMarkerRef.current = new mapboxgl.Marker(el)
+      .setLngLat([userCoords.lon, userCoords.lat])
+      .setPopup(
+        new mapboxgl.Popup({ offset: 20, closeButton: false })
+          .setHTML('<div style="font-size:13px; font-weight:600; padding:4px 8px; color:#1e293b;">📍 Tú estás aquí</div>')
+      )
+      .addTo(map.current!)
+
+    if (!hasInitializedBoundsRef.current) {
+      map.current.flyTo({ center: [userCoords.lon, userCoords.lat], zoom: 13, duration: 1200, essential: true })
+    }
+
+    return () => {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove()
+        userMarkerRef.current = null
       }
-    });
-  }, [hoveredBusinessId]);
+    }
+  }, [userCoords, mapLoaded])
+
+  // Highlight marker on hover
+  useEffect(() => {
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      const element = marker.getElement()
+      const innerElement = element.querySelector('.marker-inner') as HTMLElement
+      if (!innerElement) return
+      if (id === hoveredBusinessId) {
+        innerElement.style.transform = 'scale(1.3)'
+        element.style.zIndex = '10'
+      } else {
+        innerElement.style.transform = 'scale(1)'
+        element.style.zIndex = '1'
+      }
+    })
+  }, [hoveredBusinessId])
 
   return (
     <>
@@ -239,10 +369,29 @@ export default function MarketplaceMap({ businesses, hoveredBusinessId, setHover
         .mapboxgl-popup {
           z-index: 999 !important;
         }
-        .mapboxgl-popup-content {
-          z-index: 1000 !important;
+        .business-popup .mapboxgl-popup-content {
+          padding: 0 !important;
+          border-radius: 16px !important;
+          overflow: hidden !important;
+          box-shadow: 0 8px 32px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+          border: 1px solid #e2e8f0 !important;
+          width: 264px !important;
+          background: #ffffff !important;
+        }
+        .business-popup .mapboxgl-popup-tip {
+          border-top-color: #ffffff !important;
+        }
+        .bp-card {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: #ffffff;
+          color: #0f172a;
+        }
+        @keyframes user-pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+          70%  { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
       `}</style>
     </>
-  );
+  )
 }

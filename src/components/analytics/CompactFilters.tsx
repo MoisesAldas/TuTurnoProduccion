@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -33,8 +33,16 @@ export function CompactFilters({
   })
 
   // Estados para mes y año específicos
-  const [selectedMonth, setSelectedMonth] = useState<string>(String(new Date().getMonth()))
-  const [selectedYear, setSelectedYear] = useState<string>(String(new Date().getFullYear()))
+  const [selectedMonth, setSelectedMonth] = useState<string>(String(filters.startDate.getMonth()))
+  const [selectedYear, setSelectedYear] = useState<string>(String(filters.startDate.getFullYear()))
+
+  // Sync internal state when filters prop changes externally (e.g. restored from URL on navigation)
+  useEffect(() => {
+    setTempPeriod(filters.period)
+    setTempRange({ from: filters.startDate, to: filters.endDate })
+    setSelectedMonth(String(filters.startDate.getMonth()))
+    setSelectedYear(String(filters.startDate.getFullYear()))
+  }, [filters.period, filters.startDate, filters.endDate])
 
   // Lista de meses
   const months = [
@@ -148,13 +156,13 @@ export function CompactFilters({
 
   return (
     <div className={cn(
-      "flex items-center gap-2 flex-wrap",
+      "flex items-center gap-2",
       compact && "justify-end"
     )}>
       {/* Period Selector */}
       <Select value={tempPeriod} onValueChange={handlePeriodChange}>
         <SelectTrigger className={cn(
-          "w-full sm:w-[160px] transition-all flex-shrink-0",
+          "w-auto sm:w-[160px] transition-all flex-shrink-0",
           compact && "bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700"
         )}>
           <SelectValue placeholder="Período" />
@@ -268,15 +276,13 @@ export function CompactFilters({
         <Button
           onClick={onRefresh}
           disabled={loading}
-          size={compact ? "icon" : "default"}
+          size="icon"
           className={cn(
-            "bg-orange-600 hover:bg-orange-700 text-white border-0 flex-shrink-0",
-            compact && "bg-orange-600 hover:bg-orange-700",
-            !compact && "w-full sm:w-auto"
+            "bg-orange-600 hover:bg-orange-700 text-white border-0 flex-shrink-0 rounded-full shadow-sm hover:shadow-md transition-all duration-200",
+            loading && "grayscale opacity-80"
           )}
         >
-          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin", !compact && "sm:mr-0")} />
-          {!compact && <span className="ml-2 sm:hidden">Actualizar</span>}
+          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
         </Button>
       )}
     </div>
