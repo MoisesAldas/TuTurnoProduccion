@@ -3,6 +3,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
 import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Search, UserCheck, Building2, UserCircle, Info } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -495,15 +499,12 @@ export default function CreateAppointmentModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl p-0 border-none bg-transparent shadow-none" showCloseButton={false}>
+        <div 
+          className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 sm:p-6 rounded-t-2xl">
           <div className="flex items-center justify-between mb-4">
@@ -1087,7 +1088,8 @@ export default function CreateAppointmentModal({
             </Button>
           )}
         </div>
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
