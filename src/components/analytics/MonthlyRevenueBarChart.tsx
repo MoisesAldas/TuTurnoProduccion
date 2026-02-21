@@ -36,25 +36,36 @@ export const MonthlyRevenueBarChart = ({
     >
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+          <defs>
+            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ea580c" stopOpacity={1} />
+              <stop offset="100%" stopColor="#f97316" stopOpacity={0.8} />
+            </linearGradient>
+          </defs>
           <XAxis
             dataKey="month"
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={{ fontSize: 12, fill: '#94a3b8' }}
             axisLine={false}
             tickLine={false}
+            dy={10}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={{ fontSize: 12, fill: '#94a3b8' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(value) => `$${value}`}
+            dx={-10}
           />
-          <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
+          <Tooltip 
+            content={<CustomTooltip formatter={formatCurrency} />}
+            cursor={{ fill: '#f8fafc', opacity: 0.4 }}
+          />
           <Bar
             dataKey="revenue"
-            fill="#ea580c"
-            radius={[8, 8, 0, 0]}
+            fill="url(#barGradient)"
+            radius={[12, 12, 0, 0]}
             name="Ingresos"
+            barSize={40}
           />
         </BarChart>
       </ResponsiveContainer>

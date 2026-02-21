@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X, CheckCircle2, Phone, Mail, FileText, CalendarDays, Briefcase } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, User, Users, BarChart3, Building, X, CheckCircle2, Phone, Mail, FileText, CalendarDays, Briefcase, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -260,54 +260,49 @@ export default function EmployeesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-6">
-            <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="relative w-20 h-20 mx-auto mb-8">
+            <div className="absolute inset-0 border-4 border-orange-100 dark:border-orange-900/30 rounded-[2rem]"></div>
+            <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-[2rem] animate-spin shadow-[0_0_15px_rgba(234,88,12,0.2)]"></div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando empleados</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Preparando la información...</p>
+          <p className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse">
+            Configurando Equipo...
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Sticky Header */}
-      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">Empleados</h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Gestiona el equipo de tu negocio
-              </p>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              {business && (
-                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200">
-                  <Building className="w-4 h-4 mr-2" />
-                  {business.name}
-                </Badge>
-              )}
-              <Button
-                onClick={() => setCreateModalOpen(true)}
-                className="w-full sm:w-auto  bg-orange-600 hover:bg-orange-700 shadow-md hover:shadow-lg transition-all"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Empleado
-              </Button>
+    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950/50 p-6">
+      <div className="w-full space-y-8">
+        {/* Premium Header - Integrated */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+          <div className="relative pl-6">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-0.5">
+                Administración {business?.name && `• ${business.name}`}
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-50 tracking-tight">
+                Gestión del <span className="text-orange-600">Equipo</span>
+              </h1>
             </div>
           </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-orange-600 hover:bg-orange-700 text-white rounded-2xl h-12 px-6 shadow-[0_4px_14px_0_rgba(251,146,60,0.39)] hover:shadow-[0_6px_20px_rgba(251,146,60,0.23)] transition-all duration-300 font-bold"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Nuevo Empleado
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-      {/* Tarjetas de estadísticas */}
+        {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total Empleados"
@@ -342,9 +337,12 @@ export default function EmployeesPage() {
         />
       </div>
 
-      {/* Barra de búsqueda */}
-      <div className="relative">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+      {/* Search Bar - Premium Interactive */}
+      <div className="relative group max-w-2xl">
+        <div className="absolute left-5 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 opacity-0 group-focus-within:opacity-100 transition-all duration-300 -translate-x-4 group-focus-within:translate-x-0">
+          <Search className="w-4 h-4" />
+        </div>
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:opacity-0 transition-opacity">
           <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
         </div>
         <Input
@@ -352,23 +350,23 @@ export default function EmployeesPage() {
           placeholder="Buscar empleados por nombre, email o posición..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:border-orange-500 focus:ring-orange-500 shadow-sm"
+          className="h-14 pl-12 pr-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border-gray-100 dark:border-gray-800 rounded-[1.25rem] focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all duration-300 font-medium text-gray-900 dark:text-white"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
 
       {/* Lista de empleados */}
       {filteredEmployees.length === 0 ? (
-        <Card className="border-2 border-dashed border-gray-200 dark:border-gray-800">
-          <CardContent className="text-center py-16">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
+        <Card className="border-0 shadow-inner bg-gray-50/50 dark:bg-gray-900/30 rounded-[2.5rem]">
+          <CardContent className="text-center py-20">
+            <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-sm">
               <Users className="w-10 h-10 text-orange-600 dark:text-orange-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">
@@ -397,73 +395,83 @@ export default function EmployeesPage() {
             <Card
               key={employee.id}
               className={`
-                overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col
-                ${!employee.is_active ? 'bg-gray-50 dark:bg-gray-900/50 opacity-75' : ''}
+                overflow-hidden border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] dark:bg-gray-900 rounded-[2.25rem] hover:shadow-xl transition-all duration-300 group flex flex-col
+                ${!employee.is_active ? 'opacity-75 grayscale-[0.5]' : ''}
               `}
             >
-              <CardHeader className="pb-3 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent dark:from-orange-900/10 dark:via-amber-900/10 border-b border-gray-100 dark:border-gray-800">
+              <CardHeader className="pb-3 pt-5 px-6 bg-gradient-to-br from-orange-50/50 via-transparent to-transparent dark:from-orange-900/5 dark:via-transparent dark:to-transparent relative">
+                {/* Vertical Accent */}
+                <div className="absolute left-0 top-6 w-1.5 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)] transition-transform group-hover:scale-y-110" />
+                
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-[1rem] flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm transition-transform group-hover:scale-105">
                       {employee.avatar_url ? (
                         <img
                           src={employee.avatar_url}
                           alt={`${employee.first_name} ${employee.last_name}`}
-                          className="w-full h-full rounded-full object-cover"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <User className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600 dark:text-orange-400" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-50 truncate">
+                      <p className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-0.5 truncate">
+                        {employee.position || 'Colaborador'}
+                      </p>
+                      <h3 className="text-sm sm:text-base font-black tracking-tight text-gray-900 dark:text-gray-50 truncate">
                         {employee.first_name} {employee.last_name}
                       </h3>
-                      {employee.position && (
-                        <p className="text-xs text-orange-600 dark:text-orange-400 font-medium truncate">{employee.position}</p>
-                      )}
                     </div>
                   </div>
                   <Badge
                     variant={employee.is_active ? "default" : "secondary"}
                     className={employee.is_active
-                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200 text-xs dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800 flex-shrink-0'
-                      : 'bg-gray-200 text-gray-600 border-gray-300 text-xs dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 flex-shrink-0'
+                      ? 'bg-emerald-100 text-emerald-700 border-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold dark:bg-emerald-900/40 dark:text-emerald-400 flex-shrink-0'
+                      : 'bg-gray-100 text-gray-500 border-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold dark:bg-gray-800 dark:text-gray-400 flex-shrink-0'
                     }
                   >
-                    {employee.is_active ? 'Activo' : 'Inactivo'}
+                    {employee.is_active ? '● Activo' : '○ Inactivo'}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-4 flex-1 flex flex-col">
-                <div className="space-y-3">
+
+              <CardContent className="pt-1 pb-5 px-6 flex-1 flex flex-col">
+                <div className="space-y-2">
                   {employee.phone && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg min-w-0">
-                      <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{employee.phone}</span>
+                    <div className="flex items-center gap-2.5 p-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl min-w-0 border border-transparent hover:border-orange-100 dark:hover:border-orange-900/30 transition-colors">
+                      <div className="w-7 h-7 rounded-lg bg-blue-100/50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                        <Phone className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">{employee.phone}</span>
                     </div>
                   )}
                   {employee.email && (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg min-w-0">
-                      <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate" title={employee.email}>{employee.email}</span>
+                    <div className="flex items-center gap-2.5 p-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl min-w-0 border border-transparent hover:border-orange-100 dark:hover:border-orange-900/30 transition-colors">
+                      <div className="w-7 h-7 rounded-lg bg-purple-100/50 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate" title={employee.email}>{employee.email}</span>
                     </div>
                   )}
                   {employee.bio && (
-                    <div className="flex items-start gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/20 rounded-lg min-w-0">
-                      <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{employee.bio}</span>
+                    <div className="flex items-start gap-2.5 p-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-gray-200/50 dark:bg-gray-700/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <FileText className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                      </div>
+                      <span className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-1">{employee.bio}</span>
                     </div>
                   )}
 
                   {/* Services Badge */}
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <EmployeeServicesBadge employeeId={employee.id} />
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col gap-2 pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
+                <div className="flex flex-col gap-2 pt-4 mt-auto">
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
@@ -472,9 +480,9 @@ export default function EmployeesPage() {
                         setSelectedEmployee(employee)
                         setEditModalOpen(true)
                       }}
-                      className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800"
+                      className="rounded-xl border-gray-200 dark:border-gray-800 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-all font-bold text-[11px] h-9 dark:hover:bg-orange-900/40"
                     >
-                      <Edit className="w-4 h-4 mr-2" />
+                      <Edit className="w-3 h-3 mr-1.5" />
                       Editar
                     </Button>
                     <Button
@@ -484,9 +492,9 @@ export default function EmployeesPage() {
                         setSelectedEmployee(employee)
                         setAbsencesModalOpen(true)
                       }}
-                      className="hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-colors shadow-sm hover:shadow-md dark:hover:bg-blue-900/50 dark:hover:text-blue-400 dark:hover:border-blue-700"
+                      className="rounded-xl border-gray-200 dark:border-gray-800 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 transition-all font-bold text-[11px] h-9 dark:hover:bg-blue-900/40"
                     >
-                      <CalendarDays className="w-4 h-4 mr-2" />
+                      <CalendarDays className="w-3 h-3 mr-1.5" />
                       Ausencias
                     </Button>
                   </div>
@@ -497,18 +505,18 @@ export default function EmployeesPage() {
                       setSelectedEmployee(employee)
                       setServicesModalOpen(true)
                     }}
-                    className="w-full hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 transition-colors shadow-sm hover:shadow-md dark:hover:bg-purple-900/50 dark:hover:text-purple-400 dark:hover:border-purple-700"
+                    className="w-full rounded-xl border-gray-200 dark:border-gray-800 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 transition-all font-bold text-[11px] h-9 dark:hover:bg-purple-900/40"
                   >
-                    <Briefcase className="w-4 h-4 mr-2" />
+                    <Briefcase className="w-3 h-3 mr-1.5" />
                     Servicios
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleDeleteClick(employee)}
-                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
+                    className="w-full text-red-500 hover:text-red-700 hover:bg-red-50 transition-all font-bold text-[11px] h-8 dark:hover:bg-red-900/40"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="w-3 h-3 mr-1.5" />
                     Eliminar
                   </Button>
                 </div>
@@ -563,12 +571,19 @@ export default function EmployeesPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <AlertDialogTitle>
+                ¿Estás seguro?
+              </AlertDialogTitle>
+            </div>
             <AlertDialogDescription>
               Esta acción eliminará permanentemente este empleado. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel onClick={() => {
               setDeleteDialogOpen(false)
               setEmployeeToDelete(null)
@@ -578,7 +593,7 @@ export default function EmployeesPage() {
             <AlertDialogAction
               onClick={() => handleDeleteEmployee()}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
             >
               {isDeleting ? 'Eliminando...' : 'Eliminar'}
             </AlertDialogAction>
@@ -597,5 +612,6 @@ export default function EmployeesPage() {
       onConfirmDelete={confirmDeleteFromWarning}
     />
     </div>
+    
   )
 }

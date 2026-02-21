@@ -187,86 +187,86 @@ export default function BusinessHoursPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-6">
-            <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="relative w-20 h-20 mx-auto mb-8">
+            <div className="absolute inset-0 border-4 border-orange-100 dark:border-orange-900/30 rounded-[2rem]"></div>
+            <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-[2rem] animate-spin shadow-[0_0_15px_rgba(234,88,12,0.2)]"></div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando horarios</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Obteniendo configuración de tu negocio...</p>
+          <p className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse">
+            Configurando Horarios...
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Sticky Header */}
-      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">Horarios de Atención</h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Configura los horarios de atención de tu negocio
-              </p>
+    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950/50 p-6">
+      <div className="w-full space-y-8">
+        {/* Premium Header - Integrated (No Blur/Sticky) */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+          <div className="relative pl-6">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-0.5">
+                Configuración {businessName && `• ${businessName}`}
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-gray-50 tracking-tight">
+                Horarios de <span className="text-orange-600">Atención</span>
+              </h1>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              {businessName && (
-                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
-                  <Building className="w-4 h-4 mr-2" />
-                  {businessName}
-                </Badge>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={submitting || !hasChanges}
+              className="bg-orange-600 hover:bg-orange-700 text-white rounded-2xl h-12 px-6 shadow-[0_10px_20px_rgba(234,88,12,0.15)] hover:shadow-[0_15px_30px_rgba(234,88,12,0.25)] transition-all duration-300 disabled:opacity-50 font-bold"
+            >
+              {submitting ? (
+                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
               )}
-              <Button
-                onClick={handleSave}
-                disabled={submitting || !hasChanges}
-                className="w-full sm:w-auto  bg-orange-600 hover:bg-orange-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Guardar Horarios
-                  </>
-                )}
-              </Button>
+              Guardar Horarios
+            </Button>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="space-y-8">
+        {/* Info Alert - Glass Style */}
+        <div className="relative group overflow-hidden bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-gray-100 dark:border-gray-800 rounded-[2rem] p-6 transition-all duration-300 hover:shadow-[0_20px_40px_rgba(0,0,0,0.03)]">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-black text-gray-900 dark:text-gray-50 uppercase tracking-wider mb-1">Información Importante</h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                Estos horarios determinan tu disponibilidad pública. Para configurar excepciones como feriados o periodos de vacaciones, visita los <Link href="/dashboard/business/settings/advanced" className="text-orange-600 font-bold hover:underline">Ajustes Avanzados</Link>.
+              </p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-              {/* Info Alert */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex items-start gap-3">
-                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm text-blue-900 dark:text-blue-200">
-                    Estos horarios se mostrarán a tus clientes y determinarán la disponibilidad para reservas.
-                    Los horarios especiales (feriados, eventos) se configuran en <Link href="/dashboard/business/settings/advanced" className="underline font-medium">Ajustes Avanzados</Link>.
-                  </p>
-                </div>
-              </div>        {/* Días de la semana - Vista Compacta */}
-        <Card className="overflow-hidden shadow-md border-gray-200 dark:border-gray-700">
+        {/* Schedule Container - Premium Card */}
+        <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden border border-white dark:border-gray-800/50">
           {/* Desktop Table View */}
-          <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10 border-b-2 border-orange-200 dark:border-orange-800">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 dark:text-gray-50">Día</th>
-                  <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 dark:text-gray-50">Estado</th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 dark:text-gray-50">Apertura</th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-900 dark:text-gray-50">Cierre</th>
-                  <th className="px-4 py-3 text-center text-sm font-bold text-gray-900 dark:text-gray-50">Acciones</th>
+          <div className="hidden lg:block">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Día de la Semana</th>
+                  <th className="px-8 py-6 text-center text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Estado</th>
+                  <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Horario Apertura</th>
+                  <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Horario Cierre</th>
+                  <th className="px-8 py-6 text-center text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Sincronizar</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                 {daysOfWeek.map(day => {
                   const schedule = schedules.find(s => s.day_of_week === day.value)
                   if (!schedule) return null
@@ -274,79 +274,93 @@ export default function BusinessHoursPage() {
                   return (
                     <tr
                       key={day.value}
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                        schedule.is_closed ? 'bg-gray-50/50 dark:bg-gray-900/50' : ''
+                      className={`group transition-all duration-300 ${
+                        schedule.is_closed ? 'bg-gray-50/30 dark:bg-slate-900/10' : 'hover:bg-orange-50/30 dark:hover:bg-orange-900/5'
                       }`}
                     >
                       {/* Día */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
                           <div className={`
-                            w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
+                            w-12 h-12 rounded-[1.25rem] flex items-center justify-center flex-shrink-0 transition-all duration-500
                             ${schedule.is_closed
-                              ? 'bg-gray-100 dark:bg-gray-700'
-                              : 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900'
+                              ? 'bg-gray-100 dark:bg-gray-800 rotate-0'
+                              : 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-[0_5px_15px_rgba(234,88,12,0.2)] rotate-3 group-hover:rotate-0'
                             }
                           `}>
                             <Clock className={`w-5 h-5 ${
-                              schedule.is_closed ? 'text-gray-600 dark:text-gray-400' : 'text-orange-600 dark:text-orange-400'
+                              schedule.is_closed ? 'text-gray-400 dark:text-gray-500' : 'text-white'
                             }`} />
                           </div>
-                          <span className="font-semibold text-gray-900 dark:text-gray-50">{day.label}</span>
+                          <div>
+                            <span className={`text-base font-black tracking-tight leading-tight ${
+                              schedule.is_closed ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-50'
+                            }`}>{day.label}</span>
+                          </div>
                         </div>
                       </td>
 
                       {/* Estado */}
-                      <td className="px-4 py-3">
+                      <td className="px-8 py-6">
                         <div className="flex items-center justify-center">
-                          <div className="flex items-center gap-2 bg-orange-50/50 border border-orange-200 dark:bg-orange-900/20 dark:border-orange-800 rounded-lg px-3 py-1.5">
-                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          <div className={`
+                            flex items-center gap-3 px-4 py-2 rounded-2xl transition-all duration-300
+                            ${schedule.is_closed 
+                              ? 'bg-gray-100 dark:bg-gray-800/50 text-gray-400' 
+                              : 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 border border-orange-100 dark:border-orange-800/50 shadow-sm'
+                            }
+                          `}>
+                            <span className="text-xs font-black uppercase tracking-widest leading-none">
                               {schedule.is_closed ? 'Cerrado' : 'Abierto'}
                             </span>
                             <Switch
                               checked={!schedule.is_closed}
                               onCheckedChange={(checked) => updateSchedule(day.value, 'is_closed', !checked)}
-                              className="data-[state=checked]:bg-orange-600"
+                              className="data-[state=checked]:bg-orange-600 scale-90"
                             />
                           </div>
                         </div>
                       </td>
 
                       {/* Apertura */}
-                      <td className="px-4 py-3">
-                        <Input
-                          type="time"
-                          value={schedule.open_time}
-                          onChange={(e) => updateSchedule(day.value, 'open_time', e.target.value)}
-                          disabled={schedule.is_closed}
-                          className="h-9 w-32 font-mono focus:border-orange-500 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
+                      <td className="px-8 py-6 text-center">
+                        <div className="relative group/input max-w-[140px]">
+                          <Input
+                            type="time"
+                            value={schedule.open_time}
+                            onChange={(e) => updateSchedule(day.value, 'open_time', e.target.value)}
+                            disabled={schedule.is_closed}
+                            className="h-12 w-full text-center font-black tracking-widest rounded-xl border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 focus:border-orange-500 focus:ring-orange-500 transition-all shadow-sm disabled:opacity-30"
+                          />
+                        </div>
                       </td>
 
                       {/* Cierre */}
-                      <td className="px-4 py-3">
-                        <Input
-                          type="time"
-                          value={schedule.close_time}
-                          onChange={(e) => updateSchedule(day.value, 'close_time', e.target.value)}
-                          disabled={schedule.is_closed}
-                          className="h-9 w-32 font-mono focus:border-orange-500 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
+                      <td className="px-8 py-6 text-center">
+                        <div className="relative group/input max-w-[140px]">
+                          <Input
+                            type="time"
+                            value={schedule.close_time}
+                            onChange={(e) => updateSchedule(day.value, 'close_time', e.target.value)}
+                            disabled={schedule.is_closed}
+                            className="h-12 w-full text-center font-black tracking-widest rounded-xl border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 focus:border-orange-500 focus:ring-orange-500 transition-all shadow-sm disabled:opacity-30"
+                          />
+                        </div>
                       </td>
 
                       {/* Acciones */}
-                      <td className="px-4 py-3">
+                      <td className="px-8 py-6">
                         <div className="flex justify-center">
                           <Button
                             type="button"
-                            variant="outline"
-                            size="sm"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => copyToAllDays(day.value)}
                             disabled={schedule.is_closed}
-                            className="h-9 w-9 p-0 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
+                            className="h-11 w-11 rounded-2xl hover:bg-orange-600 hover:text-white transition-all duration-300 disabled:opacity-30"
                             title="Copiar horarios a todos los días"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-5 h-5" />
                           </Button>
                         </div>
                       </td>
@@ -358,7 +372,7 @@ export default function BusinessHoursPage() {
           </div>
 
           {/* Mobile Compact View */}
-          <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="lg:hidden divide-y divide-gray-100 dark:divide-gray-800/50">
             {daysOfWeek.map(day => {
               const schedule = schedules.find(s => s.day_of_week === day.value)
               if (!schedule) return null
@@ -366,78 +380,72 @@ export default function BusinessHoursPage() {
               return (
                 <div
                   key={day.value}
-                  className={`p-4 ${schedule.is_closed ? 'bg-gray-50/50 dark:bg-gray-900/50' : ''}`}
+                  className={`p-6 transition-all duration-300 ${
+                    schedule.is_closed ? 'bg-gray-50/30' : 'bg-white dark:bg-gray-900/30'
+                  }`}
                 >
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
                       <div className={`
-                        w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
+                        w-12 h-12 rounded-[1.25rem] flex items-center justify-center flex-shrink-0
                         ${schedule.is_closed
-                          ? 'bg-gray-100 dark:bg-gray-700'
-                          : 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900'
+                          ? 'bg-gray-100 dark:bg-gray-800'
+                          : 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg text-white'
                         }
                       `}>
-                        <Clock className={`w-5 h-5 ${
-                          schedule.is_closed ? 'text-gray-600 dark:text-gray-400' : 'text-orange-600 dark:text-orange-400'
-                        }`} />
+                        <Clock className="w-5 h-5" />
                       </div>
-                      <span className="font-semibold text-gray-900 dark:text-gray-50">{day.label}</span>
+                      <span className={`text-lg font-black tracking-tight ${
+                        schedule.is_closed ? 'text-gray-300' : 'text-gray-900 dark:text-gray-50'
+                      }`}>{day.label}</span>
                     </div>
 
-                    {/* Estado Toggle */}
-                    <div className="flex items-center gap-2 bg-orange-50/50 border border-orange-200 dark:bg-orange-900/20 dark:border-orange-800 rounded-lg px-3 py-1.5">
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    <div className={`
+                      flex items-center gap-2 px-3 py-1.5 rounded-xl
+                      ${schedule.is_closed 
+                        ? 'bg-gray-100/50 dark:bg-gray-800/50 text-gray-400' 
+                        : 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 border border-orange-100 dark:border-orange-800/50'
+                      }
+                    `}>
+                      <span className="text-[10px] font-black uppercase tracking-wider">
                         {schedule.is_closed ? 'Cerrado' : 'Abierto'}
                       </span>
                       <Switch
                         checked={!schedule.is_closed}
                         onCheckedChange={(checked) => updateSchedule(day.value, 'is_closed', !checked)}
-                        className="data-[state=checked]:bg-orange-600"
+                        className="scale-75"
                       />
                     </div>
                   </div>
 
-                  {/* Horarios */}
                   {!schedule.is_closed && (
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label htmlFor={`open-${day.value}`} className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 block">
-                            Apertura
-                          </Label>
-                          <Input
-                            id={`open-${day.value}`}
-                            type="time"
-                            value={schedule.open_time}
-                            onChange={(e) => updateSchedule(day.value, 'open_time', e.target.value)}
-                            className="h-9 font-mono text-sm focus:border-orange-500 focus:ring-orange-500"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`close-${day.value}`} className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 block">
-                            Cierre
-                          </Label>
-                          <Input
-                            id={`close-${day.value}`}
-                            type="time"
-                            value={schedule.close_time}
-                            onChange={(e) => updateSchedule(day.value, 'close_time', e.target.value)}
-                            className="h-9 font-mono text-sm focus:border-orange-500 focus:ring-orange-500"
-                          />
-                        </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Apertura</Label>
+                        <Input
+                          type="time"
+                          value={schedule.open_time}
+                          onChange={(e) => updateSchedule(day.value, 'open_time', e.target.value)}
+                          className="h-12 font-black tracking-widest text-center rounded-2xl bg-white/50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 focus:border-orange-500"
+                        />
                       </div>
-
-                      {/* Copy Button */}
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Cierre</Label>
+                        <Input
+                          type="time"
+                          value={schedule.close_time}
+                          onChange={(e) => updateSchedule(day.value, 'close_time', e.target.value)}
+                          className="h-12 font-black tracking-widest text-center rounded-2xl bg-white/50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800 focus:border-orange-500"
+                        />
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
                         onClick={() => copyToAllDays(day.value)}
-                        className="w-full h-9 text-xs hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
+                        className="col-span-2 h-12 rounded-2xl border-gray-100 dark:border-gray-800 font-bold text-xs uppercase tracking-widest hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all"
                       >
-                        <Copy className="w-3.5 h-3.5 mr-1.5" />
-                        Copiar a todos los días
+                        <Copy className="w-4 h-4 mr-2" />
+                        Sincronizar horarios
                       </Button>
                     </div>
                   )}
@@ -445,7 +453,7 @@ export default function BusinessHoursPage() {
               )
             })}
           </div>
-        </Card>
+        </div>
 
         {/* Resumen visual de cambios pendientes */}
         {hasChanges && (
@@ -463,6 +471,7 @@ export default function BusinessHoursPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   )

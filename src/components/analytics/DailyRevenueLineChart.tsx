@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import { Badge } from '@/components/ui/badge'
 import { BaseChartCard } from './BaseChartCard'
 import { CustomTooltip, formatCurrency } from './ChartComponents'
@@ -51,37 +51,48 @@ export const DailyRevenueLineChart = ({
       }
     >
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+        <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+          <defs>
+            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ea580c" stopOpacity={0.1}/>
+              <stop offset="95%" stopColor="#ea580c" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={{ fontSize: 12, fill: '#94a3b8' }}
             axisLine={false}
             tickLine={false}
+            dy={10}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={{ fontSize: 12, fill: '#94a3b8' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={(value) => `$${value}`}
+            dx={-10}
           />
-          <Tooltip content={<CustomTooltip formatter={formatCurrency} />} />
-          <Line
+          <Tooltip 
+            content={<CustomTooltip formatter={formatCurrency} />} 
+            cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }}
+          />
+          <Area
             type="monotone"
             dataKey="revenue"
             stroke="#ea580c"
             strokeWidth={3}
-            dot={{ fill: '#ea580c', r: 4 }}
-            activeDot={{ r: 6 }}
+            fillOpacity={1}
+            fill="url(#colorRevenue)"
             name="Ingresos"
+            activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }}
           />
           <ReferenceLine
             y={avgRevenue}
-            stroke="#94a3b8"
-            strokeDasharray="5 5"
-            label={{ value: 'Promedio', position: 'right', fill: '#64748b', fontSize: 12 }}
+            stroke="#cbd5e1"
+            strokeDasharray="8 8"
+            label={{ value: 'Promedio', position: 'right', fill: '#94a3b8', fontSize: 11, fontWeight: 500 }}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </BaseChartCard>
   )

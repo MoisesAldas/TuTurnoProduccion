@@ -33,30 +33,25 @@ export function EmployeeRankingChart({ data, loading = false, error }: EmployeeR
               layout="vertical"
               margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
               <XAxis
                 type="number"
-                tick={{ fill: '#6b7280', fontSize: 12 }}
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 dataKey="employee_name"
                 type="category"
-                tick={{ fill: '#6b7280', fontSize: 12 }}
+                tick={{ fill: '#94a3b8', fontSize: 12 }}
                 width={120}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
                 content={<CustomTooltip />}
-                formatter={(value: number, name: string) => {
-                  if (name === 'appointment_count') return [value, 'Citas']
-                  if (name === 'completion_rate') return [`${value}%`, 'Tasa completitud']
-                  return [value, name]
-                }}
+                cursor={{ fill: '#f8fafc', opacity: 0.4 }}
               />
-              <Bar dataKey="appointment_count" name="Citas" radius={[0, 8, 8, 0]}>
+              <Bar dataKey="appointment_count" name="Citas" radius={[0, 12, 12, 0]} barSize={32}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                 ))}

@@ -125,12 +125,13 @@ export const PaymentMethodsPieChart = ({
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-500"
+                    className="h-full rounded-full transition-all duration-1000 ease-out"
                     style={{
                       width: `${method.percentage}%`,
-                      backgroundColor: method.color
+                      backgroundColor: method.color,
+                      boxShadow: `0 0 10px ${method.color}40`
                     }}
                   />
                 </div>

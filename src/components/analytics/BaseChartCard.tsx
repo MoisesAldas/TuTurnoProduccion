@@ -24,8 +24,8 @@ export const BaseChartCard = ({
   className
 }: BaseChartCardProps) => {
   return (
-    <Card className={cn("border border-gray-200 hover:shadow-lg transition-shadow dark:border-gray-700 dark:bg-gray-800", className)}>
-      <CardHeader className="border-b border-gray-200 pt-4 px-6 pb-2 dark:border-gray-700">
+    <Card className={cn("border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] dark:bg-gray-900/50 rounded-[2.5rem] hover:shadow-2xl hover:shadow-orange-500/5 transition-all duration-500 overflow-hidden backdrop-blur-sm", className)}>
+      <CardHeader className="pt-8 px-8 pb-4">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="font-semibold text-gray-900 dark:text-gray-50">
@@ -40,11 +40,11 @@ export const BaseChartCard = ({
           {actions}
         </div>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="px-8 pb-8">
         {loading ? (
           <ChartSkeleton />
         ) : error ? (
-          <ChartError error={error} />
+          <ChartError error={error as Error} />
         ) : (
           children
         )}

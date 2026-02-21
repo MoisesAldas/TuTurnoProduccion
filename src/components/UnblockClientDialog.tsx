@@ -81,22 +81,22 @@ export default function UnblockClientDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-              <Unlock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+              <Unlock className="w-5 h-5 text-orange-600" />
             </div>
-            <AlertDialogTitle className="text-xl">
+            <AlertDialogTitle>
               Desbloquear Cliente
             </AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="text-base space-y-3">
+          <AlertDialogDescription>
             <p>
               ¿Estás seguro de que deseas desbloquear a <strong className="text-gray-900 dark:text-white">{clientName}</strong>?
             </p>
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-2">
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-3 flex items-start gap-2 mt-4">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-amber-800 dark:text-amber-200">
-                <p className="font-medium mb-1">Ten en cuenta:</p>
-                <ul className="list-disc list-inside space-y-1">
+                <p className="font-bold mb-1">Ten en cuenta:</p>
+                <ul className="list-disc list-inside space-y-1 opacity-80 font-medium">
                   <li>El cliente podrá volver a reservar citas inmediatamente</li>
                   <li>Su contador de cancelaciones se mantendrá</li>
                   <li>Si vuelve a cancelar, podría ser bloqueado nuevamente</li>
@@ -105,23 +105,26 @@ export default function UnblockClientDialog({
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="mt-4 gap-2">
           <AlertDialogCancel disabled={unblocking}>
             Cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleUnblock}
             disabled={unblocking}
-            className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-600"
+            className="bg-orange-600 hover:bg-orange-700 shadow-orange-600/20"
           >
             {unblocking ? (
               <>
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                <div className="relative w-3.5 h-3.5 mr-2">
+                  <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
+                  <div className="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
                 Desbloqueando...
               </>
             ) : (
               <>
-                <Unlock className="w-4 h-4 mr-2" />
+                <Unlock className="w-3.5 h-3.5 mr-2" />
                 Desbloquear
               </>
             )}

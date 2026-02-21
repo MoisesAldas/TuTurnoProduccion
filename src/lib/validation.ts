@@ -340,8 +340,9 @@ export const advancedSettingsSchema = z.object({
   max_monthly_cancellations: z
     .number()
     .min(1, "Mínimo 1 cancelación")
-    .max(10, "Máximo 10 cancelaciones"),
-  enable_cancellation_blocking: z.boolean(),
+    .max(10, "Máximo 10 cancelaciones")
+    .optional(),
+  enable_cancellation_blocking: z.boolean().optional(),
 });
 
 // ========================================

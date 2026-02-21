@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { CartesianGrid, Area, AreaChart, XAxis, YAxis } from "recharts"
 import {
   Card,
   CardContent,
@@ -48,11 +48,11 @@ export function MonthlyAppointmentsChart({ data, loading = false, error }: Month
 
   if (loading) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader className="pt-4 px-6 pb-2 border-b border-gray-200 dark:border-gray-700">
+      <Card className="flex flex-col border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] dark:bg-gray-900/50 rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="pt-8 px-8 pb-4">
           <div>
             <CardTitle className="font-semibold text-gray-900 dark:text-gray-50">Tendencia Mensual</CardTitle>
-            <CardDescription>Cargando datos...</CardDescription>
+            <CardDescription className="text-sm text-gray-600 dark:text-gray-400">Cargando datos...</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="h-[350px] flex items-center justify-center">
@@ -64,11 +64,11 @@ export function MonthlyAppointmentsChart({ data, loading = false, error }: Month
 
   if (error || !data.length) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader className="pt-4 px-6 pb-2 border-b border-gray-200 dark:border-gray-700">
+      <Card className="flex flex-col border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] dark:bg-gray-900/50 rounded-[2.5rem] overflow-hidden">
+        <CardHeader className="pt-8 px-8 pb-4">
           <div>
             <CardTitle className="font-semibold text-gray-900 dark:text-gray-50">Tendencia Mensual</CardTitle>
-            <CardDescription>No hay datos suficientes para mostrar la tendencia</CardDescription>
+            <CardDescription className="text-sm text-gray-600 dark:text-gray-400">No hay datos suficientes para mostrar la tendencia</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="h-[300px] flex items-center justify-center text-muted-foreground">
@@ -79,15 +79,15 @@ export function MonthlyAppointmentsChart({ data, loading = false, error }: Month
   }
 
   return (
-    <Card className="flex flex-col overflow-hidden">
-      <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 sm:py-6">
+    <Card className="flex flex-col border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] dark:bg-gray-900/50 rounded-[2.5rem] overflow-hidden backdrop-blur-sm">
+      <CardHeader className="flex flex-col items-stretch !p-0 sm:flex-row">
+        <div className="flex flex-1 flex-col justify-center gap-1 px-8 py-6">
           <CardTitle className="font-semibold text-gray-900 dark:text-gray-50">Tendencia Mensual</CardTitle>
           <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
             Resumen comparativo de citas e ingresos
           </CardDescription>
         </div>
-        <div className="flex">
+        <div className="flex border-l border-gray-100 dark:border-gray-800">
           {(["appointment_count", "revenue"] as const).map((key) => {
             const chart = key as keyof typeof chartConfig
             const isActive = activeChart === chart
@@ -96,13 +96,14 @@ export function MonthlyAppointmentsChart({ data, loading = false, error }: Month
                 key={chart}
                 data-active={isActive}
                 className={cn(
-                  "flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left transition-colors sm:border-t-0 sm:border-l sm:px-8 sm:py-6",
+                  "flex flex-1 flex-col justify-center gap-1 px-8 py-6 text-left transition-all duration-300",
                   "hover:bg-gray-50 dark:hover:bg-gray-800/50",
-                  "data-[active=true]:bg-orange-50/50 dark:data-[active=true]:bg-orange-950/10"
+                  "data-[active=true]:bg-orange-50/50 dark:data-[active=true]:bg-orange-950/10",
+                  "border-l border-gray-100 dark:border-gray-800 first:border-l-0"
                 )}
                 onClick={() => setActiveChart(chart)}
               >
-                <span className="text-muted-foreground text-xs uppercase tracking-wider font-medium">
+                <span className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold opacity-70">
                   {chartConfig[chart].label}
                 </span>
                 <span className="text-xl leading-none font-bold sm:text-2xl text-gray-900 dark:text-gray-100">
@@ -115,35 +116,37 @@ export function MonthlyAppointmentsChart({ data, loading = false, error }: Month
           })}
         </div>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:p-6">
+      <CardContent className="px-4 pb-8 pt-6 sm:px-8">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[300px] w-full"
+          className="aspect-auto h-[350px] w-full"
         >
-          <LineChart
+          <AreaChart
             accessibilityLayer
             data={data}
             margin={{
-              left: 12,
+              left: 0,
               right: 12,
               top: 10,
-              bottom: 10
+              bottom: 0
             }}
           >
-            <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f0f0f0" />
+            <defs>
+              <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={chartConfig[activeChart].color} stopOpacity={0.15}/>
+                <stop offset="95%" stopColor={chartConfig[activeChart].color} stopOpacity={0}/>
+              </linearGradient>
+            </defs>
             <XAxis
               dataKey="period_date"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
+              tickMargin={15}
               minTickGap={32}
               tick={{ fill: '#94a3b8', fontSize: 11 }}
               tickFormatter={formatMonthDateSpanish}
             />
-            <YAxis
-                hide
-                domain={['auto', 'auto']}
-            />
+            <YAxis hide />
             <ChartTooltip
               content={
                 <CustomTooltip 
@@ -152,25 +155,22 @@ export function MonthlyAppointmentsChart({ data, loading = false, error }: Month
                 />
               }
             />
-            <Line
+            <Area
               dataKey={activeChart}
-              name={chartConfig[activeChart].label as string}
               type="monotone"
               stroke={chartConfig[activeChart].color}
-              strokeWidth={3}
-              dot={{
-                r: 4,
-                fill: chartConfig[activeChart].color,
-                strokeWidth: 2,
-                stroke: "#fff"
-              }}
+              strokeWidth={4}
+              fillOpacity={1}
+              fill="url(#colorActive)"
+              animationDuration={1500}
               activeDot={{
                 r: 6,
-                strokeWidth: 0
+                stroke: "#fff",
+                strokeWidth: 2,
+                fill: chartConfig[activeChart].color
               }}
-              animationDuration={1000}
             />
-          </LineChart>
+          </AreaChart>
         </ChartContainer>
       </CardContent>
     </Card>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
   Select,
@@ -11,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import {
   Users,
   Phone,
@@ -23,6 +25,7 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  User,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
@@ -264,18 +267,18 @@ export default function RegisteredClientsTab({
       {/* Statistics Cards */}
       <ClientStatsCards stats={stats} />
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+      {/* Filters - Premium Style */}
+      <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 border-0">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
-          <div className="flex-1">
+          <div className="flex-1 group">
             <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 transition-all group-focus-within:text-orange-500 group-focus-within:scale-110" />
               <Input
                 placeholder="Buscar por nombre, teléfono o email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
+                className="pl-11 bg-gray-50/50 dark:bg-gray-800/30 border-0 rounded-2xl h-11 focus-visible:ring-1 focus-visible:ring-orange-500/30 transition-all"
               />
             </div>
           </div>
@@ -285,154 +288,148 @@ export default function RegisteredClientsTab({
             value={statusFilter}
             onValueChange={(v: 'all' | 'active' | 'blocked') => setStatusFilter(v)}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full lg:w-[180px] rounded-2xl bg-gray-50/50 dark:bg-gray-800/30 border-0 h-11 focus:ring-1 focus:ring-orange-500/30 font-semibold text-xs transition-all">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="active">Solo Activos</SelectItem>
-              <SelectItem value="blocked">Solo Bloqueados</SelectItem>
+            <SelectContent className="rounded-2xl border-gray-100 dark:border-gray-800 shadow-xl">
+              <SelectItem value="all" className="rounded-xl">Todos los estados</SelectItem>
+              <SelectItem value="active" className="rounded-xl">Solo Activos</SelectItem>
+              <SelectItem value="blocked" className="rounded-xl">Solo Bloqueados</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Clients Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Clients Grid - Premium Style */}
+      <div className="min-h-[400px]">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="animate-spin w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-3"></div>
-              <p className="text-sm text-gray-500">Cargando clientes...</p>
+              <div className="animate-spin w-10 h-10 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
+              <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Cargando registrados...</p>
             </div>
           </div>
         ) : filteredClients.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">
+          <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-[2.5rem] p-12 text-center border-0 shadow-sm">
+            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+              <Users className="w-10 h-10 text-gray-300" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 dark:text-gray-50 mb-2">Sin Clientes</h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
               {search || statusFilter !== 'all'
                 ? 'No se encontraron clientes con los filtros aplicados'
-                : 'No hay clientes registrados aún'}
+                : 'No hay clientes registrados en la plataforma aún'}
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Cliente
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Contacto
-                  </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Citas
-                  </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Cancelaciones
-                  </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Estado
-                  </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedClients.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10 flex-shrink-0">
-                          <AvatarImage src={user.avatar_url || undefined} alt={user.first_name} />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-600 dark:text-blue-400">
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {paginatedClients.map((user) => (
+                <Card
+                  key={user.id}
+                  className={`
+                    overflow-hidden border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] dark:bg-gray-900 rounded-[2.25rem] hover:shadow-xl transition-all duration-300 group flex flex-col
+                    ${user.is_blocked ? 'opacity-75 grayscale-[0.5]' : ''}
+                  `}
+                >
+                  <CardHeader className="pb-3 pt-5 px-6 bg-gradient-to-br from-blue-50/50 via-transparent to-transparent dark:from-blue-900/5 dark:via-transparent dark:to-transparent relative">
+                    {/* Vertical Accent */}
+                    <div className={`absolute left-0 top-6 w-1.5 h-8 bg-gradient-to-b ${user.is_blocked ? 'from-red-500 to-red-600' : 'from-blue-500 to-blue-600'} rounded-full shadow-[0_0_12px_rgba(59,130,246,0.2)] transition-transform group-hover:scale-y-110`} />
+                    
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                        <Avatar className="w-11 h-11 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-[1rem] flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                          <AvatarImage src={user.avatar_url || undefined} className="object-cover" />
+                          <AvatarFallback className="bg-transparent text-blue-600 dark:text-blue-400 font-bold">
                             {user.first_name?.charAt(0)}
-                            {user.last_name?.charAt(0) || ''}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-white">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-blue-600 dark:text-blue-500 mb-0.5 truncate">
+                            Usuario Global
+                          </p>
+                          <h3 className="text-sm font-black tracking-tight text-gray-900 dark:text-gray-50 truncate">
                             {user.first_name} {user.last_name || ''}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Usuario de la app
-                          </div>
+                          </h3>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="space-y-1">
-                        {user.email && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Mail className="w-3.5 h-3.5" />
-                            <span className="truncate max-w-xs">{user.email}</span>
+                      <Badge
+                        variant={user.is_blocked ? "destructive" : "default"}
+                        className={user.is_blocked
+                          ? 'bg-red-100 text-red-700 border-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold dark:bg-red-900/40 dark:text-red-400 flex-shrink-0'
+                          : 'bg-emerald-100 text-emerald-700 border-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold dark:bg-emerald-900/40 dark:text-emerald-400 flex-shrink-0'
+                        }
+                      >
+                        {user.is_blocked ? '● Bloqueado' : '● Activo'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="pt-1 pb-5 px-6 flex-1 flex flex-col">
+                    <div className="space-y-2">
+                      {user.email && (
+                        <div className="flex items-center gap-2.5 p-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl min-w-0 border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30 transition-colors">
+                          <div className="w-7 h-7 rounded-lg bg-purple-100/50 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                            <Mail className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                           </div>
-                        )}
-                        {user.phone && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Phone className="w-3.5 h-3.5" />
-                            <span>{user.phone}</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <div className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded-full text-sm font-medium">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{user.appointment_count || 0}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {user.current_month_cancellations || 0}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {user.is_blocked ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm font-medium">
-                          <Ban className="w-3.5 h-3.5" />
-                          <span>Bloqueado</span>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          <span>Activo</span>
+                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate" title={user.email}>{user.email}</span>
                         </div>
                       )}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {user.is_blocked && (
+                      {user.phone && (
+                        <div className="flex items-center gap-2.5 p-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl min-w-0 border border-transparent hover:border-blue-100 dark:hover:border-blue-900/30 transition-colors">
+                          <div className="w-7 h-7 rounded-lg bg-blue-100/50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                            <Phone className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate">{user.phone}</span>
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex items-center justify-between gap-1 p-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-transparent hover:border-orange-100 dark:hover:border-orange-900/30 transition-colors">
+                          <div className="flex items-center gap-1.5 overflow-hidden">
+                            <Calendar className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Citas</span>
+                          </div>
+                          <span className="text-xs font-black text-orange-600 dark:text-orange-400">{user.appointment_count || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-1 p-2 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl border border-transparent hover:border-red-100 dark:hover:border-red-900/30 transition-colors">
+                          <div className="flex items-center gap-1.5 overflow-hidden">
+                            <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Canc.</span>
+                          </div>
+                          <span className="text-xs font-black text-red-600 dark:text-red-400">{user.current_month_cancellations || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="pt-4 mt-auto">
+                      {user.is_blocked ? (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            onUnblockClient(
-                              user.id,
-                              `${user.first_name} ${user.last_name || ''}`
-                            )
-                          }
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                          onClick={() => onUnblockClient(user.id, `${user.first_name} ${user.last_name || ''}`)}
+                          className="w-full rounded-xl border-blue-100 dark:border-blue-900/30 hover:bg-blue-50 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold text-[11px] h-9 transition-all"
                         >
-                          <Unlock className="w-4 h-4 mr-1" />
+                          <Unlock className="w-3 h-3 mr-1.5" />
                           Desbloquear
                         </Button>
+                      ) : (
+                        <div className="text-[10px] text-center font-bold text-gray-400 uppercase tracking-widest py-2">
+                          Usuario Activo
+                        </div>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-            {/* Pagination */}
+            {/* Pagination - Premium Style */}
             {totalPages > 1 && (
-              <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
-                <div className="text-sm text-gray-500">
-                  Página {page} de {totalPages} • {filteredClients.length} clientes
+              <div className="flex items-center justify-between bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-2">
+                  Página {page} de {totalPages} <span className="mx-2 opacity-30">|</span> {filteredClients.length} clientes
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -440,6 +437,7 @@ export default function RegisteredClientsTab({
                     size="sm"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
+                    className="rounded-xl h-9 w-9 p-0 border-gray-200 dark:border-gray-800 transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
@@ -448,6 +446,7 @@ export default function RegisteredClientsTab({
                     size="sm"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
+                    className="rounded-xl h-9 w-9 p-0 border-gray-200 dark:border-gray-800 transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>

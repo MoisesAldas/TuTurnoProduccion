@@ -76,54 +76,57 @@ export default function CancellationLimitSettings({
 
   if (loading) {
     return (
-      <Card className="dark:border-gray-700">
-        <CardContent className="py-8">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin w-6 h-6 border-2 border-orange-200 border-t-orange-600 rounded-full" />
-          </div>
+      <Card className="border-0 shadow-sm dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+        <CardContent className="p-8 text-center bg-white dark:bg-gray-900">
+          <div className="animate-spin w-6 h-6 border-2 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2" />
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cargando...</p>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="dark:border-gray-700">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Shield className="w-5 h-5 text-orange-600" />
-          Límite de Cancelaciones
-        </CardTitle>
-        <CardDescription className="dark:text-gray-400 text-sm">
-          Protege tu negocio bloqueando clientes con cancelaciones excesivas
-        </CardDescription>
+    <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+      <CardHeader className="px-6 pt-6 pb-2">
+        <div className="flex flex-col gap-0.5 relative pl-5">
+          <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+          <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+            Seguridad Avanzada
+          </span>
+          <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+            Límite de Cancelaciones
+          </CardTitle>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-6 space-y-4">
+        {/* Main Grid - Compact */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Toggle para habilitar/deshabilitar */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Bloqueo automático</Label>
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Bloqueo Automático</Label>
+            <div className="flex items-center justify-between h-10 px-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-50 dark:border-gray-700/50">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                <span className="text-sm">{enabled ? 'Activado' : 'Desactivado'}</span>
+                <Shield className="w-3.5 h-3.5 text-orange-600" />
+                <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{enabled ? 'ACTIVO' : 'INACTIVO'}</span>
               </div>
               <Switch
                 id="enable-blocking"
                 checked={enabled}
                 onCheckedChange={handleEnabledChange}
+                className="scale-90"
               />
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {enabled ? 'Bloqueo automático habilitado' : 'Sistema desactivado'}
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
+              Protección anti-spam
             </p>
           </div>
 
           {/* Límite de cancelaciones */}
           <div className="space-y-1.5">
-            <Label htmlFor="limit" className="text-sm font-medium">
-              Cancelaciones máximas por mes
+            <Label htmlFor="limit" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              Citas Máximas / Mes
             </Label>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center h-10">
               <Input
                 id="limit"
                 type="number"
@@ -132,47 +135,48 @@ export default function CancellationLimitSettings({
                 value={limit}
                 onChange={(e) => handleLimitChange(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
                 disabled={!enabled}
-                className="h-9 max-w-[100px] text-center font-semibold"
+                className="h-10 w-16 text-center font-black bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 rounded-xl text-sm"
               />
-              <span className="text-sm text-gray-600 dark:text-gray-400">cancelaciones</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest pt-1">Cancelaciones</span>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Rango: 1-10 cancelaciones
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
+              Rango sugerido: 3 a 5
             </p>
           </div>
 
-          {/* Información de reseteo */}
+          {/* Información de reseteo - Compact Info */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Reseteo automático</Label>
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-800 dark:text-blue-200">
-                  Los contadores se resetean el 1ro de cada mes
-                </p>
-              </div>
+            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Estado del Contador</Label>
+            <div className="flex items-center gap-3 h-10 px-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-800/30 rounded-xl">
+              <AlertCircle className="w-3.5 h-3.5 text-blue-600" />
+              <p className="text-[10px] font-bold text-blue-800/80 dark:text-blue-300/80 uppercase tracking-tight">
+                Reseteo el día 1ero
+              </p>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Reseteo mensual automático
-            </p>
+             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">Ciclo Mensual</p>
           </div>
 
-          {/* Recomendaciones - Full Width */}
+          {/* Recomendaciones - Premium Banner */}
           <div className="md:col-span-2 lg:col-span-3">
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-800 dark:text-amber-200">
-                  <p className="font-medium mb-1">Recomendaciones:</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <div>
-                      <strong>3-5 cancelaciones:</strong> Ideal para mayoría de negocios
+            <div className="bg-orange-50/30 dark:bg-orange-950/20 border border-orange-100/30 dark:border-orange-900/40 rounded-2xl p-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4 h-4 text-orange-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-orange-950 dark:text-orange-200 uppercase tracking-widest mb-1">Guía de Configuración</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black text-orange-600/80 uppercase">Estricta</span>
+                      <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 italic">1-2 Citas</span>
                     </div>
-                    <div>
-                      <strong>1-2 cancelaciones:</strong> Política estricta (premium)
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black text-orange-600/80 uppercase">Equilibrada</span>
+                      <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 italic">3-5 Citas</span>
                     </div>
-                    <div>
-                      <strong>6-10 cancelaciones:</strong> Política flexible (casual)
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black text-orange-600/80 uppercase">Flexible</span>
+                      <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 italic">6-10 Citas</span>
                     </div>
                   </div>
                 </div>

@@ -335,51 +335,56 @@ export default function SpecialHoursManager({
             return (
               <div
                 key={hour.id}
-                className="border dark:border-gray-700 rounded-lg p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="group relative bg-white dark:bg-gray-800/40 hover:bg-orange-50/30 dark:hover:bg-orange-950/10 border-0 shadow-[0_4px_20px_rgba(0,0,0,0.02)] dark:shadow-none p-4 rounded-2xl transition-all duration-300"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <p className="font-medium text-gray-900 dark:text-gray-50 text-sm sm:text-base">
-                      {format(date, 'PPP', { locale: es })}
-                    </p>
-                    <Badge className={currentReasonColors}>
-                      {reasonLabels[hour.reason]}
-                    </Badge>
-                    {hour.is_closed && (
-                      <Badge variant="secondary" className="bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400">
-                        Cerrado
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0 pl-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <p className="text-[13px] font-black text-gray-900 dark:text-gray-50 uppercase tracking-tight">
+                        {format(date, 'PPP', { locale: es })}
+                      </p>
+                      <Badge className={`${currentReasonColors} text-[10px] font-black uppercase tracking-widest px-2 py-0.5 border-0 rounded-lg`}>
+                        {reasonLabels[hour.reason]}
                       </Badge>
-                    )}
+                      {hour.is_closed && (
+                        <Badge variant="secondary" className="bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 border-0 rounded-lg">
+                          Cerrado
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {!hour.is_closed && hour.open_time && hour.close_time && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wide bg-gray-50 dark:bg-gray-700/50 px-2 py-0.5 rounded-lg">
+                          <Plus className="w-3 h-3 text-orange-600" />
+                          {hour.open_time.substring(0, 5)} - {hour.close_time.substring(0, 5)}
+                        </div>
+                      )}
+                      {hour.description && (
+                        <p className="text-[11px] font-medium text-gray-400 italic truncate max-w-[200px]">{hour.description}</p>
+                      )}
+                    </div>
                   </div>
-                  {!hour.is_closed && hour.open_time && hour.close_time && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Horario: {hour.open_time.substring(0, 5)} - {hour.close_time.substring(0, 5)}
-                    </p>
-                  )}
-                  {hour.description && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{hour.description}</p>
-                  )}
-                </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0 self-start sm:self-auto">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openDialog(hour)}
-                    className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deleteSpecialHour(hour.id, format(date, 'PPP', { locale: es }))}
-                    className="hover:bg-red-50 hover:text-red-700 hover:border-red-300 dark:hover:bg-red-900/50 dark:hover:text-red-400 dark:hover:border-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-1.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openDialog(hour)}
+                      className="w-8 h-8 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteSpecialHour(hour.id, format(date, 'PPP', { locale: es }))}
+                      className="w-8 h-8 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )
@@ -389,65 +394,72 @@ export default function SpecialHoursManager({
 
       {/* Botón para agregar */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            onClick={() => openDialog()}
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Agregar Horario Especial
-          </Button>
-        </DialogTrigger>
+        <Button
+          type="button"
+          onClick={() => openDialog()}
+          className="w-full h-11 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl shadow-lg shadow-orange-600/20 text-[11px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar Horario Especial
+        </Button>
 
         <DialogContent className="sm:max-w-[500px] dark:bg-gray-900">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle className="dark:text-gray-50">
-                {editingId ? 'Editar Horario Especial' : 'Nuevo Horario Especial'}
-              </DialogTitle>
-              <DialogDescription className="dark:text-gray-400">
-                Configura horarios especiales, feriados o días cerrados
+            <DialogHeader className="px-6 pt-6 pb-2">
+              <div className="flex flex-col gap-0.5 relative pl-5">
+                <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                  {editingId ? 'MODIFICAR' : 'CREAR NUEVO'}
+                </span>
+                <DialogTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                  Horario Especial
+                </DialogTitle>
+              </div>
+              <DialogDescription className="px-5 text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mt-1">
+                Ajusta la disponibilidad para fechas específicas
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
-              {/* Fecha */}
-              <div className="space-y-2">
-                <Label htmlFor="special_date" className="dark:text-gray-300">Fecha *</Label>
-                <Input
-                  id="special_date"
-                  type="date"
-                  {...register('special_date')}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-                {errors.special_date && (
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.special_date.message}</p>
-                )}
-              </div>
+            <div className="space-y-4 px-6 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Fecha */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="special_date" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Fecha *</Label>
+                  <Input
+                    id="special_date"
+                    type="date"
+                    {...register('special_date')}
+                    className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                  {errors.special_date && (
+                    <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight">{errors.special_date.message}</p>
+                  )}
+                </div>
 
-              {/* Tipo de razón */}
-              <div className="space-y-2">
-                <Label htmlFor="reason" className="dark:text-gray-300">Tipo *</Label>
-                <Select
-                  value={selectedReason}
-                  onValueChange={(value) => setValue('reason', value as any)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="holiday">Feriado</SelectItem>
-                    <SelectItem value="special_event">Evento Especial</SelectItem>
-                    <SelectItem value="maintenance">Mantenimiento</SelectItem>
-                    <SelectItem value="custom">Personalizado</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Tipo de razón */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="reason" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Tipo *</Label>
+                  <Select
+                    value={selectedReason}
+                    onValueChange={(value) => setValue('reason', value as any)}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm">
+                      <SelectValue placeholder="Selecciona" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-0 shadow-2xl">
+                      <SelectItem value="holiday" className="rounded-xl">Feriado</SelectItem>
+                      <SelectItem value="special_event" className="rounded-xl">Evento Especial</SelectItem>
+                      <SelectItem value="maintenance" className="rounded-xl">Mantenimiento</SelectItem>
+                      <SelectItem value="custom" className="rounded-xl">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Estado: Cerrado o con horario */}
-              <div className="space-y-2">
-                <Label className="dark:text-gray-300">Estado</Label>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Estado de Disponibilidad</Label>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
@@ -455,14 +467,14 @@ export default function SpecialHoursManager({
                       setIsClosedDay(true)
                       setValue('is_closed', true)
                     }}
-                    className={`flex-1 px-4 py-3 border-2 rounded-lg transition-all ${
+                    className={`flex-1 px-4 py-3 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center gap-1.5 border-2 ${
                       isClosedDay
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:border-orange-500 dark:bg-orange-900/20 dark:text-orange-400'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:bg-gray-800'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:border-orange-500/50 dark:bg-orange-950/20 dark:text-orange-400'
+                        : 'border-transparent bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 text-gray-400 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <X className="w-4 h-4 mx-auto mb-1" />
-                    <p className="text-sm font-medium dark:text-gray-50">Cerrado</p>
+                    <X className={`w-5 h-5 ${isClosedDay ? 'text-orange-500' : 'text-gray-300'}`} />
+                    <span className="text-[11px] font-black uppercase tracking-widest">Cerrado</span>
                   </button>
                   <button
                     type="button"
@@ -470,80 +482,83 @@ export default function SpecialHoursManager({
                       setIsClosedDay(false)
                       setValue('is_closed', false)
                     }}
-                    className={`flex-1 px-4 py-3 border-2 rounded-lg transition-all ${
+                    className={`flex-1 px-4 py-3 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center gap-1.5 border-2 ${
                       !isClosedDay
-                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:border-orange-500 dark:bg-orange-900/20 dark:text-orange-400'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 dark:bg-gray-800'
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:border-orange-500/50 dark:bg-orange-950/20 dark:text-orange-400'
+                        : 'border-transparent bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 text-gray-400 dark:hover:bg-gray-800'
                     }`}
                   >
-                    <Calendar className="w-4 h-4 mx-auto mb-1" />
-                    <p className="text-sm font-medium dark:text-gray-50">Horario Especial</p>
+                    <Calendar className={`w-5 h-5 ${!isClosedDay ? 'text-orange-500' : 'text-gray-300'}`} />
+                    <span className="text-[11px] font-black uppercase tracking-widest">Abierto</span>
                   </button>
                 </div>
               </div>
 
               {/* Horarios (solo si no está cerrado) */}
               {!isClosedDay && (
-                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="space-y-2">
-                    <Label htmlFor="open_time" className="dark:text-gray-300">Hora de apertura *</Label>
+                <div className="grid grid-cols-2 gap-4 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-300">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="open_time" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Apertura *</Label>
                     <Input
                       id="open_time"
                       type="time"
                       {...register('open_time')}
+                      className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
                     />
                     {errors.open_time && (
-                      <p className="text-sm text-red-600 dark:text-red-400">{errors.open_time.message}</p>
+                      <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight">{errors.open_time.message}</p>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="close_time" className="dark:text-gray-300">Hora de cierre *</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="close_time" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Cierre *</Label>
                     <Input
                       id="close_time"
                       type="time"
                       {...register('close_time')}
+                      className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
                     />
                     {errors.close_time && (
-                      <p className="text-sm text-red-600 dark:text-red-400">{errors.close_time.message}</p>
+                      <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight">{errors.close_time.message}</p>
                     )}
                   </div>
                 </div>
               )}
 
               {/* Descripción */}
-              <div className="space-y-2">
-                <Label htmlFor="description" className="dark:text-gray-300">Descripción (opcional)</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nota Adicional (Opcional)</Label>
                 <Textarea
                   id="description"
                   {...register('description')}
                   rows={2}
-                  placeholder="Ej: Día de la Independencia, Mantenimiento de equipos..."
+                  className="rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm resize-none"
+                  placeholder="Ej: Solo eventos corporativos..."
                 />
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="px-6 pb-6 pt-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={closeDialog}
                 disabled={submitting}
-                className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="rounded-xl text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                className="bg-orange-600 hover:bg-orange-700 text-white rounded-xl px-8 text-[11px] font-black uppercase tracking-widest shadow-lg shadow-orange-600/20"
               >
                 {submitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                    Guardando...
+                    Procesando...
                   </>
                 ) : (
-                  <>Guardar</>
+                  <>Guardar Cambios</>
                 )}
               </Button>
             </DialogFooter>

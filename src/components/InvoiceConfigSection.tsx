@@ -16,7 +16,8 @@ import {
   CheckCircle,
   Lock,
   Info,
-  Receipt
+  Receipt,
+  Save
 } from 'lucide-react'
 
 export default function InvoiceConfigSection() {
@@ -184,71 +185,76 @@ export default function InvoiceConfigSection() {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-8">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin w-6 h-6 border-2 border-orange-200 border-t-orange-600 rounded-full"></div>
-            <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando configuración...</span>
-          </div>
+      <Card className="border-0 shadow-sm dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+        <CardContent className="p-8 text-center bg-white dark:bg-gray-900">
+          <div className="animate-spin w-6 h-6 border-2 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2" />
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cargando...</p>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="dark:border-gray-700">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg dark:text-gray-50">
-          <Receipt className="w-5 h-5 text-orange-600" />
-          Configuración de Facturación
-        </CardTitle>
-        <CardDescription className="dark:text-gray-400 text-sm">
-          Personaliza el formato de tus números de factura
+    <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+      <CardHeader className="px-6 pt-6 pb-2">
+        <div className="flex flex-col gap-0.5 relative pl-5">
+          <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+          <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+            Módulo Contable
+          </span>
+          <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+            Configuración de Facturación
+          </CardTitle>
+        </div>
+        <CardDescription className="px-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
+          Establece el formato legal y secuencial de tus comprobantes
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="px-6 pb-6 space-y-5">
         {/* Alert compacto cuando está bloqueado */}
         {prefixLocked && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-sm text-amber-900 dark:text-amber-200">
-            <Lock className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <span>
-              <strong>Prefijo bloqueado:</strong> Has emitido <strong>{invoiceCount} factura{invoiceCount !== 1 ? 's' : ''}</strong>. No se puede modificar para mantener consistencia contable.
-            </span>
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100/30 dark:border-amber-900/40">
+            <div className="w-10 h-10 rounded-xl bg-amber-100/50 dark:bg-amber-950/50 flex items-center justify-center flex-shrink-0">
+              <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <p className="text-[11px] font-bold text-amber-900/80 dark:text-amber-200/80 uppercase tracking-tight">
+              <strong>Prefijo bloqueado:</strong> Has emitido <strong>{invoiceCount} factura{invoiceCount !== 1 ? 's' : ''}</strong>. No es posible modificar el prefijo por razones contables.
+            </p>
           </div>
         )}
 
         {/* Grid: Configuración */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Prefijo */}
           <div className="space-y-1.5">
-            <Label htmlFor="invoice_prefix" className="text-sm dark:text-gray-50">
-              Prefijo de Factura *
+            <Label htmlFor="invoice_prefix" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              Prefijo de Venta *
             </Label>
             <Input
               id="invoice_prefix"
               value={invoicePrefix}
               onChange={(e) => handlePrefixChange(e.target.value)}
               disabled={prefixLocked}
-              placeholder="Ej: SALON"
-              className={`h-9 font-mono uppercase ${prefixError ? 'border-red-500' : ''}`}
+              placeholder="Ej: FAC"
+              className={`h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm font-black uppercase font-mono ${prefixError ? 'border-red-500' : ''}`}
               maxLength={10}
             />
             {prefixError && (
-              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+              <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" />
                 {prefixError}
               </p>
             )}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Solo letras y números (2-10 caracteres)
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
+              Letras y Números (Máx 10)
             </p>
           </div>
 
           {/* Número Inicial */}
           <div className="space-y-1.5">
-            <Label htmlFor="sequential_start" className="text-sm dark:text-gray-50">
-              Número Inicial
+            <Label htmlFor="sequential_start" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              Secuencia Inicial
             </Label>
             <Input
               id="sequential_start"
@@ -258,106 +264,108 @@ export default function InvoiceConfigSection() {
               value={sequentialStart}
               onChange={(e) => setSequentialStart(parseInt(e.target.value) || 1)}
               disabled={prefixLocked || invoiceCount > 0}
-              className="h-9"
+              className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm font-black"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {invoiceCount > 0 ? 'Bloqueado (facturas emitidas)' : 'Primera factura iniciará en este número'}
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
+              {invoiceCount > 0 ? 'Protegido por historial' : 'Comienza en el n° indicado'}
             </p>
           </div>
 
-          {/* Ejemplos - Full Width */}
-          <div className="lg:col-span-2">
-            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">💡 Sugerencias:</p>
-            <div className="flex flex-wrap gap-2">
-              {['SALON', 'BARBER', 'SPA', 'ESTETICA', 'BELLEZA'].map((example) => (
-                <Badge
+          {/* Ejemplos - Compact Row */}
+          <div className="sm:col-span-2">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest pr-1">Sugeridos:</span>
+              {['SALON', 'BARBER', 'SPA', 'CITA', 'TURNO'].map((example) => (
+                <Button
                   key={example}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-colors dark:hover:bg-orange-900/20 dark:hover:border-orange-700"
-                  onClick={() => !prefixLocked && handlePrefixChange(example)}
+                  type="button"
+                  variant="ghost"
+                  disabled={prefixLocked}
+                  onClick={() => handlePrefixChange(example)}
+                  className="h-7 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-400 hover:bg-orange-50 hover:text-orange-600 transition-colors disabled:opacity-50"
                 >
                   {example}
-                </Badge>
+                </Button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Vista Previa Compacta */}
+        {/* Vista Previa Premium */}
         {previewNumber && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <FileText className="w-4 h-4 text-green-600" />
-            <span>Primera factura:</span>
-            <Badge variant="secondary" className="font-mono text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20">
-              {previewNumber}
-            </Badge>
-            <span>→</span>
-            {[1, 2].map((num) => {
-              const currentYear = new Date().getFullYear()
-              const nextNum = `${invoicePrefix.toUpperCase()}-${currentYear}-${String(sequentialStart + num).padStart(4, '0')}`
-              return (
-                <Badge key={num} variant="outline" className="font-mono text-xs">
-                  {nextNum}
+          <div className="flex items-center gap-4 p-3 rounded-2xl bg-orange-50/30 dark:bg-orange-950/20 border border-orange-100/30 dark:border-orange-900/40">
+            <div className="w-10 h-10 rounded-xl bg-orange-100/50 dark:bg-orange-950/50 flex items-center justify-center flex-shrink-0">
+              <FileText className="h-5 w-5 text-orange-600" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black text-orange-950 dark:text-orange-200 uppercase tracking-widest pr-1">Próxima Emisión</span>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="bg-orange-600 text-white text-[11px] font-black uppercase tracking-widest border-0 rounded-lg">
+                  {previewNumber}
                 </Badge>
-              )
-            })}
+                <div className="flex gap-1">
+                  {[1, 2].map((num) => {
+                    const currentYear = new Date().getFullYear()
+                    const nextNum = `${invoicePrefix.toUpperCase()}-${currentYear}-${String(sequentialStart + num).padStart(4, '0')}`
+                    return (
+                      <span key={num} className="text-[10px] font-bold text-gray-300 uppercase tracking-tight">/ {nextNum}</span>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Reglas Compactas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400">
-          <div className="flex items-center gap-1.5">
-            <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
-            <span>Solo A-Z y 0-9 (2-10 caracteres)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
-            <span>Sin espacios ni símbolos especiales</span>
-          </div>
-          <div className="flex items-center gap-1.5 lg:col-span-2">
-            <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <span><strong>Importante:</strong> Se bloquea tras emitir la primera factura</span>
-          </div>
-        </div>
+        {/* Políticas y Estadísticas */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-gray-50 dark:border-gray-800">
+           <div className="flex flex-col gap-1">
+             <div className="flex items-center gap-1.5 text-[9px] font-black text-gray-400 uppercase tracking-widest">
+               <CheckCircle className="w-3 h-3 text-green-500" />
+               Aprobado por sistema fiscal
+             </div>
+             {invoiceCount > 0 && (
+               <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-tight">
+                 {invoiceCount} registros históricos detectados
+               </div>
+             )}
+           </div>
 
-        {/* Estadísticas */}
-        {invoiceCount > 0 && (
-          <div className="flex flex-wrap items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-            <FileText className="w-4 h-4" />
-            <span>Has emitido <strong>{invoiceCount}</strong> factura{invoiceCount !== 1 ? 's' : ''} con prefijo <strong>{invoicePrefix}</strong></span>
-          </div>
-        )}
-
-        {/* Botones de Acción */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-3">
-          <Button
-            onClick={handleSave}
-            disabled={saving || prefixLocked || !invoicePrefix || !!prefixError}
-            className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700"
-          >
-            {saving ? (
-              <>
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                Guardando...
-              </>
-            ) : (
-              'Guardar Configuración'
-            )}
-          </Button>
-
-          {!prefixLocked && invoicePrefix && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setInvoicePrefix('')
-                setSequentialStart(1)
-                setPrefixError('')
-              }}
-              className="w-full sm:w-auto hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              Limpiar
-            </Button>
-          )}
+           {/* Sticky Action Bar - Standardized */}
+           <div className="flex items-center gap-2">
+             {!prefixLocked && invoicePrefix && (
+               <Button
+                 type="button"
+                 variant="ghost"
+                 onClick={() => {
+                   setInvoicePrefix('')
+                   setSequentialStart(1)
+                   setPrefixError('')
+                 }}
+                 className="h-9 px-4 rounded-lg text-xs font-bold text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+               >
+                 Restablecer
+               </Button>
+             )}
+             <Button
+               type="button"
+               onClick={handleSave}
+               disabled={saving || prefixLocked || !invoicePrefix || !!prefixError}
+               className="h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+             >
+               {saving ? (
+                 <>
+                   <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                   Guardando...
+                 </>
+               ) : (
+                 <>
+                   <Save className="w-3.5 h-3.5 mr-2" />
+                   Aplicar Formato
+                 </>
+               )}
+             </Button>
+           </div>
         </div>
       </CardContent>
     </Card>

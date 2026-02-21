@@ -1,0 +1,72 @@
+# TuTurno: Guía de Estilo Premium SaaS
+
+Este documento define los principios de diseño aplicados al rediseño del Dashboard (Febrero 2024), con el objetivo de mantener una estética de alta gama, moderna y profesional ("Modern SaaS" / "Soft Minimalism").
+IMPORTANTE: Solo diseñar la interfaz de usuario, no la lógica de negocio.
+
+## 1. Arquitectura de "Capas" y Elevación
+
+En lugar de usar bordes rígidos, el diseño se basa en la profundidad visual.
+
+- **Bordes**: Eliminar `border` o `border-gray-200`. Usar `border-0`.
+- **Sombras (Shadows)**: Usar sombras muy difusas y ligeras para crear un efecto flontante.
+  - _Clase recomendada:_ `shadow-[0_8px_30px_rgb(0,0,0,0.04)]` (para modo claro).
+- **Redondeado (Border Radius)**: Evitar esquinas cuadradas.
+  - _Clase recomendada:_ `rounded-3xl` o `rounded-[2.5rem]` (40px) para contenedores grandes.
+
+## 2. Tipografía y Jerarquía Premium
+
+La organización visual debe sentirse aireada y estructurada sin necesidad de líneas divisorias.
+
+### Secciones de Página
+
+Para los encabezados de sección, usar el patrón **"Eyebrow + Title"**:
+
+- **Eyebrow (Ceja)**: Texto pequeño, en mayúsculas, negrita extrema y mucho espaciado entre letras.
+  - _Clase:_ `text-[10px] items-center uppercase tracking-[0.2em] font-extrabold text-orange-600`
+- **Barra de Acento**: Una barra vertical a la izquierda con degradado y brillo sutil.
+  - _Clase:_ `absolute left-0 w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]`
+- **Título**: Grande, pesado y con poco espaciado entre letras para un look moderno.
+  - _Clase:_ `text-2xl font-extrabold tracking-tight`
+
+### Layout del Header
+
+- **Integrado**: Los encabezados de página no deben usar efectos de `sticky` o `backdrop-blur` por defecto. Deben estar integrados en el flujo de la página (`p-6` o `py-8`) para mantener una navegación limpia y aireada.
+- **Sin Sombras**: Evitar fondos sólidos con sombras en el header superior a menos que sea una vista de tabla muy larga donde la persistencia sea crítica.
+- **Full Width (100%)**: Las páginas del dashboard deben utilizar el 100% del ancho disponible para maximizar el espacio de trabajo. Evitar contenedores con `max-w-7xl` o similares. Usar `w-full` y `px-6` para mantener el aire en los laterales sin restringir el crecimiento del contenido.
+
+## 3. Gráficos Minimalistas (Analytics)
+
+Los datos deben ser los protagonistas.
+
+- **Fondo**: Eliminar `CartesianGrid` (cuadrículas).
+- **Ejes**: Usar colores muy tenues como `text-[#94a3b8]`.
+- **Glow & Gradients**:
+  - Usar `AreaChart` con un `linearGradient` que baje de opacidad (15% -> 0%).
+  - Para barras (`Bar`), usar `radius={[0, 12, 12, 0]}` para bordes curvos.
+- **Transparencia**: Usar `stroke="transparent"` en elementos de gráficos para que el color de fondo fluya.
+
+## 5. Formularios y Controles Compactos
+
+Los formularios deben sentirse densos pero legibles, optimizando el espacio vertical.
+
+- **Inputs y Selects**: Usar una altura estándar de `h-10` y bordes redondeados `rounded-xl`. Fondo suave `bg-gray-50/50`.
+- **Labels (Etiquetas)**: Pequeñas, en mayúsculas y negrita extrema.
+  - _Clase:_ `text-[10px] font-black uppercase tracking-widest text-gray-400`
+- **Interruptores (Switches)**: Escalar ligeramente (`scale-110`) para facilitar la interacción táctil en móviles.
+
+## 6. Barra de Acciones Persistente (Sticky Action Bar)
+
+Para formularios largos, las acciones principales deben estar siempre accesibles.
+
+- **Diseño**: Un contenedor flotante, con desenfoque de fondo (glassmorphism) y bordes muy redondeados.
+- **Clase**: `sticky bottom-4 z-20 flex justify-end bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl gap-2`
+
+## 7. Botones Premium (Call to Action)
+
+- **Estandarización**: Usar el naranja de marca con sombras profundas.
+- **Save Button**: `h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95`.
+- **Ghost/Neutral**: `h-9 px-4 rounded-lg text-xs font-bold text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all`.
+
+---
+
+_Nota: Este estilo está inspirado en plataformas como Stripe, Linear y las nuevas interfaces de Apple._

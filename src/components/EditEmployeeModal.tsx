@@ -644,20 +644,26 @@ export default function EditEmployeeModal({
       </DialogContent>
     </Dialog>
 
-    {/* Delete Confirmation Dialog */}
     <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <AlertDialogTitle>
+              ¿Estás seguro?
+            </AlertDialogTitle>
+          </div>
           <AlertDialogDescription>
             Esta acción eliminará permanentemente a {employee.first_name} {employee.last_name}. Esta acción no se puede deshacer.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="mt-4 gap-2">
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
             disabled={deleting}
           >
             {deleting ? (

@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Building, Users, UserPlus } from 'lucide-react'
+import { Building, Users, UserPlus, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
@@ -493,37 +493,47 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="w-full space-y-6">{/* Changed from max-w-7xl to w-full */}
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-     
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Clientes</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Gestiona la base de datos de clientes
-              </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-6">
+      <div className="w-full space-y-8">
+        {/* Premium Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="relative pl-6 flex-shrink-0">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-1">
+                {businessName || 'Administración'}
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-gray-50">
+                Gestión de Clientes
+              </h1>
             </div>
           </div>
+          
+          <Button
+            onClick={handleAddClient}
+            className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 shadow-md hover:shadow-lg transition-all rounded-2xl h-11 px-6 font-bold"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Nuevo Cliente
+          </Button>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Premium Style */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+          <TabsList className="inline-flex h-12 items-center justify-center rounded-3xl bg-gray-100/80 dark:bg-gray-800/50 p-1.5 backdrop-blur-sm shadow-inner overflow-hidden border border-gray-200/50 dark:border-gray-700/50">
             <TabsTrigger
               value="business"
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white transition-all"
+              className="rounded-2xl px-6 py-2 text-xs font-bold tracking-wider uppercase transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-orange-600 dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-lg"
             >
               <Users className="w-4 h-4 mr-2" />
-              NEGOCIO
+              Negocio
             </TabsTrigger>
             <TabsTrigger
               value="registered"
-              className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white transition-all"
+              className="rounded-2xl px-6 py-2 text-xs font-bold tracking-wider uppercase transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 data-[state=active]:text-orange-600 dark:data-[state=active]:text-orange-400 data-[state=active]:shadow-lg"
             >
               <UserPlus className="w-4 h-4 mr-2" />
-              REGISTRADOS
+              Registrados
             </TabsTrigger>
           </TabsList>
 
@@ -632,16 +642,22 @@ export default function ClientsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent onCloseAutoFocus={(e) => e.preventDefault()}>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <AlertDialogTitle>
+                ¿Estás seguro?
+              </AlertDialogTitle>
+            </div>
             <AlertDialogDescription>
               Esta acción eliminará permanentemente este cliente. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel
               onClick={() => {
                 setDeleteDialogOpen(false)
@@ -652,7 +668,7 @@ export default function ClientsPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteClient}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
             >
               Eliminar
             </AlertDialogAction>

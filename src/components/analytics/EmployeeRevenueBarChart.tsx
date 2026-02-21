@@ -3,9 +3,9 @@
 import { useMemo } from 'react'
 import { Label, Pie, PieChart, Cell } from 'recharts'
 import { TrendingUp } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { formatCurrency } from './ChartComponents'
+import { BaseChartCard } from './BaseChartCard'
+import { ChartEmptyState, CustomTooltip, formatCurrency } from './ChartComponents'
 import type { EmployeeRevenueDetailed } from '@/types/analytics'
 
 interface EmployeeRevenueBarChartProps {
@@ -83,37 +83,27 @@ export const EmployeeRevenueBarChart = ({
     return config
   }, [chartData])
 
-  if (loading) {
+  if (loading || error || !chartData.length) {
     return (
-      <Card className="flex flex-col">
-        <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700">
-          <CardTitle>Ingresos por Empleado</CardTitle>
-          <CardDescription>Cargando...</CardDescription>
-        </CardHeader>
-      </Card>
-    )
-  }
-
-  if (error || !chartData.length) {
-    return (
-      <Card className="flex flex-col">
-        <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700">
-          <CardTitle>Ingresos por Empleado</CardTitle>
-          <CardDescription>No hay datos disponibles</CardDescription>
-        </CardHeader>
-      </Card>
+      <BaseChartCard
+        title="Ingresos por Empleado"
+        description="Distribución de ingresos por empleado"
+        loading={loading}
+        error={error}
+      >
+        {!chartData.length && <ChartEmptyState message="No hay datos disponibles" />}
+      </BaseChartCard>
     )
   }
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="pt-4 px-6 pb-2 border-b border-gray-200 dark:border-gray-700">
-        <div>
-          <CardTitle className="font-semibold text-gray-900 dark:text-gray-50">Ingresos por Empleado</CardTitle>
-          <CardDescription>Distribución de ingresos por empleado</CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 p-6 flex items-center justify-center min-h-[350px]">
+    <BaseChartCard
+      title="Ingresos por Empleado"
+      description="Distribución de ingresos por empleado"
+      loading={loading}
+      error={error}
+    >
+      <div className="flex flex-col items-center justify-center min-h-[350px]">
         <ChartContainer
           config={chartConfig}
           className="mx-auto aspect-square w-full max-w-[300px]"
@@ -127,11 +117,17 @@ export const EmployeeRevenueBarChart = ({
               data={chartData}
               dataKey="revenue"
               nameKey="name"
-              innerRadius={60}
-              strokeWidth={5}
+              innerRadius={50}
+              outerRadius={100}
+              strokeWidth={8}
+              stroke="transparent"
             >
               {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.fill} 
+                  className="stroke-background dark:stroke-gray-900"
+                />
               ))}
               <Label
                 content={({ viewBox }) => {
@@ -146,14 +142,14 @@ export const EmployeeRevenueBarChart = ({
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-2xl font-bold"
+                          className="fill-foreground text-2xl font-extrabold tracking-tight"
                         >
                           {formatCurrency(totalRevenue)}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground text-sm"
+                          className="fill-muted-foreground text-xs font-medium uppercase tracking-widest opacity-70"
                         >
                           Total
                         </tspan>
@@ -165,15 +161,17 @@ export const EmployeeRevenueBarChart = ({
             </Pie>
           </PieChart>
         </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          {topEmployee?.name} lidera con {topEmployeePercentage}% <TrendingUp className="h-4 w-4" />
+
+        <div className="mt-8 space-y-3 w-full">
+          <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-50 text-base">
+            <TrendingUp className="h-5 w-5 text-orange-500" />
+            <span>{topEmployee?.name} lidera con {topEmployeePercentage}%</span>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Mostrando ingresos de {chartData.length} {chartData.length === 1 ? 'empleado' : 'empleados'}
+          </p>
         </div>
-        <div className="leading-none text-muted-foreground">
-          Mostrando ingresos de {chartData.length} empleado{chartData.length !== 1 ? 's' : ''} en el período
-        </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </BaseChartCard>
   )
 }

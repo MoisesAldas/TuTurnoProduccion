@@ -855,19 +855,23 @@ export default function ClientProfilePage() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="flex items-center text-red-600 dark:text-red-400">
-                        <AlertTriangle className="w-5 h-5 mr-2" />
-                        ¿Estás absolutamente seguro?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription className="text-base py-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                          <AlertTriangle className="w-5 h-5 text-red-600" />
+                        </div>
+                        <AlertDialogTitle>
+                          ¿Estás absolutamente seguro?
+                        </AlertDialogTitle>
+                      </div>
+                      <AlertDialogDescription>
                         Esta acción <strong>no se puede deshacer</strong>. Esto eliminará permanentemente tu cuenta y removerá todos tus datos de nuestros servidores.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className="mt-4 gap-2">
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction 
                         onClick={handleDeleteAccount} 
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
                       >
                         Sí, eliminar mi cuenta
                       </AlertDialogAction>

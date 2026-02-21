@@ -25,8 +25,10 @@ import { PDFPreviewModal } from '@/components/pdf'
 import jsPDF from 'jspdf'
 // Modular cancellation components
 import { handleBusinessCancellation, getBusinessOwnerId } from '@/lib/appointments/businessCancellationAdapter'
+import { StatsCard } from '@/components/StatsCard'
 
 import type { Employee, Service, Appointment } from '@/types/database'
+
 
 
 export default function ListarPage() {
@@ -526,10 +528,15 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
   // Early return for loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-950">
         <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Cargando...</p>
+          <div className="relative w-20 h-20 mx-auto mb-8">
+            <div className="absolute inset-0 border-4 border-orange-100 dark:border-orange-900/30 rounded-[2rem]"></div>
+            <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-[2rem] animate-spin shadow-[0_0_15px_rgba(234,88,12,0.2)]"></div>
+          </div>
+          <p className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse">
+            Preparando Listado...
+          </p>
         </div>
       </div>
     )
@@ -566,347 +573,383 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Sticky Header */}
-      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-[5]">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            {/* Título */}
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-slate-950">
+      {/* Premium Header - Integrated */}
+      <div className="w-full px-6 py-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="relative pl-6">
+            <div className="absolute left-0 w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 mb-1">
+                Gestión de Citas
+              </span>
+              <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
                 Listado de Citas
               </h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Consulta, filtra y exporta tus citas
-              </p>
             </div>
+          </div>
 
-            {/* Badge + Exportar */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              {businessName && (
-                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
-                  <Building className="w-4 h-4 mr-2" />
-                  {businessName}
-                </Badge>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-2 duration-200">
-                  <DropdownMenuLabel className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                Formato de Exportación
-              </DropdownMenuLabel>
-
-              <DropdownMenuSeparator />
-
-              {/* CSV Option */}
-              <DropdownMenuItem onClick={handleExportCSV} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
-                <FileText className="w-4 h-4 mr-3 text-blue-600" />
-                <div className="flex-1">
-                  <p className="font-medium">CSV</p>
-                  <p className="text-xs text-gray-500">Valores separados por comas</p>
-                </div>
-              </DropdownMenuItem>
-
-              {/* Excel Option */}
-              <DropdownMenuItem onClick={handleExportExcel} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
-                <FileSpreadsheet className="w-4 h-4 mr-3 text-green-600" />
-                <div className="flex-1">
-                  <p className="font-medium">Excel</p>
-                  <p className="text-xs text-gray-500">Hoja de cálculo con múltiples pestañas</p>
-                </div>
-              </DropdownMenuItem>
-
-              {/* PDF Option */}
-              <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer focus:bg-orange-50 focus:text-orange-600 transition-colors">
-                <FileBarChart className="w-4 h-4 mr-3 text-red-600" />
-                <div className="flex-1">
-                  <p className="font-medium">PDF</p>
-                  <p className="text-xs text-gray-500">Reporte profesional con tablas</p>
-                </div>
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-
-              <div className="px-2 py-1.5 text-xs text-gray-400 text-center">
-                Los datos se descargarán automáticamente
+          <div className="flex items-center gap-3">
+            {businessName && (
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{businessName}</span>
               </div>
-            </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            )}
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="h-11 px-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm transition-all duration-300 flex items-center gap-2"
+                >
+                  <Download className="w-4.5 h-4.5 text-orange-600" />
+                  <span>Exportar Datos</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 p-2 rounded-[1.5rem] border-0 shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
+                <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Formato de Salida
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="my-1 bg-gray-50" />
+                
+                <DropdownMenuItem onClick={handleExportCSV} className="rounded-xl p-3 cursor-pointer focus:bg-orange-50 dark:focus:bg-orange-900/20 group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">CSV</p>
+                      <p className="text-[10px] text-gray-500">Valores por comas</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={handleExportExcel} className="rounded-xl p-3 cursor-pointer focus:bg-orange-50 dark:focus:bg-orange-900/20 group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">Excel</p>
+                      <p className="text-[10px] text-gray-500">Hoja de cálculo</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={handleExportPDF} className="rounded-xl p-3 cursor-pointer focus:bg-orange-50 dark:focus:bg-orange-900/20 group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <FileBarChart className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm">PDF</p>
+                      <p className="text-[10px] text-gray-500">Reporte Profesional</p>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Stats Cards */}
-       
+        {/* Stats Metrics Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatsCard
+            title="Total Citas"
+            value={stats.total}
+            description="Citas encontradas en este periodo"
+            icon={Calendar}
+            variant="blue"
+          />
+          <StatsCard
+            title="Pendientes"
+            value={stats.pending}
+            description="Incluye confirmadas y en proceso"
+            icon={Clock}
+            variant="orange"
+          />
+          <StatsCard
+            title="Completadas"
+            value={stats.completed}
+            description="Citas finalizadas con éxito"
+            icon={Check}
+            variant="green"
+          />
+          <StatsCard
+            title="Ingresos Totales"
+            value={formatPrice(stats.totalRevenue)}
+            description="De las citas completadas"
+            icon={DollarSign}
+            variant="green"
+          />
+        </div>
 
-        {/* Filtros */}
-        <Card className="overflow-hidden border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-          <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange- via-amber-50 to-yellow-50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center shadow-md">
-                <Calendar className="w-5 h-5 text-white" />
-              </div>
-           
-              <div>
-                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-50">Filtros Avanzados</CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Personaliza tu búsqueda de citas</CardDescription>
-              </div>
+        {/* Filtros Avanzados - Premium Card */}
+        <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] dark:bg-gray-900 rounded-[2.5rem] overflow-hidden hover:shadow-xl transition-all duration-500">
+          <CardHeader className="px-8 pt-8 pb-4">
+            <div className="flex flex-col gap-1 relative pl-6">
+              <div className="absolute left-0 w-1 h-8 bg-orange-500 rounded-full" />
+              <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                Personalización
+              </span>
+              <CardTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                Filtros Avanzados
+              </CardTitle>
             </div>
           </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Empleado */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                Empleado
-              </label>
-              <Select
-                value={employeeIds.length === employees.length ? 'all' : (employeeIds[0] || 'all')}
-                onValueChange={(val) => {
-                  if (val === 'all') setEmployeeIds(employees.map(e => e.id))
-                  else setEmployeeIds([val])
-                  setPage(1)
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todo el equipo</SelectItem>
-                  {employees.map(e => (
-                    <SelectItem key={e.id} value={e.id}>{e.first_name} {e.last_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Servicio */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                <Briefcase className="w-4 h-4 text-orange-600" />
-                Servicio
-              </label>
-              <Select
-                value={serviceIds.length === 0 ? 'all' : (serviceIds[0])}
-                onValueChange={(val) => {
-                  if (val === 'all') setServiceIds([])
-                  else setServiceIds([val])
-                  setPage(1)
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los servicios</SelectItem>
-                  {services.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Estado */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                <ListIcon className="w-4 h-4 text-orange-600" />
-                Estado
-              </label>
-              <Select
-                value={statuses.length === 0 ? 'all' : (statuses[0])}
-                onValueChange={(val) => {
-                  if (val === 'all') setStatuses([])
-                  else setStatuses([val])
-                  setPage(1)
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  {statusOptions.map(s => (
-                    <SelectItem key={s} value={s}>
-                      {statusConfig[s as keyof typeof statusConfig]?.label || s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Tipo cliente */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                <User className="w-4 h-4 text-orange-600" />
-                Tipo de Cliente
-              </label>
-              <Select value={walkinFilter} onValueChange={(v: any) => { setWalkinFilter(v); setPage(1) }}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Todos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Todos</SelectItem>
-                  <SelectItem value="only">Solo Walk-in</SelectItem>
-                  <SelectItem value="exclude">Excluir Walk-in</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Fecha desde */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-orange-600" />
-                Desde
-              </label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
-                className="w-full"
-              />
-            </div>
-
-            {/* Fecha hasta */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-orange-600" />
-                Hasta
-              </label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
-                className="w-full"
-              />
-            </div>
-
-            {/* Búsqueda */}
-            <div className="space-y-2 sm:col-span-2">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                <SearchIcon className="w-4 h-4 text-orange-600" />
-                Buscar Cliente
-              </label>
-              <Input
-                placeholder="Nombre o teléfono..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-                className="w-full"
-              />
-            </div>
-
-            {/* Ordenar por */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Ordenar por</label>
-              <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="appointment_date,start_time">Fecha y hora</SelectItem>
-                  <SelectItem value="appointment_date">Fecha</SelectItem>
-                  <SelectItem value="start_time">Hora</SelectItem>
-                  <SelectItem value="status">Estado</SelectItem>
-                  <SelectItem value="total_price">Precio</SelectItem>
-                  <SelectItem value="employee_name">Empleado</SelectItem>
-                  <SelectItem value="client_name">Cliente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Dirección */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Dirección</label>
-              <Select value={sortDir} onValueChange={(v: any) => { setSortDir(v); setPage(1) }}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="asc">Ascendente</SelectItem>
-                  <SelectItem value="desc">Descendente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Limpiar filtros */}
-            <div className="sm:col-span-2 flex items-end">
-              <Button
-                variant="outline"
-                className="w-full hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors"
-                onClick={() => {
-                  setEmployeeIds(employees.map(e => e.id))
-                  setServiceIds([])
-                  setStatuses([])
-                  setDateFrom('')
-                  setDateTo('')
-                  setSearch('')
-                  setWalkinFilter('any')
-                  setSortBy('appointment_date,start_time')
-                  setSortDir('asc')
-                  setPage(1)
-                }}
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Limpiar Filtros
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Resultados */}
-      <Card className="overflow-hidden border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
-        <CardHeader className="border-b border-gray-200 bg-gradient-to-r from-orange- via-amber-50 to-yellow-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                 <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center shadow-md">
-                <SearchIcon className="w-5 h-5 text-white" />
+          <CardContent className="px-8 pb-8 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Empleado */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Empleado
+                </label>
+                <Select
+                  value={employeeIds.length === employees.length ? 'all' : (employeeIds[0] || 'all')}
+                  onValueChange={(val) => {
+                    if (val === 'all') setEmployeeIds(employees.map(e => e.id))
+                    else setEmployeeIds([val])
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs ring-offset-transparent focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-xl">
+                    <SelectItem value="all">Todo el equipo</SelectItem>
+                    {employees.map(e => (
+                      <SelectItem key={e.id} value={e.id}>{e.first_name} {e.last_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              
-           
-              <div>
-                <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">Resultados</CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-gray-600">
-                  {totalCount} {totalCount === 1 ? 'cita encontrada' : 'citas encontradas'}
-                </CardDescription>
+
+              {/* Servicio */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Servicio
+                </label>
+                <Select
+                  value={serviceIds.length === 0 ? 'all' : (serviceIds[0])}
+                  onValueChange={(val) => {
+                    if (val === 'all') setServiceIds([])
+                    else setServiceIds([val])
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-xl">
+                    <SelectItem value="all">Todos los servicios</SelectItem>
+                    {services.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Estado */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Estado
+                </label>
+                <Select
+                  value={statuses.length === 0 ? 'all' : (statuses[0])}
+                  onValueChange={(val) => {
+                    if (val === 'all') setStatuses([])
+                    else setStatuses([val])
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-xl">
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    {statusOptions.map(s => (
+                      <SelectItem key={s} value={s}>
+                        {statusConfig[s as keyof typeof statusConfig]?.label || s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tipo cliente */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Tipo de Cliente
+                </label>
+                <Select value={walkinFilter} onValueChange={(v: any) => { setWalkinFilter(v); setPage(1) }}>
+                  <SelectTrigger className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-xl">
+                    <SelectItem value="any">Todos</SelectItem>
+                    <SelectItem value="only">Solo Walk-in</SelectItem>
+                    <SelectItem value="exclude">Excluir Walk-in</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Fecha desde */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Desde
+                </label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+                  className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all"
+                />
+              </div>
+
+              {/* Fecha hasta */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Hasta
+                </label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+                  className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all"
+                />
+              </div>
+
+              {/* Búsqueda */}
+              <div className="space-y-2 lg:col-span-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Buscar Cliente
+                </label>
+                <div className="relative group">
+                  <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                  <Input
+                    placeholder="Escribe nombre o teléfono..."
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+                    className="h-11 pl-11 pr-4 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Ordenar por */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Ordenar por
+                </label>
+                <Select value={sortBy} onValueChange={(v: any) => { setSortBy(v); setPage(1) }}>
+                  <SelectTrigger className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-xl">
+                    <SelectItem value="appointment_date,start_time">Fecha y hora</SelectItem>
+                    <SelectItem value="appointment_date">Fecha</SelectItem>
+                    <SelectItem value="start_time">Hora</SelectItem>
+                    <SelectItem value="status">Estado</SelectItem>
+                    <SelectItem value="total_price">Precio</SelectItem>
+                    <SelectItem value="employee_name">Empleado</SelectItem>
+                    <SelectItem value="client_name">Cliente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Dirección */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  Dirección
+                </label>
+                <Select value={sortDir} onValueChange={(v: any) => { setSortDir(v); setPage(1) }}>
+                  <SelectTrigger className="h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950 px-4 font-bold text-xs focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-0 shadow-xl">
+                    <SelectItem value="asc">Ascendente</SelectItem>
+                    <SelectItem value="desc">Descendente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Limpiar filtros */}
+              <div className="lg:col-span-2 flex items-end">
+                <Button
+                  variant="outline"
+                  className="w-full h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 font-bold text-xs text-gray-500 hover:text-orange-600 hover:border-orange-100 hover:bg-orange-50/30 transition-all shadow-sm"
+                  onClick={() => {
+                    setEmployeeIds(employees.map(e => e.id))
+                    setServiceIds([])
+                    setStatuses([])
+                    setDateFrom('')
+                    setDateTo('')
+                    setSearch('')
+                    setWalkinFilter('any')
+                    setSortBy('appointment_date,start_time')
+                    setSortDir('asc')
+                    setPage(1)
+                  }}
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Limpiar Filtros
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+      {/* Resultados - Master List */}
+      <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] dark:bg-gray-900 rounded-[2.5rem] overflow-hidden hover:shadow-xl transition-all duration-500">
+        <CardHeader className="px-8 pt-8 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1 relative pl-6">
+              <div className="absolute left-0 w-1 h-8 bg-orange-500 rounded-full" />
+              <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                Listado
+              </span>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">Resultados</CardTitle>
+                <div className="px-2 py-0.5 bg-orange-50 dark:bg-orange-900/20 rounded-full">
+                  <span className="text-[10px] font-black text-orange-600 dark:text-orange-400">
+                    {totalCount} {totalCount === 1 ? 'cita' : 'citas'}
+                  </span>
+                </div>
               </div>
             </div>
             {fetching && (
-              <Loader2 className="w-5 h-5 text-orange-600 animate-spin" />
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                <Loader2 className="w-3.5 h-3.5 text-orange-600 animate-spin" />
+                <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Sincronizando</span>
+              </div>
             )}
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {fetching && rows.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-600">Cargando citas...</p>
+            <div className="text-center py-24">
+              <div className="relative w-16 h-16 mx-auto mb-6">
+                <div className="absolute inset-0 border-4 border-orange-100 dark:border-orange-900/30 rounded-2xl"></div>
+                <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-2xl animate-spin"></div>
+              </div>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Buscando citas...</p>
             </div>
           ) : rows.length === 0 ? (
-            <div className="text-center py-16 bg-gradient-to-b from-gray-50 to-white">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <Calendar className="w-10 h-10 text-orange-600" />
+            <div className="text-center py-24 bg-gradient-to-b from-transparent to-gray-50/50 dark:to-gray-800/20">
+              <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-gray-100 dark:border-gray-700">
+                <Calendar className="w-10 h-10 text-orange-100 dark:text-orange-900" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay citas</h3>
-              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                No se encontraron citas con los filtros seleccionados. Intenta ajustar los criterios de búsqueda.
+              <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2">No se encontraron citas</h3>
+              <p className="text-xs font-medium text-gray-500 max-w-[240px] mx-auto">
+                Ajusta los filtros o intenta con términos de búsqueda diferentes.
               </p>
             </div>
           ) : (
             <>
-              {/* Desktop Table - DataTable Component */}
-              <div className="hidden lg:block p-6">
+              {/* Desktop Table View */}
+              <div className="hidden lg:block px-8 pb-8 pt-2">
                 <DataTable
                   columns={columns}
                   data={rows}
@@ -915,177 +958,126 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
               </div>
 
 
-              {/* Mobile Cards */}
-              <div className="lg:hidden space-y-3 p-3">
+              {/* Mobile Cards - Premium Style */}
+              <div className="lg:hidden px-6 pb-8 pt-2 space-y-4">
                 {rows.map((row) => (
                   <div
                     key={row.id}
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                    className="group relative bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-xl hover:scale-[1.01] transition-all duration-300 overflow-hidden"
                   >
-                    {/* Card Header */}
-                    <div className="p-4 bg-gradient-to-br from-orange-50/50 via-amber-50/30 to-transparent border-b border-gray-100">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <User className="w-4 h-4 text-orange-600 flex-shrink-0" />
-                            <h3 className="font-semibold text-gray-900 truncate">{row.client_name}</h3>
-                          </div>
-                          <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                            <span className="font-mono">{row.client_phone}</span>
-                            {row.is_walk_in && (
-                              <Badge className="bg-orange-100 text-orange-700 border-orange-200 border text-[10px] px-1.5 py-0">
-                                Walk-in
-                              </Badge>
-                            )}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="p-5 flex flex-col gap-4">
+                      {/* Top row: Status and Action */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full animate-pulse ${
+                            row.status === 'completed' ? 'bg-green-500' :
+                            row.status === 'cancelled' ? 'bg-red-500' : 'bg-orange-500'
+                          }`} />
                           {getStatusBadge(row.status)}
-
-                          {/* Mobile Actions Menu */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 rounded-lg"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuLabel className="text-xs font-semibold text-gray-500 uppercase">
-                                Acciones
-                              </DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-
-                              {/* Ver detalles */}
-                              <DropdownMenuItem
-                                onClick={() => handleView(row.id)}
-                                className="cursor-pointer"
-                              >
-                                <Eye className="w-4 h-4 mr-2 text-blue-600" />
-                                <span>Ver detalles</span>
-                              </DropdownMenuItem>
-
-                              {/* Editar */}
-                              {row.status !== 'completed' && row.status !== 'cancelled' && (
-                                <DropdownMenuItem
-                                  onClick={() => handleEdit(row.id)}
-                                  className="cursor-pointer"
-                                >
-                                  <Edit className="w-4 h-4 mr-2 text-orange-600" />
-                                  <span>Editar</span>
-                                </DropdownMenuItem>
-                              )}
-
-                              <DropdownMenuSeparator />
-
-                              {/* Finalizar y Cobrar */}
-                              {['confirmed', 'in_progress'].includes(row.status) && (
-                                <DropdownMenuItem
-                                  onClick={() => handleCheckout(row.id)}
-                                  className="cursor-pointer"
-                                >
-                                  <CreditCard className="w-4 h-4 mr-2 text-green-600" />
-                                  <span>Finalizar y Cobrar</span>
-                                </DropdownMenuItem>
-                              )}
-
-                              {/* Confirmar */}
-                              {row.status === 'pending' && (
-                                <DropdownMenuItem
-                                  onClick={() => handleConfirm(row.id)}
-                                  className="cursor-pointer"
-                                >
-                                  <Check className="w-4 h-4 mr-2 text-green-600" />
-                                  <span>Confirmar</span>
-                                </DropdownMenuItem>
-                              )}
-
-                              {/* En Progreso */}
-                              {row.status === 'confirmed' && (
-                                <DropdownMenuItem
-                                  onClick={() => handleInProgress(row.id)}
-                                  className="cursor-pointer"
-                                >
-                                  <Clock className="w-4 h-4 mr-2 text-blue-600" />
-                                  <span>En Progreso</span>
-                                </DropdownMenuItem>
-                              )}
-
-                              {/* No Asistió */}
-                              {['confirmed', 'pending'].includes(row.status) && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => handleNoShow(row.id)}
-                                    className="cursor-pointer"
-                                  >
-                                    <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
-                                    <span>No Asistió</span>
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-
-                              {/* Cancelar */}
-                              {row.status !== 'cancelled' && row.status !== 'completed' && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => handleCancel(row.id)}
-                                    className="cursor-pointer text-red-600"
-                                  >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    <span>Cancelar cita</span>
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
-                      </div>
-                    </div>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-9 w-9 p-0 rounded-2xl bg-gray-50 dark:bg-gray-900 hover:bg-white transition-colors border border-transparent hover:border-gray-100 shadow-sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-64 p-2 rounded-[1.5rem] border-0 shadow-2xl">
+                             <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Acciones de Cita</DropdownMenuLabel>
+                             <DropdownMenuSeparator className="bg-gray-50" />
+                             
+                             <DropdownMenuItem onClick={() => handleView(row.id)} className="rounded-xl p-3 cursor-pointer group focus:bg-blue-50">
+                               <div className="flex items-center gap-3">
+                                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:scale-110 transition-all">
+                                   <Eye className="w-5 h-5 text-blue-600" />
+                                 </div>
+                                 <span className="font-bold text-sm">Ver Detalles</span>
+                               </div>
+                             </DropdownMenuItem>
 
-                    {/* Card Body */}
-                    <div className="p-4 space-y-3">
-                      {/* Date & Time Row */}
+                             {row.status !== 'completed' && row.status !== 'cancelled' && (
+                               <DropdownMenuItem onClick={() => handleEdit(row.id)} className="rounded-xl p-3 cursor-pointer group focus:bg-orange-50">
+                                 <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover:scale-110 transition-all">
+                                     <Edit className="w-5 h-5 text-orange-600" />
+                                   </div>
+                                   <span className="font-bold text-sm">Editar Cita</span>
+                                 </div>
+                               </DropdownMenuItem>
+                             )}
+
+                             {['confirmed', 'in_progress'].includes(row.status) && (
+                               <DropdownMenuItem onClick={() => handleCheckout(row.id)} className="rounded-xl p-3 cursor-pointer group focus:bg-green-50">
+                                 <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center group-hover:scale-110 transition-all">
+                                     <CreditCard className="w-5 h-5 text-green-600" />
+                                   </div>
+                                   <span className="font-bold text-sm">Finalizar y Cobrar</span>
+                                 </div>
+                               </DropdownMenuItem>
+                             )}
+
+                             {row.status === 'pending' && (
+                               <DropdownMenuItem onClick={() => handleConfirm(row.id)} className="rounded-xl p-3 cursor-pointer group focus:bg-green-50">
+                                 <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center group-hover:scale-110 transition-all">
+                                     <Check className="w-5 h-5 text-green-600" />
+                                   </div>
+                                   <span className="font-bold text-sm text-green-600">Confirmar Cita</span>
+                                 </div>
+                               </DropdownMenuItem>
+                             )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Client Info */}
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 rounded-lg flex-1">
-                          <Calendar className="w-4 h-4 text-orange-600 dark:text-orange-400 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">{formatDate(row.appointment_date)}</span>
+                        <div className="w-14 h-14 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl flex items-center justify-center shadow-inner border border-white dark:border-gray-700">
+                          <User className="w-6 h-6 text-orange-600" />
                         </div>
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-50">{row.start_time?.substring(0,5)}</span>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <h3 className="text-lg font-black tracking-tight text-gray-900 dark:text-white truncate">
+                            {row.client_name}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-400 group-hover:text-orange-500 transition-colors uppercase tracking-widest">{row.client_phone}</span>
+                            {row.is_walk_in && (
+                              <div className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                <span className="text-[8px] font-black uppercase tracking-tighter text-gray-500">Walk-in</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Employee & Price Row */}
-                      <div className="flex items-center justify-between gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Users className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                          </div>
-                          <span className="text-sm text-gray-600 dark:text-gray-400 truncate">{row.employee_name}</span>
+                      {/* Details Strip */}
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                          <Calendar className="w-3.5 h-3.5 text-orange-600" />
+                          <span className="text-[10px] font-black uppercase text-gray-600 dark:text-gray-300">{formatDate(row.appointment_date)}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
-                          <span className="text-sm font-bold text-green-700 dark:text-green-400">{formatPrice(Number(row.total_price || 0))}</span>
+                        <div className="flex items-center gap-2 px-3 py-2.5 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                          <Clock className="w-3.5 h-3.5 text-blue-600" />
+                          <span className="text-[10px] font-black uppercase text-gray-600 dark:text-gray-300">{row.start_time?.substring(0,5)}</span>
                         </div>
                       </div>
 
-                      {/* Services */}
-                      <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-                        <div className="flex items-start gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Briefcase className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      {/* Services Footer */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-gray-800">
+                        <div className="flex -space-x-2">
+                          <div className="w-8 h-8 rounded-full bg-orange-100 border-2 border-white dark:border-gray-800 flex items-center justify-center z-10 shadow-sm">
+                            <Briefcase className="w-3.5 h-3.5 text-orange-600" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Servicios</p>
-                            <p className="text-sm text-gray-900 dark:text-gray-50 line-clamp-2">{(row.service_names || []).join(', ')}</p>
+                          <div className="px-3 h-8 bg-gray-50 dark:bg-gray-900 rounded-r-full flex items-center pl-4 border border-l-0 border-gray-100 dark:border-gray-800">
+                            <span className="text-[10px] font-bold text-gray-500 truncate max-w-[120px]">
+                              {(row.service_names || []).join(', ')}
+                            </span>
                           </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Total</span>
+                          <span className="text-base font-black text-gray-900 dark:text-white">{formatPrice(Number(row.total_price || 0))}</span>
                         </div>
                       </div>
                     </div>
@@ -1097,60 +1089,58 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
         </CardContent>
       </Card>
 
-      {/* Paginación */}
+      {/* Premium Pagination Bar */}
       {totalCount > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/80 backdrop-blur-sm dark:bg-gray-800/80 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Mostrando <span className="font-semibold text-gray-900 dark:text-gray-50">{(page-1)*limit+1}</span> a{' '}
-            <span className="font-semibold text-gray-900 dark:text-gray-50">{Math.min(page*limit, totalCount)}</span> de{' '}
-            <span className="font-semibold text-gray-900 dark:text-gray-50">{totalCount}</span> resultados
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Por página:</span>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl p-4 px-8 rounded-[2rem] border border-white/20 dark:border-gray-800 shadow-[0_10px_40px_rgba(0,0,0,0.04)] mt-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+              Mostrando <span className="text-gray-900 dark:text-white">{(page-1)*limit+1} - {Math.min(page*limit, totalCount)}</span> de <span className="text-gray-900 dark:text-white">{totalCount}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 h-9 px-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Página</span>
               <Select value={String(limit)} onValueChange={(v) => { setLimit(Number(v)); setPage(1) }}>
-                <SelectTrigger className="w-[80px]">
+                <SelectTrigger className="w-[60px] h-7 border-0 bg-transparent p-0 font-bold text-xs ring-0 ring-offset-0 focus:ring-0">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl border-0 shadow-xl">
                   <SelectItem value="25">25</SelectItem>
                   <SelectItem value="50">50</SelectItem>
                   <SelectItem value="100">100</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-
-              <div className="px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-50">
-                {page} / {totalPages}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className="hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
-        </div> )
- } </div>
 
-      </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="w-10 h-10 p-0 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:text-orange-600 transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-400" />
+            </Button>
+
+            <div className="px-5 h-10 flex items-center justify-center bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm min-w-[100px]">
+              <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase mr-1">Pág.</span>
+              <span className="text-sm font-black text-gray-900 dark:text-white">{page} <span className="text-gray-300 font-normal">/</span> {totalPages}</span>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="w-10 h-10 p-0 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:text-orange-600 transition-all shadow-sm"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* AppointmentModal - solo si no está editando */}
       {selectedAppointment && !editingAppointment && (
         <AppointmentModal
@@ -1195,10 +1185,8 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
         onDownload={handlePDFDownload}
         title="Previsualización de Citas"
       />
+      </div>
+      </div>
     </>
-      
-  
-  
-
   )
 }

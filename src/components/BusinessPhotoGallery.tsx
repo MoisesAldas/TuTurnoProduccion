@@ -8,6 +8,18 @@ import { Camera, Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { compressImage, validateImageFile, formatFileSize } from '@/lib/imageUtils'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { AlertCircle, Trash2 as TrashIcon } from 'lucide-react'
 
 interface BusinessPhoto {
   id: string
@@ -246,8 +258,6 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
   }
 
   const deletePhoto = async (photoId: string, photoUrl: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta foto?')) return
-
     try {
       // Delete from database (soft delete)
       const { error: dbError } = await supabase
@@ -288,21 +298,21 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
 
   if (loading) {
     return compact ? (
-      <div className="py-6 text-center">
-        <div className="animate-spin w-6 h-6 border-3 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2"></div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">Cargando...</p>
+      <div className="py-4 text-center">
+        <div className="animate-spin w-5 h-5 border-2 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-2"></div>
+        <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest">Cargando...</p>
       </div>
     ) : (
-      <Card>
+      <Card className="border-0 shadow-sm dark:bg-gray-900 rounded-[2rem] overflow-hidden">
         <CardContent className="p-12 text-center bg-white dark:bg-gray-900">
           <div className="animate-spin w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Cargando galería...</p>
+          <p className="text-sm font-bold text-gray-600 dark:text-gray-400 uppercase tracking-widest">Cargando galería...</p>
         </CardContent>
       </Card>
     )
   }
 
-  // Compact Mode - Grid 3x2 (6 slots total)
+  // Compact Mode - Grid 3x2 (6 slots total) - Compacted
   if (compact) {
     // Create array of 6 slots
     const TOTAL_SLOTS = 6
@@ -324,7 +334,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
     }
 
     return (
-      <div className="space-y-3 h-full flex flex-col">
+      <div className="space-y-2 h-full flex flex-col">
         {/* Grid 3x2 Gallery */}
         <div className="grid grid-cols-3 gap-2">
           {slots.map((slot, index) => {
@@ -332,7 +342,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
               return (
                 <div
                   key={slot.data.id}
-                  className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700 transition-all"
+                  className="relative group aspect-square rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800 hover:border-orange-200 transition-all"
                 >
                   <img
                     src={slot.data.photo_url}
@@ -340,14 +350,43 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
                     className="w-full h-full object-cover"
                   />
                   {/* Overlay on hover */}
-                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => deletePhoto(slot.data.id, slot.data.photo_url)}
-                      className="p-1 bg-red-500 hover:bg-red-600 rounded text-white"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          type="button"
+                          className="p-1 bg-red-500 hover:bg-red-600 rounded shadow-sm text-white transition-transform active:scale-90"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                              <AlertCircle className="w-5 h-5 text-red-600" />
+                            </div>
+                            <AlertDialogTitle>
+                              Eliminar Foto
+                            </AlertDialogTitle>
+                          </div>
+                          <AlertDialogDescription>
+                            ¿Estás seguro de que deseas eliminar esta foto de la galería? Esta acción no se puede deshacer.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter className="mt-4 gap-2">
+                          <AlertDialogCancel>
+                            Cancelar
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deletePhoto(slot.data!.id, slot.data!.photo_url)}
+                            className="bg-red-600 hover:bg-red-700 text-white shadow-red-600/20"
+                          >
+                            Eliminar Permanentemente
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               )
@@ -360,17 +399,14 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-orange-400 dark:hover:border-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all flex flex-col items-center justify-center gap-1 text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-orange-300 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {uploading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin text-orange-600" />
-                      <span className="text-xs font-semibold text-gray-900 dark:text-gray-50">Subiendo...</span>
-                    </>
+                    <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
                   ) : (
                     <>
-                      <Upload className="w-5 h-5" />
-                      <span className="text-xs font-semibold text-gray-900 dark:text-gray-50">Agregar</span>
+                      <Upload className="w-4 h-4" />
+                      <span className="text-[9px] font-black uppercase tracking-widest leading-none">Subir</span>
                     </>
                   )}
                 </button>
@@ -381,7 +417,7 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
             return (
               <div
                 key={`empty-${index}`}
-                className="aspect-square rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                className="aspect-square rounded-xl border-2 border-dashed border-gray-50 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/20"
               />
             )
           })}
@@ -397,118 +433,146 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
         />
 
         {/* Info Text - Compact */}
-        <p className="text-xs text-gray-700 dark:text-gray-300 text-center font-medium mt-3 px-2">
+        <div className="text-center mt-1">
           {photos.length >= MAX_PHOTOS ? (
-            <span className="text-orange-600 font-semibold">
-              Límite alcanzado ({MAX_PHOTOS}/{MAX_PHOTOS})
+            <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">
+              Límite {MAX_PHOTOS}/{MAX_PHOTOS}
             </span>
           ) : (
-            <span className="text-gray-900 dark:text-gray-50">{photos.length}/{MAX_PHOTOS} fotos • JPG, PNG (máx. 5MB)</span>
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+              {photos.length}/{MAX_PHOTOS} fotos
+            </span>
           )}
-        </p>
+        </div>
       </div>
     )
   }
 
-  // Full Mode - Grid View
+  // Full Mode - Compacted Premium Redesign
   return (
-    <>
-      <Card className="border-gray-200 dark:border-gray-700">
-        <CardHeader className="border-b dark:border-gray-800 bg-white dark:bg-gray-900">
-          <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
-              <ImageIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div className="flex-1">
-              <span>Galería de Fotos</span>
-              <p className="text-sm font-normal text-gray-600 dark:text-gray-400 mt-1">
-                Muestra las instalaciones y ambiente de tu negocio ({photos.length}/{MAX_PHOTOS})
-              </p>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {/* Info Alert */}
-          <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
-            <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertDescription className="text-blue-700 dark:text-blue-200">
-              Las fotos de tu galería se mostrarán en un carrusel en tu perfil público.
-              Recomendamos fotos de alta calidad de tus instalaciones, equipo y ambiente.
-            </AlertDescription>
-          </Alert>
-
-          {/* Photos Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="relative group aspect-video rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700 transition-all"
-              >
-                <img
-                  src={photo.photo_url}
-                  alt="Foto del negocio"
-                  className="w-full h-full object-cover"
-                />
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deletePhoto(photo.id, photo.photo_url)}
-                    className="bg-red-500 hover:bg-red-600"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Eliminar
-                  </Button>
-                </div>
-              </div>
-            ))}
-
-            {/* Upload Button */}
-            {photos.length < MAX_PHOTOS && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="aspect-video rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-orange-400 dark:hover:border-orange-700 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all flex flex-col items-center justify-center gap-2 text-gray-500 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                    <span className="text-sm font-medium dark:text-gray-50">Subiendo...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-8 h-8" />
-                    <span className="text-sm font-medium dark:text-gray-50">Subir Foto</span>
-                    <span className="text-xs text-gray-400 dark:text-gray-500">JPG, PNG (máx. 5MB)</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Hidden File Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-
-          {/* Info Text */}
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            {photos.length >= MAX_PHOTOS ? (
-              <span className="text-orange-600 font-medium">
-                Has alcanzado el límite de {MAX_PHOTOS} fotos. Elimina alguna para subir más.
+    <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+      <CardHeader className="px-6 pt-6 pb-2">
+        <div className="flex flex-col gap-0.5 relative pl-5">
+          <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+          <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+            Galería
+          </span>
+          <div className="flex items-center justify-between gap-4">
+            <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+              Galería de Fotos
+            </CardTitle>
+            <div className="px-2.5 py-1 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
+              <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">
+                {photos.length}/{MAX_PHOTOS} Slots
               </span>
-            ) : (
-              <>Puedes subir hasta {MAX_PHOTOS - photos.length} foto(s) más</>
-            )}
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="px-6 pb-6 space-y-4">
+        {/* Info Alert - Compact */}
+        <div className="flex items-start gap-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-800/30 rounded-xl p-3">
+          <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
+            <Camera className="w-4 h-4 text-blue-600" />
+          </div>
+          <p className="text-[10px] font-medium text-blue-800/80 dark:text-blue-300/80 leading-tight pt-1">
+            Muestra las instalaciones y ambiente de tu negocio. Estas fotos aparecerán en tu perfil público.
           </p>
-        </CardContent>
-      </Card>
-    </>
+        </div>
+
+        {/* Photos Grid - Compacted */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {photos.map((photo) => (
+            <div
+              key={photo.id}
+              className="relative group aspect-video rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 hover:border-orange-200 transition-all shadow-sm"
+            >
+              <img
+                src={photo.photo_url}
+                alt="Foto del negocio"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              {/* Overlay on hover */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-8 rounded-lg bg-red-600 hover:bg-red-700 text-[11px] font-bold"
+                    >
+                      <X className="w-3.5 h-3.5 mr-1.5" />
+                      Eliminar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                        </div>
+                        <AlertDialogTitle>
+                          Eliminar Foto
+                        </AlertDialogTitle>
+                      </div>
+                      <AlertDialogDescription>
+                        ¿Estás seguro de que deseas eliminar esta foto de la galería? Esta acción no se puede deshacer.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-4 gap-2">
+                      <AlertDialogCancel>
+                        Cancelar
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deletePhoto(photo.id, photo.photo_url)}
+                        className="bg-red-600 hover:bg-red-700 text-white shadow-red-600/20"
+                      >
+                        Eliminar Permanentemente
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          ))}
+
+          {/* Upload Button - Compacted */}
+          {photos.length < MAX_PHOTOS && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="aspect-video rounded-2xl border-2 border-dashed border-gray-100 dark:border-gray-800 hover:border-orange-200 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-all flex flex-col items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subiendo...</span>
+                </>
+              ) : (
+                <>
+                  <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center shadow-sm group-hover:bg-white dark:group-hover:bg-gray-700 transition-colors">
+                    <Upload className="w-5 h-5 text-gray-400 group-hover:text-orange-600" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-widest">Añadir Foto</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">JPG, PNG • Máx 5MB</p>
+                  </div>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </CardContent>
+    </Card>
   )
 }

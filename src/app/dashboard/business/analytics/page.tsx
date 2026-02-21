@@ -165,14 +165,20 @@ export default function AnalyticsPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
+      <div className="w-full space-y-6">
       {/* Header and Filters - Same Level */}
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        {/* Title */}
-        <div className="flex-shrink-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-50 mt-3">
-            Dashboard de Análisis
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{businessName}</p>
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        {/* Title Section with Accent */}
+        <div className="relative pl-6 flex-shrink-0">
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+          <div className="flex flex-col">
+            <span className="text-[10px] items-center uppercase tracking-[0.2em] font-extrabold text-orange-600 mb-1">
+              {businessName || 'Analytics'}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-gray-50">
+              Dashboard de Análisis
+            </h1>
+          </div>
         </div>
 
         {/* Filtros con botón de actualizar integrado */}
@@ -236,6 +242,7 @@ export default function AnalyticsPage() {
 
       {/* Time Slot Chart - Full Width */}
       <TimeSlotChart data={data?.timeSlots || []} loading={loading} />
+    </div>
     </div>
   )
 }

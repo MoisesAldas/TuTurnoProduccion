@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Calendar, Plus, Trash2, CalendarX, Clock, X } from 'lucide-react'
+import { Calendar, Plus, Trash2, CalendarX, Clock, X, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 
@@ -477,20 +477,26 @@ export default function EmployeeAbsences({ employeeId, employeeName }: EmployeeA
         </CardContent>
       </Card>
 
-      {/* Alert Dialog for Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar ausencia?</AlertDialogTitle>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <AlertDialogTitle>
+                ¿Eliminar ausencia?
+              </AlertDialogTitle>
+            </div>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. La ausencia será eliminada permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
             >
               Eliminar
             </AlertDialogAction>

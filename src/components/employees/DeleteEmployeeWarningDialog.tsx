@@ -11,7 +11,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-import { AlertTriangle, Info } from 'lucide-react'
+import { AlertTriangle, Info, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface Service {
   id: string
@@ -38,18 +39,23 @@ export default function DeleteEmployeeWarningDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-md">
+      <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            {hasOrphanedServices ? (
-              <>
+          <div className="flex items-center gap-3 mb-2">
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center",
+              hasOrphanedServices ? "bg-amber-50 dark:bg-amber-900/20" : "bg-red-50 dark:bg-red-900/20"
+            )}>
+              {hasOrphanedServices ? (
                 <AlertTriangle className="w-5 h-5 text-amber-600" />
-                Advertencia: Servicios afectados
-              </>
-            ) : (
-              <>¿Eliminar empleado?</>
-            )}
-          </AlertDialogTitle>
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              )}
+            </div>
+            <AlertDialogTitle>
+              {hasOrphanedServices ? "Servicios Afectados" : "¿Eliminar Empleado?"}
+            </AlertDialogTitle>
+          </div>
           <AlertDialogDescription asChild>
             <div className="space-y-4">
               {hasOrphanedServices ? (
@@ -59,7 +65,7 @@ export default function DeleteEmployeeWarningDialog({
                     realizar los siguientes servicios:
                   </p>
 
-                  <div className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 rounded p-3">
+                  <div className="border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 rounded-2xl p-3">
                     <ul className="space-y-1 text-sm text-amber-900 dark:text-amber-200">
                       {orphanedServices.map(service => (
                         <li key={service.id} className="flex items-center gap-2">
@@ -70,12 +76,14 @@ export default function DeleteEmployeeWarningDialog({
                     </ul>
                   </div>
 
-                  <div className="border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded p-3">
-                    <div className="flex gap-2">
-                      <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div className="border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded-2xl p-4">
+                    <div className="flex gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                        <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
                       <div className="text-sm text-blue-900 dark:text-blue-200">
                         <strong className="block mb-1">¿Qué pasará?</strong>
-                        <ul className="space-y-1 ml-4 list-disc">
+                        <ul className="space-y-1 ml-4 list-disc opacity-80 font-medium">
                           <li>Estos servicios quedarán sin empleados asignados</li>
                           <li>Los clientes NO podrán reservarlos</li>
                           <li>Deberás asignar otro empleado a estos servicios</li>
@@ -84,8 +92,8 @@ export default function DeleteEmployeeWarningDialog({
                     </div>
                   </div>
 
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    <strong>Recomendación:</strong> Asigna estos servicios a otro 
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium italic">
+                    Recomendación: Asigna estos servicios a otro 
                     empleado antes de eliminar a {employeeName}.
                   </p>
                 </>
@@ -98,11 +106,16 @@ export default function DeleteEmployeeWarningDialog({
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="mt-4 gap-2">
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirmDelete}
-            className={hasOrphanedServices ? 'bg-amber-600 hover:bg-amber-700' : 'bg-red-600 hover:bg-red-700'}
+            className={cn(
+              "shadow-lg",
+              hasOrphanedServices 
+                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20' 
+                : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
+            )}
           >
             {hasOrphanedServices ? 'Eliminar de todos modos' : 'Eliminar'}
           </AlertDialogAction>

@@ -1,6 +1,5 @@
-'use client'
-
 import * as React from 'react'
+import { cn } from '@/lib/utils'
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -39,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   // Server-side sorting props
   manualSorting?: boolean
   onSortingChange?: (updater: any) => void
+  tableContainerClassName?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -51,6 +51,7 @@ export function DataTable<TData, TValue>({
   onPaginationChange,
   manualSorting = false,
   onSortingChange: externalOnSortingChange,
+  tableContainerClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -116,7 +117,7 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className={cn("rounded-md border dark:border-gray-700 bg-white dark:bg-gray-800", tableContainerClassName)}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

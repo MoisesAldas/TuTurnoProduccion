@@ -272,24 +272,31 @@ export default function BusinessDashboard() {
       )}>
         <div className="w-full px-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            {/* Left: Title */}
+            {/* Left: Title Section with Accent */}
             <div className={cn(
-              "transition-all duration-300 flex-shrink-0 w-full sm:w-auto",
-              scrolled ? "hidden sm:block" : "block"
+              "transition-all duration-300 flex-shrink-0 w-full sm:w-auto relative",
+              scrolled ? "pl-2" : "pl-6"
             )}>
-              <h1 className={cn(
-                "font-bold transition-all duration-300 text-left",
-                scrolled 
-                  ? "text-lg text-white" 
-                  : "text-xl sm:text-2xl lg:text-3xl text-gray-900 dark:text-gray-50"
-              )}>
-                {scrolled ? "Dashboard" : "Dashboard de análisis"}
-              </h1>
               {!scrolled && (
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 text-left">
-                  {businessName}
-                </p>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
               )}
+              
+              <div className="flex flex-col">
+                {scrolled ? (
+                  <h1 className="font-bold text-lg text-white">
+                    Dashboard
+                  </h1>
+                ) : (
+                  <>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-0.5">
+                      {businessName || 'Business'}
+                    </span>
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-gray-900 dark:text-gray-50">
+                      Dashboard de análisis
+                    </h1>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Right: Filters + Export */}
@@ -339,10 +346,13 @@ export default function BusinessDashboard() {
             {/* ========================================
                 ANÁLISIS DE INGRESOS
                 ======================================== */}
-            <motion.div variants={itemVariants} className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-                <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            <motion.div variants={itemVariants} className="space-y-6">
+              <div className="relative pl-6 py-2">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+                <p className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-1">
+                  Métricas de Negocio
+                </p>
+                <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-50">
                   Análisis de Ingresos
                 </h2>
               </div>
@@ -377,10 +387,13 @@ export default function BusinessDashboard() {
             {/* ========================================
                 RENDIMIENTO DE SERVICIOS Y EQUIPO
                 ======================================== */}
-            <motion.div variants={itemVariants} className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-                <Users className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            <motion.div variants={itemVariants} className="space-y-6">
+              <div className="relative pl-6 py-2">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+                <p className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-1">
+                  Productividad
+                </p>
+                <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-50">
                   Servicios y Equipo
                 </h2>
               </div>
@@ -402,10 +415,13 @@ export default function BusinessDashboard() {
             {/* ========================================
                 DISTRIBUCIÓN TEMPORAL
                 ======================================== */}
-            <motion.div variants={itemVariants} className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-                <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            <motion.div variants={itemVariants} className="space-y-6">
+              <div className="relative pl-6 py-2">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+                <p className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-1">
+                  Flujo de Trabajo
+                </p>
+                <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-50">
                   Distribución Temporal
                 </h2>
               </div>
@@ -439,10 +455,13 @@ export default function BusinessDashboard() {
           >
             <div className="lg:sticky lg:top-24 space-y-4">
               {/* Section Header */}
-              <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-                <BarChart3 className="w-5 h-5 text-orange-600 dark:text-orange-500" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-                  Indicadores Clave
+              <div className="relative pl-6 py-2">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_10px_rgba(251,146,60,0.2)]" />
+                <p className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-0.5">
+                  KPIs
+                </p>
+                <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
+                  Panel de Control
                 </h2>
               </div>
 

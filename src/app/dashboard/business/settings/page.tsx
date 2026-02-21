@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Switch } from '@/components/ui/switch'
 import {
   Save, Building, Mail, Phone, Globe, MapPin, Upload, Camera, X,
   Image as ImageIcon, Settings, Shield, Clock, Calendar, Bell, Receipt,
@@ -131,6 +132,8 @@ export default function UnifiedSettingsPage() {
       require_deposit: false,
       deposit_percentage: 0,
       auto_confirm_appointments: false,
+      max_monthly_cancellations: 5,
+      enable_cancellation_blocking: false,
     }
   })
 
@@ -199,6 +202,8 @@ export default function UnifiedSettingsPage() {
         require_deposit: businessData.require_deposit ?? false,
         deposit_percentage: businessData.deposit_percentage || 0,
         auto_confirm_appointments: businessData.auto_confirm_appointments ?? false,
+        max_monthly_cancellations: businessData.max_monthly_cancellations || 5,
+        enable_cancellation_blocking: businessData.enable_cancellation_blocking ?? false,
       })
 
       // Ubicación
@@ -548,27 +553,35 @@ export default function UnifiedSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Configuración</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Gestiona todos los aspectos de tu negocio
-              </p>
+    <div className="min-h-screen bg-transparent">
+      {/* Integrated Header - Compacted */}
+      <div className="w-full px-6 pt-6 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="flex flex-col gap-0.5 relative pl-6">
+            <div className="absolute left-0 w-1 h-8 bg-orange-500 rounded-full mt-1" />
+            <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600/80">
+              Configuración de Negocio
+            </span>
+            <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+              {navigationItems.find(item => item.id === activeSection)?.label || 'Ajustes'}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="px-3 py-1.5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                <Settings className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 animate-[spin_4s_linear_infinite]" />
+              </div>
+              <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">
+                {business?.name}
+              </span>
             </div>
-            <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
-              <Settings className="w-4 h-4 mr-2" />
-              {business?.name}
-            </Badge>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main Content - Compacted */}
+      <div className="w-full px-6 py-2">
         {/* Mobile Section Selector */}
         <div className="lg:hidden w-full mb-4">
           <select
@@ -585,81 +598,106 @@ export default function UnifiedSettingsPage() {
         </div>
 
         <div className="flex gap-6 items-start">
-          {/* Sidebar Navigation - Sticky */}
+          {/* Sidebar Navigation - Sticky & Compacter */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-20 space-y-1">
-              {navigationItems.map((item) => {
-                const Icon = item.icon
-                const isActive = activeSection === item.id
+            <div className="sticky top-6 space-y-2">
+              <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl rounded-[1.75rem] border border-gray-100 dark:border-gray-800 p-2 shadow-sm">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon
+                  const isActive = activeSection === item.id
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveSection(item.id)}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
-                      transition-all duration-200
-                      ${isActive
-                        ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-lg'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }
-                    `}
-                  >
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
-                    <span>{item.label}</span>
-                  </button>
-                )
-              })}
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveSection(item.id)}
+                      className={`
+                        w-full flex items-center gap-3 px-3.5 py-2.5 rounded-[1.125rem] text-xs font-bold
+                        transition-all duration-300 relative group
+                        ${isActive
+                          ? 'bg-orange-600 text-white shadow-[0_8px_16px_-4px_rgba(234,88,12,0.3)]'
+                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-orange-600'
+                        }
+                      `}
+                    >
+                      <div className={`
+                        w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300
+                        ${isActive 
+                          ? 'bg-white/20' 
+                          : 'bg-gray-50 dark:bg-gray-800 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/20'
+                        }
+                      `}>
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500 group-hover:text-orange-600'}`} />
+                      </div>
+                      <span className="flex-1 text-left tracking-tight">{item.label}</span>
+                      {isActive && (
+                        <div className="w-1 h-1 rounded-full bg-white shadow-sm" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </aside>
 
           {/* Content Area */}
           <div className="flex-1 min-w-0 w-full lg:w-auto">
-            {/* Profile Section */}
+            {/* Profile Section - Compacted */}
             {activeSection === 'profile' && (
               <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-4">
-                <Card className="dark:border-gray-700">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Building className="w-5 h-5 text-orange-600" />
-                      Información del Negocio
-                    </CardTitle>
-                    <CardDescription className="dark:text-gray-400 text-sm">
-                      Información básica que se mostrará en tu perfil público
-                    </CardDescription>
+                <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+                  <CardHeader className="px-6 pt-6 pb-2">
+                    <div className="flex flex-col gap-0.5 relative pl-5">
+                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                        General
+                      </span>
+                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Información del Negocio
+                      </CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4">
-                      {/* Columna Izquierda: Logo */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">Logo</Label>
-                        <div className="flex lg:flex-col items-start gap-2">
-                          <div className="w-24 h-24 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                            {logoPreview ? (
-                              <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
-                            ) : (
-                              <Camera className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                  <CardContent className="px-6 pb-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6">
+                      {/* Logo Upload Section - Shorter */}
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Logo</Label>
+                        <div className="flex lg:flex-col items-center gap-3">
+                          <div className="relative group">
+                            <div className="w-24 h-24 rounded-[1.5rem] border-2 border-dashed border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-orange-200 dark:group-hover:border-orange-800">
+                              {logoPreview ? (
+                                <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                              ) : (
+                                <Building className="w-8 h-8 text-gray-300 dark:text-gray-700" />
+                              )}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="w-8 h-8 text-white hover:bg-white/20 rounded-full"
+                                  onClick={() => logoInputRef.current?.click()}
+                                >
+                                  <Camera className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            {uploadingLogo && (
+                              <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-[1.5rem] flex items-center justify-center">
+                                <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+                              </div>
                             )}
                           </div>
-                          <div className="flex lg:flex-col gap-2">
-                            <Button
+                          
+                          <div className="flex lg:flex-row gap-2">
+                             <Button
                               type="button"
                               size="sm"
                               variant="outline"
+                              className="h-8 rounded-lg border-gray-100 dark:border-gray-800 shadow-sm text-[11px]"
                               onClick={() => logoInputRef.current?.click()}
-                              disabled={uploadingLogo}
                             >
-                              {uploadingLogo ? (
-                                <>
-                                  <div className="w-3 h-3 border-2 border-gray-300 dark:border-gray-600 border-t-orange-600 rounded-full animate-spin mr-2" />
-                                  Procesando...
-                                </>
-                              ) : (
-                                <>
-                                  <Upload className="w-3 h-3 mr-2" />
-                                  {logoPreview ? 'Cambiar' : 'Subir'}
-                                </>
-                              )}
+                              <Upload className="w-3 h-3 mr-1.5" />
+                              Subir
                             </Button>
                             {logoFile && (
                               <Button
@@ -667,7 +705,7 @@ export default function UnifiedSettingsPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={removeLogo}
-                                className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50"
+                                className="h-8 rounded-lg border-gray-100 dark:border-gray-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm"
                               >
                                 <X className="w-3 h-3" />
                               </Button>
@@ -683,259 +721,210 @@ export default function UnifiedSettingsPage() {
                         />
                       </div>
 
-                      {/* Columna Derecha: Campos + Descripción */}
-                      <div className="space-y-3">
-                        {/* Fila 1: Nombre + Teléfono */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {/* Nombre */}
+                      {/* Form Fields - Compacted */}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Name */}
                           <div className="space-y-1.5">
-                            <Label htmlFor="name" className="text-sm dark:text-gray-50">
-                              Nombre del Negocio *
+                            <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                              Nombre *
                             </Label>
-                            <div className="relative">
-                              <Input
-                                id="name"
-                                {...registerInfo('name')}
-                                placeholder="Ej: Salón de Belleza María"
-                                className={`h-9 ${
-                                  touchedInfo.name && !errorsInfo.name ? 'border-green-500' : ''
-                                } ${
-                                  errorsInfo.name ? 'border-red-500' : ''
-                                }`}
-                              />
-                              {touchedInfo.name && !errorsInfo.name && (
-                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                              )}
-                            </div>
+                            <Input
+                              id="name"
+                              {...registerInfo('name')}
+                              className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
+                              placeholder="Ej: Salón de Belleza María"
+                            />
                             {errorsInfo.name && (
-                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.name.message}</p>
+                              <p className="text-[9px] font-bold text-red-500 mt-1 uppercase tracking-wider">{errorsInfo.name.message}</p>
                             )}
                           </div>
 
-                          {/* Teléfono */}
+                          {/* Phone */}
                           <div className="space-y-1.5">
-                            <Label htmlFor="phone" className="text-sm dark:text-gray-50">Teléfono</Label>
-                            <div className="relative">
-                              <Input
-                                id="phone"
-                                type="tel"
-                                {...registerInfo('phone', {
-                                  onChange: (e) => {
-                                    // Solo permite números
-                                    const value = e.target.value.replace(/\D/g, '')
-                                    e.target.value = value
-                                  }
-                                })}
-                                placeholder="0987654321"
-                                maxLength={10}
-                                className={`h-9 ${
-                                  touchedInfo.phone && !errorsInfo.phone ? 'border-green-500' : ''
-                                } ${
-                                  errorsInfo.phone ? 'border-red-500' : ''
-                                }`}
-                              />
-                              {touchedInfo.phone && !errorsInfo.phone && (
-                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                              )}
-                            </div>
+                            <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Teléfono</Label>
+                            <Input
+                              id="phone"
+                              type="tel"
+                              {...registerInfo('phone', {
+                                onChange: (e) => {
+                                  const value = e.target.value.replace(/\D/g, '')
+                                  e.target.value = value
+                                }
+                              })}
+                              className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
+                              placeholder="0987654321"
+                              maxLength={10}
+                            />
                             {errorsInfo.phone && (
-                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.phone.message}</p>
+                              <p className="text-[9px] font-bold text-red-500 mt-1 uppercase tracking-wider">{errorsInfo.phone.message}</p>
                             )}
                           </div>
                         </div>
 
-                        {/* Fila 2: Categoría (Full Width) */}
+                        {/* Category */}
                         <div className="space-y-1.5">
-                          <Label htmlFor="business_category_id" className="text-sm dark:text-gray-50">
-                            Categoría del Negocio *
+                          <Label htmlFor="business_category_id" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                            Categoría *
                           </Label>
                           <Select
                             value={watchInfo('business_category_id') || ''}
-                            onValueChange={(value) => {
-                              setValue('business_category_id', value, { shouldValidate: true })
-                            }}
+                            onValueChange={(value) => setValue('business_category_id', value, { shouldValidate: true })}
                           >
-                            <SelectTrigger className={`h-9 ${
-                              touchedInfo.business_category_id && !errorsInfo.business_category_id
-                                ? 'border-green-500'
-                                : ''
-                            } ${
-                              errorsInfo.business_category_id ? 'border-red-500' : ''
-                            }`}>
+                            <SelectTrigger className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm">
                               <SelectValue placeholder="Selecciona una categoría" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="rounded-xl border-gray-100 dark:border-gray-800 shadow-2xl">
                               {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
+                                <SelectItem key={category.id} value={category.id} className="rounded-lg m-1 text-xs">
                                   {category.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          {errorsInfo.business_category_id && (
-                            <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.business_category_id.message}</p>
-                          )}
                         </div>
 
-                        {/* Fila 3: Email + Website */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* Email */}
                           <div className="space-y-1.5">
-                            <Label htmlFor="email" className="text-sm dark:text-gray-50">Email</Label>
-                            <div className="relative">
-                              <Input
-                                id="email"
-                                type="email"
-                                {...registerInfo('email')}
-                                placeholder="contacto@negocio.com"
-                                className={`h-9 ${
-                                  touchedInfo.email && !errorsInfo.email ? 'border-green-500' : ''
-                                } ${
-                                  errorsInfo.email ? 'border-red-500' : ''
-                                }`}
-                              />
-                              {touchedInfo.email && !errorsInfo.email && (
-                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                              )}
-                            </div>
-                            {errorsInfo.email && (
-                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.email.message}</p>
-                            )}
+                            <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email</Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              {...registerInfo('email')}
+                              className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
+                              placeholder="contacto@negocio.com"
+                            />
                           </div>
 
                           {/* Website */}
                           <div className="space-y-1.5">
-                            <Label htmlFor="website" className="text-sm dark:text-gray-50">Sitio Web</Label>
-                            <div className="relative">
-                              <Input
-                                id="website"
-                                {...registerInfo('website')}
-                                placeholder="https://tunegocio.com"
-                                className={`h-9 ${
-                                  touchedInfo.website && !errorsInfo.website ? 'border-green-500' : ''
-                                } ${
-                                  errorsInfo.website ? 'border-red-500' : ''
-                                }`}
-                              />
-                              {touchedInfo.website && !errorsInfo.website && (
-                                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                              )}
-                            </div>
-                            {errorsInfo.website && (
-                              <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.website.message}</p>
-                            )}
+                            <Label htmlFor="website" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sitio Web</Label>
+                            <Input
+                              id="website"
+                              {...registerInfo('website')}
+                              className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
+                              placeholder="https://tunegocio.com"
+                            />
                           </div>
                         </div>
 
-                        {/* Fila 3: Descripción - Full Width */}
+                        {/* Description */}
                         <div className="space-y-1.5">
-                          <Label htmlFor="description" className="text-sm dark:text-gray-50">Descripción</Label>
+                          <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-gray-400">Descripción</Label>
                           <Textarea
                             id="description"
                             {...registerInfo('description')}
                             placeholder="Describe tu negocio..."
                             rows={2}
-                            className={`resize-none ${
-                              touchedInfo.description && !errorsInfo.description ? 'border-green-500' : ''
-                            } ${
-                              errorsInfo.description ? 'border-red-500' : ''
-                            }`}
+                            className="rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 resize-none p-3 text-xs"
                           />
-                          {errorsInfo.description && (
-                            <p className="text-xs text-red-600 dark:text-red-400">{errorsInfo.description.message}</p>
-                          )}
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Máximo 500 caracteres</p>
+                          <div className="flex justify-between items-center">
+                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Máx 500 caracteres</p>
+                             {errorsInfo.description && (
+                               <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider">{errorsInfo.description.message}</p>
+                             )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Save Button */}
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </Button>
+                {/* Sticky Action Bar - Compact */}
+                <div className="sticky bottom-4 z-20 flex justify-end">
+                  <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5 mr-2" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
 
-            {/* Visual Identity Section */}
+            {/* Visual Identity Section - Compacted */}
             {activeSection === 'visual' && (
-              <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-6">
-                <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ImageIcon className="w-5 h-5 text-orange-600" />
-                      Imagen de Portada
-                    </CardTitle>
-                    <CardDescription className="dark:text-gray-400">
-                      Imagen principal que se mostrará en tu perfil
-                    </CardDescription>
+              <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-4">
+                <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+                  <CardHeader className="px-6 pt-6 pb-2">
+                    <div className="flex flex-col gap-0.5 relative pl-5">
+                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                        Marca
+                      </span>
+                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Imagen de Portada
+                      </CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-start gap-2 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-                      <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
-                      <div className="text-xs text-orange-900 dark:text-orange-200">
-                        <p><strong>Requisitos:</strong> JPG, PNG o WebP • Tamaño recomendado: 2000x1000px (2:1) • Máximo 10MB</p>
-                        <p className="mt-1 text-orange-700 dark:text-orange-300">Tu portada aparecerá en la parte superior de tu perfil público.</p>
+                  <CardContent className="px-6 pb-6 space-y-4">
+                    <div className="flex items-start gap-4 bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100/50 dark:border-orange-800/30 rounded-xl p-3">
+                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
+                        <Info className="w-4 h-4 text-orange-600" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-black text-orange-950 dark:text-orange-200 uppercase tracking-widest">Requisitos</p>
+                        <p className="text-[10px] font-medium text-orange-800/80 dark:text-orange-300/80 leading-tight">
+                          JPG, PNG, WebP • 2000x1000px (2:1) • Máx: 10MB
+                        </p>
                       </div>
                     </div>
-                    <div className="space-y-4">
-                      <div className="w-full aspect-[2/1] border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
-                        {coverPreview ? (
-                          <img src={coverPreview} alt="Cover" className="w-full h-full object-contain" />
+
+                    <div className="group relative w-full aspect-[21/7] border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden bg-gray-50/50 dark:bg-gray-900 flex items-center justify-center transition-all hover:border-orange-200 dark:hover:border-orange-800">
+                         {coverPreview ? (
+                          <>
+                            <img src={coverPreview} alt="Cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                               <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="w-10 h-10 rounded-full bg-white/20 text-white hover:bg-white/40"
+                                onClick={() => coverInputRef.current?.click()}
+                              >
+                                <Upload className="w-5 h-5" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="w-10 h-10 rounded-full bg-red-500/20 text-red-100 hover:bg-red-500/40"
+                                onClick={removeCover}
+                              >
+                                <X className="w-5 h-5" />
+                              </Button>
+                            </div>
+                          </>
                         ) : (
-                          <div className="text-center text-gray-400 dark:text-gray-500">
-                            <ImageIcon className="w-12 h-12 mx-auto mb-2" />
-                            <p className="text-sm">Sin imagen de portada</p>
+                          <div className="text-center group-hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center mx-auto mb-2">
+                              <ImageIcon className="w-6 h-6 text-gray-400" />
+                            </div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sin portada</p>
+                          </div>
+                        )}
+
+                        {uploadingCover && (
+                          <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center">
+                            <div className="w-6 h-6 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
                           </div>
                         )}
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => coverInputRef.current?.click()}
-                          disabled={uploadingCover}
-                        >
-                          {uploadingCover ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-gray-300 border-t-orange-600 rounded-full animate-spin mr-2" />
-                              Procesando...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="w-4 h-4 mr-2" />
-                              {coverPreview ? 'Cambiar Portada' : 'Subir Portada'}
-                            </>
-                          )}
-                        </Button>
-                        {coverFile && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={removeCover}
-                            className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
+                      
                       <input
                         ref={coverInputRef}
                         type="file"
@@ -943,7 +932,6 @@ export default function UnifiedSettingsPage() {
                         onChange={handleCoverSelect}
                         className="hidden"
                       />
-                    </div>
                   </CardContent>
                 </Card>
 
@@ -952,104 +940,120 @@ export default function UnifiedSettingsPage() {
                   <BusinessPhotoGallery businessId={business.id} />
                 )}
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </Button>
+                <div className="sticky bottom-4 z-20 flex justify-end">
+                  <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5 mr-2" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
 
-            {/* Location Section */}
+            {/* Location Section - Compacted */}
             {activeSection === 'location' && (
               <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-4">
-                <Card className="dark:border-gray-700">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <MapPin className="w-5 h-5 text-orange-600" />
-                      Ubicación del Negocio
-                    </CardTitle>
-                    <CardDescription className="dark:text-gray-400 text-sm">
-                      Ayuda a tus clientes a encontrarte fácilmente
-                    </CardDescription>
+                <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+                  <CardHeader className="px-6 pt-6 pb-2">
+                    <div className="flex flex-col gap-0.5 relative pl-5">
+                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                        Geolocalización
+                      </span>
+                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Ubicación del Negocio
+                      </CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="px-6 pb-6 space-y-4">
                     {locationData.address && (
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-sm text-green-900 dark:text-green-200">
-                        <MapPin className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
-                        <span>
-                          <strong>Ubicación seleccionada:</strong> {locationData.address}
-                        </span>
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100/50 dark:border-orange-800/30">
+                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
+                          <MapPin className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-black text-orange-950 dark:text-orange-200 uppercase tracking-widest">Punto Seleccionado</p>
+                          <p className="text-[11px] font-bold text-gray-700 dark:text-gray-300 truncate">
+                            {locationData.address}
+                          </p>
+                        </div>
                       </div>
                     )}
-                    <MapboxLocationPicker
-                      onLocationSelect={(location) => {
-                        setLocationData({
-                          address: location.address,
-                          latitude: location.latitude,
-                          longitude: location.longitude
-                        })
-                      }}
-                      initialLocation={locationData}
-                    />
+                    <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm relative group">
+                      <MapboxLocationPicker
+                        onLocationSelect={(location) => {
+                          setLocationData({
+                            address: location.address,
+                            latitude: location.latitude,
+                            longitude: location.longitude
+                          })
+                        }}
+                        initialLocation={locationData}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </Button>
+                {/* Sticky Action Bar - Compact */}
+                <div className="sticky bottom-4 z-20 flex justify-end">
+                  <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5 mr-2" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
 
-            {/* Policies Section */}
+            {/* Policies Section - Compacted */}
             {activeSection === 'policies' && (
               <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-4">
-                <Card className="dark:border-gray-700">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Shield className="w-5 h-5 text-orange-600" />
-                      Políticas de Cancelación
-                    </CardTitle>
-                    <CardDescription className="dark:text-gray-400 text-sm">
-                      Define las reglas para cancelar y reagendar citas
-                    </CardDescription>
+                <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+                  <CardHeader className="px-6 pt-6 pb-2">
+                    <div className="flex flex-col gap-0.5 relative pl-5">
+                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                        Seguridad
+                      </span>
+                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Políticas de Cancelación
+                      </CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-6 pb-6 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {/* Horas de anticipación */}
                       <div className="space-y-1.5">
-                        <Label htmlFor="cancellation_policy_hours" className="text-sm dark:text-gray-50">
-                          Horas de anticipación
+                        <Label htmlFor="cancellation_policy_hours" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                          Anticipación (Horas)
                         </Label>
                         <div className="relative">
                           <Input
@@ -1057,97 +1061,67 @@ export default function UnifiedSettingsPage() {
                             type="number"
                             min="0"
                             max="168"
-                            className={`h-9 ${
-                              touchedAdvanced.cancellation_policy_hours && !errorsAdvanced.cancellation_policy_hours ? 'border-green-500' : ''
-                            } ${
-                              errorsAdvanced.cancellation_policy_hours ? 'border-red-500' : ''
-                            }`}
+                            className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
                             {...registerAdvanced('cancellation_policy_hours', { valueAsNumber: true })}
                           />
                           {touchedAdvanced.cancellation_policy_hours && !errorsAdvanced.cancellation_policy_hours && (
                             <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Máximo 168 horas (7 días)
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                          Máximo 168h (7 días)
                         </p>
                         {errorsAdvanced.cancellation_policy_hours && (
-                          <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_hours.message}</p>
+                          <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider mt-1">{errorsAdvanced.cancellation_policy_hours.message}</p>
                         )}
                       </div>
 
-                      {/* Permitir cancelación */}
-                      <div className="space-y-1.5">
-                        <Label className="text-sm dark:text-gray-50 flex items-center gap-2">
-                          Cancelación por clientes
-                          <Badge variant="secondary" className="text-xs">Próximamente</Badge>
+                      {/* Permitir cancelación - Disabled with Premium Badge */}
+                      <div className="space-y-1.5 opacity-60">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center justify-between">
+                          Autocancelación
+                          <span className="text-[8px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500">Pronto</span>
                         </Label>
-                        <div className="flex items-center gap-2 opacity-50 cursor-not-allowed">
-                          <input
-                            type="checkbox"
-                            id="allow_client_cancellation"
-                            disabled
-                            className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                          />
-                          <Label htmlFor="allow_client_cancellation" className="cursor-not-allowed text-sm font-medium dark:text-gray-50">
-                            Permitir cancelación
-                          </Label>
+                        <div className="h-10 px-3 rounded-xl bg-gray-50/30 dark:bg-gray-800/20 border border-dashed border-gray-200 dark:border-gray-700 flex items-center gap-2 cursor-not-allowed">
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
+                          <span className="text-xs font-bold text-gray-400">Deshabilitado</span>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Función en desarrollo
-                        </p>
                       </div>
 
-                      {/* Permitir reagendar */}
-                      <div className="space-y-1.5">
-                        <Label className="text-sm dark:text-gray-50 flex items-center gap-2">
-                          Reagendar por clientes
-                          <Badge variant="secondary" className="text-xs">Próximamente</Badge>
+                      {/* Permitir reagendar - Disabled with Premium Badge */}
+                      <div className="space-y-1.5 opacity-60">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center justify-between">
+                          Reagendar
+                          <span className="text-[8px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500">Pronto</span>
                         </Label>
-                        <div className="flex items-center gap-2 opacity-50 cursor-not-allowed">
-                          <input
-                            type="checkbox"
-                            id="allow_client_reschedule"
-                            disabled
-                            className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                          />
-                          <Label htmlFor="allow_client_reschedule" className="cursor-not-allowed text-sm font-medium dark:text-gray-50">
-                            Permitir reagendar
-                          </Label>
+                        <div className="h-10 px-3 rounded-xl bg-gray-50/30 dark:bg-gray-800/20 border border-dashed border-gray-200 dark:border-gray-700 flex items-center gap-2 cursor-not-allowed">
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
+                          <span className="text-xs font-bold text-gray-400">Deshabilitado</span>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Función en desarrollo
-                        </p>
                       </div>
 
                       {/* Texto de política - Full Width */}
                       <div className="md:col-span-2 lg:col-span-3 space-y-1.5">
-                        <Label htmlFor="cancellation_policy_text" className="text-sm dark:text-gray-50">
-                          Texto de la política
+                        <Label htmlFor="cancellation_policy_text" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                          Texto Legal de la Política
                         </Label>
                         <Textarea
                           id="cancellation_policy_text"
                           {...registerAdvanced('cancellation_policy_text')}
                           rows={2}
-                          className={`resize-none ${
-                            touchedAdvanced.cancellation_policy_text && !errorsAdvanced.cancellation_policy_text ? 'border-green-500' : ''
-                          } ${
-                            errorsAdvanced.cancellation_policy_text ? 'border-red-500' : ''
-                          }`}
-                          placeholder="Describe tu política de cancelación..."
+                          className="rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 resize-none p-3 text-xs"
+                          placeholder="Describe tus reglas de cancelación..."
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Este texto se mostrará a los clientes al reservar
-                        </p>
+                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Se mostrará al cliente antes de confirmar</p>
                         {errorsAdvanced.cancellation_policy_text && (
-                          <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.cancellation_policy_text.message}</p>
+                          <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider mt-1">{errorsAdvanced.cancellation_policy_text.message}</p>
                         )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Cancellation Limit Settings */}
+                {/* Cancellation Limit Settings - Premium Integrated */}
                 {business && (
                   <CancellationLimitSettings 
                     businessId={business.id}
@@ -1156,161 +1130,155 @@ export default function UnifiedSettingsPage() {
                   />
                 )}
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </Button>
+                {/* Sticky Action Bar - Compact */}
+                <div className="sticky bottom-4 z-20 flex justify-end">
+                  <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5 mr-2" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
 
-            {/* Booking Section */}
+            {/* Booking Section - Compacted */}
             {activeSection === 'booking' && (
               <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-4">
-                <Card className="dark:border-gray-700">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Clock className="w-5 h-5 text-orange-600" />
-                      Restricciones de Reserva
-                    </CardTitle>
-                    <CardDescription className="dark:text-gray-400 text-sm">
-                      Define cuándo pueden reservar tus clientes
-                    </CardDescription>
+                <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+                  <CardHeader className="px-6 pt-6 pb-2">
+                    <div className="flex flex-col gap-0.5 relative pl-5">
+                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                        Disponibilidad
+                      </span>
+                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Restricciones de Reserva
+                      </CardTitle>
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                        {/* Anticipación mínima */}
-                        <div className="space-y-1.5">
-                          <Label htmlFor="min_booking_hours" className="text-sm dark:text-gray-50">
-                            Anticipación mínima (horas)
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id="min_booking_hours"
-                              type="number"
-                              min="0"
-                              max="72"
-                              className={`h-9 ${
-                                touchedAdvanced.min_booking_hours && !errorsAdvanced.min_booking_hours ? 'border-green-500' : ''
-                              } ${
-                                errorsAdvanced.min_booking_hours ? 'border-red-500' : ''
-                              }`}
-                              {...registerAdvanced('min_booking_hours', { valueAsNumber: true })}
-                            />
-                            {touchedAdvanced.min_booking_hours && !errorsAdvanced.min_booking_hours && (
-                              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Máximo 72 horas (3 días)
-                          </p>
-                          {errorsAdvanced.min_booking_hours && (
-                            <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.min_booking_hours.message}</p>
-                          )}
+                  <CardContent className="px-6 pb-6 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Anticipación mínima */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="min_booking_hours" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                          Anticipación Mínima (Horas)
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="min_booking_hours"
+                            type="number"
+                            min="0"
+                            max="72"
+                            className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
+                            {...registerAdvanced('min_booking_hours', { valueAsNumber: true })}
+                          />
                         </div>
-
-                        {/* Días máximos */}
-                        <div className="space-y-1.5">
-                          <Label htmlFor="max_booking_days" className="text-sm dark:text-gray-50">
-                            Días máximos al futuro
-                          </Label>
-                          <div className="relative">
-                            <Input
-                              id="max_booking_days"
-                              type="number"
-                              min="1"
-                              max="365"
-                              className={`h-9 ${
-                                touchedAdvanced.max_booking_days && !errorsAdvanced.max_booking_days ? 'border-green-500' : ''
-                              } ${
-                                errorsAdvanced.max_booking_days ? 'border-red-500' : ''
-                              }`}
-                              {...registerAdvanced('max_booking_days', { valueAsNumber: true })}
-                            />
-                            {touchedAdvanced.max_booking_days && !errorsAdvanced.max_booking_days && (
-                              <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Máximo 365 días (1 año)
-                          </p>
-                          {errorsAdvanced.max_booking_days && (
-                            <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.max_booking_days.message}</p>
-                          )}
-                        </div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Máximo 72h (3 días)</p>
+                        {errorsAdvanced.min_booking_hours && (
+                          <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider mt-1">{errorsAdvanced.min_booking_hours.message}</p>
+                        )}
                       </div>
 
-                      {/* Vista previa con Badge */}
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <Info className="w-4 h-4" />
+                      {/* Días máximos */}
+                      <div className="space-y-1.5">
+                        <Label htmlFor="max_booking_days" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                          Futuro Máximo (Días)
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            id="max_booking_days"
+                            type="number"
+                            min="1"
+                            max="365"
+                            className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm"
+                            {...registerAdvanced('max_booking_days', { valueAsNumber: true })}
+                          />
+                        </div>
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Máximo 365d (1 año)</p>
+                        {errorsAdvanced.max_booking_days && (
+                          <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider mt-1">{errorsAdvanced.max_booking_days.message}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Badge Summary - Compact */}
+                    <div className="flex items-center gap-4 p-3 rounded-xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-800/30">
+                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-blue-800/80 dark:text-blue-300/80">
                         <span>Reservas desde</span>
-                        <Badge variant="secondary" className="font-mono">
-                          {watchAdvanced('min_booking_hours')}h
-                        </Badge>
-                        <span>de anticipación hasta</span>
-                        <Badge variant="secondary" className="font-mono">
-                          {watchAdvanced('max_booking_days')}d
-                        </Badge>
-                        <span>al futuro</span>
+                        <span className="bg-white/80 dark:bg-white/10 px-1.5 py-0.5 rounded text-orange-600">{watchAdvanced('min_booking_hours')}h</span>
+                        <span>hasta</span>
+                        <span className="bg-white/80 dark:bg-white/10 px-1.5 py-0.5 rounded text-orange-600">{watchAdvanced('max_booking_days')}d</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </Button>
+                {/* Sticky Action Bar - Compact */}
+                <div className="sticky bottom-4 z-20 flex justify-end">
+                  <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5 mr-2" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
 
             {/* Special Hours Section */}
             {activeSection === 'special-hours' && (
-              <div className="space-y-6">
-                <Card className="dark:border-gray-700">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-orange-600" />
-                      Horarios Especiales y Feriados
-                    </CardTitle>
-                    <CardDescription className="dark:text-gray-400">
+              <div className="space-y-4">
+                <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+                  <CardHeader className="px-6 pt-6 pb-2">
+                    <div className="flex flex-col gap-0.5 relative pl-5">
+                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                        Disponibilidad
+                      </span>
+                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Horarios Especiales y Feriados
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="px-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
                       Gestiona días cerrados, feriados y horarios especiales
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="flex items-start gap-2 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-6">
-                      <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-orange-900 dark:text-orange-200">
+                  <CardContent className="px-6 pb-6 pt-4">
+                    <div className="flex items-start gap-3 bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100/50 dark:border-orange-800/30 rounded-xl p-3 mb-6">
+                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
+                        <Info className="w-4 h-4 text-orange-600" />
+                      </div>
+                      <p className="text-[10px] font-medium text-orange-800/80 dark:text-orange-300/80 leading-tight">
                         Configura días especiales donde tu negocio tendrá horarios diferentes o estará cerrado. Estos horarios tienen prioridad sobre los horarios regulares.
                       </p>
                     </div>
@@ -1335,161 +1303,153 @@ export default function UnifiedSettingsPage() {
             {/* Reminders Section */}
             {activeSection === 'reminders' && (
               <form onSubmit={handleSubmitAdvanced(onSubmitAdvanced)} className="space-y-4">
-                <Card className="dark:border-gray-700">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Bell className="w-5 h-5 text-orange-600" />
-                      Recordatorios Automáticos
-                    </CardTitle>
-                    <CardDescription className="dark:text-gray-400 text-sm">
-                      Configura recordatorios para tus clientes
+                <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
+                  <CardHeader className="px-6 pt-6 pb-2">
+                    <div className="flex flex-col gap-0.5 relative pl-5">
+                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                        Comunicación Inteligente
+                      </span>
+                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                        Recordatorios Automáticos
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="px-5 text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
+                      Reduce el ausentismo notificando a tus clientes antes de su cita
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {/* Activar recordatorios */}
-                      <div className="flex items-center gap-2 pb-3 border-b dark:border-gray-800">
-                        <input
-                          type="checkbox"
-                          id="enable_reminders"
-                          {...registerAdvanced('enable_reminders')}
-                          className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                        />
-                        <Label htmlFor="enable_reminders" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                          Activar recordatorios automáticos
-                        </Label>
+                  <CardContent className="px-6 pb-6 space-y-5">
+                    {/* Activar recordatorios - Toggle Premium */}
+                    <div className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-2xl border border-gray-50/50 dark:border-gray-700/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                          <Bell className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <Label htmlFor="enable_reminders" className="text-[12px] font-black uppercase tracking-widest text-gray-900 dark:text-gray-100 cursor-pointer">
+                            Estado del Sistema
+                          </Label>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Activar notificaciones push/email</p>
+                        </div>
                       </div>
+                      <Switch
+                        id="enable_reminders"
+                        checked={enableReminders}
+                        onCheckedChange={(checked: boolean) => setValueAdvanced('enable_reminders', checked, { shouldDirty: true })}
+                        className="scale-110"
+                      />
+                    </div>
 
-                      {enableReminders && (
-                        <div className="space-y-3">
-                          {/* Grid: Horas antes + Canales */}
-                          <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-x-6 gap-y-3">
-                            {/* Horas antes */}
-                            <div className="space-y-1.5">
-                              <Label htmlFor="reminder_hours_before" className="text-sm dark:text-gray-50">
-                                Horas antes
-                              </Label>
-                              <div className="relative">
-                                <Input
-                                  id="reminder_hours_before"
-                                  type="number"
-                                  min="1"
-                                  max="168"
-                                  className={`h-9 ${
-                                    touchedAdvanced.reminder_hours_before && !errorsAdvanced.reminder_hours_before ? 'border-green-500' : ''
-                                  } ${
-                                    errorsAdvanced.reminder_hours_before ? 'border-red-500' : ''
-                                  }`}
-                                  {...registerAdvanced('reminder_hours_before', { valueAsNumber: true })}
-                                />
+                    {enableReminders && (
+                      <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-500">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                          {/* Horas antes */}
+                          <div className="space-y-1.5">
+                            <Label htmlFor="reminder_hours_before" className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                              Anticipación de Envío
+                            </Label>
+                            <div className="relative group">
+                              <Input
+                                id="reminder_hours_before"
+                                type="number"
+                                min="1"
+                                max="168"
+                                className="h-10 rounded-xl bg-gray-50/50 dark:bg-gray-800/50 border-gray-50 dark:border-gray-700/50 focus:ring-orange-500/20 text-sm font-black transition-all group-hover:border-orange-200"
+                                {...registerAdvanced('reminder_hours_before', { valueAsNumber: true })}
+                              />
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                                <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Horas</span>
                                 {touchedAdvanced.reminder_hours_before && !errorsAdvanced.reminder_hours_before && (
-                                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
                                 )}
                               </div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Máximo 168h (7 días)
-                              </p>
-                              {errorsAdvanced.reminder_hours_before && (
-                                <p className="text-xs text-red-600 dark:text-red-400">{errorsAdvanced.reminder_hours_before.message}</p>
-                              )}
                             </div>
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none mt-1">
+                              Sugerido: 24h a 48h
+                            </p>
+                            {errorsAdvanced.reminder_hours_before && (
+                              <p className="text-[10px] font-bold text-red-500 mt-1 uppercase tracking-tight">{errorsAdvanced.reminder_hours_before.message}</p>
+                            )}
+                          </div>
 
-                            {/* Canales */}
-                            <div className="space-y-2">
-                              <Label className="text-sm dark:text-gray-50">Canales de notificación</Label>
-
-                              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-                                {/* Email */}
+                          {/* Canales */}
+                          <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Canales de notificación</Label>
+                            <div className="flex gap-2">
+                              {/* Email */}
+                              <div className={`flex-1 flex items-center justify-between h-10 px-3 rounded-xl border-2 transition-all duration-300 ${
+                                watchAdvanced('reminder_email_enabled')
+                                  ? 'border-orange-500 bg-orange-50/50 dark:border-orange-500/50 dark:bg-orange-950/20'
+                                  : 'border-transparent bg-gray-50/50 dark:bg-gray-800/50'
+                              }`}>
                                 <div className="flex items-center gap-2">
-                                  <input
-                                    type="checkbox"
-                                    id="reminder_email_enabled"
-                                    {...registerAdvanced('reminder_email_enabled')}
-                                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                                  />
-                                  <Label htmlFor="reminder_email_enabled" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                                    Email
-                                  </Label>
-                                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                  <div className={`w-1.5 h-1.5 rounded-full ${watchAdvanced('reminder_email_enabled') ? 'bg-orange-500' : 'bg-gray-300'}`} />
+                                  <span className={`text-[11px] font-black uppercase tracking-widest ${watchAdvanced('reminder_email_enabled') ? 'text-orange-900 dark:text-orange-200' : 'text-gray-400'}`}>Email</span>
                                 </div>
+                                <Switch
+                                  checked={watchAdvanced('reminder_email_enabled')}
+                                  onCheckedChange={(checked: boolean) => setValueAdvanced('reminder_email_enabled', checked, { shouldDirty: true })}
+                                  className="scale-90"
+                                />
+                              </div>
 
-                                {/* SMS */}
-                                <div className="flex items-center gap-2 opacity-50">
-                                  <input
-                                    type="checkbox"
-                                    id="reminder_sms_enabled"
-                                    {...registerAdvanced('reminder_sms_enabled')}
-                                    disabled={true}
-                                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                                  />
-                                  <Label htmlFor="reminder_sms_enabled" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                                    SMS
-                                  </Label>
-                                  <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-                                    Próximamente
-                                  </Badge>
+                              {/* SMS / Push Placeholder */}
+                              <div className="flex-1 flex items-center justify-between h-10 px-3 rounded-xl bg-gray-100/30 dark:bg-gray-800/20 border border-dashed border-gray-200 dark:border-gray-700 opacity-60 overflow-hidden">
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">PRÓXIMAMENTE</span>
+                                  <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">SMS & PUSH</span>
                                 </div>
-
-                                {/* Push */}
-                                <div className="flex items-center gap-2 opacity-50">
-                                  <input
-                                    type="checkbox"
-                                    id="reminder_push_enabled"
-                                    {...registerAdvanced('reminder_push_enabled')}
-                                    disabled={true}
-                                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                                  />
-                                  <Label htmlFor="reminder_push_enabled" className="cursor-pointer text-sm font-medium dark:text-gray-50">
-                                    Push
-                                  </Label>
-                                  <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
-                                    Próximamente
-                                  </Badge>
-                                </div>
+                                <div className="w-8 h-4 rounded-full bg-gray-200 dark:bg-gray-800" />
                               </div>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Vista previa con Badge */}
-                          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400 pt-2">
-                            <Bell className="w-4 h-4" />
-                            <span>Recordatorio</span>
-                            <Badge variant="secondary" className="font-mono">
-                              {watchAdvanced('reminder_hours_before')}h antes
-                            </Badge>
-                            <span>vía</span>
-                            <Badge variant="secondary" className="font-mono">
-                              {[
-                                watchAdvanced('reminder_email_enabled') && 'Email',
-                                watchAdvanced('reminder_sms_enabled') && 'SMS',
-                                watchAdvanced('reminder_push_enabled') && 'Push'
-                              ].filter(Boolean).join(', ') || 'ninguno'}
-                            </Badge>
+                        {/* Vista previa con Badge - Premium Recap */}
+                        <div className="flex items-center gap-4 p-3 rounded-2xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100/50 dark:border-blue-800/30">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                            <Info className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-black text-blue-950 dark:text-blue-200 uppercase tracking-widest">Resumen del Recordatorio</span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">El cliente recibirá un recordatorio</span>
+                              <Badge variant="secondary" className="bg-blue-200/50 dark:bg-blue-800/30 text-blue-900 dark:text-blue-200 text-[10px] font-black uppercase tracking-widest border-0">
+                                {watchAdvanced('reminder_hours_before')} Horas
+                              </Badge>
+                              <span className="text-[11px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-tight">antes de su turno vía</span>
+                              <Badge variant="secondary" className="bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 text-[10px] font-black uppercase tracking-widest border-0">
+                                {watchAdvanced('reminder_email_enabled') ? 'Email' : 'Ninguno'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
-                <div className="flex justify-end sticky bottom-0 bg-white/95 backdrop-blur-sm py-3 sm:py-4 px-4 sm:px-0 border-t dark:bg-gray-900/95 dark:border-gray-800 -mx-4 sm:mx-0">
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Guardar Cambios
-                      </>
-                    )}
-                  </Button>
+                {/* Sticky Action Bar - Standardized */}
+                <div className="sticky bottom-4 z-20 flex justify-end">
+                  <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl flex items-center gap-2">
+                    <Button
+                      type="submit"
+                      disabled={submitting}
+                      className="h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5 mr-2" />
+                          Guardar Cambios
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}

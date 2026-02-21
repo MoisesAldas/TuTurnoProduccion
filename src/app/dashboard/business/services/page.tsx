@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Plus, Search, Edit, Trash2, Clock, DollarSign, CheckCircle2, Building, X, LayoutGrid, Table as TableIcon, Briefcase } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Clock, DollarSign, CheckCircle2, Building, X, LayoutGrid, Table as TableIcon, Briefcase, AlertCircle } from 'lucide-react'
 import { StatsCard } from '@/components/StatsCard'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
@@ -268,53 +268,46 @@ const formatDuration = (minutes: number) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-950">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-6">
-            <div className="absolute inset-0 border-4 border-orange-100 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="relative w-20 h-20 mx-auto mb-8">
+            <div className="absolute inset-0 border-4 border-orange-100 dark:border-orange-900/30 rounded-[2rem]"></div>
+            <div className="absolute inset-0 border-4 border-orange-600 border-t-transparent rounded-[2rem] animate-spin shadow-[0_0_15px_rgba(234,88,12,0.2)]"></div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-2">Cargando servicios</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Obteniendo tu catálogo de servicios...</p>
+          <p className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse">
+            Configurando Catálogo...
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Sticky Header */}
-      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-6">
+      <div className="w-full space-y-8">
+        {/* Premium Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            {/* Vertical Accent */}
+            <div className="w-1.5 h-10 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">Servicios</h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Gestiona los servicios de tu negocio
+              <p className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-0.5">
+                {business?.name || 'Catálogo'}
               </p>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              {business && (
-                <Badge className="hidden sm:flex bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800">
-                  <Building className="w-4 h-4 mr-2" />
-                  {business.name}
-                </Badge>
-              )}
-              <Button
-  onClick={() => setCreateModalOpen(true)}
-  className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white shadow-md hover:shadow-lg transition-all"
->
-  <Plus className="w-4 h-4 mr-2" />
-  Nuevo Servicio
-</Button>
-
+              <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                Gestión de Servicios
+              </h1>
             </div>
           </div>
+          <Button
+            onClick={() => setCreateModalOpen(true)}
+            className="bg-orange-600 hover:bg-orange-700 text-white rounded-2xl h-12 px-6 shadow-[0_4px_14px_0_rgba(251,146,60,0.39)] hover:shadow-[0_6px_20px_rgba(251,146,60,0.23)] transition-all duration-300 font-bold"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Nuevo Servicio
+          </Button>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
@@ -350,154 +343,172 @@ const formatDuration = (minutes: number) => {
           />
         </div>
 
-        {/* Search Bar with View Toggle */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="relative flex-1">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-              <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+        {/* Search Bar with View Toggle - Premium Style */}
+        <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] p-4 border-0">
+          <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+            {/* Search */}
+            <div className="flex-1 group">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 transition-all group-focus-within:text-orange-500 group-focus-within:scale-110" />
+                <Input
+                  type="text"
+                  placeholder="Buscar servicios por nombre o descripción..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-11 bg-gray-50/50 dark:bg-gray-800/30 border-0 rounded-2xl h-11 focus-visible:ring-1 focus-visible:ring-orange-500/30 transition-all shadow-none"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
-            <Input
-              type="text"
-              placeholder="Buscar servicios por nombre o descripción..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-12 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:border-orange-500 focus:ring-orange-500 shadow-sm"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
 
-          {/* View Toggle */}
-          <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-1 shadow-sm">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className={`h-10 ${
-                viewMode === 'grid'
-                  ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
-              }`}
-            >
-              <LayoutGrid className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Cuadrícula</span>
-            </Button>
-            <Button
-              variant={viewMode === 'table' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('table')}
-              className={`h-10 ${
-                viewMode === 'table'
-                  ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50'
-              }`}
-            >
-              <TableIcon className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Tabla</span>
-            </Button>
+            {/* View Toggle - Premium Grouped Style */}
+            <div className="flex items-center gap-1 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl p-1 shrink-0 self-center lg:self-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className={`flex-1 lg:w-auto rounded-xl h-9 px-4 font-bold text-xs transition-all duration-300 ${
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm font-black'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5 mr-2" />
+                Cuadrícula
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className={`flex-1 lg:w-auto rounded-xl h-9 px-4 font-bold text-xs transition-all duration-300 ${
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm font-black'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
+                }`}
+              >
+                <TableIcon className="w-3.5 h-3.5 mr-2" />
+                Tabla
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Services Grid/Table or Empty State */}
         {filteredServices.length === 0 ? (
-          <Card className="border-2 border-dashed border-gray-200 dark:border-gray-800">
-            <CardContent className="text-center py-16">
-              <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <DollarSign className="w-10 h-10 text-orange-600 dark:text-orange-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">
-                {services.length === 0 ? 'No tienes servicios registrados' : 'No se encontraron servicios'}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                {services.length === 0
-                  ? 'Los servicios son la base de tu negocio. Comienza creando tu primer servicio para que los clientes puedan hacer reservas.'
-                  : `No encontramos servicios que coincidan con "${searchQuery}". Intenta con una búsqueda diferente.`
-                }
-              </p>
-              {services.length === 0 && (
-                <Link href="/dashboard/business/services/new">
-                  <Button className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-md hover:shadow-lg transition-all">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Crear Primer Servicio
-                  </Button>
-                </Link>
-              )}
-            </CardContent>
-          </Card>
+          <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-[2.5rem] p-16 text-center border-0 shadow-sm">
+            <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-orange-100 dark:shadow-none shadow-xl transition-transform hover:scale-110 duration-500">
+              <DollarSign className="w-10 h-10 text-orange-600 dark:text-orange-400" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 dark:text-gray-50 mb-3">
+              {services.length === 0 ? 'Sin Servicios Registrados' : 'Sin Resultados'}
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto leading-relaxed">
+              {services.length === 0
+                ? 'Comienza creando tu primer servicio para que los clientes puedan hacer reservas.'
+                : `No encontramos servicios que coincidan con "${searchQuery}".`
+              }
+            </p>
+            {services.length === 0 && (
+              <Button onClick={() => setCreateModalOpen(true)} className="bg-orange-600 hover:bg-orange-700 rounded-2xl h-12 px-8 font-black shadow-lg">
+                <Plus className="w-5 h-5 mr-2" />
+                Crear Primer Servicio
+              </Button>
+            )}
+          </div>
         ) : viewMode === 'table' ? (
-          /* Table View */
-          <DataTable
-            columns={columns}
-            data={filteredServices}
-          />
+          <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-md rounded-[2.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden border-0">
+            <DataTable
+              columns={columns}
+              data={filteredServices}
+              tableContainerClassName="border-0 bg-transparent shadow-none rounded-none"
+            />
+          </div>
         ) : (
-          /* Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredServices.map((service) => (
               <Card
                 key={service.id}
                 className={`
-                  hover:shadow-lg transition-all duration-200 group
-                  ${!service.is_active ? 'bg-gray-50 dark:bg-gray-900/50 opacity-75' : ''}
+                  overflow-hidden border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] dark:bg-gray-900 rounded-[2.25rem] hover:shadow-xl transition-all duration-300 group flex flex-col
+                  ${!service.is_active ? 'opacity-75 grayscale-[0.5]' : ''}
                 `}
               >
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-50 line-clamp-1">
-                      {service.name}
-                    </CardTitle>
+                <CardHeader className="pb-3 pt-5 px-6 bg-gradient-to-br from-orange-50/50 via-transparent to-transparent dark:from-orange-900/5 dark:via-transparent dark:to-transparent relative">
+                  {/* Vertical Accent */}
+                  <div className="absolute left-0 top-6 w-1.5 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)] transition-transform group-hover:scale-y-110" />
+                  
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                      <div className="w-11 h-11 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-[1rem] flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                        <Briefcase className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500 mb-0.5 truncate">
+                          Servicio Ofrecido
+                        </p>
+                        <h3 className="text-sm font-black tracking-tight text-gray-900 dark:text-gray-50 truncate">
+                          {service.name}
+                        </h3>
+                      </div>
+                    </div>
                     <Badge
                       variant={service.is_active ? "default" : "secondary"}
                       className={service.is_active
-                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-400 dark:border-emerald-800 flex-shrink-0'
-                        : 'bg-gray-200 text-gray-600 border border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 flex-shrink-0'
+                        ? 'bg-emerald-100 text-emerald-700 border-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold dark:bg-emerald-900/40 dark:text-emerald-400 flex-shrink-0'
+                        : 'bg-gray-100 text-gray-500 border-0 rounded-full px-2.5 py-0.5 text-[9px] font-bold dark:bg-gray-800 dark:text-gray-400 flex-shrink-0'
                       }
                     >
-                      {service.is_active ? 'Activo' : 'Inactivo'}
+                      {service.is_active ? '● Activo' : '○ Inactivo'}
                     </Badge>
-                  </div>
-                  {service.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                      {service.description}
-                    </p>
-                  )}
-                  {/* Employees Badge */}
-                  <div className="mt-3">
-                    <ServiceEmployeesBadge serviceId={service.id} variant="compact" />
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-0 space-y-4">
-                  {/* Price - Simplified */}
-                  <div className="flex items-baseline justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <DollarSign className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      <span className="text-sm font-medium">Precio</span>
+                <CardContent className="pt-1 pb-5 px-6 flex-1 flex flex-col">
+                  {service.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-4 min-h-[2.5rem]">
+                      {service.description}
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center justify-between p-2.5 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl border border-transparent group-hover:border-orange-100 dark:group-hover:border-orange-900/30 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-green-100/50 dark:bg-green-900/30 flex items-center justify-center">
+                          <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Precio</span>
+                      </div>
+                      <span className="text-lg font-black text-orange-600 dark:text-orange-400">
+                        {formatPrice(service.price)}
+                      </span>
                     </div>
-                    <span className="text-2xl font-bold  bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
-                      {formatPrice(service.price)}
-                    </span>
+
+                    <div className="flex items-center justify-between p-2.5 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl border border-transparent group-hover:border-orange-100 dark:group-hover:border-orange-900/30 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-blue-100/50 dark:bg-blue-900/30 flex items-center justify-center">
+                          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Duración</span>
+                      </div>
+                      <span className="text-sm font-black text-gray-900 dark:text-gray-50 text-right">
+                        {formatDuration(service.duration_minutes)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2 p-2.5 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl">
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Personal Asignado</span>
+                      <ServiceEmployeesBadge serviceId={service.id} variant="compact" />
+                    </div>
                   </div>
 
-                  {/* Duration */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                      <span>Duración</span>
-                    </div>
-                    <span className="font-semibold text-gray-900 dark:text-gray-50">
-                      {formatDuration(service.duration_minutes)}
-                    </span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <div className="grid grid-cols-2 gap-2 mt-auto">
                     <Button
                       variant="outline"
                       size="sm"
@@ -505,21 +516,22 @@ const formatDuration = (minutes: number) => {
                         setSelectedService(service)
                         setEditModalOpen(true)
                       }}
-                      className="flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 transition-colors group-hover:border-orange-200 shadow-sm hover:shadow-md dark:hover:bg-orange-900/50 dark:hover:text-orange-400 dark:hover:border-orange-700 dark:group-hover:border-orange-800"
+                      className="rounded-xl border-gray-100 dark:border-gray-800 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200 transition-all font-bold text-[11px] h-9 dark:hover:bg-orange-900/40"
                     >
-                      <Edit className="w-4 h-4 mr-2" />
+                      <Edit className="w-3.5 h-3.5 mr-1.5" />
                       Editar
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => {
                         setServiceToDelete(service.id)
                         setDeleteDialogOpen(true)
                       }}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 transition-colors shadow-sm hover:shadow-md dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
+                      className="rounded-xl text-red-500 hover:text-red-700 hover:bg-red-50 transition-all font-bold text-[11px] h-9 dark:hover:bg-red-900/40"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      Eliminar
                     </Button>
                   </div>
                 </CardContent>
@@ -551,12 +563,19 @@ const formatDuration = (minutes: number) => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <AlertDialogTitle>
+                ¿Estás seguro?
+              </AlertDialogTitle>
+            </div>
             <AlertDialogDescription>
               Esta acción eliminará permanentemente este servicio. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel onClick={() => {
               setDeleteDialogOpen(false)
               setServiceToDelete(null)
@@ -565,7 +584,7 @@ const formatDuration = (minutes: number) => {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteService}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
             >
               Eliminar
             </AlertDialogAction>
