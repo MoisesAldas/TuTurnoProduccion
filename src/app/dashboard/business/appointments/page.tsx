@@ -678,11 +678,20 @@ export default function AppointmentsPage() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setShowSettingsModal(true)}
+              className="h-8 w-8 p-0 rounded-xl border-gray-100 shadow-sm bg-white text-gray-400 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-100 transition-all active:scale-95"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
               onClick={fetchAppointments}
               disabled={refreshing}
-              className="h-8 w-8 p-0 rounded-xl border-gray-100 shadow-sm bg-white text-gray-400 hover:text-orange-600"
+              className="h-8 w-8 p-0 rounded-xl border-gray-100 shadow-sm bg-white text-gray-400 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-100 transition-all active:scale-95"
             >
-              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
             
             <Button

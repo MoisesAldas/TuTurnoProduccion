@@ -13,7 +13,17 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Switch } from '@/components/ui/switch'
 import {
-  Save, Building, Mail, Phone, Globe, MapPin, Upload, Camera, X,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  Save, Building, Mail, Phone, Globe, MapPin, Upload, Camera, X, Trash2,
   Image as ImageIcon, Settings, Shield, Clock, Calendar, Bell, Receipt,
   CheckCircle2, Info, AlertCircle
 } from 'lucide-react'
@@ -76,6 +86,10 @@ export default function UnifiedSettingsPage() {
   const [showCoverCropper, setShowCoverCropper] = useState(false)
   const [originalCoverFile, setOriginalCoverFile] = useState<File | null>(null)
   const coverInputRef = useRef<HTMLInputElement>(null)
+  const [isDeletingLogo, setIsDeletingLogo] = useState(false)
+  const [isDeletingCover, setIsDeletingCover] = useState(false)
+  const [showDeleteLogoConfirm, setShowDeleteLogoConfirm] = useState(false)
+  const [showDeleteCoverConfirm, setShowDeleteCoverConfirm] = useState(false)
 
   // Estado para ubicación
   const [locationData, setLocationData] = useState({
@@ -405,6 +419,98 @@ export default function UnifiedSettingsPage() {
     }
   }
 
+  const handleDeleteLogo = async () => {
+    if (!business) return
+
+    try {
+      setIsDeletingLogo(true)
+
+      // 1. Eliminar del storage si existe una URL
+      if (business.logo_url) {
+        try {
+          const fileName = business.logo_url.split('/').slice(-3).join('/')
+          await supabase.storage.from('business-images').remove([fileName])
+        } catch (storageError) {
+          console.warn('No se pudo eliminar el logo del storage:', storageError)
+        }
+      }
+
+      // 2. Actualizar base de datos
+      const { error } = await supabase
+        .from('businesses')
+        .update({ logo_url: null })
+        .eq('id', business.id)
+
+      if (error) throw error
+
+      // 3. Actualizar estado local
+      setBusiness({ ...business, logo_url: undefined })
+      setLogoPreview(null)
+      setLogoFile(null)
+
+      toast({
+        title: 'Logo eliminado',
+        description: 'El logo se ha eliminado correctamente.'
+      })
+    } catch (error) {
+      console.error('Error deleting logo:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudo eliminar el logo.'
+      })
+    } finally {
+      setIsDeletingLogo(false)
+      setShowDeleteLogoConfirm(false)
+    }
+  }
+
+  const handleDeleteCover = async () => {
+    if (!business) return
+
+    try {
+      setIsDeletingCover(true)
+
+      // 1. Eliminar del storage si existe una URL
+      if (business.cover_image_url) {
+        try {
+          const fileName = business.cover_image_url.split('/').slice(-3).join('/')
+          await supabase.storage.from('business-images').remove([fileName])
+        } catch (storageError) {
+          console.warn('No se pudo eliminar la portada del storage:', storageError)
+        }
+      }
+
+      // 2. Actualizar base de datos
+      const { error } = await supabase
+        .from('businesses')
+        .update({ cover_image_url: null })
+        .eq('id', business.id)
+
+      if (error) throw error
+
+      // 3. Actualizar estado local
+      setBusiness({ ...business, cover_image_url: undefined })
+      setCoverPreview(null)
+      setCoverFile(null)
+
+      toast({
+        title: 'Portada eliminada',
+        description: 'La imagen de portada se ha eliminado correctamente.'
+      })
+    } catch (error) {
+      console.error('Error deleting cover:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No se pudo eliminar la portada.'
+      })
+    } finally {
+      setIsDeletingCover(false)
+      setShowDeleteCoverConfirm(false)
+    }
+  }
+
   const uploadImage = async (file: File, type: 'logo' | 'cover'): Promise<string | null> => {
     if (!file || !business) return null
 
@@ -693,22 +799,56 @@ export default function UnifiedSettingsPage() {
                               type="button"
                               size="sm"
                               variant="outline"
-                              className="h-8 rounded-lg border-gray-100 dark:border-gray-800 shadow-sm text-[11px]"
                               onClick={() => logoInputRef.current?.click()}
+                              disabled={uploadingLogo}
+                              className="h-8 px-3 rounded-lg border-orange-200 dark:border-orange-800 text-[10px] font-black uppercase tracking-widest hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all active:scale-95"
                             >
                               <Upload className="w-3 h-3 mr-1.5" />
-                              Subir
+                              Cambiar
                             </Button>
-                            {logoFile && (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={removeLogo}
-                                className="h-8 rounded-lg border-gray-100 dark:border-gray-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 shadow-sm"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
+
+                            {(logoPreview || business?.logo_url) && (
+                              <AlertDialog open={showDeleteLogoConfirm} onOpenChange={setShowDeleteLogoConfirm}>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    if (logoFile) {
+                                      removeLogo()
+                                    } else {
+                                      setShowDeleteLogoConfirm(true)
+                                    }
+                                  }}
+                                  className="h-8 px-3 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                                >
+                                  <Trash2 className="w-3 h-3 mr-1.5" />
+                                  Quitar
+                                </Button>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                                        <AlertCircle className="w-5 h-5 text-red-600" />
+                                      </div>
+                                      <AlertDialogTitle>Eliminar Logo</AlertDialogTitle>
+                                    </div>
+                                    <AlertDialogDescription>
+                                      ¿Estás seguro de que deseas eliminar el logo de tu negocio? Esta acción no se puede deshacer.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter className="mt-4 gap-2">
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleDeleteLogo}
+                                      disabled={isDeletingLogo}
+                                      className="bg-red-600 hover:bg-red-700 text-white shadow-red-600/20"
+                                    >
+                                      {isDeletingLogo ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             )}
                           </div>
                         </div>
@@ -884,37 +1024,79 @@ export default function UnifiedSettingsPage() {
                       </div>
                     </div>
 
-                    <div className="group relative w-full aspect-[21/7] border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden bg-gray-50/50 dark:bg-gray-900 flex items-center justify-center transition-all hover:border-orange-200 dark:hover:border-orange-800">
+                    <div 
+                      onClick={() => !uploadingCover && coverInputRef.current?.click()}
+                      className={`group relative w-full aspect-[21/7] border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden bg-gray-50/50 dark:bg-gray-900 flex items-center justify-center transition-all hover:border-orange-200 dark:hover:border-orange-800 cursor-pointer ${uploadingCover ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
                          {coverPreview ? (
                           <>
                             <img src={coverPreview} alt="Cover" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                               <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="w-10 h-10 rounded-full bg-white/20 text-white hover:bg-white/40"
-                                onClick={() => coverInputRef.current?.click()}
-                              >
-                                <Upload className="w-5 h-5" />
-                              </Button>
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="w-10 h-10 rounded-full bg-red-500/20 text-red-100 hover:bg-red-500/40"
-                                onClick={removeCover}
-                              >
-                                <X className="w-5 h-5" />
-                              </Button>
-                            </div>
+                                <Button
+                                 type="button"
+                                 size="icon"
+                                 variant="ghost"
+                                 className="w-10 h-10 rounded-full bg-white/20 text-white hover:bg-white/40"
+                                 onClick={(e) => {
+                                   e.stopPropagation()
+                                   coverInputRef.current?.click()
+                                 }}
+                               >
+                                 <Upload className="w-5 h-5" />
+                               </Button>
+
+                               <AlertDialog open={showDeleteCoverConfirm} onOpenChange={setShowDeleteCoverConfirm}>
+                                 <Button
+                                   type="button"
+                                   size="icon"
+                                   variant="ghost"
+                                   className="w-10 h-10 rounded-full bg-red-500/20 text-red-100 hover:bg-red-500/40"
+                                   onClick={(e) => {
+                                     e.stopPropagation()
+                                     if (coverFile) {
+                                       removeCover()
+                                     } else {
+                                       setShowDeleteCoverConfirm(true)
+                                     }
+                                   }}
+                                 >
+                                   <X className="w-5 h-5" />
+                                 </Button>
+                                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                   <AlertDialogHeader>
+                                     <div className="flex items-center gap-3 mb-2">
+                                       <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                                         <AlertCircle className="w-5 h-5 text-red-600" />
+                                       </div>
+                                       <AlertDialogTitle>Eliminar Portada</AlertDialogTitle>
+                                     </div>
+                                     <AlertDialogDescription>
+                                       ¿Estás seguro de que deseas eliminar la imagen de portada de tu negocio? Esta acción no se puede deshacer.
+                                     </AlertDialogDescription>
+                                   </AlertDialogHeader>
+                                   <AlertDialogFooter className="mt-4 gap-2">
+                                     <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+                                     <AlertDialogAction
+                                       onClick={(e) => {
+                                         e.stopPropagation()
+                                         handleDeleteCover()
+                                       }}
+                                       disabled={isDeletingCover}
+                                       className="bg-red-600 hover:bg-red-700 text-white shadow-red-600/20"
+                                     >
+                                       {isDeletingCover ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                                     </AlertDialogAction>
+                                   </AlertDialogFooter>
+                                 </AlertDialogContent>
+                               </AlertDialog>
+                             </div>
                           </>
                         ) : (
-                          <div className="text-center group-hover:scale-110 transition-transform">
-                            <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center mx-auto mb-2">
-                              <ImageIcon className="w-6 h-6 text-gray-400" />
+                          <div className="text-center group-hover:scale-110 transition-all duration-300">
+                            <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center mx-auto mb-3 group-hover:bg-orange-50 dark:group-hover:bg-orange-900/20">
+                              <ImageIcon className="w-6 h-6 text-gray-400 group-hover:text-orange-600 transition-colors" />
                             </div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sin portada</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-orange-600">Haz clic para subir portada</p>
                           </div>
                         )}
 
@@ -922,6 +1104,64 @@ export default function UnifiedSettingsPage() {
                           <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center">
                             <div className="w-6 h-6 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
                           </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-row gap-2">
+                         <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => coverInputRef.current?.click()}
+                          disabled={uploadingCover}
+                          className="h-8 px-3 rounded-lg border-orange-200 dark:border-orange-800 text-[10px] font-black uppercase tracking-widest hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all active:scale-95"
+                        >
+                          <Upload className="w-3 h-3 mr-1.5" />
+                          {coverPreview ? 'Cambiar Portada' : 'Subir Portada'}
+                        </Button>
+
+                        {(coverPreview || business?.cover_image_url) && (
+                          <AlertDialog open={showDeleteCoverConfirm} onOpenChange={setShowDeleteCoverConfirm}>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (coverFile) {
+                                  removeCover()
+                                } else {
+                                  setShowDeleteCoverConfirm(true)
+                                }
+                              }}
+                              className="h-8 px-3 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1.5" />
+                              Quitar
+                            </Button>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                                    <AlertCircle className="w-5 h-5 text-red-600" />
+                                  </div>
+                                  <AlertDialogTitle>Eliminar Portada</AlertDialogTitle>
+                                </div>
+                                <AlertDialogDescription>
+                                  ¿Estás seguro de que deseas eliminar la portada de tu negocio? Esta acción no se puede deshacer.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter className="mt-4 gap-2">
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleDeleteCover}
+                                  disabled={isDeletingCover}
+                                  className="bg-red-600 hover:bg-red-700 text-white shadow-red-600/20"
+                                >
+                                  {isDeletingCover ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                       

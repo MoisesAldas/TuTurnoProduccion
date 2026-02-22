@@ -88,9 +88,11 @@ Para garantizar la "consistencia" absoluta entre las interfaces de Cliente y Neg
 - **Título de Card**: `text-lg font-black text-slate-900 tracking-tight`
 - **Eyebrow (Ceja)**: `text-[10px] uppercase tracking-[0.2em] font-extrabold text-slate-400 border-slate-200` (Estandarizar a Slate para un look más serio en dashboard).
 
-## 4. Integridad de Datos y Estado
+## 11. Integridad del Código y Funcionalidad (REGLA DE ORO)
 
-- **No Placeholders**: Eliminar textos como "Cliente Platinum", "Nivel Oro" o sistemas de puntos si no existen en la base de datos real.
+- **Preservación Obligatoria**: Durante cualquier rediseño o ajuste estético, **ESTÁ PROHIBIDO** eliminar lógica existente, botones de acción, diálogos o configuraciones a menos que el USUARIO lo pida explícitamente.
+- **Mapeo de Funcionalidades**: Antes de aplicar un nuevo layout, se debe identificar cada interacción (engagement) existente y asegurar que tenga un lugar en la nueva interfaz.
+- **Detección de "Código Huérfano"**: Si un componente de diálogo o estado existe en el archivo, su activador (trigger/botón) **DEBE** permanecer visible y funcional en la interfaz. No se debe "limpiar" funcionalidad para ganar estética.
 - **Badges de Estado**: Usar estados reales (ej: "Estado Activo") con animaciones de pulso (`pulse`) para indicar vida en la interfaz. Color: `emerald` para activo, `rose` para acción requerida.
 
 ### Métricas y KPIs
