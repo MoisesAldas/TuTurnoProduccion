@@ -111,6 +111,18 @@ Para garantizar la "consistencia" absoluta entre las interfaces de Cliente y Neg
   - Contenedores de Sección/Hero: `rounded-3xl`
   - Botones/Inputs: `rounded-xl`
 
+## 12. Escalado Dinámico de Fuente (Adaptive Text)
+
+Para variables cuyo contenido es dinámico y puede variar significativamente en longitud (nombres de negocio, direcciones, categorías largas), se debe aplicar una lógica de escalado automático para evitar rupturas de layout y mantener la armonía visual.
+
+- **Nombres y Títulos Grandes**:
+  - < 20 caracteres: `text-4xl sm:text-5xl lg:text-6xl`
+  - 20-30 caracteres: `text-3xl sm:text-4xl lg:text-5xl`
+  - > 30 caracteres: `text-2xl sm:text-3xl lg:text-4xl`
+- **Elementos de Información (Métricas, Ubicación)**:
+  - Aplicar reducciones de `-2px` o `-1px` si la variable excede los 30 o 50 caracteres respectivamente, para garantizar que el contenido siga siendo legible en una sola línea o en un bloque balanceado.
+- **Implementación**: Usar una función de utilidad (ej: `getAdaptiveFontSize`) para calcular las clases CSS de Tailwind dinámicamente según el `.length` de la variable.
+
 ---
 
 _Nota: Este estilo está inspirado en plataformas como Stripe, Linear y las nuevas interfaces de Apple._

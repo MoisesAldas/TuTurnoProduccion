@@ -480,7 +480,7 @@ export default function CreateAppointmentModal({
   const getStepTitle = (step: number): string => {
     switch (step) {
       case 1: return 'Cliente'
-      case 2: return 'Servicio y Empleado'
+      case 2: return 'Servicio'
       case 3: return 'Fecha y Hora'
       case 4: return 'Confirmación'
       default: return ''

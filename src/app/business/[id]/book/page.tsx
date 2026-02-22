@@ -67,6 +67,14 @@ interface SpecialHour {
 
 type BookingStep = 'service' | 'employee' | 'datetime' | 'details' | 'confirmation'
 
+const stepTitles = {
+  service: 'Selecciona un servicio',
+  employee: 'Elige tu profesional',
+  datetime: 'Fecha y hora',
+  details: 'Detalles de la cita',
+  confirmation: '¡Reserva confirmada!'
+}
+
 export default function BookingPage() {
   const [business, setBusiness] = useState<Business | null>(null)
   const [services, setServices] = useState<Service[]>([])
@@ -91,6 +99,7 @@ export default function BookingPage() {
   const [specialHourForDate, setSpecialHourForDate] = useState<SpecialHour | null>(null)
   const [checkingSpecialHours, setCheckingSpecialHours] = useState(false)
 
+  const [isOpenToday, setIsOpenToday] = useState<boolean>(false)
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -211,7 +220,38 @@ export default function BookingPage() {
 
       if (!employeesError) {
         setAllEmployees(employeesData || [])
-        // No establecer employees aquí - se filtrará por servicios seleccionados
+      }
+
+      // ✅ Check if business is open TODAY
+      const dayOfWeek = now.getDay()
+      const formatDateForDB = (date: Date) => {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+      const todayStr = formatDateForDB(now)
+
+      // Check special hours first
+      const { data: specialToday } = await supabase
+        .from('business_special_hours')
+        .select('is_closed')
+        .eq('business_id', businessId)
+        .eq('special_date', todayStr)
+        .maybeSingle()
+
+      if (specialToday?.is_closed) {
+        setIsOpenToday(false)
+      } else {
+        // Check regular hours
+        const { data: regularToday } = await supabase
+          .from('business_hours')
+          .select('is_closed')
+          .eq('business_id', businessId)
+          .eq('day_of_week', dayOfWeek)
+          .maybeSingle()
+        
+        setIsOpenToday(regularToday ? !regularToday.is_closed : false)
       }
 
     } catch (error) {
@@ -639,6 +679,22 @@ export default function BookingPage() {
     }
   }
 
+  // Adaptive font size based on text length
+  const getAdaptiveFontSize = (text: string, type: 'title' | 'small' = 'title') => {
+    const len = text.length
+    if (type === 'title') {
+      if (len > 30) return 'text-xl sm:text-2xl lg:text-3xl'
+      if (len > 20) return 'text-2xl sm:text-3xl lg:text-4xl'
+      return 'text-2xl sm:text-3xl lg:text-4xl'
+    }
+    // For smaller elements
+    if (len > 50) return 'text-[10px] sm:text-xs'
+    if (len > 30) return 'text-xs sm:text-sm'
+    return 'text-sm'
+  }
+
+  const stepTitleFontSize = getAdaptiveFontSize(stepTitles[currentStep] || '', 'title')
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-EC', {
       style: 'currency',
@@ -673,14 +729,14 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-6">
             <div className="absolute inset-0 border-4 border-slate-200 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute inset-0 border-4 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando opciones de reserva</h3>
-          <p className="text-sm text-gray-600">Preparando servicios y horarios...</p>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">Cargando opciones de reserva</h3>
+          <p className="text-sm text-slate-500">Preparando servicios y horarios...</p>
         </div>
       </div>
     )
@@ -688,118 +744,62 @@ export default function BookingPage() {
 
   if (!business) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Negocio no encontrado</h1>
-          <p className="text-gray-600 mb-4">No se pudo cargar la información del negocio.</p>
+          <h1 className="text-2xl font-black text-slate-950 mb-2 tracking-tight">Negocio no encontrado</h1>
+          <p className="text-slate-500 mb-6">No se pudo cargar la información del negocio.</p>
           <Link href="/marketplace">
-            <Button>Volver al Marketplace</Button>
+            <Button className="bg-slate-950 hover:bg-slate-900 text-white rounded-xl px-8 h-12 font-bold transition-all">
+              Volver al Marketplace
+            </Button>
           </Link>
         </div>
       </div>
     )
   }
 
-  const stepTitles = {
-    service: 'Selecciona un servicio',
-    employee: 'Elige tu profesional',
-    datetime: 'Fecha y hora',
-    details: 'Detalles de la cita',
-    confirmation: '¡Reserva confirmada!'
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-gray-200/50 shadow-sm">
+    <div className="min-h-screen bg-slate-50">
+      {/* Header - Glassmorphism Premium (Consistent with Business Profile) */}
+      <header className="bg-white/70 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-200/40 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
+          <div className="flex justify-between items-center py-3 lg:py-2.5">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link href={`/business/${businessId}`}>
-                <Button variant="ghost" size="sm" className="hover:bg-slate-100 hover:text-slate-900 transition-all duration-200">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver al perfil
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2 -ml-2 h-9 sm:h-10 px-2 sm:px-3 rounded-xl hover:bg-slate-100 hover:text-slate-900 transition-all duration-300 group"
+                >
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">Perfil del negocio</span>
                 </Button>
               </Link>
-              <div className="h-6 w-px bg-gray-200"></div>
-              <Logo color="slate" size="md" />
-            </div>
-            <div>
-            
+              <div className="hidden sm:block h-6 w-px bg-slate-200/60"></div>
+              <Logo color="slate" size="sm" className="sm:hidden" />
+              <Logo color="slate" size="md" className="hidden sm:block" />
             </div>
           </div>
         </div>
+        
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Title and Progress */}
-        <div className="mb-6">
-          {/* Desktop: Only Title */}
-          <div className="hidden lg:block">
-            <h2 className="text-2xl font-bold text-gray-900">
+        <div className="mb-10 lg:mb-7">
+          <div className="flex flex-col gap-1.5 lg:pl-6 relative">
+            {/* Accent Bar */}
+            <div className="hidden lg:block absolute left-0 top-0 w-1.5 h-full bg-gradient-to-b from-slate-800 to-slate-950 rounded-full shadow-[0_0_12px_rgba(2,6,23,0.12)]" />
+            
+            <span className="text-[10px] items-center uppercase tracking-[0.3em] font-black text-slate-400">
+              Paso {(['service', 'employee', 'datetime', 'details', 'confirmation'].indexOf(currentStep) + 1)} de 4
+            </span>
+            <h4 className={`${stepTitleFontSize} font-black mt-2 tracking-tighter text-slate-950 leading-[1.1] py-1 break-words`}>
               {stepTitles[currentStep]}
-            </h2>
-            {currentStep !== 'service' && (
-              <p className="text-gray-500 text-sm mt-1">
-                Puedes volver atrás para cambiar tu selección
-              </p>
-            )}
-          </div>
-
-          {/* Mobile: Progress + Title */}
-          <div className="lg:hidden">
-            <div className="flex items-center justify-center mb-4">
-              <div className="flex items-center space-x-2">
-                {(['service', 'employee', 'datetime', 'details'] as BookingStep[]).map((step, index) => {
-                  const isActive = currentStep === step
-                  const isCompleted = ['service', 'employee', 'datetime', 'details'].indexOf(currentStep) > index
-                  const stepNames = ['Servicio', 'Empleado', 'Fecha', 'Detalles']
-
-                  return (
-                    <div key={step} className="flex items-center">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-200 ${
-                          isActive
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-110'
-                            : isCompleted
-                            ? 'bg-blue-100 text-blue-700 border-blue-300'
-                            : 'bg-white text-gray-400 border-gray-200'
-                        }`}>
-                          {isCompleted ? (
-                            <CheckCircle className="w-5 h-5" />
-                          ) : (
-                            index + 1
-                          )}
-                        </div>
-                        <span className={`text-xs mt-2 font-medium ${
-                          isActive
-                            ? 'text-blue-600'
-                            : isCompleted
-                            ? 'text-blue-500'
-                            : 'text-gray-400'
-                        }`}>
-                          {stepNames[index]}
-                        </span>
-                      </div>
-                      {index < 3 && (
-                        <div className="mx-4">
-                          <ArrowLeft className={`w-4 h-4 rotate-180 ${
-                            isCompleted
-                              ? 'text-blue-500'
-                              : 'text-gray-300'
-                          }`} />
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 text-center">
-              {stepTitles[currentStep]}
-            </h2>
-            {currentStep !== 'service' && (
-              <p className="text-gray-500 text-center mt-2 text-sm">
+            </h4>
+            {currentStep !== 'service' && currentStep !== 'confirmation' && (
+              <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-1">
                 Puedes volver atrás para cambiar tu selección
               </p>
             )}
@@ -821,103 +821,108 @@ export default function BookingPage() {
         {/* Step Content - 2 Column Layout on Desktop (except confirmation) */}
         {currentStep === 'confirmation' ? (
           /* Confirmation - Full Width Centered */
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center space-y-6 max-w-2xl mx-auto animate-in fade-in zoom-in duration-700">
+          <div className="flex items-center justify-center min-h-[70vh] px-4">
+            <div className="text-center w-full max-w-xl mx-auto space-y-8 animate-in fade-in zoom-in duration-1000">
               {/* Success Icon with Animation */}
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto animate-in zoom-in duration-500 delay-150">
-                <CheckCircle className="w-12 h-12 text-green-600" />
+              <div className="relative mx-auto w-24 h-24">
+                <div className="absolute inset-0 bg-slate-950/5 rounded-full animate-ping duration-[3s]" />
+                <div className="relative w-24 h-24 bg-slate-950 rounded-full flex items-center justify-center shadow-2xl animate-in zoom-in duration-500 delay-300">
+                  <CheckCircle className="w-12 h-12 text-white" />
+                </div>
               </div>
 
               {/* Title and Description */}
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
-                <h3 className="text-3xl font-bold text-gray-900 mb-3">
-                  ¡Tu cita ha sido confirmada!
+              <div className="space-y-3 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-500">
+                <h3 className="text-3xl sm:text-4xl font-black tracking-tighter text-slate-950 leading-tight">
+                  ¡Reserva Confirmada!
                 </h3>
-                <p className="text-gray-600 text-lg">
-                  Recibirás un email de confirmación con todos los detalles.
+                <p className="text-slate-500 font-medium text-base sm:text-lg max-w-md mx-auto leading-relaxed">
+                  Tu cita ha sido agendada con éxito. Te enviamos los detalles a tu correo electrónico.
                 </p>
               </div>
 
               {/* Details Card */}
-              <Card className="text-left animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
-                <CardHeader>
-                  <CardTitle>Detalles de tu cita</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <span className="text-gray-600 text-sm font-medium">Negocio:</span>
-                    <p className="font-medium text-gray-900 mt-1">{business.name}</p>
+              <Card className="border-none shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-white overflow-hidden text-left animate-in fade-in slide-in-from-bottom-8 duration-700 delay-700">
+                <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Detalles de la Cita</h4>
+                  <div className="px-2.5 py-1 bg-white rounded-full text-[10px] font-black text-slate-950 shadow-sm border border-slate-100">
+                    ID: #{Math.random().toString(36).substr(2, 6).toUpperCase()}
                   </div>
-
-                  {/* Services List */}
-                  <div>
-                    <span className="text-gray-600 text-sm font-medium">
-                      Servicios ({selectedServices.length}):
-                    </span>
-                    <div className="space-y-2 mt-2">
-                      {selectedServices.map((service) => (
-                        <div key={service.id} className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-gray-900">{service.name}</p>
-                            <p className="text-sm text-gray-500">{formatDuration(service.duration_minutes)}</p>
+                </div>
+                <CardContent className="p-6 space-y-6">
+                  {/* Services Summary */}
+                  <div className="space-y-3">
+                    {selectedServices.map((service) => (
+                      <div key={service.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100/50 group hover:bg-slate-100/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                            <Clock className="w-5 h-5 text-slate-400" />
                           </div>
-                          <p className="font-semibold text-green-600">{formatPrice(service.price)}</p>
+                          <div>
+                            <p className="font-black text-slate-950 text-sm leading-tight">{service.name}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{formatDuration(service.duration_minutes)}</p>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-gray-600">Profesional:</span>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
-                        {selectedEmployee?.avatar_url ? (
-                          <img
-                            src={selectedEmployee.avatar_url}
-                            alt={`${selectedEmployee.first_name} ${selectedEmployee.last_name}`}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-4 h-4 text-green-600" />
-                        )}
+                        <p className="font-black text-slate-950">{formatPrice(service.price)}</p>
                       </div>
-                      <span className="font-medium">
-                        {selectedEmployee?.first_name} {selectedEmployee?.last_name}
-                      </span>
+                    ))}
+                  </div>
+
+                  {/* Professional & Time Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100/50">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Atendido por</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-200 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                          {selectedEmployee?.avatar_url ? (
+                            <img src={selectedEmployee.avatar_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                              <User className="w-5 h-5 text-slate-400" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="font-black text-slate-950 text-sm">{selectedEmployee?.first_name} {selectedEmployee?.last_name}</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100/50">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Fecha y Hora</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-100">
+                          <CalendarIcon className="w-5 h-5 text-slate-400" />
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-950 text-sm">{selectedDate ? formatDate(selectedDate) : ''}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{selectedTime}hs</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Total Container */}
+                  <div className="p-4 bg-slate-950 text-white rounded-2xl flex justify-between items-center shadow-lg">
                     <div>
-                      <span className="text-gray-600 text-sm">Fecha:</span>
-                      <p className="font-medium text-gray-900 mt-1">
-                        {selectedDate ? formatDate(selectedDate) : ''}
-                      </p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total Pagado / A pagar</p>
+                      <p className="text-xs font-medium text-slate-500">Incluye impuestos</p>
                     </div>
-                    <div>
-                      <span className="text-gray-600 text-sm">Hora:</span>
-                      <p className="font-medium text-gray-900 mt-1">{selectedTime}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center text-lg font-semibold pt-4 border-t">
-                    <span className="text-gray-900">Total:</span>
-                    <span className="text-green-600">
-                      {formatPrice(totalPrice)}
-                    </span>
+                    <p className="text-2xl font-black tracking-tighter">{formatPrice(totalPrice)}</p>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-700">
+              <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-1000">
                 <Link href="/dashboard/client" className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    Ver mis citas
-                  </Button>
+                <Button
+  variant="outline"
+  className="w-full h-14 rounded-2xl border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-700 font-black tracking-tight transition-all"
+>
+  Ver mis citas
+</Button>
                 </Link>
                 <Link href="/marketplace" className="flex-1">
-                  <Button className="w-full bg-slate-900 hover:bg-slate-800">
+                  <Button className="w-full h-14 bg-slate-950 hover:bg-slate-900 text-white shadow-xl hover:shadow-2xl transition-all rounded-2xl font-black tracking-tight">
                     Explorar más negocios
                   </Button>
                 </Link>
@@ -931,126 +936,122 @@ export default function BookingPage() {
             <div className="max-w-4xl mx-auto lg:mx-0">
               {/* Service Selection */}
           {currentStep === 'service' && (
-            <div className="space-y-6">
-              {/* Continue Button - Floating at bottom on mobile, fixed position on desktop */}
+            <div className="space-y-6 pb-20 lg:pb-0">
+              {/* Continue Button - Floating at bottom on mobile */}
               {selectedServices.length > 0 && (
-                <div className="lg:hidden sticky bottom-4 z-10">
+                <div className="lg:hidden fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-10 pointer-events-none">
                   <Button
                     onClick={handleContinueToEmployee}
                     disabled={bookingStatus?.is_blocked}
-                    className="w-full bg-black hover:bg-neutral-800 text-white shadow-lg hover:shadow-xl h-12 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="pointer-events-auto bg-slate-950 hover:bg-slate-900 text-white shadow-[0_15px_30px_rgba(2,6,23,0.35)] h-14 px-8 rounded-full font-black text-sm transition-all duration-300 active:scale-95 disabled:opacity-50 flex items-center gap-2"
                   >
-                    Continuar con {selectedServices.length} servicio{selectedServices.length > 1 ? 's' : ''}
+                    <span>Continuar</span>
+                    <ArrowLeft className="w-4 h-4 rotate-180" />
                   </Button>
                 </div>
               )}
 
               {/* Service List with Checkboxes - 2 Column Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {services.map((service) => {
-                const isSelected = selectedServices.some(s => s.id === service.id)
-                return (
-                  <Card
-                    key={service.id}
-                    className={`cursor-pointer transition-all hover:shadow-md h-full flex flex-col ${
-                      isSelected ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''
-                    } ${bookingStatus?.is_blocked ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
-                    onClick={() => !bookingStatus?.is_blocked && handleServiceSelect(service)}
-                  >
-                    <CardContent className="p-6 flex-1 flex flex-col">
-                      <div className="flex items-start gap-4 flex-1">
-                        {/* Checkbox */}
-                        <div className="flex items-center pt-1 flex-shrink-0">
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                            isSelected
-                              ? 'bg-indigo-600 border-indigo-600'
-                              : 'border-gray-300'
-                          }`}>
-                            {isSelected && (
-                              <CheckCircle className="w-4 h-4 text-white" />
-                            )}
+                {services.map((service) => {
+                  const isSelected = selectedServices.some(s => s.id === service.id)
+                  return (
+                    <Card
+                      key={service.id}
+                      className={`group cursor-pointer border-none transition-all duration-300 h-full flex flex-col ${
+                        isSelected 
+                          ? 'ring-2 ring-slate-950 bg-white shadow-xl -translate-y-1' 
+                          : 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-xl hover:-translate-y-1'
+                      } ${bookingStatus?.is_blocked ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                      onClick={() => !bookingStatus?.is_blocked && handleServiceSelect(service)}
+                    >
+                      <CardContent className="p-5 lg:p-6 flex-1 flex flex-col">
+                        <div className="flex items-start gap-4 flex-1">
+                          {/* Premium Checkbox */}
+                          <div className="flex items-center pt-1 flex-shrink-0">
+                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${
+                              isSelected
+                                ? 'bg-slate-950 border-slate-950 shadow-md scale-110'
+                                : 'border-slate-200 group-hover:border-slate-300'
+                            }`}>
+                              {isSelected && (
+                                <CheckCircle className="w-4 h-4 text-white" />
+                              )}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Service Info */}
-                        <div className="flex-1 flex flex-col min-h-[120px]">
-                          <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                            {service.name}
-                          </h3>
-                          <div className="flex-1">
-                            {service.description && (
-                              <p className="text-gray-600 text-sm line-clamp-2 mb-3">{service.description}</p>
-                            )}
-                          </div>
-                          
-                          {/* Time and Price - Always at bottom - 50% each */}
-                          <div className="grid grid-cols-2 gap-3 mt-auto">
-                            {/* Duration Badge */}
-                            <div className="flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-100 rounded-lg">
-                              <Clock className="w-4 h-4 text-slate-600 flex-shrink-0" />
-                              <div className="flex flex-col items-center">
-                                <span className="text-xs text-slate-500">Duración</span>
-                                <span className="text-sm font-medium text-slate-900">
-                                  {formatDuration(service.duration_minutes)}
-                                </span>
-                              </div>
+                          {/* Service Info */}
+                          <div className="flex-1 flex flex-col min-h-[120px]">
+                            <h3 className="font-black text-lg text-slate-950 mb-1 lg:mb-2 tracking-tight group-hover:text-slate-800 transition-colors">
+                              {service.name}
+                            </h3>
+                            <div className="flex-1">
+                              {service.description && (
+                                <p className="text-slate-500 text-sm leading-relaxed line-clamp-2 mb-4">{service.description}</p>
+                              )}
                             </div>
                             
-                            {/* Price Badge */}
-                            <div className="flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-900 rounded-lg">
-                              <div className="flex flex-col items-center flex-1">
-                                <span className="text-xs text-slate-400">Precio</span>
-                                <span className="text-lg font-bold text-white">
-                                  {formatPrice(service.price)}
-                                </span>
+                            {/* Meta Info Badges */}
+                            <div className="flex flex-wrap items-center gap-2 mt-auto pt-4 border-t border-slate-50">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 text-slate-600 rounded-full text-xs font-bold ring-1 ring-slate-200/50">
+                                <Clock className="w-3.5 h-3.5" />
+                                {formatDuration(service.duration_minutes)}
+                              </div>
+                              <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-black transition-colors ${
+                                isSelected ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-950'
+                              }`}>
+                                {formatPrice(service.price)}
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </div>
             </div>
           )}
 
           {/* Employee Selection */}
           {currentStep === 'employee' && (
-            <div className="space-y-6">
+            <div className="space-y-6 pb-20 lg:pb-0">
               {/* Back Button */}
               <div className="flex justify-start">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={goBackToService}
-                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 pl-2 pr-4"
+                  className="gap-2 h-10 px-4 rounded-xl hover:bg-slate-100 hover:text-slate-900 transition-all duration-300 group"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver a Servicios
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">Volver a Servicios</span>
                 </Button>
               </div>
 
               <div className="space-y-4">
-              <div className="lg:hidden mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                <h3 className="font-medium text-indigo-900 mb-3">
-                  Servicios seleccionados ({selectedServices.length})
-                </h3>
-                <div className="space-y-2">
-                  {selectedServices.map(service => (
-                    <div key={service.id} className="flex justify-between items-center">
-                      <span className="text-indigo-700">{service.name}</span>
-                      <span className="text-indigo-900 font-medium">{formatPrice(service.price)}</span>
-                    </div>
-                  ))}
+               <div className="lg:hidden mb-8 p-6 bg-slate-950 text-white rounded-[2rem] shadow-xl overflow-hidden relative">
+                  {/* Decorative background accent */}
+                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl" />
+                  
+                  <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400 mb-4">
+                    Servicios seleccionados ({selectedServices.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedServices.map(service => (
+                      <div key={service.id} className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
+                        <span className="text-sm font-bold text-slate-100">{service.name}</span>
+                        <span className="text-sm font-black text-white">{formatPrice(service.price)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+                    <span className="font-black text-xs uppercase tracking-widest text-slate-400">Total</span>
+                    <span className="text-xl font-black text-white">
+                      {formatPrice(totalPrice)}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-3 pt-3 border-t border-indigo-200 flex justify-between font-semibold">
-                  <span className="text-indigo-900">Total:</span>
-                  <span className="text-indigo-900">
-                    {formatPrice(totalPrice)}
-                  </span>
-                </div>
-              </div>
 
               {/* Loading state */}
               {loadingEmployees && (
@@ -1073,39 +1074,76 @@ export default function BookingPage() {
               {/* Employees list */}
               {!loadingEmployees && employees.length > 0 && (
                 <div className="space-y-4">
-              {employees.map((employee) => (
-                <Card
-                  key={employee.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedEmployee?.id === employee.id ? 'ring-2 ring-blue-500' : ''
-                  }`}
-                  onClick={() => handleEmployeeSelect(employee)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden">
-                        {employee.avatar_url ? (
-                          <img
-                            src={employee.avatar_url}
-                            alt={`${employee.first_name} ${employee.last_name}`}
-                            className="w-full h-full rounded-full object-cover border-2 border-white shadow-md"
-                          />
-                        ) : (
-                          <User className="w-8 h-8 text-slate-600" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-gray-900">
-                          {employee.first_name} {employee.last_name}
-                        </h3>
-                        {employee.position && (
-                          <p className="text-slate-600 font-medium">{employee.position}</p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                <div className="grid grid-cols-1 gap-4">
+                  {employees.map((employee) => {
+                    const isSelected = selectedEmployee?.id === employee.id
+                    return (
+                      <Card
+                        key={employee.id}
+                        className={`group cursor-pointer border-none transition-all duration-300 ${
+                          isSelected 
+                            ? 'ring-2 ring-slate-950 bg-white shadow-xl -translate-y-1' 
+                            : 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-xl hover:-translate-y-1'
+                        }`}
+                        onClick={() => handleEmployeeSelect(employee)}
+                      >
+                        <CardContent className="p-5 lg:p-6">
+                          <div className="flex items-center gap-6">
+                            {/* Avatar with dynamic border */}
+                            <div className={`relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 transition-transform duration-300 group-hover:scale-105 ${
+                              isSelected ? 'p-1 bg-gradient-to-tr from-slate-800 to-slate-950 rounded-full' : ''
+                            }`}>
+                              <div className="w-full h-full bg-slate-100 rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-sm">
+                                {employee.avatar_url ? (
+                                  <img
+                                    src={employee.avatar_url}
+                                    alt={`${employee.first_name} ${employee.last_name}`}
+                                    className="w-full h-full rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <User className="w-8 h-8 text-slate-400" />
+                                )}
+                              </div>
+                              {/* Selected indicator badge */}
+                              {isSelected && (
+                                <div className="absolute -right-1 -bottom-1 w-6 h-6 bg-slate-950 rounded-full border-2 border-white flex items-center justify-center shadow-lg animate-in zoom-in">
+                                  <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex-1">
+                              <h3 className="font-black text-xl text-slate-950 tracking-tight group-hover:text-slate-800 transition-colors">
+                                {employee.first_name} {employee.last_name}
+                              </h3>
+                              {employee.position && (
+                                <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">
+                                  {employee.position}
+                                </p>
+                              )}
+                              {/* Pulse availability marker (Visual flavor) */}
+                              {isOpenToday ? (
+                                <div className="flex items-center gap-2 mt-3 animate-in fade-in duration-500">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                                  <span className="text-[10px] items-center uppercase tracking-widest font-black text-slate-400">
+                                    Disponible hoy
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 mt-3 animate-in fade-in duration-500">
+                                  <div className="w-2 h-2 bg-slate-200 rounded-full shadow-sm" />
+                                  <span className="text-[10px] items-center uppercase tracking-widest font-black text-slate-400 italic">
+                                    Cerrado hoy
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
               </div>
               )}
             </div>
@@ -1118,39 +1156,41 @@ export default function BookingPage() {
 
           {/* Date and Time Selection */}
           {currentStep === 'datetime' && (
-            <div className="space-y-6">
+            <div className="space-y-6 pb-20 lg:pb-0">
               {/* Back Button */}
               <div className="flex justify-start">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={goBackToEmployee}
-                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 pl-2 pr-4"
+                  className="gap-2 h-10 px-4 rounded-xl hover:bg-slate-100 hover:text-slate-900 transition-all duration-300 group"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver a Empleados
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">Volver a Empleados</span>
                 </Button>
               </div>
 
               {/* Continue Button - Floating at bottom on mobile */}
               {selectedDate && selectedTime && (
-                <div className="lg:hidden sticky bottom-4 z-10">
+                <div className="lg:hidden fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-10 pointer-events-none">
                   <Button
                     onClick={handleDateTimeConfirm}
-                    className="w-full bg-black hover:bg-neutral-800 text-white shadow-lg hover:shadow-xl h-12"
+                    className="pointer-events-auto bg-slate-950 hover:bg-slate-900 text-white shadow-[0_15px_30px_rgba(2,6,23,0.35)] h-14 px-8 rounded-full font-black text-sm transition-all duration-300 active:scale-95 flex items-center gap-2"
                   >
-                    Continuar
+                    <span>Siguiente</span>
+                    <ArrowLeft className="w-4 h-4 rotate-180" />
                   </Button>
                 </div>
               )}
 
               {/* Calendar and Time Slots - Side by Side */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Calendar */}
-                <Card>
-                  <CardHeader className="hidden lg:block">
-                    <CardTitle>Selecciona una fecha</CardTitle>
+                {/* Calendar Card */}
+                <Card className="border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-white overflow-hidden">
+                  <CardHeader className="hidden lg:block border-b border-slate-50">
+                    <CardTitle className="text-lg font-black tracking-tight text-slate-950">Selecciona una fecha</CardTitle>
                   </CardHeader>
-                  <CardContent className="flex justify-center">
+                  <CardContent className="flex justify-center p-6 sm:p-8">
                     <Calendar
                       mode="single"
                       selected={selectedDate}
@@ -1183,87 +1223,95 @@ export default function BookingPage() {
                       }}
                       fromYear={new Date().getFullYear()}
                       toYear={new Date().getFullYear() + 5}
-                      className="rounded-md border shadow-sm mx-auto"
-                      captionLayout="dropdown"
+                       className=""
+                     captionLayout="buttons"
                     />
                   </CardContent>
                 </Card>
 
-                {/* Time Slots */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      {selectedDate ? `Horarios - ${formatDate(selectedDate)}` : 'Selecciona una fecha primero'}
+                {/* Time Slots Card */}
+                <Card className="border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-white overflow-hidden">
+                  <CardHeader className="border-b border-slate-50">
+                    <CardTitle className="text-lg font-black tracking-tight text-slate-950 flex flex-col gap-1">
+                      {selectedDate ? (
+                        <>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">{formatDate(selectedDate)}</span>
+                          <span>Horarios Disponibles</span>
+                        </>
+                      ) : (
+                        'Horarios'
+                      )}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-6">
                     {!selectedDate ? (
-                      <div className="text-center py-12 text-gray-500">
-                        <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                        <p>Selecciona una fecha para ver los horarios disponibles</p>
+                      <div className="text-center py-4 px-4 group">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-500">
+                          <CalendarIcon className="w-8 h-8 text-slate-300" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Selecciona una fecha primero</p>
                       </div>
                     ) : (
                       <>
                         {/* Special Hours Alerts */}
                         {specialHourForDate && specialHourForDate.is_closed && (
-                          <Alert className="bg-red-50 border-red-200 mb-4">
-                            <AlertCircle className="h-4 w-4 text-red-600" />
-                            <AlertTitle className="text-red-900 font-semibold">Negocio cerrado</AlertTitle>
-                            <AlertDescription className="text-red-700 text-sm">
-                              {specialHourForDate.description || `El negocio estará cerrado este día (${
-                                specialHourForDate.reason === 'holiday' ? 'Feriado' :
-                                specialHourForDate.reason === 'special_event' ? 'Evento Especial' :
-                                specialHourForDate.reason === 'maintenance' ? 'Mantenimiento' :
-                                'Día especial'
-                              }).`}
-                              <br />
-                              <span className="font-medium">Por favor selecciona otra fecha.</span>
-                            </AlertDescription>
+                          <Alert className="bg-red-50/50 border-red-100 mb-6 rounded-2xl p-4">
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                            <div className="ml-3">
+                              <AlertTitle className="text-red-950 font-black text-xs uppercase tracking-widest mb-1">Negocio cerrado</AlertTitle>
+                              <AlertDescription className="text-red-800 text-sm font-medium leading-relaxed">
+                                {specialHourForDate.description || `El negocio estará cerrado este día.`}
+                              </AlertDescription>
+                            </div>
                           </Alert>
                         )}
 
                         {specialHourForDate && !specialHourForDate.is_closed && specialHourForDate.open_time && specialHourForDate.close_time && (
-                          <Alert className="bg-blue-50 border-blue-200 mb-4">
-                            <Info className="h-4 w-4 text-blue-600" />
-                            <AlertTitle className="text-blue-900 font-semibold">Horario especial</AlertTitle>
-                            <AlertDescription className="text-blue-700 text-sm">
-                              {specialHourForDate.description && (
-                                <>
-                                  {specialHourForDate.description}
-                                  <br />
-                                </>
-                              )}
-                              <span className="font-medium">
-                                Horario de atención: {specialHourForDate.open_time.substring(0, 5)} - {specialHourForDate.close_time.substring(0, 5)}
-                              </span>
-                            </AlertDescription>
+                          <Alert className="bg-blue-50/50 border-blue-100 mb-6 rounded-2xl p-4">
+                            <Info className="h-5 w-5 text-blue-500" />
+                            <div className="ml-3">
+                              <AlertTitle className="text-blue-950 font-black text-xs uppercase tracking-widest mb-1">Horario especial</AlertTitle>
+                              <AlertDescription className="text-blue-800 text-sm font-medium leading-relaxed">
+                                {specialHourForDate.description}
+                                <div className="mt-2 text-[10px] font-black uppercase text-blue-600 bg-blue-100/50 w-fit px-2 py-0.5 rounded-full">
+                                  Atención: {specialHourForDate.open_time.substring(0, 5)} - {specialHourForDate.close_time.substring(0, 5)}
+                                </div>
+                              </AlertDescription>
+                            </div>
                           </Alert>
                         )}
 
                         {/* Time Slots Grid or Empty State */}
                         {!specialHourForDate?.is_closed && availableSlots.length > 0 ? (
-                          <div className="grid grid-cols-3 gap-2 max-h-[400px] overflow-y-auto pr-2">
-                            {availableSlots.map((slot) => (
-                              <Button
-                                key={slot.time}
-                                variant={selectedTime === slot.time ? 'default' : 'outline'}
-                                disabled={!slot.available}
-                                onClick={() => setSelectedTime(slot.time)}
-                                className="h-12"
-                              >
-                                {slot.time}
-                              </Button>
-                            ))}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            {availableSlots.map((slot) => {
+                              const isSelected = selectedTime === slot.time
+                              return (
+                                <Button
+                                  key={slot.time}
+                                  variant="ghost"
+                                  disabled={!slot.available}
+                                  onClick={() => setSelectedTime(slot.time)}
+                                  className={`h-12 rounded-xl transition-all duration-300 font-black tracking-tight ${
+                                    isSelected 
+                                      ? 'bg-slate-950 text-white shadow-lg scale-105 hover:bg-slate-900 border-none' 
+                                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-950 ring-1 ring-slate-200/50 border-none'
+                                  } disabled:opacity-30`}
+                                >
+                                  {slot.time}
+                                </Button>
+                              )
+                            })}
                           </div>
                         ) : !specialHourForDate?.is_closed && (
-                          <Alert className="bg-yellow-50 border-yellow-200">
-                            <AlertCircle className="h-4 w-4 text-yellow-600" />
-                            <AlertTitle className="text-yellow-900 font-semibold">Sin horarios disponibles</AlertTitle>
-                            <AlertDescription className="text-yellow-700 text-sm">
-                              El profesional no tiene disponibilidad en esta fecha.
-                              <br />
-                              <span className="font-medium">Por favor, intenta con otra fecha.</span>
-                            </AlertDescription>
+                          <Alert className="bg-amber-50/50 border-amber-100 rounded-2xl p-4">
+                            <AlertCircle className="h-5 w-5 text-amber-500" />
+                            <div className="ml-3">
+                              <AlertTitle className="text-amber-950 font-black text-xs uppercase tracking-widest mb-1">Sin horarios disponibles</AlertTitle>
+                              <AlertDescription className="text-amber-800 text-sm font-medium leading-relaxed">
+                                El profesional no tiene disponibilidad en esta fecha. Intenta con otro día.
+                              </AlertDescription>
+                            </div>
                           </Alert>
                         )}
                       </>
@@ -1276,106 +1324,172 @@ export default function BookingPage() {
 
           {/* Booking Details */}
           {currentStep === 'details' && (
-            <div className="space-y-6">
+            <div className="space-y-6 pb-20 lg:pb-0">
               {/* Back Button */}
               <div className="flex justify-start">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={goBackToDateTime}
-                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 pl-2 pr-4"
+                  className="gap-2 h-10 px-4 rounded-xl hover:bg-slate-100 hover:text-slate-900 transition-all duration-300 group"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Volver a Fecha y Hora
+                  <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">Volver a Fecha y Hora</span>
                 </Button>
               </div>
 
               {/* Cancellation Policy Card - Mobile Only */}
               {business?.cancellation_policy_text && (
-                <Card className="bg-blue-50 border-blue-200 lg:hidden">
+                <Card className="bg-slate-950 text-white border-none shadow-xl rounded-[2rem] overflow-hidden lg:hidden relative">
+                   <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-2xl" />
                   <CardHeader>
-                    <CardTitle className="text-base text-blue-900">Política de cancelación</CardTitle>
+                    <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Política de cancelación</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-blue-700">{business.cancellation_policy_text}</p>
+                    <p className="text-sm font-medium text-slate-100 leading-relaxed">{business.cancellation_policy_text}</p>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Booking Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resumen de tu cita</CardTitle>
+              {/* Booking Summary Card */}
+              <Card className="border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-white overflow-hidden">
+                <CardHeader className="border-b border-slate-50">
+                  <CardTitle className="text-lg font-black tracking-tight text-slate-950">Resumen de tu cita</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="p-6 space-y-4">
                   {/* Services */}
-                  {selectedServices.map((service) => (
-                    <div key={service.id} className="flex justify-between items-start pb-3 border-b">
-                      <div className="flex-1">
-                        <p className="font-medium">{service.name}</p>
-                        <p className="text-sm text-gray-500">({formatDuration(service.duration_minutes)})</p>
+                  <div className="space-y-3">
+                    {selectedServices.map((service) => (
+                      <div key={service.id} className="flex justify-between items-start pb-3 border-b border-slate-50 last:border-none last:pb-0">
+                        <div className="flex-1">
+                          <p className="font-black text-slate-950 text-base tracking-tight">{service.name}</p>
+                          <div className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                            <Clock className="w-3 h-3" />
+                            {formatDuration(service.duration_minutes)}
+                          </div>
+                        </div>
+                        <p className="font-black text-slate-950 text-base">{formatPrice(service.price)}</p>
                       </div>
-                      <p className="font-semibold">{formatPrice(service.price)}</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
 
-                  {/* Professional and Time */}
-                  <div className="flex justify-between items-center pb-3 border-b">
-                    <div className="flex-1">
-                      <p className="font-medium uppercase text-sm">
-                        {selectedEmployee?.first_name} {selectedEmployee?.last_name}
-                      </p>
+                  {/* Professional and Time - Premium Style */}
+                  <div className="grid grid-cols-2 gap-4 py-4 border-t border-slate-100">
+                    <div className="space-y-1">
+                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Profesional</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden border border-slate-200">
+                          {selectedEmployee?.avatar_url ? (
+                            <img src={selectedEmployee.avatar_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-4 h-4 text-slate-400" />
+                          )}
+                        </div>
+                         <p className="font-black text-slate-950 text-base tracking-tight truncate">
+                          {selectedEmployee?.first_name} {selectedEmployee?.last_name}
+                        </p>
+                      </div>
                     </div>
-                    <p className="font-medium">{selectedTime}</p>
+                    <div className="space-y-1">
+                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Horario</span>
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-slate-100 rounded-lg text-slate-600">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                         <p className="font-black text-slate-950 text-base tracking-tight">{selectedTime}</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Date */}
-                  <div className="flex justify-between items-center pb-3 border-b">
-                    <p className="font-medium">{selectedDate ? formatDate(selectedDate) : ''}</p>
+                  <div className="flex justify-between items-center py-4 border-t border-slate-100">
+                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Fecha</span>
+                    <div className="flex items-center gap-2 text-slate-950">
+                      <CalendarIcon className="w-4 h-4 text-slate-400" />
+                       <p className="font-black text-base tracking-tight">{selectedDate ? formatDate(selectedDate) : ''}</p>
+                    </div>
                   </div>
 
-                  {/* Total */}
-                  <div className="flex justify-between items-center pt-2">
-                    <p className="font-semibold">Total ({formatDuration(totalDuration)})</p>
-                    <p className="text-xl font-bold">{formatPrice(totalPrice)}</p>
+                  {/* Total Container */}
+                  <div className="p-5 bg-slate-950 text-white rounded-2xl flex justify-between items-center shadow-lg relative overflow-hidden group">
+                    <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-white/5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700" />
+                    <div>
+                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total a pagar</p>
+                      <p className="text-xs font-medium text-slate-400">Duración estimada: {formatDuration(totalDuration)}</p>
+                    </div>
+                    <p className="text-2xl font-black tracking-tighter">{formatPrice(totalPrice)}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Additional Notes */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notas adicionales (opcional)</CardTitle>
+              {/* Additional Notes Card */}
+              <Card className="border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-white overflow-hidden">
+                <CardHeader className="border-b border-slate-50">
+                  <CardTitle className="text-sm font-black uppercase tracking-widest text-slate-400">Notas adicionales (opcional)</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-6">
                   <Textarea
                     placeholder="¿Tienes alguna preferencia especial o algo que el profesional deba saber?"
                     value={clientNotes}
                     onChange={(e) => setClientNotes(e.target.value)}
-                    rows={3}
+                    rows={4}
+                    className="resize-none rounded-xl border-slate-200 focus:border-slate-950 focus:ring-slate-950/10 placeholder:text-slate-300 text-sm font-medium transition-all"
                   />
                 </CardContent>
               </Card>
 
-              {/* Confirm Booking */}
-              <div className="text-center">
+              {/* Confirm Booking Button - Standard for Desktop, Floating for Mobile */}
+              <div className="text-center pt-4">
+                {/* Mobile Floating Confirm Button */}
+                <div className="lg:hidden fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-10 pointer-events-none">
+                  <Button
+                    onClick={handleBookingSubmit}
+                    disabled={submitting || bookingStatus?.is_blocked}
+                    className="pointer-events-auto bg-slate-950 hover:bg-slate-900 text-white shadow-[0_15px_30px_rgba(2,6,23,0.35)] h-14 px-8 rounded-full font-black text-sm transition-all duration-300 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4" />
+                    )}
+                    <span>Confirmar</span>
+                  </Button>
+                </div>
+
                 <Button
                   onClick={handleBookingSubmit}
                   size="lg"
                   disabled={submitting || bookingStatus?.is_blocked}
-                  className="w-full md:w-auto px-8 bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full md:w-auto px-12 h-14 bg-slate-950 hover:bg-slate-900 text-white rounded-2xl font-black tracking-tight text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hidden lg:inline-flex"
                 >
                   {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Confirmando...
-                    </>
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Confirmando Reserva...</span>
+                    </div>
                   ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Confirmar Reserva
-                    </>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5" />
+                      <span>Confirmar Reserva</span>
+                    </div>
                   )}
                 </Button>
+                
+                {/* Desktop Text Only */}
+                <p className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden lg:block">
+                  Al confirmar, aceptas nuestras políticas de reserva
+                </p>
+                
+                {/* Mobile non-floating button for when they reach the bottom, but the floating one is primary */}
+                <div className="lg:hidden mt-4">
+                   <Button
+                    onClick={handleBookingSubmit}
+                    disabled={submitting || bookingStatus?.is_blocked}
+                    className="w-full h-14 bg-slate-950/10 text-slate-400 rounded-2xl font-bold"
+                  >
+                    {submitting ? 'Confirmando...' : 'Finalizar al fondo'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -1387,126 +1501,142 @@ export default function BookingPage() {
         
         
 
-          {/* Sidebar - Summary (Desktop Only) - 4/12 width */}
-          <div className="hidden lg:block lg:col-span-4">
-              <div className="sticky top-0">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Resumen de Reserva</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-4">
-                    {/* Services */}
-                    {selectedServices.length > 0 && (
-                      <div >
-                        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-600" />
-                          Servicios ({selectedServices.length})
-                        </h4>
-                        <div className="space-y-2">
-                          {selectedServices.map(service => (
-                            <div key={service.id} className="flex justify-between text-sm">
-                              <span className="text-gray-700">{service.name}</span>
-                              <span className="font-medium text-gray-900">{formatPrice(service.price)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    {/* Sidebar - Summary (Desktop Only) */}
+                    <div className="hidden lg:block lg:col-span-4">
+                        <div className="sticky top-10">
+                          <Card className="border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-white overflow-hidden">
+                            <CardHeader className="border-b border-slate-50">
+                              <CardTitle className="text-lg font-black tracking-tight text-slate-950">Resumen de Reserva</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6 space-y-6">
+                              {/* Services */}
+                              {selectedServices.length > 0 && (
+                                <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                                    <div className="w-4 h-px bg-slate-200" />
+                                    Servicios ({selectedServices.length})
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {selectedServices.map(service => (
+                                      <div key={service.id} className="flex justify-between items-start group">
+                                        <div className="flex-1">
+                                          <p className="text-sm font-bold text-slate-950 group-hover:text-slate-700 transition-colors line-clamp-1">{service.name}</p>
+                                          <p className="text-[10px] font-medium text-slate-400">{formatDuration(service.duration_minutes)}</p>
+                                        </div>
+                                        <span className="text-sm font-black text-slate-950">{formatPrice(service.price)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
 
-                    {/* Employee */}
-                    {selectedEmployee && (
-                      <div className="pt-4 border-t">
-                        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-600" />
-                          Profesional
-                        </h4>
-                        <p className="text-sm text-gray-700">
-                          {selectedEmployee.first_name} {selectedEmployee.last_name}
-                        </p>
-                      </div>
-                    )}
+                              {/* Employee */}
+                              {selectedEmployee && (
+                                <div className="pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-right-4 duration-500 delay-100">
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                                    <div className="w-4 h-px bg-slate-200" />
+                                    Profesional
+                                  </h4>
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden border border-slate-200">
+                                      {selectedEmployee.avatar_url ? (
+                                        <img src={selectedEmployee.avatar_url} alt="" className="w-full h-full object-cover" />
+                                      ) : (
+                                        <User className="w-4 h-4 text-slate-400" />
+                                      )}
+                                    </div>
+                                    <p className="text-sm font-black text-slate-950 tracking-tight">
+                                      {selectedEmployee.first_name} {selectedEmployee.last_name}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
 
-                    {/* Date & Time */}
-                    {selectedDate && selectedTime && (
-                      <div className="pt-4 border-t">
-                        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-blue-600" />
-                          Fecha y Hora
-                        </h4>
-                        <p className="text-sm text-gray-700">
-                          {selectedDate.toLocaleDateString('es-ES', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}
-                        </p>
-                        <p className="text-sm font-medium text-gray-900 mt-1">{selectedTime}</p>
-                      </div>
-                    )}
+                              {/* Date & Time */}
+                              {selectedDate && selectedTime && (
+                                <div className="pt-6 border-t border-slate-100 animate-in fade-in slide-in-from-right-4 duration-500 delay-200">
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                                    <div className="w-4 h-px bg-slate-200" />
+                                    Fecha y Hora
+                                  </h4>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-slate-950">
+                                      <CalendarIcon className="w-4 h-4 text-slate-400" />
+                                      <p className="text-sm font-black tracking-tight capitalize">
+                                        {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-slate-950">
+                                      <Clock className="w-4 h-4 text-slate-400" />
+                                      <p className="text-sm font-black tracking-tight">{selectedTime}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
 
-                    {/* Total */}
-                    {selectedServices.length > 0 && (
-                      <div className="pt-4 border-t-2 border-slate-200">
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold text-gray-900">Total</span>
-                          <span className="text-2xl font-bold text-slate-900">{formatPrice(totalPrice)}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Duración: {formatDuration(totalDuration)}
-                        </p>
-                      </div>
-                    )}
+                              {/* Total - Premium Black Card */}
+                              {selectedServices.length > 0 && (
+                                <div className="pt-6">
+                                  <div className="p-5 bg-slate-950 text-white rounded-2xl shadow-xl relative overflow-hidden group animate-in zoom-in duration-500">
+                                     <div className="absolute -right-2 -bottom-2 w-16 h-16 bg-white/5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700" />
+                                    <div className="flex justify-between items-center relative z-10">
+                                      <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Total</p>
+                                        <p className="text-[10px] font-medium text-slate-500">{formatDuration(totalDuration)} est.</p>
+                                      </div>
+                                      <span className="text-2xl font-black text-white tracking-tighter">{formatPrice(totalPrice)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
 
-                    {/* Booking Policies */}
-                    {business && (business.min_booking_hours > 0 || business.max_booking_days < 365) && (
-                      <div className="pt-4 border-t">
-                        <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                          <Info className="w-4 h-4 text-blue-600" />
-                          Políticas de Reserva
-                        </h4>
-                        <div className="space-y-2 text-xs text-gray-600">
-                          {business.min_booking_hours > 0 && (
-                            <p className="flex items-start gap-2">
-                              <span className="text-blue-600 mt-0.5">•</span>
-                              <span>Reserva con al menos <strong className="text-gray-900">{business.min_booking_hours}h</strong> de anticipación</span>
-                            </p>
-                          )}
-                          {business.max_booking_days < 365 && (
-                            <p className="flex items-start gap-2">
-                              <span className="text-blue-600 mt-0.5">•</span>
-                              <span>Hasta <strong className="text-gray-900">{business.max_booking_days} días</strong> en el futuro</span>
-                            </p>
-                          )}
-                          {business.cancellation_policy_text && (
-                            <p className="flex items-start gap-2">
-                              <span className="text-blue-600 mt-0.5">•</span>
-                              <span>{business.cancellation_policy_text}</span>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                              {/* Continue Button for Steps */}
+                              {(currentStep === 'service' || currentStep === 'datetime') && selectedServices.length > 0 && (
+                                <div className="pt-2">
+                                  <Button
+                                    onClick={() => {
+                                      if (currentStep === 'service') handleContinueToEmployee()
+                                      else if (currentStep === 'datetime') handleDateTimeConfirm()
+                                    }}
+                                    disabled={currentStep === 'datetime' && (!selectedDate || !selectedTime)}
+                                    className="w-full bg-slate-950 hover:bg-slate-900 text-white shadow-lg hover:shadow-xl h-14 rounded-2xl font-black tracking-widest uppercase text-xs transition-all duration-300 disabled:opacity-30 group"
+                                  >
+                                    Continuar Paso
+                                    <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover:translate-x-1 transition-transform" />
+                                  </Button>
+                                </div>
+                              )}
 
-                    {/* Continue Button - Only show on service/datetime steps */}
-                    {(currentStep === 'service' || currentStep === 'datetime') && selectedServices.length > 0 && (
-                      <div className="pt-4 border-t-2 border-slate-200">
-                        <Button
-                          onClick={() => {
-                            if (currentStep === 'service') handleContinueToEmployee()
-                            else if (currentStep === 'datetime') handleDateTimeConfirm()
-                          }}
-                          disabled={currentStep === 'datetime' && (!selectedDate || !selectedTime)}
-                          className="w-full bg-black hover:bg-neutral-800 text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed h-12"
-                        >
-                          Continuar →
-                        </Button>
+                              {/* Booking Policies */}
+                              {business && (business.min_booking_hours > 0 || business.max_booking_days < 365) && (
+                                <div className="pt-6 border-t border-slate-100">
+                                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
+                                    <Info className="w-4 h-4 text-slate-400" />
+                                    Políticas
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {business.min_booking_hours > 0 && (
+                                      <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
+                                        • Requiere <strong className="text-slate-950">{business.min_booking_hours}h</strong> de anticipación
+                                      </p>
+                                    )}
+                                    {business.max_booking_days < 365 && (
+                                      <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
+                                        • Reservas de hasta <strong className="text-slate-950">{business.max_booking_days} días</strong> a futuro
+                                      </p>
+                                    )}
+                                    {business.cancellation_policy_text && (
+                                      <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
+                                        • {business.cancellation_policy_text}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-            </div>
-          </div>
+                    </div>
         </div>
 
 

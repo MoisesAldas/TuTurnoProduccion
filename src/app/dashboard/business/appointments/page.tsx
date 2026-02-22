@@ -607,7 +607,7 @@ export default function AppointmentsPage() {
                     toYear={2030}
                     initialFocus
                     locale={es}
-                    className="rounded-2xl border-0"
+                    className=""
                   />
                 </PopoverContent>
               </Popover>

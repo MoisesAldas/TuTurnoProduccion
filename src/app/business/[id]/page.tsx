@@ -591,48 +591,65 @@ export default function BusinessProfilePage() {
     ? services
     : services.filter(s => s.category === selectedCategory)
 
+  // Adaptive font size based on text length
+  const getAdaptiveFontSize = (text: string, type: 'title' | 'small' = 'title') => {
+    const len = text.length
+    if (type === 'title') {
+      if (len > 30) return 'text-2xl sm:text-3xl lg:text-4xl'
+      if (len > 20) return 'text-3xl sm:text-4xl lg:text-5xl'
+      return 'text-4xl sm:text-5xl lg:text-6xl'
+    }
+    // For smaller elements like addresses or category labels
+    if (len > 50) return 'text-[10px] sm:text-xs'
+    if (len > 30) return 'text-xs sm:text-sm'
+    return 'text-sm'
+  }
+
+  const nameFontSize = getAdaptiveFontSize(business.name, 'title')
+  const addressFontSize = business.address ? getAdaptiveFontSize(business.address, 'small') : 'text-sm'
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header - Clean & Minimal - Responsive */}
-      <header className="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-gray-200/50 shadow-sm">
+    <div className="min-h-screen bg-slate-50">
+      {/* Header - Glassmorphism Premium */}
+      <header className="bg-white/70 backdrop-blur-xl sticky top-0 z-50 border-b border-slate-200/40 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex justify-between items-center py-3 lg:py-2.5">
             {/* Left: Back Button + Logo */}
             <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1 sm:gap-2 -ml-2 sm:ml-0 min-h-[44px] min-w-[44px] hover:bg-slate-100 hover:text-slate-900 transition-all duration-200"
+                className="gap-2 -ml-2 h-9 sm:h-10 px-2 sm:px-3 rounded-xl hover:bg-slate-100 hover:text-slate-900 transition-all duration-300 group"
                 onClick={() => window.location.href = '/marketplace'}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Marketplace</span>
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                <span className="hidden md:inline text-[10px] font-black uppercase tracking-widest">Marketplace</span>
               </Button>
-              <div className="hidden sm:block h-6 w-px bg-gray-200"></div>
-              <Logo color="slate" size="md" />
+              <div className="hidden sm:block h-6 w-px bg-slate-200/60"></div>
+              <Logo color="slate" size="sm" className="sm:hidden" />
+              <Logo color="slate" size="md" className="hidden sm:block" />
             </div>
 
-            {/* Right: Auth Actions - Responsive */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            {/* Right: Auth Actions */}
+            <div className="flex items-center gap-2 sm:gap-3">
               {authState?.user ? (
                 <>
                   <Link href="/dashboard/client">
                     <Button 
                       size="sm" 
-                      className="text-xs sm:text-sm bg-slate-900 hover:bg-slate-800 text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 px-3 py-2"
+                      className="bg-slate-950 hover:bg-slate-900 text-white shadow-lg shadow-slate-950/20 rounded-xl px-5 h-10 text-[11px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-[1.02] active:scale-95"
                     >
-                      <span className="hidden sm:inline">Mi Dashboard</span>
-                      <span className="sm:hidden">Dashboard</span>
+                      <span className="hidden sm:inline">Panel de Control</span>
+                      <span className="sm:hidden text-[10px]">Panel</span>
                     </Button>
                   </Link>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={signOut}
-                    className="text-gray-600 hover:text-red-600 hover:bg-red-50 transition-all duration-200 px-2 py-2"
+                    className="h-10 w-10 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all duration-300"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline ml-1.5 text-xs">Cerrar Sesión</span>
+                    <LogOut className="w-4 h-4" />
                   </Button>
                 </>
               ) : (
@@ -641,19 +658,17 @@ export default function BusinessProfilePage() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-sm min-h-[44px] text-gray-700 hover:text-slate-900 hover:bg-slate-100 transition-all duration-200"
+                      className="h-9 sm:h-10 px-2 sm:px-4 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all duration-300"
                     >
-                      <span className="hidden sm:inline">Iniciar Sesión</span>
-                      <span className="sm:hidden">Ingresar</span>
+                      Ingresar
                     </Button>
                   </Link>
                   <Link href="/auth/client/register">
                     <Button
                       size="sm"
-                      className="bg-slate-900 hover:bg-slate-800 text-white text-sm min-h-[44px] shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+                      className="bg-slate-950 hover:bg-slate-900 text-white shadow-lg shadow-slate-950/20 rounded-xl px-3 sm:px-6 h-9 sm:h-10 text-[10px] sm:text-[11px] font-black uppercase tracking-widest transition-all duration-300 hover:scale-[1.02] active:scale-95"
                     >
-                      <span className="hidden sm:inline">Registrarse</span>
-                      <span className="sm:hidden">Registro</span>
+                      Registrarse
                     </Button>
                   </Link>
                 </>
@@ -668,144 +683,117 @@ export default function BusinessProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Section - Title + Photos */}
           <div className="mb-8 sm:mb-12">
-            {/* Title and Rating - Responsive */}
-            <div className="mb-4 sm:mb-6">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-                {business.name}
-              </h1>
-
-              {/* Metadata Row */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm mb-2">
-                {business.rating && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <span className="font-semibold text-gray-900 text-base">{business.rating}</span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(business.rating || 0)
-                                ? 'text-yellow-400 fill-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
+            {/* Hero Header Section - Asymmetric Premium Layout */}
+            <div className="mb-10 lg:mb-14">
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+                {/* Left Side: Brand Identity */}
+                <div className="relative pl-6 flex-1">
+                  <div className="absolute left-0 top-0 w-1 h-full bg-gradient-to-b from-slate-800 to-slate-950 rounded-full shadow-[0_0_12px_rgba(2,6,23,0.12)]" />
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] items-center uppercase tracking-[0.3em] font-black text-slate-400">
+                      {categoryName}
+                    </span>
+                    <h1 className={`${nameFontSize} font-black tracking-tighter text-slate-950 leading-[1.1] py-1 break-words`}>
+                      {business.name}
+                    </h1>
+                    {business.rating && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl shadow-sm">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3 h-3 ${
+                                i < Math.floor(business.rating || 0)
+                                  ? 'text-amber-400 fill-amber-400'
+                                  : 'text-slate-200'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">
+                          {business.total_reviews || 0} {business.total_reviews === 1 ? 'reseña' : 'reseñas'}
+                        </span>
                       </div>
-                      <span className="text-gray-500">({business.total_reviews || 0} {business.total_reviews === 1 ? 'reseña' : 'reseñas'})</span>
-                    </div>
-                    <span className="hidden sm:inline text-gray-400">•</span>
+                    )}
                   </div>
-                )}
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
-                  <CategoryIcon className="w-3.5 h-3.5" />
-                  {categoryName}
-                </span>
-                {businessStatus && (
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium w-fit ${
-                      businessStatus.isOpen
-                        ? 'bg-green-50 text-green-700 border border-green-200'
-                        : 'bg-red-50 text-red-700 border border-red-200'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${businessStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {businessStatus.message}
-                  </span>
-                )}
-              </div>
+                </div>
 
-              {business.address && (
-                <button
-                  onClick={() => business.latitude && business.longitude && setShowLocationModal(true)}
-                  className="text-gray-600 hover:text-slate-900 flex items-center gap-2 text-sm sm:text-base group transition-colors text-left"
-                >
-                  <MapPin className="w-4 h-4 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                  <span className="line-clamp-1">{business.address}</span>
-                </button>
-              )}
+                {/* Right Side: Quick Info (Location & Status) */}
+                <div className="flex flex-col lg:items-end lg:text-right gap-4 lg:min-w-[300px]">
+                  {business.address && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Ubicación</span>
+                      <button
+                        onClick={() => business.latitude && business.longitude && setShowLocationModal(true)}
+                        className={`${addressFontSize} font-bold text-slate-950 hover:text-slate-800 transition-colors underline decoration-slate-200 decoration-2 underline-offset-4 hover:decoration-slate-400 inline-block`}
+                      >
+                        {business.address}
+                      </button>
+                    </div>
+                  )}
+
+                  {businessStatus && (
+                    <div className="flex flex-col lg:items-end gap-1">
+                      <div
+                        className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] border-2 transition-all duration-300 ${
+                          businessStatus.isOpen
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100 shadow-lg shadow-emerald-500/10'
+                            : 'bg-rose-50 text-rose-700 border-rose-100 shadow-lg shadow-rose-500/10'
+                        }`}
+                      >
+                        <span className={`w-2.5 h-2.5 rounded-full ${businessStatus.isOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                        {businessStatus.message}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Photo Gallery Grid - Airbnb Style (5 photos) */}
-            <div className="relative rounded-lg sm:rounded-xl overflow-hidden">
+            {/* Photo Gallery Grid - Premium SaaS Style */}
+            <div className="relative group/gallery">
               {(() => {
                 const allPhotos = [
                   ...(business.cover_image_url ? [{ id: 'cover', photo_url: business.cover_image_url }] : []),
                   ...businessPhotos
                 ]
-                const hasPhotos = allPhotos.length > 0
-
-                if (!hasPhotos) {
-                  // Empty state - no photos
+                
+                if (allPhotos.length === 0) {
                   return (
-                    <div className="bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden aspect-[16/9] sm:aspect-[21/9] flex items-center justify-center">
-                      <div className="text-center">
-                        <Sparkles className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">No hay fotos disponibles</p>
+                    <div className="w-full h-[300px] sm:h-[400px] bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col items-center justify-center gap-4 shadow-sm">
+                      <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-sm">
+                        <Sparkles className="w-8 h-8 text-slate-300" />
                       </div>
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Sin fotos disponibles</p>
                     </div>
                   )
                 }
 
                 return (
                   <>
-                    {/* Mobile: Single photo with swipe indicator */}
-                    <div className="block sm:hidden">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 sm:grid-rows-2 h-[350px] sm:h-[500px] lg:h-[600px] gap-3 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200/40 bg-slate-100 border border-white">
+                      {/* Featured Photo - Left side (2/4 columns, full height) */}
                       <div
-                        className="relative cursor-pointer aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse"
+                        className="sm:col-span-2 sm:row-span-2 relative overflow-hidden cursor-pointer group bg-slate-200 animate-pulse"
                         onClick={() => {
                           setSelectedPhotoIndex(0)
                           setShowPhotoGallery(true)
                         }}
                       >
                         <img
-                          src={allPhotos[0].photo_url}
-                          alt={business.name}
+                          src={allPhotos[0]?.photo_url}
+                          alt={`${business.name} - Principal`}
                           loading="lazy"
-                          className="w-full h-full object-cover hover:opacity-95 transition-opacity"
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                           onLoad={(e) => {
                             const parent = e.currentTarget.parentElement
                             if (parent) {
-                              parent.classList.remove('animate-pulse', 'bg-gradient-to-br', 'from-gray-100', 'to-gray-200')
-                              parent.classList.add('bg-gray-100')
+                              parent.classList.remove('animate-pulse', 'bg-slate-200')
+                              parent.classList.add('bg-slate-100')
                             }
                           }}
                         />
-                        {/* Photo counter overlay */}
-                        {allPhotos.length > 1 && (
-                          <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            {allPhotos.length} {allPhotos.length === 1 ? 'foto' : 'fotos'}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Tablet & Desktop: Airbnb-style grid (1 large + 4 small) */}
-                    <div className="hidden sm:grid sm:grid-cols-4 gap-2 h-[400px] lg:h-[500px]">
-                      {/* Large Photo - Left side (2 rows, 2 columns) */}
-                      <div
-                        className="col-span-2 row-span-2 relative rounded-l-xl overflow-hidden cursor-pointer bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse group"
-                        onClick={() => {
-                          setSelectedPhotoIndex(0)
-                          setShowPhotoGallery(true)
-                        }}
-                      >
-                        <img
-                          src={allPhotos[0].photo_url}
-                          alt={`${business.name} - Foto principal`}
-                          loading="eager"
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          onLoad={(e) => {
-                            const parent = e.currentTarget.parentElement
-                            if (parent) {
-                              parent.classList.remove('animate-pulse', 'bg-gradient-to-br', 'from-gray-100', 'to-gray-200')
-                              parent.classList.add('bg-gray-100')
-                            }
-                          }}
-                        />
-                        {/* Subtle overlay on hover */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                        <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/5 transition-colors duration-500" />
                       </div>
 
                       {/* Small Photos - Right side (2x2 grid) */}
@@ -814,16 +802,10 @@ export default function BusinessProfilePage() {
                         const isLast = index === 4
                         const hasMore = allPhotos.length > 5
 
-                        // Apply rounded corners conditionally
-                        const roundedClass =
-                          index === 2 ? 'rounded-tr-xl' :  // Top-right
-                          index === 4 ? 'rounded-br-xl' :  // Bottom-right
-                          ''
-
                         return (
                           <div
                             key={index}
-                            className={`relative overflow-hidden cursor-pointer bg-gradient-to-br from-gray-100 to-gray-200 ${photo ? 'animate-pulse' : ''} group ${roundedClass}`}
+                            className={`relative overflow-hidden cursor-pointer bg-slate-200 ${photo ? 'animate-pulse' : ''} group`}
                             onClick={() => {
                               setSelectedPhotoIndex(photo ? index : 0)
                               setShowPhotoGallery(true)
@@ -835,32 +817,29 @@ export default function BusinessProfilePage() {
                                   src={photo.photo_url}
                                   alt={`${business.name} - Foto ${index + 1}`}
                                   loading="lazy"
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                   onLoad={(e) => {
-                                    // The parent is the <> fragment's parent div (the grid cell)
                                     const container = e.currentTarget.closest('.group')
                                     if (container) {
-                                      container.classList.remove('animate-pulse', 'bg-gradient-to-br', 'from-gray-100', 'to-gray-200')
-                                      container.classList.add('bg-gray-100')
+                                      container.classList.remove('animate-pulse', 'bg-slate-200')
+                                      container.classList.add('bg-slate-100')
                                     }
                                   }}
                                 />
-                                {/* Subtle overlay on hover */}
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                                <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/10 transition-colors duration-500" />
 
-                                {/* "Ver todas" button on last photo if more photos exist */}
                                 {isLast && hasMore && (
-                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover:bg-slate-950/70">
                                     <div className="text-white text-center">
-                                      <Sparkles className="w-6 h-6 mx-auto mb-1" />
-                                      <span className="text-sm font-semibold">Ver todas</span>
+                                      <Sparkles className="w-6 h-6 mx-auto mb-1 text-amber-400" />
+                                      <span className="text-[10px] font-black uppercase tracking-widest">Ver todas</span>
                                     </div>
                                   </div>
                                 )}
                               </>
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                <Sparkles className="w-8 h-8" />
+                              <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                <Sparkles className="w-8 h-8 opacity-20" />
                               </div>
                             )}
                           </div>
@@ -875,10 +854,10 @@ export default function BusinessProfilePage() {
                           setSelectedPhotoIndex(0)
                           setShowPhotoGallery(true)
                         }}
-                        className="hidden sm:flex absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm hover:bg-white text-gray-900 px-4 py-2.5 rounded-lg font-medium text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-100 transition-all duration-200 items-center gap-2 border border-gray-200/80"
+                        className="hidden sm:flex absolute bottom-8 right-8 bg-white/90 backdrop-blur-md hover:bg-slate-950 hover:text-white text-slate-950 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-slate-950/10 hover:shadow-slate-950/20 hover:scale-105 active:scale-95 transition-all duration-300 items-center gap-2.5 border border-white/50"
                       >
                         <Sparkles className="w-4 h-4" />
-                        Ver todas las fotos ({allPhotos.length})
+                        Todas las fotos ({allPhotos.length})
                       </button>
                     )}
                   </>
@@ -894,68 +873,90 @@ export default function BusinessProfilePage() {
             {/* Main Content - 2/3 width on desktop */}
             <div className="lg:col-span-2 space-y-8 sm:space-y-12">
 
-              {/* Services Section - CTA to Booking Page */}
+              {/* Services Section - Premium Grid */}
               <section id="services">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Servicios</h2>
+                <div className="relative pl-6 mb-8 sm:mb-10">
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-slate-800 to-slate-950 rounded-full shadow-[0_0_15px_rgba(2,6,23,0.15)]" />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Oferta Profesional</span>
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">Servicios Disponibles</h2>
+                  </div>
+                </div>
 
                 {services.length === 0 ? (
-                  <div className="text-center py-12 sm:py-16 bg-gray-50 rounded-lg sm:rounded-xl">
-                    <Sparkles className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-                      No hay servicios disponibles
-                    </h3>
-                    <p className="text-sm sm:text-base text-gray-500 px-4">
-                      Este negocio aún no ha publicado sus servicios.
-                    </p>
+                  <div className="text-center py-16 bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 border-dashed">
+                    <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 shadow-sm">
+                      <Sparkles className="w-8 h-8 text-slate-200" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">Sin servicios</h3>
+                    <p className="text-sm text-slate-400 font-medium">Este negocio aún no ha publicado servicios.</p>
                   </div>
                 ) : (
                   <>
-                    {/* Category Tabs - Horizontal scroll on mobile */}
+                    {/* Category Tabs - Refined */}
                     {serviceCategories.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pb-3 sm:pb-4 mb-4 sm:mb-6 border-b border-gray-200 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+                      <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
                         {serviceCategories.map((category, index) => (
                           <button
                             key={`category-${index}-${category}`}
                             onClick={() => setSelectedCategory(category)}
-                            className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 ${
+                            className={`px-6 py-2.5 rounded-2xl whitespace-nowrap text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
                               selectedCategory === category
-                                ? 'bg-slate-900 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-slate-950 text-white shadow-lg shadow-slate-950/20'
+                                : 'bg-white text-slate-500 border border-slate-100 hover:bg-slate-50 hover:text-slate-900 shadow-sm'
                             }`}
-                            style={{ minWidth: '44px', minHeight: '44px' }} // Touch target size
                           >
-                            {category === 'all' ? 'Todos' : category}
+                            {category === 'all' ? 'Ver Todos' : category}
                           </button>
                         ))}
                       </div>
                     )}
 
-                    {/* Services List - Cards stack on mobile */}
-                    <div className="space-y-3 sm:space-y-4">
+                    {/* Services List - Premium Cards */}
+                    <div className="grid grid-cols-1 gap-4">
                       {filteredServices.map((service) => (
                         <div
                           key={service.id}
-                          className="p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-slate-300 transition-all duration-200"
+                          className="group p-5 sm:p-6 bg-white border border-slate-100/40 rounded-[2rem] shadow-md hover:shadow-2xl hover:shadow-slate-200/60 hover:-translate-y-1.5 transition-all duration-500 flex flex-col sm:flex-row sm:items-center justify-between gap-6"
                         >
                           {/* Service Info */}
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 mb-2 text-base sm:text-lg">
-                              {service.name}
-                            </h3>
+                          <div className="flex-1 space-y-3">
+                            <div className="flex flex-col gap-1">
+                              {service.category && (
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                                  {service.category}
+                                </span>
+                              )}
+                              <h3 className="font-black text-slate-900 text-lg sm:text-xl leading-tight group-hover:text-slate-950 transition-colors">
+                                {service.name}
+                              </h3>
+                            </div>
+                            
                             {service.description && (
-                              <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                              <p className="text-sm text-slate-500 font-medium leading-relaxed line-clamp-2 max-w-2xl">
                                 {service.description}
                               </p>
                             )}
-                            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                              <span className="text-lg sm:text-xl font-bold text-slate-900">
-                                {formatPrice(service.price)}
-                              </span>
-                              <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                                <Clock className="w-4 h-4" />
-                                <span>{formatDuration(service.duration_minutes)}</span>
+                            
+                            <div className="flex items-center gap-4 pt-1">
+                              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-xl">
+                                <Clock className="w-3.5 h-3.5 text-slate-950" />
+                                <span className="text-[11px] font-black uppercase tracking-tight text-slate-600">
+                                  {formatDuration(service.duration_minutes)}
+                                </span>
                               </div>
                             </div>
+                          </div>
+
+                          {/* Price & Action */}
+                          <div className="flex sm:flex-col items-center sm:items-end justify-between gap-4 sm:min-w-[140px] pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-50">
+                            <div className="flex flex-col sm:items-end">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Precio</span>
+                              <span className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tighter">
+                                {formatPrice(service.price)}
+                              </span>
+                            </div>
+                            
                           </div>
                         </div>
                       ))}
@@ -963,453 +964,451 @@ export default function BusinessProfilePage() {
 
                     {/* Empty state for filtered category */}
                     {filteredServices.length === 0 && (
-                      <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg">
-                        <p className="text-sm sm:text-base">No hay servicios en esta categoría.</p>
+                      <div className="text-center py-20 bg-slate-50/30 rounded-[2.5rem] border border-slate-100/50">
+                        <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No hay servicios en esta categoría</p>
                       </div>
                     )}
                   </>
                 )}
               </section>
 
-              {/* Team Section */}
+              {/* Team Section - Premium Carousel */}
               <section id="team">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Equipo</h2>
+                <div className="flex flex-col gap-1 mb-8 sm:mb-10 pl-4 border-l-4 border-slate-950">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Nuestro Talento</span>
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">Conoce al Equipo</h2>
+                </div>
 
                 {employees.length === 0 ? (
-                  <div className="text-center py-12 sm:py-16 bg-gray-50 rounded-lg sm:rounded-xl">
-                    <Users className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-                      No hay información del equipo
-                    </h3>
-                    <p className="text-sm sm:text-base text-gray-500 px-4">
-                      Este negocio aún no ha publicado información sobre su equipo.
-                    </p>
+                  <div className="text-center py-16 bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50">
+                    <Users className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">Equipo no disponible</h3>
+                    <p className="text-sm text-slate-400 font-medium">Este negocio aún no ha presentado a su equipo.</p>
                   </div>
                 ) : (
                   <>
-                    {/* Horizontal scroll with snap points on mobile */}
-                    <div className="flex gap-4 sm:gap-6 overflow-x-auto pt-2 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-hide overflow-y-visible">
+                    {/* Horizontal scroll with snap points - Refined */}
+                    <div className="flex gap-8 sm:gap-10 overflow-x-auto pt-4 pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scrollbar-hide overflow-y-visible">
                       {employees.map((employee) => (
                         <div
                           key={employee.id}
-                          className="group flex flex-col items-center flex-shrink-0 snap-start cursor-pointer"
-                          style={{ minWidth: '100px' }} // Consistent card width
+                          className="group flex flex-col items-center flex-shrink-0 snap-start cursor-pointer transition-transform duration-300 hover:-translate-y-2"
+                          style={{ minWidth: '130px' }}
                         >
-                          {/* Avatar with gradient border */}
-                          <div className="relative mb-3">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 ring-2 ring-slate-100 group-hover:ring-slate-400 group-hover:scale-105 transition-all duration-200">
+                          {/* Avatar with Premium Styling */}
+                          <div className="relative mb-4">
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[2rem] overflow-hidden bg-slate-100 border-4 border-white shadow-xl shadow-slate-200/60 group-hover:shadow-slate-300 transition-all duration-500 ring-1 ring-slate-100/50">
                               {employee.avatar_url ? (
                                 <img
                                   src={employee.avatar_url}
                                   alt={`${employee.first_name} ${employee.last_name}`}
                                   loading="lazy"
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
                                 />
                               ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                                  <Users className="w-8 h-8 sm:w-10 sm:h-10 text-slate-600" />
+                                <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                                  <Users className="w-10 h-10 text-slate-200" />
                                 </div>
                               )}
                             </div>
                           </div>
 
                           {/* Name and Position */}
-                          <p className="font-medium text-gray-900 text-sm sm:text-base text-center max-w-[100px] group-hover:text-slate-900 transition-colors">
-                            {employee.first_name}
-                          </p>
-                          {employee.position && (
-                            <p className="text-xs sm:text-sm text-gray-500 text-center max-w-[100px] mt-1">
-                              {employee.position}
+                          <div className="text-center space-y-1">
+                            <p className="font-black text-slate-900 text-sm sm:text-base tracking-tight leading-tight group-hover:text-slate-950 transition-colors">
+                              {employee.first_name}
                             </p>
-                          )}
+                            {employee.position && (
+                              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 group-hover:text-slate-500 transition-colors">
+                                {employee.position}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
 
-                    {/* Scroll indicator for mobile (only if more than 3 employees) */}
+                    {/* Scroll indicator for mobile - Sleeker */}
                     {employees.length > 3 && (
-                      <p className="text-xs text-gray-400 text-center mt-2 sm:hidden">
-                        Desliza para ver más →
-                      </p>
+                      <div className="flex items-center justify-center gap-2 mt-2 sm:hidden">
+                        <div className="w-8 h-1 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="w-1/2 h-full bg-slate-950 animate-pulse" />
+                        </div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Desliza</span>
+                      </div>
                     )}
                   </>
                 )}
               </section>
 
-              {/* Reviews Section */}
-              <section id="reviews">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Reseñas</h2>
-                {/* Reviews Summary Card */}
-                {reviews.length > 0 && (
-                  <Card className="mb-6 bg-gray-50 border-gray-200">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                            Calificación General
-                          </h3>
-                          <div className="flex items-center gap-3">
-                            <div className="text-4xl font-bold text-gray-900">
-                              {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
-                            </div>
-                            <div>
-                              <StarRating
-                                rating={reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length}
-                                readonly
-                                size="lg"
-                              />
-                              <p className="text-sm text-gray-600 mt-1">
-                                Basado en {reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
+              {/* Reviews Section - Premium Feedback */}
+              <section id="reviews" className="scroll-mt-24">
+                <div className="relative pl-6 mb-8 sm:mb-10">
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-slate-800 to-slate-950 rounded-full shadow-[0_0_15px_rgba(2,6,23,0.15)]" />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] items-center uppercase tracking-[0.2em] font-extrabold text-slate-400 border-slate-200">
+                      Feedback de Clientes
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">Reseñas y Experiencias</h2>
+                  </div>
+                </div>
 
-                        {/* Rating Distribution */}
-                        <div className="hidden md:block">
-                          <div className="space-y-2">
-                            {[5, 4, 3, 2, 1].map((stars) => {
-                              const count = reviews.filter(r => r.rating === stars).length
-                              const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
-                              return (
-                                <div key={stars} className="flex items-center gap-2 text-sm">
-                                  <span className="w-12 text-gray-700">{stars} ⭐</span>
-                                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                    <div
-                                      className="h-full bg-amber-400"
-                                      style={{ width: `${percentage}%` }}
-                                    />
-                                  </div>
-                                  <span className="w-12 text-gray-600">{count}</span>
-                                </div>
-                              )
-                            })}
+                {/* Reviews Summary Card - Glassmorphism style */}
+                {reviews.length > 0 && (
+                  <div className="mb-10 bg-slate-50 border border-slate-100/50 rounded-[2.5rem] p-6 sm:p-10 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100/20 rounded-full -translate-y-12 translate-x-12 blur-3xl opacity-50" />
+                    
+                    <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8 md:gap-12">
+                      <div className="flex flex-col items-center md:items-start text-center md:text-left gap-4">
+                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Calificación General</h3>
+                        <div className="flex items-center gap-6">
+                          <div className="text-6xl sm:text-7xl font-black text-slate-950 tracking-tighter">
+                            {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <StarRating
+                              rating={reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length}
+                              readonly
+                              size="lg"
+                            />
+                            <p className="text-[11px] font-black uppercase tracking-tight text-slate-500">
+                              Basado en {reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'}
+                            </p>
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      {/* Rating Distribution - Clean Vertical Bars */}
+                      <div className="flex-1 max-w-md w-full">
+                        <div className="space-y-3">
+                          {[5, 4, 3, 2, 1].map((stars) => {
+                            const count = reviews.filter(r => r.rating === stars).length
+                            const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
+                            return (
+                              <div key={stars} className="flex items-center gap-4 group">
+                                <div className="flex items-center gap-1 w-10">
+                                  <span className="text-[11px] font-black text-slate-950">{stars}</span>
+                                  <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                </div>
+                                <div className="flex-1 h-3 bg-white rounded-full overflow-hidden border border-slate-100 shadow-inner">
+                                  <div
+                                    className="h-full bg-slate-950 transition-all duration-1000 group-hover:bg-slate-800"
+                                    style={{ width: `${percentage}%` }}
+                                  />
+                                </div>
+                                <span className="w-8 text-[11px] font-black text-slate-400 text-right">{count}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
 
-                {/* Individual Reviews */}
-                <div className="space-y-4">
+                {/* Individual Reviews - Premium Cards */}
+                <div className="grid grid-cols-1 gap-6">
                   {reviews.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Star className="w-8 h-8 text-amber-600" />
+                    <div className="text-center py-20 bg-slate-50/50 rounded-[2.5rem] border border-slate-100/50 border-dashed">
+                      <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                        <Star className="w-10 h-10 text-slate-200" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        No hay reseñas aún
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        Sé el primero en compartir tu experiencia con este negocio.
-                      </p>
+                      <h3 className="text-xl font-black text-slate-900 mb-2">Aún no hay reseñas</h3>
+                      <p className="text-sm text-slate-400 font-medium mb-8 max-w-xs mx-auto">Comparte tu opinión con la comunidad después de tu primera cita.</p>
                       <Button
-                        className="bg-black hover:bg-neutral-800 text-white"
                         onClick={() => handleBookAppointment()}
+                        className="bg-slate-950 hover:bg-slate-900 text-white rounded-xl px-8 h-12 text-[11px] font-black uppercase tracking-widest shadow-lg shadow-slate-950/20"
                       >
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Reservar Cita
+                        Agendar Primera Cita
                       </Button>
                     </div>
                   ) : (
                     reviews.map((review) => {
-                      // Safety check: skip if client is null
                       if (!review.client) return null
 
                       return (
-                        <Card key={review.id} className="hover:shadow-md hover:border-gray-300 transition-all duration-200">
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-4">
-                              {/* Client Avatar */}
-                              <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
-                                {review.client.first_name.charAt(0).toUpperCase()}
-                              </div>
+                        <div key={review.id} className="group p-6 sm:p-8 bg-white border border-slate-100/50 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500">
+                          <div className="flex items-start gap-6">
+                            {/* Client Avatar - Initials with gradient */}
+                            <div className="w-14 h-14 bg-gradient-to-br from-slate-800 to-slate-950 rounded-2xl flex items-center justify-center text-white font-black text-xl flex-shrink-0 shadow-lg shadow-slate-950/20">
+                              {review.client.first_name.charAt(0).toUpperCase()}
+                            </div>
 
-                              {/* Review Content */}
-                              <div className="flex-1">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div>
-                                    <h4 className="font-semibold text-gray-900">
-                                      {review.client.first_name} {review.client.last_name}
-                                    </h4>
-                                    <p className="text-sm text-gray-500">
-                                      {formatDate(review.created_at)}
-                                    </p>
-                                  </div>
+                            <div className="flex-1">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                <div>
+                                  <h4 className="font-black text-slate-950 text-base sm:text-lg tracking-tight">
+                                    {review.client.first_name} {review.client.last_name}
+                                  </h4>
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    {formatDate(review.created_at)}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                                   <StarRating rating={review.rating} readonly size="sm" />
                                 </div>
+                              </div>
 
-                                {review.comment && (
-                                  <p className="text-gray-700 leading-relaxed">
-                                    {review.comment}
-                                  </p>
-                                )}
+                              {review.comment && (
+                                <p className="text-slate-600 font-medium leading-relaxed text-sm sm:text-base">
+                                  {review.comment}
+                                </p>
+                              )}
 
-                                {/* Business Reply */}
-                                {review.business_reply && (
-                                  <div className="mt-4 pl-4 border-l-2 border-orange-400 bg-orange-50 p-3 rounded-r">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="font-semibold text-orange-900 text-sm">Respuesta del negocio</span>
-                                      {review.business_reply_at && (
-                                        <span className="text-xs text-orange-600">
-                                          {formatDate(review.business_reply_at)}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-gray-700 text-sm leading-relaxed">
-                                      {review.business_reply}
+                              {/* Business Reply - Sleek Subcard */}
+                              {review.business_reply && (
+                                <div className="mt-4 pl-4 border-l-2 border-slate-200">
+                                  <div className="bg-slate-50 p-4 rounded-2xl">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Respuesta del negocio</p>
+                                    <p className="text-sm text-slate-600 font-medium italic leading-relaxed">
+                                      "{review.business_reply}"
                                     </p>
                                   </div>
-                                )}
+                                </div>
+                              )}
 
-                                {/* Reply Button (only for owner) */}
-                                {isOwner && !review.business_reply && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-3 text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200"
-                                    onClick={() => {
-                                      setSelectedReviewId(review.id)
-                                      setShowReplyModal(true)
-                                    }}
-                                  >
-                                    Responder
-                                  </Button>
-                                )}
-                              </div>
+                              {/* Reply Button (only for owner) */}
+                              {isOwner && !review.business_reply && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-950 hover:bg-slate-50 rounded-xl"
+                                  onClick={() => {
+                                    setSelectedReviewId(review.id)
+                                    setShowReplyModal(true)
+                                  }}
+                                >
+                                  Responder
+                                </Button>
+                              )}
                             </div>
-                          </CardContent>
-                        </Card>
+                          </div>
+                        </div>
                       )
                     })
                   )}
                 </div>
               </section>
 
-              {/* About Section */}
+              {/* About Section - Premium Typography */}
               <section id="about">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Acerca de</h2>
-                <div className="prose max-w-none">
+                <div className="flex flex-col gap-1 mb-6 sm:mb-8 pl-4 border-l-4 border-slate-950">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Historia y Misión</span>
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">Acerca de {business.name}</h2>
+                </div>
+                <div className="bg-slate-50/50 p-6 sm:p-10 rounded-[2.5rem] border border-slate-100/50">
                   {business.description ? (
-                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{business.description}</p>
+                    <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed max-w-4xl">{business.description}</p>
                   ) : (
-                    <p className="text-sm sm:text-base text-gray-500 italic">No hay información adicional disponible.</p>
+                    <p className="text-sm sm:text-base text-slate-400 italic font-medium">No hay información adicional disponible.</p>
                   )}
                 </div>
               </section>
 
-              {/* Map Section - Responsive height */}
+              {/* Map Section - Premium Frame */}
               {business.latitude && business.longitude && (
                 <section id="location">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Ubicación</h2>
-                  <div
-                    className="rounded-lg sm:rounded-xl overflow-hidden border border-gray-200 shadow-sm"
-                    style={{ height: '300px' }}
-                  >
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      style={{ border: 0 }}
-                      loading="lazy"
-                      src={`https://www.google.com/maps?q=${business.latitude},${business.longitude}&hl=es&z=15&output=embed`}
-                    />
+                  <div className="flex flex-col gap-1 mb-6 sm:mb-8 pl-4 border-l-4 border-slate-950">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Encuéntranos</span>
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">Ubicación Estratégica</h2>
                   </div>
-                  {business.address && (
-                    <p className="mt-3 text-sm text-gray-600 flex items-start gap-2">
-                      <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                      <span>{business.address}</span>
-                    </p>
-                  )}
+                  
+                  <div className="relative group/map">
+                    <div
+                      className="rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-2xl shadow-slate-200/40 bg-slate-100"
+                      style={{ height: '400px' }}
+                    >
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        loading="lazy"
+                        src={`https://www.google.com/maps?q=${business.latitude},${business.longitude}&hl=es&z=15&output=embed`}
+                        className="grayscale-[0.2] contrast-105 group-hover/map:grayscale-0 transition-all duration-700"
+                      />
+                    </div>
+                    
+                    {business.address && (
+                      <div className="absolute bottom-6 left-6 right-6">
+                        <div className="bg-white/90 backdrop-blur-xl p-4 sm:p-5 rounded-3xl border border-white/50 shadow-xl flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-2xl bg-slate-950 flex items-center justify-center flex-shrink-0 shadow-lg shadow-slate-950/20">
+                            <MapPin className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Dirección Exacta</p>
+                            <p className="text-sm font-bold text-slate-900">{business.address}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </section>
               )}
 
-              {/* Business Information Section */}
+              {/* Business Information Section - Detailed Specs */}
               <section id="info">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Información adicional</h2>
+                <div className="relative pl-6 mb-8 sm:mb-10">
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-slate-800 to-slate-950 rounded-full shadow-[0_0_15px_rgba(2,6,23,0.15)]" />
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Detalles del Servicio</span>
+                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">Información del Negocio</h2>
+                  </div>
+                </div>
 
-                <div className="space-y-6">
-                  {/* Business Hours */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Business Hours - Premium Card */}
                   {businessHours.length > 0 && (
-                    <Card className="border border-gray-200">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-slate-900" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900">Horarios de atención</h3>
+                    <div className="bg-white border border-slate-100/40 p-6 sm:p-8 rounded-[2rem] shadow-md hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-500 group">
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-slate-950 group-hover:border-slate-950 transition-all duration-500">
+                          <Clock className="w-6 h-6 text-slate-950 group-hover:text-white transition-colors" />
                         </div>
-                        <div className="space-y-2">
-                          {businessHours.map((hours) => (
-                            <div key={hours.id} className="flex justify-between items-center text-sm py-1.5">
-                              <span className="text-gray-700 font-medium">{getDayName(hours.day_of_week)}</span>
-                              {hours.is_closed ? (
-                                <span className="text-gray-500 italic">Cerrado</span>
-                              ) : (
-                                <span className="text-gray-900">
-                                  {formatTime(hours.open_time)} - {formatTime(hours.close_time)}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Cancellation Policy */}
-                  {business.cancellation_policy_text && (
-                    <Card className="border border-gray-200">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
-                            <Ban className="w-5 h-5 text-red-600" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900">Política de cancelación</h3>
-                        </div>
-                        <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                          {business.cancellation_policy_text}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {business.allow_client_cancellation && (
-                            <Badge className="text-xs bg-blue-50 text-blue-700 border border-blue-200">
-                              <Ban className="w-3 h-3 mr-1" />
-                              Cancelación permitida
-                            </Badge>
-                          )}
-                          {business.allow_client_reschedule && (
-                            <Badge className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200">
-                              <RefreshCw className="w-3 h-3 mr-1" />
-                              Reagendamiento permitido
-                            </Badge>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Booking Restrictions */}
-                  {(business.min_booking_hours || business.max_booking_days) && (
-                    <Card className="border border-gray-200">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                            <Calendar className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900">Condiciones de reserva</h3>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-700">
-                          {business.min_booking_hours && business.min_booking_hours > 0 && (
-                            <div className="flex items-start gap-2">
-                              <Info className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span>
-                                Las reservas deben hacerse con al menos{' '}
-                                <span className="font-semibold">
-                                  {business.min_booking_hours} {business.min_booking_hours === 1 ? 'hora' : 'horas'}
-                                </span>{' '}
-                                de anticipación
-                              </span>
-                            </div>
-                          )}
-                          {business.max_booking_days && (
-                            <div className="flex items-start gap-2">
-                              <Info className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span>
-                                Puedes reservar con hasta{' '}
-                                <span className="font-semibold">{business.max_booking_days} días</span> de anticipación
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Reminders & Deposit */}
-                  {(business.enable_reminders || business.require_deposit) && (
-                    <Card className="border border-gray-200">
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                            <Bell className="w-5 h-5 text-purple-600" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900">Otros servicios</h3>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-700">
-                          {business.enable_reminders && business.reminder_hours_before && (
-                            <div className="flex items-start gap-2">
-                              <Bell className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span>
-                                Recibirás un recordatorio{' '}
-                                <span className="font-semibold">
-                                  {business.reminder_hours_before} {business.reminder_hours_before === 1 ? 'hora' : 'horas'}
-                                </span>{' '}
-                                antes de tu cita
-                              </span>
-                            </div>
-                          )}
-                          {business.require_deposit && business.deposit_percentage && business.deposit_percentage > 0 && (
-                            <div className="flex items-start gap-2">
-                              <CreditCard className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span>
-                                Se requiere un depósito del{' '}
-                                <span className="font-semibold">{business.deposit_percentage}%</span> para confirmar tu cita
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Contact Info */}
-                  <Card className="border border-gray-200">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center">
-                          <Phone className="w-5 h-5 text-gray-600" />
-                        </div>
-                        <h3 className="font-semibold text-gray-900">Información de contacto</h3>
+                        <h3 className="font-black text-slate-950 text-lg tracking-tight">Horarios de Atención</h3>
                       </div>
                       <div className="space-y-3">
+                        {businessHours.map((hours) => (
+                          <div key={hours.id} className="flex justify-between items-center text-sm py-2 border-b border-slate-50 last:border-0">
+                            <span className="text-slate-500 font-black uppercase tracking-widest text-[10px]">{getDayName(hours.day_of_week)}</span>
+                            {hours.is_closed ? (
+                              <span className="text-rose-500 font-bold text-[11px] uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded-lg">Cerrado</span>
+                            ) : (
+                              <span className="text-slate-950 font-black tracking-tight">
+                                {formatTime(hours.open_time)} — {formatTime(hours.close_time)}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Policies & Restrictions - Combined Premium Card */}
+                  <div className="flex flex-col gap-6">
+                    {/* Cancellation Policy */}
+                    {(business.cancellation_policy_text || business.cancellation_policy_hours) && (
+                      <div className="bg-slate-50/50 border border-slate-100/50 p-6 rounded-[2rem] shadow-sm">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center">
+                            <Ban className="w-5 h-5 text-slate-950" />
+                          </div>
+                          <h3 className="font-black text-slate-950 text-base tracking-tight">Política de Cancelación</h3>
+                        </div>
+                        {business.cancellation_policy_hours && (
+                          <p className="text-xs font-black uppercase tracking-widest text-rose-500 mb-2">
+                             Antelación requerida: {business.cancellation_policy_hours} horas
+                          </p>
+                        )}
+                        {business.cancellation_policy_text && (
+                          <p className="text-sm text-slate-600 font-medium leading-relaxed mb-4">
+                            {business.cancellation_policy_text}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {business.allow_client_cancellation && (
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-xl border border-slate-100 text-[10px] font-black uppercase tracking-tight text-emerald-600">
+                              <RefreshCw className="w-3 h-3" />
+                              Cancelación permitida
+                            </div>
+                          )}
+                          {!business.allow_client_cancellation && (
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-xl border border-slate-100 text-[10px] font-black uppercase tracking-tight text-rose-500">
+                              <Ban className="w-3 h-3" />
+                              Cancelación no permitida
+                            </div>
+                          )}
+                          {business.allow_client_reschedule && (
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-xl border border-slate-100 text-[10px] font-black uppercase tracking-tight text-emerald-600">
+                              <Calendar className="w-3 h-3" />
+                              Reagendamiento permitido
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Booking Conditions */}
+                    {(business.min_booking_hours || business.max_booking_days || business.require_deposit) && (
+                      <div className="bg-white border border-slate-100/40 p-6 rounded-[2rem] shadow-md flex-1">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                            <Info className="w-5 h-5 text-slate-950" />
+                          </div>
+                          <h3 className="font-black text-slate-950 text-base tracking-tight">Condiciones</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {business.min_booking_hours && business.min_booking_hours > 0 && (
+                            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100/50">
+                              <Clock className="w-4 h-4 text-slate-400" />
+                              <span className="text-[11px] font-bold text-slate-600">
+                                Anticipación: <span className="text-slate-950 font-black">{business.min_booking_hours} h</span>
+                              </span>
+                            </div>
+                          )}
+                          {business.max_booking_days && business.max_booking_days > 0 && (
+                            <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100/50">
+                              <Calendar className="w-4 h-4 text-slate-400" />
+                              <span className="text-[11px] font-bold text-slate-600">
+                                Máximo futuro: <span className="text-slate-950 font-black">{business.max_booking_days} días</span>
+                              </span>
+                            </div>
+                          )}
+                          {business.require_deposit && business.deposit_percentage && (
+                            <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-100/50">
+                              <CreditCard className="w-4 h-4 text-emerald-600" />
+                              <span className="text-[11px] font-bold text-emerald-700">
+                                Depósito: <span className="font-black">{business.deposit_percentage}%</span> requerido
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contact Info Card - Added for completeness */}
+                    <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                          <MapPin className="w-5 h-5 text-slate-950" />
+                        </div>
+                        <h3 className="font-black text-slate-950 text-base tracking-tight">Información de Contacto</h3>
+                      </div>
+                      <div className="space-y-4">
                         {business.address && (
-                          <div className="flex items-start gap-3 text-sm">
-                            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <span className="text-gray-700">{business.address}</span>
+                          <div className="flex items-start gap-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Dir:</span>
+                            <p className="text-sm text-slate-600 font-medium leading-relaxed">{business.address}</p>
                           </div>
                         )}
                         {business.phone && (
-                          <div className="flex items-start gap-3 text-sm">
-                            <Phone className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <a href={`tel:${business.phone}`} className="text-gray-700 hover:text-slate-900 transition-colors">
-                              {business.phone}
-                            </a>
+                          <div className="flex items-center gap-3">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tel:</span>
+                             <p className="text-sm text-slate-950 font-black">{business.phone}</p>
                           </div>
                         )}
                         {business.email && (
-                          <div className="flex items-start gap-3 text-sm">
-                            <Mail className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <a href={`mailto:${business.email}`} className="text-gray-700 hover:text-slate-900 transition-colors">
-                              {business.email}
-                            </a>
-                          </div>
-                        )}
-                        {business.website && (
-                          <div className="flex items-start gap-3 text-sm">
-                            <Globe className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <a
-                              href={business.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-700 hover:text-slate-900 transition-colors"
-                            >
-                              Visitar sitio web
-                            </a>
+                          <div className="flex items-center gap-3">
+                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email:</span>
+                             <p className="text-sm text-slate-950 font-black">{business.email}</p>
                           </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+
+                    {/* Reminders - Clean Card */}
+                    {business.enable_reminders && (
+                      <div className="bg-slate-50/50 border border-slate-100/50 p-6 rounded-[2rem] shadow-sm">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center">
+                            <Bell className="w-5 h-5 text-slate-950" />
+                          </div>
+                          <h3 className="font-black text-slate-950 text-base tracking-tight">Otros servicios</h3>
+                        </div>
+                        <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                          Recibirás un recordatorio <span className="text-slate-950 font-black">{business.reminder_hours_before} horas</span> antes de tu cita.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
 
@@ -1417,132 +1416,132 @@ export default function BusinessProfilePage() {
 
             {/* Sidebar - Sticky on desktop, bottom on mobile */}
             <div className="lg:col-span-1">
-              <div className="lg:sticky lg:top-24 space-y-4 sm:space-y-6">
-                {/* CTA Card */}
-                <Card className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <CardContent className="p-4 sm:p-6">
+              <div className="lg:sticky lg:top-24 space-y-6">
+                {/* Main CTA Card - Premium Elevate */}
+                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl shadow-slate-200/50 hover:shadow-slate-300 transition-all duration-500 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
+                  
+                  <div className="relative">
                     <Button
                       size="lg"
-                      className="w-full bg-black hover:bg-neutral-800 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-200 h-12 sm:h-auto py-3 text-base sm:text-sm"
+                      className="w-full bg-slate-950 hover:bg-slate-900 text-white font-black uppercase tracking-[0.15em] shadow-lg shadow-slate-950/20 rounded-2xl h-14 transition-all duration-300 hover:scale-[1.02] active:scale-95 text-[11px]"
                       onClick={() => handleBookAppointment()}
-                      style={{ minHeight: '44px' }} // Touch target size
                     >
-                      <Calendar className="w-5 h-5 mr-2" />
-                      Reservar ahora
+                      <Calendar className="w-5 h-5 mr-3" />
+                      Reservar Ahora
                     </Button>
 
-                    {/* Quick Info */}
-                    <div className="space-y-4 pt-4 border-t border-gray-200 mt-4">
-                      {business.address && (
-                        <div className="flex items-start gap-3">
-                          <MapPin className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 mb-1 text-sm sm:text-base">Ubicación</p>
-                            <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">{business.address}</p>
-                            {business.latitude && business.longitude && (
-                              <button
-                                onClick={() => setShowLocationModal(true)}
-                                className="text-slate-900 hover:text-slate-800 font-medium mt-2 inline-flex items-center gap-1 text-sm transition-colors"
-                                style={{ minHeight: '44px', minWidth: '44px' }} // Touch target
-                              >
-                                <MapPin className="w-4 h-4" />
-                                Ver en mapa
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                    <div className="mt-8 space-y-6">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contacto Directo</span>
+                        <div className="h-0.5 w-8 bg-slate-950 rounded-full mb-3" />
+                      </div>
 
                       {business.phone && (
-                        <div className="flex items-start gap-3">
-                          <Phone className="w-5 h-5 text-slate-900 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 mb-1 text-sm sm:text-base">Teléfono</p>
-                            <a
-                              href={`tel:${business.phone}`}
-                              className="text-gray-600 hover:text-slate-900 font-medium transition-colors text-sm"
-                              style={{ minHeight: '44px', minWidth: '44px' }} // Touch target
-                            >
-                              {business.phone}
-                            </a>
+                        <a
+                          href={`tel:${business.phone}`}
+                          className="group flex items-center gap-4 transition-all duration-300"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-slate-950 group-hover:border-slate-950 transition-all duration-300">
+                            <Phone className="w-4.5 h-4.5 text-slate-950 group-hover:text-white transition-colors" />
                           </div>
-                        </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Llámanos</span>
+                            <span className="text-sm font-bold text-slate-900 group-hover:text-slate-950 transition-colors uppercase tracking-tight">{business.phone}</span>
+                          </div>
+                        </a>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
 
-                {/* Business Info Card - Hidden on mobile to reduce clutter */}
-                <Card className="border border-gray-200 hidden sm:block">
-                  <CardContent className="p-4 sm:p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4 text-sm sm:text-base">Información del negocio</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Categoría</span>
-                        <span className="font-medium text-gray-900 flex items-center gap-1.5">
-                          <CategoryIcon className="w-4 h-4 text-slate-900" />
-                          <span className="text-xs sm:text-sm">{categoryName}</span>
-                        </span>
-                      </div>
-                      {business.rating && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Calificación</span>
-                          <span className="font-medium text-gray-900 flex items-center gap-1">
-                            {business.rating}
-                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                          </span>
-                        </div>
+                      {business.email && (
+                        <a
+                          href={`mailto:${business.email}`}
+                          className="group flex items-center gap-4 transition-all duration-300"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-slate-950 group-hover:border-slate-950 transition-all duration-300">
+                            <Mail className="w-4.5 h-4.5 text-slate-950 group-hover:text-white transition-colors" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Escríbenos</span>
+                            <span className="text-sm font-bold text-slate-900 group-hover:text-slate-950 transition-colors truncate max-w-[150px]">{business.email}</span>
+                          </div>
+                        </a>
                       )}
-                      {services.length > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Servicios</span>
-                          <span className="font-medium text-gray-900">{services.length}</span>
-                        </div>
-                      )}
-                      {employees.length > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Equipo</span>
-                          <span className="font-medium text-gray-900">{employees.length} {employees.length === 1 ? 'persona' : 'personas'}</span>
-                        </div>
+
+                      {business.latitude && business.longitude && (
+                        <button
+                          onClick={() => setShowLocationModal(true)}
+                          className="group flex items-center gap-4 transition-all duration-300 w-full text-left"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center group-hover:bg-slate-950 group-hover:border-slate-950 transition-all duration-300">
+                            <MapPin className="w-4.5 h-4.5 text-slate-950 group-hover:text-white transition-colors" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Ubicación</span>
+                            <span className="text-sm font-bold text-slate-900 group-hover:text-slate-950 transition-colors">Cómo llegar</span>
+                          </div>
+                        </button>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
+
+                {/* Business Stats Card - Hidden on mobile */}
+                <div className="bg-slate-50/50 border border-slate-100/50 rounded-[2rem] p-6 hidden lg:block">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 border-b border-slate-200 pb-2">Estadísticas Rápidas</h3>
+                  <div className="grid grid-cols-1 gap-5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black text-slate-500 uppercase tracking-tight">Especialidad</span>
+                      <span className="bg-white px-3 py-1 rounded-lg border border-slate-100 text-[11px] font-black text-slate-950 uppercase tracking-tighter">
+                        {categoryName}
+                      </span>
+                    </div>
+                    {business.rating && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-tight">Experiencia</span>
+                        <div className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-lg border border-slate-100">
+                          <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                          <span className="text-[11px] font-black text-slate-950">{business.rating}</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black text-slate-500 uppercase tracking-tight">Servicios</span>
+                      <span className="text-sm font-black text-slate-950">{services.length}</span>
+                    </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
-      {/* Mobile Sticky CTA Bar - Fixed at bottom */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-lg border-t border-gray-100 shadow-[0_-4px_20px_-5px_rgb(0,0,0,0.1)] z-40 safe-area-inset-bottom">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            {/* Price Range or Rating */}
-            <div className="flex-1 min-w-0">
-              {services.length > 0 && (
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">Desde</span>
-                  <span className="text-lg font-bold text-gray-900">
-                    {formatPrice(Math.min(...services.map(s => s.price)))}
-                  </span>
-                </div>
-              )}
-              {services.length === 0 && business.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span className="font-semibold text-gray-900">{business.rating}</span>
-                  <span className="text-sm text-gray-500">({business.total_reviews || 0})</span>
-                </div>
-              )}
+      {/* Mobile Sticky CTA Bar - Premium Glassmorphism */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-2xl border-t border-slate-200/50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.15)] z-50 transition-all duration-300 transform translate-y-0 group-hover:translate-y-0">
+        <div className="max-w-7xl mx-auto px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="flex items-center justify-between gap-6">
+            {/* Price Info */}
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Desde</span>
+              <div className="flex flex-wrap items-baseline gap-1.5">
+                <span className="text-2xl font-black text-slate-950 tracking-tighter">
+                  {services.length > 0 
+                    ? formatPrice(Math.min(...services.map(s => s.price)))
+                    : 'N/A'}
+                </span>
+                {business.rating && (
+                  <div className="flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded-lg border border-slate-100">
+                    <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                    <span className="text-[10px] font-black text-slate-900">{business.rating}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* CTA Button */}
+            {/* Premium CTA Button */}
             <Button
               size="lg"
-              className="bg-black hover:bg-neutral-800 active:bg-neutral-900 active:scale-95 text-white font-semibold shadow-lg hover:shadow-xl px-8 flex-shrink-0 transition-all duration-150"
+              className="flex-1 bg-slate-950 hover:bg-slate-900 active:scale-95 text-white font-black uppercase tracking-[0.1em] shadow-xl shadow-slate-950/20 rounded-2xl h-14 text-[11px] transition-all duration-300"
               onClick={() => handleBookAppointment()}
-              style={{ minHeight: '48px' }} // Larger touch target
             >
               <Calendar className="w-5 h-5 mr-2" />
               Reservar
@@ -1551,8 +1550,8 @@ export default function BusinessProfilePage() {
         </div>
       </div>
 
-      {/* Add padding to bottom of main content to prevent overlap with sticky bar on mobile */}
       <div className="lg:hidden h-20" />
+    </main>
 
       {/* Location Map Modal */}
       {business.latitude && business.longitude && (

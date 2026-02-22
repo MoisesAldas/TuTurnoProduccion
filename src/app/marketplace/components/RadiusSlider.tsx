@@ -27,26 +27,29 @@ export default function RadiusSlider({ value, onChange, disabled, businessCount 
   }
 
   return (
-    <div className="flex items-center gap-2 sm:gap-3 w-full min-w-0">
+    <div className="flex items-center gap-3 w-full min-w-0">
       {/* Label + Badge */}
-      <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-        <MapPin className="w-3 h-3 text-slate-500 flex-shrink-0" />
-        <span className="text-xs text-slate-600 font-medium hidden sm:inline whitespace-nowrap">Hasta</span>
-        {disabled ? (
-          <Loader2 className="w-3 h-3 text-slate-400 animate-spin" />
-        ) : (
-          <Badge
-            variant="outline"
-            className="border-slate-300 text-slate-700 text-xs font-semibold px-1.5 py-0 h-5 min-w-[38px] justify-center"
-          >
-            {value} km
-          </Badge>
-        )}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <MapPin className="w-3 h-3 text-slate-400" />
+            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">Radio</span>
+          </div>
+          {disabled ? (
+            <Loader2 className="w-3 h-3 text-slate-400 animate-spin" />
+          ) : (
+            <Badge
+              className="bg-slate-950 text-white border-0 shadow-sm font-black text-[9px] uppercase tracking-tight px-2 py-0 h-4 min-w-[38px] justify-center rounded-full"
+            >
+              {value} km
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Slider — slate color override, grows to fill available space */}
       <div
-        className="flex-1 min-w-[60px] max-w-[160px]"
+        className="flex-1 px-1"
         style={{ '--primary': '222.2 47.4% 11.2%' } as React.CSSProperties}
       >
         <Slider
@@ -59,13 +62,6 @@ export default function RadiusSlider({ value, onChange, disabled, businessCount 
           className="cursor-pointer"
         />
       </div>
-
-      {/* Business count — hidden on xs */}
-      {typeof businessCount === 'number' && (
-        <span className="hidden sm:inline text-xs text-slate-400 whitespace-nowrap flex-shrink-0">
-          {businessCount} {businessCount === 1 ? 'negocio' : 'negocios'}
-        </span>
-      )}
     </div>
   )
 }

@@ -31,6 +31,7 @@ import GeolocationPrompt from '@/app/marketplace/components/GeolocationPrompt'
 import RadiusSlider from '@/app/marketplace/components/RadiusSlider'
 import DistanceBadge from '@/app/marketplace/components/DistanceBadge'
 
+
 // Lazy load Mapbox to save 500KB on initial bundle
 const MarketplaceMap = dynamic(() => import('@/components/MarketplaceMap'), {
   ssr: false,
@@ -345,9 +346,9 @@ export default function MarketplacePage() {
 
   return (
     <div className="h-screen w-full overflow-x-hidden flex flex-col bg-slate-50">
-      {/* Header */}
-      <header className="flex-shrink-0 bg-white border-b border-gray-200 z-20 shadow-sm">
-        <div className="container mx-auto px-4 space-y-3 py-4">
+      {/* Header Premium - Transparent with Blur */}
+      <header className="flex-shrink-0 bg-white/80 backdrop-blur-md border-b border-gray-100/50 sticky top-0 z-50 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
+        <div className="container mx-auto px-4 lg:px-6 space-y-3 py-3 lg:py-2.5">
           <div className="flex flex-col md:flex-row items-center gap-3">
             {/* Back Button + Logo */}
             <div className="w-full md:w-auto flex items-center gap-3 flex-shrink-0">
@@ -375,7 +376,7 @@ export default function MarketplacePage() {
                 placeholder="Buscar por nombre, ubicación o categoría..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 w-full h-12 text-base rounded-xl bg-slate-50 border-gray-200 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-slate-300 focus:ring-2 focus:ring-slate-200 shadow-none transition-all duration-200"
+                className="pl-11 w-full h-12 text-base rounded-2xl bg-gray-50/50 border-gray-100/80 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-orange-200 focus:ring-4 focus:ring-orange-500/5 shadow-none transition-all duration-300"
               />
             </div>
 
@@ -385,7 +386,7 @@ export default function MarketplacePage() {
               <div className="flex-1 md:w-auto">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full h-12 px-5 rounded-xl border-gray-200 bg-white text-slate-800 font-semibold text-base shadow-none hover:bg-gray-50 hover:border-gray-300 hover:text-slate-800 transition-colors duration-200">
+                    <Button variant="outline" className="w-full h-12 px-5 rounded-2xl border-gray-100/80 bg-white text-slate-900 font-black text-[11px] uppercase tracking-widest shadow-sm hover:bg-gray-50 hover:border-orange-100 hover:text-orange-600 transition-all duration-300 active:scale-95">
                       <span className="truncate max-w-[130px] sm:max-w-none">
                         {selectedCategory
                           ? categories.find(c => c.id === selectedCategory)?.name
@@ -422,11 +423,11 @@ export default function MarketplacePage() {
 
               {/* Filter Button */}
               <div className="flex-1 md:w-auto relative">
-                <Button variant="outline" className="w-full h-12 px-5 rounded-xl border-gray-200 bg-white text-slate-800 font-semibold text-base shadow-none hover:bg-gray-50 hover:border-gray-300 hover:text-slate-800 transition-colors duration-200" onClick={() => setIsFilterSheetOpen(true)}>
-                  <Filter className="w-[18px] h-[18px] mr-2 text-slate-500 flex-shrink-0" />
+                <Button variant="outline" className="w-full h-12 px-5 rounded-2xl border-gray-100/80 bg-white text-slate-900 font-black text-[11px] uppercase tracking-widest shadow-sm hover:bg-gray-50 hover:border-orange-100 hover:text-orange-600 transition-all duration-300 active:scale-95" onClick={() => setIsFilterSheetOpen(true)}>
+                  <Filter className="w-3.5 h-3.5 mr-2 text-slate-500 flex-shrink-0" />
                   Filtros
                   {activeFiltersCount > 0 && (
-                    <Badge className="ml-2 bg-slate-900 hover:bg-slate-800 text-white text-xs">
+                    <Badge className="ml-2 bg-orange-600 hover:bg-orange-700 text-white text-[9px] font-black uppercase tracking-tighter h-5 px-1.5 min-w-[20px] justify-center">
                       {activeFiltersCount}
                     </Badge>
                   )}
@@ -452,7 +453,7 @@ export default function MarketplacePage() {
         <div className="lg:col-span-2 overflow-y-auto scrollbar-hide border-r border-gray-200">
           <div className="p-4">
 
-            {/* Proximity Controls — inside left panel */}
+            {/* Unified Proximity Toolbar — Single Row Overlay */}
             <AnimatePresence>
             {isGeolocationActive && (
               <motion.div
@@ -460,45 +461,41 @@ export default function MarketplacePage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="flex flex-col gap-2 mb-2 pb-2 border-b border-gray-100"
+                className="bg-slate-50/40 rounded-2xl border border-slate-100/50 p-2.5 mb-6 shadow-sm shadow-slate-200/5"
               >
-                {/* Sort Mode Toggle */}
-                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 self-start">
-                  <button
-                    onClick={() => setSortMode('cercanos')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                      sortMode === 'cercanos'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <Navigation className="w-3 h-3 flex-shrink-0" />
-                    Más cercanos
-                  </button>
-                  <button
-                    onClick={() => setSortMode('valorados')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
-                      sortMode === 'valorados'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <Star className="w-3 h-3 flex-shrink-0" />
-                    Mejor valorados
-                  </button>
-                </div>
+                <div className="flex flex-col md:flex-row md:items-center gap-4 px-1">
+                  {/* Mode Label (Fixed to 'Cercanos') */}
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-950 text-white rounded-xl shadow-lg shadow-slate-950/20 border border-white/10 group">
+                      <Navigation className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.1em]">Cercanos</span>
+                    </div>
+                  </div>
 
-                {/* Radius Slider — full width row below toggle */}
-                {sortMode === 'cercanos' && (
-                  <div className="w-full">
+                  {/* Radius Slider Row Integration */}
+                  <div className="flex-1 min-w-0">
                     <RadiusSlider
                       value={radiusKm}
                       onChange={setRadiusKm}
                       disabled={nearbyLoading}
-                      businessCount={filteredBusinesses.length}
                     />
                   </div>
-                )}
+
+                  {/* Count & Status Row */}
+                  <div className="items-center gap-4 flex-shrink-0 pl-2 border-l border-slate-200/40 hidden sm:flex">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none mb-0.5">Disponibles</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-950 font-black tracking-tight">
+                          {filteredBusinesses.length}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                          {filteredBusinesses.length === 1 ? 'negocio' : 'negocios'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             )}
             </AnimatePresence>
@@ -507,23 +504,23 @@ export default function MarketplacePage() {
               <div className="flex items-center justify-between px-2 mb-3">
                 <div className="hidden sm:flex items-center gap-2">
                   {selectedCategory && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-700 text-xs font-medium rounded-full">
+                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-950 text-white text-[10px] font-black uppercase tracking-tight rounded-full shadow-md shadow-slate-950/10">
                       {categories.find(c => c.id === selectedCategory)?.name}
                       <button
                         onClick={(e) => { e.preventDefault(); setSelectedCategory('') }}
-                        className="ml-0.5 hover:text-slate-900"
+                        className="p-0.5 hover:bg-white/20 rounded-full transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
                     </span>
                   )}
                   {ratingFilter > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-medium rounded-full">
+                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500 text-white text-[10px] font-black uppercase tracking-tight rounded-full shadow-md shadow-amber-500/10">
                       <Star className="w-3 h-3 fill-current" />
-                      {ratingFilter}+
+                      {ratingFilter}+ Estrellas
                       <button
                         onClick={(e) => { e.preventDefault(); setRatingFilter(0) }}
-                        className="ml-0.5 hover:text-amber-900"
+                        className="p-0.5 hover:bg-white/20 rounded-full transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -536,7 +533,7 @@ export default function MarketplacePage() {
                     setSelectedCategory('')
                     setRatingFilter(0)
                   }}
-                  className="text-xs text-gray-500 hover:text-slate-900 transition-colors ml-auto"
+                  className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 hover:text-orange-600 transition-colors ml-auto bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100/50 hover:bg-orange-50 hover:border-orange-100"
                 >
                   Limpiar todo
                 </button>
@@ -581,50 +578,50 @@ export default function MarketplacePage() {
                   </div>
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">
+                <h3 className="text-xl font-black text-slate-950 mb-2 text-center tracking-tight">
                   {sortMode === 'cercanos'
                     ? `Sin negocios en ${radiusKm} km`
                     : 'No encontramos resultados'}
                 </h3>
 
-                <p className="text-gray-500 text-center max-w-sm mb-6 leading-relaxed">
+                <p className="text-[13px] text-slate-500 text-center max-w-sm mb-8 leading-relaxed font-medium">
                   {sortMode === 'cercanos'
-                    ? 'Intenta ampliar el radio de búsqueda para encontrar más negocios.'
-                    : 'No hay negocios que coincidan con tu búsqueda.'}
+                    ? 'Intenta ampliar el radio de búsqueda para encontrar más negocios en esta área.'
+                    : 'No hay negocios que coincidan con los filtros aplicados en este momento.'}
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   {sortMode === 'cercanos' && (
-                    <Button
-                      onClick={() => setRadiusKm(50)}
-                      variant="outline"
-                      className="border-slate-200 text-slate-900 hover:bg-slate-50"
-                    >
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Ampliar a 50 km
-                    </Button>
+                     <Button
+                       onClick={() => setRadiusKm(50)}
+                       variant="outline"
+                       className="rounded-xl border-slate-200 text-slate-950 hover:bg-slate-50 font-black text-[11px] uppercase tracking-wider h-10 px-4 transition-all duration-300 active:scale-95 shadow-sm"
+                     >
+                       <MapPin className="w-4 h-4 mr-2" />
+                       Ampliar a 50 km
+                     </Button>
                   )}
                   {(searchQuery || selectedCategory || ratingFilter > 0) && (
-                    <Button
-                      onClick={() => {
-                        setSearchQuery('')
-                        setSelectedCategory('')
-                        setRatingFilter(0)
-                      }}
-                      variant="outline"
-                      className="border-slate-200 text-slate-900 hover:bg-slate-50"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Limpiar filtros
-                    </Button>
+                     <Button
+                       onClick={() => {
+                         setSearchQuery('')
+                         setSelectedCategory('')
+                         setRatingFilter(0)
+                       }}
+                       variant="outline"
+                       className="rounded-xl border-slate-200 text-slate-950 hover:bg-slate-50 font-black text-[11px] uppercase tracking-wider h-10 px-4 transition-all duration-300 active:scale-95 shadow-sm"
+                     >
+                       <X className="w-4 h-4 mr-2" />
+                       Limpiar filtros
+                     </Button>
                   )}
-                  <Button
-                    onClick={fetchBusinesses}
-                    className="bg-slate-900 hover:bg-slate-800 text-white"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Recargar
-                  </Button>
+                   <Button
+                     onClick={fetchBusinesses}
+                     className="bg-slate-950 hover:bg-slate-900 text-white rounded-xl font-black text-[11px] uppercase tracking-wider h-10 px-5 transition-all duration-300 active:scale-95 shadow-lg shadow-slate-950/20"
+                   >
+                     <RefreshCw className="w-4 h-4 mr-2" />
+                     Recargar
+                   </Button>
                 </div>
               </div>
             ) : (
@@ -650,6 +647,7 @@ export default function MarketplacePage() {
                       business={business}
                       index={index}
                       isHovered={hoveredBusinessId === business.id || clickedBusinessId === business.id}
+                      isGeolocationActive={isGeolocationActive}
                       onMouseEnter={() => setHoveredBusinessId(business.id)}
                       onMouseLeave={() => setHoveredBusinessId(null)}
                     />
@@ -667,7 +665,7 @@ export default function MarketplacePage() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
         >
-          <div className="w-full h-full rounded-2xl overflow-hidden shadow-sm">
+          <div className="w-full h-full rounded-[2rem] overflow-hidden shadow-[0_20px_50px_-12px_rgba(2,6,23,0.15)] border border-slate-100/50">
             <MarketplaceMap
               businesses={filteredBusinesses}
               hoveredBusinessId={hoveredBusinessId}
@@ -696,7 +694,7 @@ export default function MarketplacePage() {
               onClick={() => setShowMobileMap(false)}
               variant="outline"
               size="sm"
-              className="rounded-full bg-white shadow-lg border-gray-200 hover:bg-gray-50 h-10 px-4"
+              className="rounded-full bg-white/90 backdrop-blur-md shadow-xl border-slate-200 hover:bg-slate-950 hover:text-white h-11 px-5 border-0 text-[11px] font-black uppercase tracking-wider transition-all duration-300 text-slate-950"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver a lista
@@ -726,17 +724,17 @@ export default function MarketplacePage() {
       >
         <Button
           onClick={() => setShowMobileMap(!showMobileMap)}
-          className="rounded-full shadow-xl bg-slate-900 hover:bg-slate-800 text-white px-6 h-12 font-medium transition-all duration-200 active:scale-95"
+          className="rounded-full shadow-[0_15px_30px_-5px_rgba(2,6,23,0.3)] bg-slate-950 hover:bg-slate-900 text-white px-8 h-12 text-[12px] font-black uppercase tracking-[0.16em] transition-all duration-300 active:scale-95 border-0 hover:-translate-y-0.5"
           size="lg"
         >
           {showMobileMap ? (
             <>
-              <List className="w-5 h-5 mr-2" />
+              <List className="w-4 h-4 mr-2.5" />
               Ver Lista
             </>
           ) : (
             <>
-              <Map className="w-5 h-5 mr-2" />
+              <Map className="w-4 h-4 mr-2.5" />
               Ver Mapa
             </>
           )}
@@ -753,9 +751,10 @@ export default function MarketplacePage() {
   )
 }
 
-const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLeave, index }: {
+const BusinessCard = React.memo(({ business, isHovered, isGeolocationActive, onMouseEnter, onMouseLeave, index }: {
   business: Business
   isHovered: boolean
+  isGeolocationActive: boolean
   onMouseEnter: () => void
   onMouseLeave: () => void
   index: number
@@ -775,18 +774,18 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
   return (
     <Link href={`/business/${business.id}`}>
       <Card
-        className={`group relative overflow-hidden h-full flex flex-col bg-white border border-gray-100 transition-all duration-300 ease-out cursor-pointer ${
+        className={`group relative overflow-hidden h-full flex flex-col bg-white border border-gray-100/50 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer rounded-[2rem] ${
           isHovered
-            ? 'shadow-xl shadow-slate-900/10 border-slate-400 -translate-y-1'
-            : 'hover:shadow-lg hover:shadow-gray-200/50 hover:border-gray-200 hover:-translate-y-0.5'
+            ? 'shadow-[0_22px_45px_-12px_rgba(2,6,23,0.12)] border-orange-200/50 -translate-y-2'
+            : 'hover:shadow-xl hover:shadow-gray-200/50 hover:border-gray-200 hover:-translate-y-1'
         }`}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
-        <div className={`absolute inset-0 bg-slate-900/[0.02] pointer-events-none transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+        <div className={`absolute inset-0 bg-slate-950/[0.01] pointer-events-none transition-opacity duration-500 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
 
         <div className="relative w-full overflow-hidden">
-          <AspectRatio ratio={16 / 10}>
+          <AspectRatio ratio={16 / 10} className="overflow-hidden rounded-t-[2rem]">
             {business.cover_image_url ? (
               <>
                 <Image
@@ -794,73 +793,64 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
                   alt={business.name}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                   priority={shouldPrioritize}
                   loading={shouldPrioritize ? undefined : 'lazy'}
-                  placeholder="blur"
-                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
               </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                <Building2 className="w-10 h-10 text-gray-300" />
+              <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                <Building2 className="w-12 h-12 text-slate-300" />
               </div>
             )}
+            
+            <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+              <Badge className="bg-white/95 backdrop-blur-md text-slate-950 border-0 shadow-sm font-black text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-full">
+                {business.business_categories?.name}
+              </Badge>
+              {isGeolocationActive && business.distance_km !== undefined && (
+                <Badge className="bg-slate-950 text-white border-0 shadow-xl shadow-slate-950/20 font-black text-[9px] uppercase tracking-tight px-2.5 py-1 rounded-full">
+                  {business.distance_km.toFixed(1)} km
+                </Badge>
+              )}
+            </div>
           </AspectRatio>
-          {/* Category badge */}
-          <div className="absolute top-3 left-3">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/90 backdrop-blur-md text-gray-700 shadow-md">
-              {business.business_categories?.name || 'Negocio'}
-            </span>
-          </div>
         </div>
 
-        <CardContent className="p-4 flex flex-col flex-grow relative">
-          <h3 className={`font-semibold text-lg leading-tight mb-1 transition-colors duration-200 truncate ${isHovered ? 'text-slate-900' : 'text-gray-900'}`}>
-            {business.name}
-          </h3>
-
-          {/* Address */}
-          <div className="flex items-center gap-1.5 text-gray-500 mb-1">
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-            <p className="text-sm truncate">{business.address || 'Sin dirección'}</p>
+        <CardContent className="flex-grow p-5 pt-2">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-lg font-black text-slate-950 leading-tight tracking-tight group-hover:text-orange-600 transition-colors duration-300">
+              {business.name}
+            </h3>
+            {business.average_rating && business.average_rating > 0 && (
+              <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
+                <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
+                <span className="text-[10px] font-black text-amber-700">{business.average_rating.toFixed(1)}</span>
+              </div>
+            )}
           </div>
 
-          {/* Distance badge — shown below address when proximity mode is active */}
-          {business.distance_km !== undefined && (
-            <div className="mb-2">
-              <DistanceBadge distanceKm={business.distance_km} />
-            </div>
-          )}
+          <p className="text-[11px] text-slate-500 line-clamp-2 mb-4 font-medium leading-relaxed italic">
+            {business.address || 'Sin dirección registrada'}
+          </p>
 
-          {/* Open/closed status */}
-          {businessStatus && (
-            <div className="mb-3">
-              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                businessStatus.isOpen
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
+          <div className="mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
+            {businessStatus && (
+              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 ${
+                businessStatus.isOpen 
+                  ? 'bg-emerald-100 border-emerald-200 text-emerald-800 shadow-sm shadow-emerald-500/5' 
+                  : 'bg-rose-100 border-rose-200 text-rose-800 shadow-sm shadow-rose-500/5'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${businessStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
-                {businessStatus.message}
-              </span>
-            </div>
-          )}
-
-          <div className="flex-grow"></div>
-
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            {business.average_rating && business.average_rating > 0 ? (
-              <span className="inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-bold text-amber-800">
-                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
-                {business.average_rating.toFixed(1)}
-                <span className="font-normal text-amber-600">({business.review_count})</span>
-              </span>
-            ) : (
-              <span className="text-xs text-gray-400 italic">Sin reseñas aún</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${businessStatus.isOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                  {businessStatus.message}
+                </span>
+              </div>
             )}
-            <ChevronRight className={`w-5 h-5 text-gray-300 transition-all duration-200 ${isHovered ? 'text-slate-900 translate-x-1' : 'group-hover:text-gray-400'}`} />
+            <div className="bg-slate-50 p-1.5 rounded-xl group-hover:bg-orange-50 transition-colors duration-300">
+              <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-orange-600 transition-transform duration-300 group-hover:translate-x-0.5" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -870,18 +860,22 @@ const BusinessCard = React.memo(({ business, isHovered, onMouseEnter, onMouseLea
 
 BusinessCard.displayName = 'BusinessCard'
 
-const BusinessCardSkeleton = React.memo(() => (
-  <Card className="overflow-hidden h-full flex flex-col">
-    <AspectRatio ratio={16 / 10}>
-      <div className="w-full h-full bg-slate-200 animate-pulse"></div>
-    </AspectRatio>
-    <CardContent className="p-4 space-y-3">
-      <div className="h-4 w-1/2 bg-slate-200 rounded animate-pulse"></div>
-      <div className="h-6 w-3/4 bg-slate-200 rounded animate-pulse"></div>
-      <div className="h-4 w-full bg-slate-200 rounded animate-pulse"></div>
-      <div className="h-8 w-2/5 bg-slate-200 rounded-full animate-pulse mt-2"></div>
+const BusinessCardSkeleton = () => (
+  <Card className="overflow-hidden h-full flex flex-col border border-gray-100 rounded-[2rem] shadow-sm animate-pulse">
+    <div className="w-full aspect-[16/10] bg-slate-100 rounded-t-[2rem]" />
+    <CardContent className="p-5 pt-4 flex flex-col gap-2">
+      <div className="flex justify-between items-start">
+        <div className="h-6 w-3/4 bg-slate-100 rounded-lg" />
+        <div className="h-6 w-12 bg-slate-100 rounded-lg" />
+      </div>
+      <div className="h-4 w-full bg-slate-50 rounded-lg mt-2" />
+      <div className="h-4 w-2/3 bg-slate-50 rounded-lg" />
+      <div className="mt-4 pt-4 border-t border-slate-50 flex justify-between">
+        <div className="h-4 w-24 bg-slate-100 rounded-lg" />
+        <div className="h-8 w-8 bg-slate-50 rounded-lg" />
+      </div>
     </CardContent>
   </Card>
-))
+)
 
 BusinessCardSkeleton.displayName = 'BusinessCardSkeleton'

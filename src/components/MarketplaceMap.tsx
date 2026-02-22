@@ -90,59 +90,58 @@ function buildPopupHTML(business: MapBusiness): string {
   const distanceText = business.distance_km != null ? `${business.distance_km.toFixed(1)} km` : ''
 
   const imageSection = business.cover_image_url
-    ? `<div style="width:100%;height:130px;overflow:hidden;position:relative;flex-shrink:0;">
+    ? `<div style="width:100%;height:140px;overflow:hidden;position:relative;flex-shrink:0;border-radius:1.5rem 1.5rem 0 0;">
         <img src="${business.cover_image_url}" alt="${business.name}"
           style="width:100%;height:100%;object-fit:cover;display:block;" />
-        ${categoryName ? `<span style="position:absolute;top:8px;left:8px;background:rgba(255,255,255,0.92);backdrop-filter:blur(4px);padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;color:#374151;">${categoryName}</span>` : ''}
+        ${categoryName ? `<span style="position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);padding:3px 10px;border-radius:99px;font-size:9px;font-weight:900;color:#020617;text-transform:uppercase;letter-spacing:0.05em;box-shadow:0 2px 8px rgba(0,0,0,0.1);">${categoryName}</span>` : ''}
       </div>`
     : categoryName
-      ? `<div style="background:#f8fafc;padding:8px 14px;border-bottom:1px solid #f1f5f9;">
-          <span style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">${categoryName}</span>
+      ? `<div style="background:#f8fafc;padding:12px 14px;border-bottom:1px solid #f1f5f9;border-radius:1.5rem 1.5rem 0 0;">
+          <span style="font-size:9px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;">${categoryName}</span>
         </div>`
       : ''
 
   const statusHTML = status
-    ? `<span style="font-size:11.5px;font-weight:600;color:${status.isOpen ? '#16a34a' : '#dc2626'};">
-        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${status.isOpen ? '#16a34a' : '#dc2626'};margin-right:4px;vertical-align:middle;"></span>${status.message}
+    ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;background:${status.isOpen ? '#ecfdf5' : '#fff1f2'};color:${status.isOpen ? '#065f46' : '#9f1239'};border:1px solid ${status.isOpen ? '#d1fae5' : '#ffe4e6'};">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${status.isOpen ? '#10b981' : '#f43f5e'};"></span>${status.isOpen ? 'Abierto' : status.message}
       </span>`
     : ''
 
   const ratingHTML = hasRating
-    ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#fefce8;border:1px solid #fef08a;padding:3px 8px;border-radius:99px;font-size:12px;font-weight:700;color:#854d0e;">
-        ★ ${(business.average_rating ?? 0).toFixed(1)}
-        <span style="font-weight:400;color:#a16207;">(${business.review_count})</span>
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#fffbeb;border:1px solid #fef3c7;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:900;color:#92400e;box-shadow:0 2px 6px rgba(146,64,14,0.05);">
+        <span style="color:#f59e0b;">★</span> ${(business.average_rating ?? 0).toFixed(1)}
+        <span style="font-weight:600;color:#b45309;opacity:0.7;">(${business.review_count})</span>
       </span>`
-    : `<span style="font-size:12px;color:#94a3b8;">Sin reseñas</span>`
+    : `<span style="font-size:11px;color:#94a3b8;font-weight:600;italic">Sin reseñas</span>`
 
   const distHTML = distanceText
-    ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#64748b;">
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#020617;color:#fff;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.02em;box-shadow:0 4px 12px rgba(2,6,23,0.15);">
         ${distanceText}
       </span>`
     : ''
 
   const addressHTML = business.address
-    ? `<p style="font-size:12px;color:#64748b;margin:0 0 12px 0;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${business.address}</p>`
+    ? `<p style="font-size:11px;color:#64748b;margin:0 0 16px 0;line-height:1.5;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-style:italic;">${business.address}</p>`
     : ''
 
   return `
-    <div class="bp-card">
+    <div class="bp-card" style="border-radius:1.5rem;overflow:hidden;background:#fff;">
       ${imageSection}
-      <div style="padding:12px 14px 14px;">
-        <h3 style="font-weight:700;font-size:15px;margin:0 0 4px 0;color:#0f172a;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${business.name}</h3>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div style="padding:16px 20px 20px;">
+        <h3 style="font-weight:900;font-size:17px;margin:0 0 10px 0;color:#020617;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.01em;">${business.name}</h3>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
           ${statusHTML}
           ${distHTML}
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:${addressHTML ? '8px' : '12px'};">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
           ${ratingHTML}
         </div>
         ${addressHTML}
         <a href="/business/${business.id}"
-          style="display:block;width:100%;padding:9px 0;background:#0f172a;color:#fff;text-align:center;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px;letter-spacing:0.01em;box-sizing:border-box;"
-          onmouseover="this.style.background='#1e293b'"
-          onmouseout="this.style.background='#0f172a'">
-          Ver detalles
+          style="display:block;width:100%;padding:12px 0;background:#020617;color:#fff;text-align:center;border-radius:14px;text-decoration:none;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;box-sizing:border-box;transition:all 0.3s ease;box-shadow:0 4px 12px rgba(2,6,23,0.1);"
+          onmouseover="this.style.background='#ea580c';this.style.transform='translateY(-2px)'"
+          onmouseout="this.style.background='#020617';this.style.transform='translateY(0)'">
+          Ver Perfil
         </a>
       </div>
     </div>
