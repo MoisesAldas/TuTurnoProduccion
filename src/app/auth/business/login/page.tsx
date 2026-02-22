@@ -43,12 +43,15 @@ export default function BusinessLoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showBannedAlert, setShowBannedAlert] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const { signInWithGoogle, signInWithEmail } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const errorParam = searchParams.get('error')
+  const successParam = searchParams.get('success')
+  const customMessage = searchParams.get('message')
   const returnUrl = searchParams.get('returnUrl')
 
   useEffect(() => {
@@ -57,7 +60,13 @@ export default function BusinessLoginPage() {
   }, [])
 
   useEffect(() => {
-    if (errorParam) {
+    if (customMessage) {
+      if (successParam) {
+        setSuccessMessage(decodeURIComponent(customMessage))
+      } else {
+        setError(decodeURIComponent(customMessage))
+      }
+    } else if (errorParam) {
       setError(ERROR_MESSAGES[errorParam as keyof typeof ERROR_MESSAGES] || 'Ocurrió un error inesperado')
     }
     
@@ -66,7 +75,7 @@ export default function BusinessLoginPage() {
     if (bannedParam === 'true') {
       setShowBannedAlert(true)
     }
-  }, [errorParam, searchParams])
+  }, [errorParam, successParam, customMessage, searchParams])
 
   const {
     register,
@@ -209,6 +218,15 @@ export default function BusinessLoginPage() {
                     </Button>
                   </Link>
                 )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Success Alert */}
+          {successMessage && (
+            <Alert className="border-green-200 bg-green-50">
+              <AlertDescription className="text-green-700 font-medium">
+                {successMessage}
               </AlertDescription>
             </Alert>
           )}

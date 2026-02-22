@@ -73,9 +73,9 @@ Para formularios largos, las acciones principales deben estar siempre accesibles
 
 ## 7. Botones Premium (Call to Action)
 
-- **Estandarización**: Usar el naranja de marca con sombras profundas.
 - **Save Button**: `h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95`.
 - **Ghost/Neutral**: `h-9 px-4 rounded-lg text-xs font-bold text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all`.
+- **REGLA DE ORO (Contraste en Hover)**: Es **MANDATORIO** que si un elemento cambia de fondo al hacer hover (ej: `hover:bg-slate-100`), se defina también el color del texto (ej: `hover:text-slate-900`). **NUNCA** dejar que el color del texto sea implícito, ya que esto suele romper la legibilidad en interfaces premium.
 
 ## 8. Escalas de Tipografía y Espaciado (Standard SaaS)
 

@@ -148,6 +148,11 @@ export default function AppointmentDetailPage() {
       return false
     }
 
+    // NUEVO: Si la cita ya está cancelada o completada, no permitir cancelar
+    if (['cancelled', 'completed', 'no_show'].includes(appointment.status)) {
+      return false
+    }
+
     // NUEVO: Si la cita está pending, siempre permitir cancelar
     // (significa que el negocio hizo cambios y el cliente debe poder responder)
     if (appointment.status === 'pending') {
@@ -166,6 +171,11 @@ export default function AppointmentDetailPage() {
     if (!appointment) return false
 
     if (!appointment.business.allow_client_reschedule) {
+      return false
+    }
+
+    // NUEVO: Si la cita ya está cancelada o completada, no permitir reprogramar
+    if (['cancelled', 'completed', 'no_show'].includes(appointment.status)) {
       return false
     }
 

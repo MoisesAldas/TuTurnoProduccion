@@ -361,6 +361,7 @@ export default function ClientProfilePage() {
         description: 'Tu foto de perfil se actualizó exitosamente.',
       })
 
+      router.refresh()
       setShowAvatarDialog(false)
       setSelectedImageFile(null)
     } catch (error) {

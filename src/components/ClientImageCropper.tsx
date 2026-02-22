@@ -150,23 +150,23 @@ export default function ClientImageCropper({
   }
 
   return (
-    <div className="space-y-4">
-      <CardHeader className="px-0 pt-0">
+    <div className="space-y-6 bg-white dark:bg-slate-950 rounded-[2.5rem] shadow-2xl p-8 md:p-10 border border-slate-100 dark:border-white/5">
+      <CardHeader className="p-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-3 text-xl text-gray-900 dark:text-gray-50">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-sm">
-              <User className="w-5 h-5 text-white" />
+          <CardTitle className="flex items-center gap-4 text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <div className="w-12 h-12 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center shadow-lg">
+              <User className="w-6 h-6 text-white dark:text-slate-900" />
             </div>
-            <span>Ajustar Foto de Perfil</span>
+            <span>Ajustar Foto</span>
           </CardTitle>
-          <Badge variant="outline" className="border-slate-300 text-slate-700 bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700">
+          <Badge variant="outline" className="rounded-full px-3 py-1 border-slate-200 bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400 dark:border-white/10 font-bold text-[10px] uppercase tracking-widest">
             {maxWidth}x{maxHeight}px
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4 px-0">
-        <div className="relative w-full aspect-square max-w-lg mx-auto bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden">
+      <CardContent className="space-y-8 p-0">
+        <div className="relative w-full aspect-square max-w-lg mx-auto bg-slate-50 dark:bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner">
           <Cropper
             image={imageUrl}
             crop={crop}
@@ -184,10 +184,10 @@ export default function ClientImageCropper({
 
         <div className="w-full max-w-lg mx-auto space-y-4 pt-4">
             {/* Zoom */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <ZoomIn className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                Zoom
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                <ZoomIn className="w-3.5 h-3.5" />
+                Nivel de Zoom
               </Label>
               <div className="flex items-center gap-2">
                 <Button
@@ -204,7 +204,7 @@ export default function ClientImageCropper({
                   min={1}
                   max={3}
                   step={0.1}
-                  className="flex-1 [&_[role=slider]]:bg-slate-900 [&_[role=slider]]:border-slate-900 dark:[&_[role=slider]]:bg-slate-100"
+                  className="flex-1 [&_[role=slider]]:bg-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:bg-orange-500 dark:[&_[role=slider]]:border-orange-500"
                 />
                 <Button
                   variant="outline"
@@ -218,10 +218,10 @@ export default function ClientImageCropper({
             </div>
 
             {/* Rotación */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                <RotateCw className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                Rotación
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                <RotateCw className="w-3.5 h-3.5" />
+                Ángulo de Rotación
               </Label>
               <div className="flex items-center gap-2">
                 <Button
@@ -238,7 +238,7 @@ export default function ClientImageCropper({
                   min={0}
                   max={360}
                   step={1}
-                  className="flex-1 [&_[role=slider]]:bg-slate-900 [&_[role=slider]]:border-slate-900 dark:[&_[role=slider]]:bg-slate-100"
+                  className="flex-1 [&_[role=slider]]:bg-orange-600 [&_[role=slider]]:border-orange-600 dark:[&_[role=slider]]:bg-orange-500 dark:[&_[role=slider]]:border-orange-500"
                 />
                 <Button
                   variant="outline"
@@ -253,21 +253,21 @@ export default function ClientImageCropper({
         </div>
         
         {/* Botones de acción */}
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-slate-200 dark:border-slate-800 max-w-lg mx-auto">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-4 pt-8 border-t border-slate-100 dark:border-white/5 max-w-lg mx-auto">
           <Button
             variant="outline"
             onClick={onCancel}
-            className="w-full sm:w-auto border-2 border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="h-12 px-8 rounded-2xl border-2 border-slate-100 text-slate-500 font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 hover:text-slate-900 transition-all dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
           >
             <X className="w-4 h-4 mr-2" />
-            Cancelar
+            Descartar
           </Button>
           <Button
             onClick={handleSave}
-            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-md hover:shadow-lg transition-all dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            className="h-12 px-10 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-[11px] uppercase tracking-widest shadow-xl shadow-slate-900/20 active:scale-95 transition-all w-full sm:w-auto dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
           >
             <Check className="w-4 h-4 mr-2" />
-            Guardar Foto
+            Confirmar Foto
           </Button>
         </div>
       </CardContent>

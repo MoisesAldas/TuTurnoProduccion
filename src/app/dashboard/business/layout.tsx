@@ -153,9 +153,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         ${collapsed ? 'lg:w-20' : 'lg:w-64'}
         absolute lg:relative inset-y-0 left-0 z-50
         w-64 lg:w-auto
-        bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white
+        bg-slate-950 text-white
         transition-all duration-500 ease-in-out
-        flex flex-col border-r border-gray-700 shadow-2xl
+        flex flex-col border-r border-white/5 shadow-2xl
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         group
         `}
@@ -177,7 +177,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </button>
 
         {/* Logo Section */}
-        <div className="h-16 flex items-center justify-center px-4 border-b border-gray-700/50 relative">
+        <div className="h-16 flex items-center justify-center px-4 border-b border-white/5 relative">
           {/* Logo - Centered, always visible with smooth animations */}
           <Link
             href="/dashboard/business"
@@ -203,14 +203,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-1.5 hover:bg-gray-700 rounded-lg transition-colors absolute right-4"
+            className="lg:hidden p-1.5 hover:bg-slate-900 rounded-lg transition-colors absolute right-4"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           {navigation.map((item) => {
             // Lógica mejorada para determinar si está activo
             let isActive = false
@@ -241,8 +241,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   flex items-center px-3 py-2.5 rounded-xl text-sm font-medium
                   transition-all duration-500 ease-in-out
                   ${isActive
-                    ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-500/30 scale-[1.02]'
-                    : 'text-gray-300 hover:bg-gray-800/50 hover:text-white hover:shadow-md hover:scale-[1.02]'
+                    ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-500/30 scale-[1.02] border border-white/5'
+                    : 'text-gray-400 hover:bg-slate-900 hover:text-white hover:shadow-md hover:scale-[1.02]'
                   }
                 `}
               >
@@ -274,10 +274,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </nav>
 
         {/* User Section */}
-        <div className="p-3 border-t border-gray-700">
+        <div className="p-3 border-t border-white/5">
           {/* Expanded view - Show on mobile always, show on desktop when not collapsed */}
           <div className={`space-y-2 transition-all duration-500 ${collapsed ? 'lg:hidden' : ''}`}>
-            <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-gray-800/50 transition-all duration-300 cursor-pointer group">
+            <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-slate-900 transition-all duration-300 cursor-pointer group">
               <Avatar className="w-9 h-9 border-2 border-orange-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
                 {authState.user?.avatar_url ? (
                   <AvatarImage src={authState.user.avatar_url} />
@@ -320,7 +320,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               </Avatar>
               <button
                 onClick={handleSignOut}
-                className="w-10 h-10 flex items-center justify-center hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md group"
+                className="w-10 h-10 flex items-center justify-center hover:bg-slate-900 rounded-xl transition-all duration-300 hover:shadow-md group"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors duration-300" />

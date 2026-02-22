@@ -379,7 +379,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (userError) {
 
           // Usuario autenticado pero sin perfil, redirigir a setup
-          router.push(`/auth/${userType}/setup`)
+          const authPath = userType === 'business_owner' ? 'business' : 'client'
+          router.push(`/auth/${authPath}/setup`)
           return
         }
 
