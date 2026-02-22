@@ -390,9 +390,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
           {/* Header con color sólido Premium - Ultra Compacto */}
           <div className="relative overflow-hidden pt-4 pb-3 sm:pt-6 sm:pb-4 px-5 sm:px-8 bg-primary shadow-lg sm:shadow-xl rounded-t-2xl">
             {/* Patrón de fondo sutil */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-            </div>
+          
 
             {/* Botón Cerrar Premium - Ultra Ajustado */}
             <Button
