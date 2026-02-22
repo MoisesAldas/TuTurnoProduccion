@@ -94,14 +94,14 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
         onMouseLeave={() => setCollapsed(true)}
         className={`${collapsed ? 'lg:w-20' : 'lg:w-64'}
         fixed lg:static inset-y-0 left-0 z-50 w-64 lg:w-auto
-        bg-slate-900 text-white
+        bg-slate-950 text-white
         transition-all duration-500 ease-in-out
-        flex flex-col border-r border-slate-700 shadow-2xl
+        flex flex-col border-r border-slate-800 shadow-2xl
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         group`}>
 
         {/* Logo Section */}
-        <div className="h-20 flex items-center justify-center px-4 border-b border-slate-700/50 relative">
+        <div className="h-20 flex items-center justify-center px-4 border-b border-white/5 relative">
           <Link href="/" className="flex items-center justify-center transition-all duration-500">
             {/* Mobile logo */}
             <Logo color="white" size="sm" className="lg:hidden" />
@@ -111,14 +111,14 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             {/* Desktop collapsed logo */}
             <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
-              <div className="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center text-white font-black text-xl shadow-lg hover:scale-110 transition-transform duration-300">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-lg hover:scale-110 transition-transform duration-300">
                 T
               </div>
             </div>
           </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-1.5 hover:bg-slate-800 rounded-lg transition-colors absolute right-4"
+            className="lg:hidden p-1.5 hover:bg-slate-900 rounded-lg transition-colors absolute right-4"
             aria-label="Cerrar menú de navegación"
           >
             <X className="w-5 h-5" />
@@ -126,7 +126,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           {navigation.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard/client' && pathname?.startsWith(item.href))
             const Icon = item.icon
@@ -134,11 +134,11 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
               <Link key={item.name} href={item.href} prefetch={true} onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-500 ease-in-out
                   ${isActive
-                    ? 'bg-slate-700 text-white shadow-lg scale-[1.02]'
-                    : 'text-gray-300 hover:bg-slate-800 hover:text-white hover:shadow-md hover:scale-[1.02]'
+                    ? 'bg-slate-900 text-white shadow-lg scale-[1.02] border border-white/5'
+                    : 'text-gray-400 hover:bg-slate-900 hover:text-white hover:shadow-md hover:scale-[1.02]'
                   }`}>
-                <Icon className={`flex-shrink-0 w-5 h-5 transition-all duration-500 ease-in-out ${collapsed ? 'lg:mx-auto mr-3' : 'mr-3'} ${isActive ? 'text-white scale-110' : 'text-gray-400 group-hover:text-white group-hover:scale-110'}`} />
-                <span className={`transition-all duration-500 ease-in-out whitespace-nowrap overflow-hidden ${collapsed ? 'lg:opacity-0 lg:w-0' : 'lg:opacity-100 lg:w-auto'} ${isActive ? 'font-semibold' : ''}`}>
+                <Icon className={`flex-shrink-0 w-5 h-5 transition-all duration-500 ease-in-out ${collapsed ? 'lg:mx-auto mr-3' : 'mr-3'} ${isActive ? 'text-white scale-110' : 'text-gray-500 group-hover:text-white group-hover:scale-110'}`} />
+                <span className={`transition-all duration-500 ease-in-out whitespace-nowrap overflow-hidden ${collapsed ? 'lg:opacity-0 lg:w-0' : 'lg:opacity-100 lg:w-auto'} ${isActive ? 'font-black' : ''}`}>
                   {item.name}
                 </span>
               </Link>

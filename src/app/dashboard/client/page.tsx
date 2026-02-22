@@ -362,35 +362,32 @@ export default function ClientDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Premium Integrated Header */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b dark:border-gray-800 sticky top-0 z-30">
-        <div className="w-full px-4 sm:px-6 py-4 lg:py-5">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 flex-shrink-0 sticky top-0 z-30 shadow-sm md:h-20 flex items-center">
+        <div className="w-full px-6 py-4 md:py-0">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div className="flex flex-col md:flex-row items-center gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-bold text-slate-500 border-slate-200">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-widest font-black text-slate-400 border-slate-200 px-2.5 py-0.5">
                     Resumen del Cliente
                   </Badge>
-                  <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300"></span>
-                  <span className="hidden sm:inline text-[10px] text-slate-400 font-medium">Dashboard</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Dashboard</span>
                 </div>
-                <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-gray-50 flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-gray-50 flex items-center justify-center md:justify-start gap-3">
                   ¡Hola, {authState.user?.first_name || 'Cliente'}!
-                  <span className="text-slate-400 text-lg wave-animation"></span>
+                 
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button asChild className="flex-1 sm:flex-none bg-slate-900 hover:bg-slate-800 shadow-md hover:shadow-lg transition-all text-white font-bold h-11 px-6 rounded-xl">
+            <div className="flex items-center justify-center w-full md:w-auto gap-3">
+              <Button asChild className="w-full md:w-auto bg-slate-900 hover:bg-slate-800 shadow-xl hover:shadow-slate-900/20 transition-all duration-300 text-white font-black h-10 px-8 rounded-2xl text-xs tracking-tight">
                 <Link href="/marketplace">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Nueva Reserva
+                  <Plus className="w-4 h-4 mr-2" />
+                  NUEVA RESERVA
                 </Link>
               </Button>
-              <div className="flex items-center bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-                 <NotificationBell userId={authState.user?.id} />
-              </div>
             </div>
           </div>
         </div>
