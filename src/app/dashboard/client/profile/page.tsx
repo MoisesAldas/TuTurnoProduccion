@@ -487,7 +487,7 @@ export default function ClientProfilePage() {
   return (
     <div className="min-h-screen bg-slate-50/50">
       {/* Premium Integrated Header (Consistent with appointments) */}
-      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50 shadow-sm">
+      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 sticky top-0 z-30 shadow-sm">
         <div className="w-full px-6 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">

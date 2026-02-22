@@ -156,13 +156,13 @@ export function CompactFilters({
 
   return (
     <div className={cn(
-      "flex items-center gap-2",
-      compact && "justify-end"
+      "flex flex-wrap items-center gap-1.5 sm:gap-2 w-full sm:w-auto",
+      compact && "sm:justify-end px-2"
     )}>
-      {/* Period Selector */}
+      {/* Selector de Período */}
       <Select value={tempPeriod} onValueChange={handlePeriodChange}>
         <SelectTrigger className={cn(
-          "w-auto sm:w-[160px] transition-all flex-shrink-0",
+          "flex-1 min-w-[140px] sm:w-[160px] sm:flex-none transition-all font-bold h-10 rounded-xl border-gray-200 shadow-sm",
           compact && "bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700"
         )}>
           <SelectValue placeholder="Período" />
@@ -177,12 +177,27 @@ export function CompactFilters({
         </SelectContent>
       </Select>
 
-      {/* Month and Year for Specific Month */}
+      {/* Botón de Actualizar (Movido arriba para mobile) */}
+      {onRefresh && (
+        <Button
+          onClick={onRefresh}
+          disabled={loading}
+          size="icon"
+          className={cn(
+            "bg-orange-600 hover:bg-orange-700 text-white border-0 flex-shrink-0 rounded-full shadow-lg shadow-orange-600/20 h-10 w-10 transition-all active:scale-90",
+            loading && "grayscale opacity-80"
+          )}
+        >
+          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+        </Button>
+      )}
+
+      {/* Mes y Año (Solo para Mes específico) */}
       {tempPeriod === 'specific-month' && (
-        <>
+        <div className="flex items-center gap-1.5 w-full sm:w-auto animate-in fade-in slide-in-from-top-1 duration-200">
           <Select value={selectedMonth} onValueChange={handleMonthChange}>
             <SelectTrigger className={cn(
-              "w-full sm:w-[130px] flex-shrink-0",
+              "flex-1 sm:w-[130px] sm:flex-none font-bold h-10 rounded-xl border-gray-200 shadow-sm",
               compact && "bg-gray-800 border-gray-700 text-gray-200"
             )}>
               <SelectValue />
@@ -198,7 +213,7 @@ export function CompactFilters({
 
           <Select value={selectedYear} onValueChange={handleYearChange}>
             <SelectTrigger className={cn(
-              "w-full sm:w-[100px] flex-shrink-0",
+              "flex-1 sm:w-[100px] sm:flex-none font-bold h-10 rounded-xl border-gray-200 shadow-sm",
               compact && "bg-gray-800 border-gray-700 text-gray-200"
             )}>
               <SelectValue />
@@ -211,14 +226,14 @@ export function CompactFilters({
               ))}
             </SelectContent>
           </Select>
-        </>
+        </div>
       )}
 
-      {/* Year selector for Specific Year */}
+      {/* Año (Solo para Año específico) */}
       {tempPeriod === 'specific-year' && (
         <Select value={selectedYear} onValueChange={handleYearChange}>
           <SelectTrigger className={cn(
-            "w-full sm:w-[100px] flex-shrink-0",
+            "flex-1 sm:w-[100px] sm:flex-none font-bold h-10 rounded-xl border-gray-200 shadow-sm",
             compact && "bg-gray-800 border-gray-700 text-gray-200"
           )}>
             <SelectValue />
@@ -233,14 +248,14 @@ export function CompactFilters({
         </Select>
       )}
 
-      {/* Custom Date Range */}
+      {/* Rango Personalizado */}
       {tempPeriod === 'custom' && (
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "w-full sm:w-auto justify-start text-left font-normal flex-shrink-0",
+                "flex-1 sm:w-auto justify-start text-left font-bold h-10 px-4 rounded-xl border-gray-200 shadow-sm transition-all",
                 compact && "bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-700"
               )}
             >
@@ -248,7 +263,7 @@ export function CompactFilters({
               {tempRange.from && tempRange.to ? (
                 <>
                   <span className="hidden sm:inline">{format(tempRange.from, 'dd/MM/yy')} - {format(tempRange.to, 'dd/MM/yy')}</span>
-                  <span className="sm:hidden">{format(tempRange.from, 'dd/MM')} - {format(tempRange.to, 'dd/MM')}</span>
+                  <span className="sm:hidden text-xs">{format(tempRange.from, 'dd/MM')} - {format(tempRange.to, 'dd/MM')}</span>
                 </>
               ) : (
                 <span>Seleccionar</span>
@@ -269,21 +284,6 @@ export function CompactFilters({
             />
           </PopoverContent>
         </Popover>
-      )}
-
-      {/* Refresh Button */}
-      {onRefresh && (
-        <Button
-          onClick={onRefresh}
-          disabled={loading}
-          size="icon"
-          className={cn(
-            "bg-orange-600 hover:bg-orange-700 text-white border-0 flex-shrink-0 rounded-full shadow-sm hover:shadow-md transition-all duration-200",
-            loading && "grayscale opacity-80"
-          )}
-        >
-          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-        </Button>
       )}
     </div>
   )
