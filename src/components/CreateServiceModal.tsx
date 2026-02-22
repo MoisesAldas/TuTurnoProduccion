@@ -70,7 +70,7 @@ export default function CreateServiceModal({
       duration_minutes: '',
       is_active: true
     },
-    mode: 'onBlur',
+    mode: 'onChange',
     reValidateMode: 'onChange'
   })
 
@@ -238,7 +238,7 @@ export default function CreateServiceModal({
               </Label>
               <Select
                 value={durationMinutesValue}
-                onValueChange={(value) => setValue('duration_minutes', value)}
+                onValueChange={(value) => setValue('duration_minutes', value, { shouldValidate: true })}
               >
                 <SelectTrigger className="w-full h-10 focus:border-orange-500 focus:ring-orange-500">
                   <div className="flex items-center">
