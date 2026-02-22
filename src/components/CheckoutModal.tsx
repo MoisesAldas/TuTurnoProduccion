@@ -310,27 +310,40 @@ export default function CheckoutModal({
           className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="relative bg-orange-600 rounded-t-2xl p-4 sm:p-5 transition-colors">
-            <button
-              onClick={onClose}
-              className="absolute top-3 right-3 p-1.5 hover:bg-white/20 rounded-lg transition-colors z-10"
-              disabled={processing}
-              aria-label="Cerrar modal"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
+          {/* Header con color sólido Premium - Ultra Compacto */}
+          <div className="relative overflow-hidden pt-4 pb-3 sm:pt-6 sm:pb-4 px-5 sm:px-8 bg-orange-600 shadow-lg sm:shadow-xl rounded-t-2xl">
+            {/* Patrón de fondo sutil */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+            </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                <DollarSign className="w-5 h-5 text-white" />
+            {/* Botón Cerrar Premium - Ultra Ajustado */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-black/10 hover:bg-black/20 text-white border-none transition-all duration-300 z-10"
+              disabled={processing}
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+
+            <div className="relative flex items-center gap-3 sm:gap-5">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg border border-white/20 flex-shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               
-              <div className="flex-1 min-w-0 pr-8">
-                <h2 className="text-lg sm:text-xl font-bold text-white leading-tight truncate">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                  <span className="text-[8px] sm:text-[9px] font-black text-white/80 uppercase tracking-[0.2em]">
+                    Cita #{appointmentId.substring(0, 8)}
+                  </span>
+                </div>
+                
+                <h2 className="text-lg sm:text-2xl font-black text-white leading-none tracking-tight mb-1">
                   Finalizar Compra
                 </h2>
-                <p className="text-white/90 text-xs mt-1 truncate">
+                <p className="text-white/90 text-[10px] sm:text-xs font-medium truncate">
                   Registra el pago para completar la cita
                 </p>
               </div>
@@ -339,27 +352,28 @@ export default function CheckoutModal({
 
           {/* Content - Scrollable */}
           <div className="flex-1 overflow-y-auto p-6">
-            {/* Services Summary */}
-            <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-orange-500" />
+            {/* Services Summary - Premium Style */}
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 sm:p-6 mb-5">
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
                 Resumen de Servicios
               </h3>
               <div className="space-y-3">
                 {services.map((service, index) => (
-                  <div key={index} className="flex justify-between items-center pb-3 border-b border-gray-200 last:border-0 last:pb-0">
-                    <span className="text-gray-700">{service.name}</span>
-                    <span className="font-semibold text-gray-900">{formatPrice(service.price)}</span>
+                  <div key={index} className="flex justify-between items-center pb-2 border-b border-gray-100 last:border-0 last:pb-0">
+                    <span className="text-sm font-bold text-gray-700">{service.name}</span>
+                    <span className="text-sm font-black text-gray-900">{formatPrice(service.price)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Total */}
-            <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-5 border-2 border-orange-200 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900">Total a Pagar</span>
-                <span className="text-3xl font-bold bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
+            {/* Total - High Contrast */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl border border-white/10 mb-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-orange-500/20 transition-all duration-700" />
+              <div className="flex justify-between items-center relative z-10">
+                <span className="text-xs sm:text-sm font-black text-white/60 uppercase tracking-widest">Total a Pagar</span>
+                <span className="text-3xl sm:text-4xl font-black text-white tracking-tighter tabular-nums drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                   {formatPrice(totalAmount)}
                 </span>
               </div>
@@ -554,31 +568,31 @@ export default function CheckoutModal({
             )}
           </div>
 
-          {/* Footer Actions */}
-          <div className="border-t border-gray-200 p-6 bg-gray-50 rounded-b-2xl">
-            <div className="flex gap-3">
+          {/* Footer Actions - Premium Standard */}
+          <div className="border-t border-gray-100 p-5 sm:p-6 bg-slate-50/50 backdrop-blur-md rounded-b-2xl">
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
               <Button
                 onClick={onClose}
                 disabled={processing}
-                variant="outline"
-                className="flex-1 hover:bg-gray-100 transition-all"
+                variant="ghost"
+                className="flex-1 h-12 rounded-xl text-gray-500 font-bold uppercase tracking-widest text-[10px] hover:bg-gray-100 transition-all"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleFinalizePurchase}
                 disabled={processing || !paymentMethod}
-                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex-[2] h-12 bg-orange-600 hover:bg-orange-700 text-white rounded-xl shadow-lg hover:shadow-orange-600/20 transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group"
               >
                 {processing ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                    Procesando...
+                    <span className="text-[10px] font-black uppercase tracking-widest">Procesando...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    Finalizar Compra
-                    <ArrowRight className="w-4 h-4" />
+                  <div className="flex items-center justify-center gap-3 w-full">
+                    <span className="text-[10px] font-black uppercase tracking-widest">Finalizar Compra</span>
+                    <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 )}
               </Button>

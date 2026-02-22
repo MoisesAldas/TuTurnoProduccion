@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   ArrowLeft, Calendar, Clock, MapPin, Phone, User,
-  CheckCircle, AlertCircle, Edit, Trash2, Loader2
+  CheckCircle, AlertCircle, Edit, Trash2, Loader2, Store, XCircle
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
@@ -32,6 +32,7 @@ import LocationMapModal from '@/components/LocationMapModal'
 import ModifyAppointmentDialog from '@/components/ModifyAppointmentDialog'
 // Modular cancellation components
 import { handleClientCancellation } from '@/lib/appointments/clientCancellationAdapter'
+
 
 interface Appointment {
   id: string
@@ -59,6 +60,7 @@ interface Appointment {
       id: string
       name: string
       description?: string
+      duration_minutes: number
     }
     price: number
   }[]
@@ -116,7 +118,7 @@ export default function AppointmentDetailPage() {
           ),
           employee:employees(id, first_name, last_name, position, avatar_url),
           appointment_services(
-            service:services(id, name, description),
+            service:services(id, name, description, duration_minutes),
             price
           )
         `)
@@ -285,19 +287,31 @@ export default function AppointmentDetailPage() {
     }).format(price)
   }
 
-  const getStatusBadge = () => {
-    switch (appointment?.status) {
+  const getStatusInfo = (status: string) => {
+    switch (status) {
       case 'confirmed':
-        return <Badge className="bg-blue-600 text-white border-0 font-semibold px-3 py-1.5">Confirmada</Badge>
+        return { label: 'Confirmada', color: 'text-emerald-500 bg-emerald-50/50 ring-emerald-500/30', icon: CheckCircle }
       case 'pending':
-        return <Badge className="bg-yellow-500 text-white border-0 font-semibold px-3 py-1.5">Pendiente</Badge>
+        return { label: 'Pendiente', color: 'text-amber-500 bg-amber-50/50 ring-amber-500/30', icon: Clock }
       case 'completed':
-        return <Badge className="bg-green-600 text-white border-0 font-semibold px-3 py-1.5">Completada</Badge>
+        return { label: 'Completada', color: 'text-slate-500 bg-slate-50/50 ring-slate-500/30', icon: CheckCircle }
       case 'cancelled':
-        return <Badge className="bg-red-600 text-white border-0 font-semibold px-3 py-1.5">Cancelada</Badge>
+        return { label: 'Cancelada', color: 'text-rose-500 bg-rose-50/50 ring-rose-500/30', icon: XCircle }
       default:
-        return <Badge className="bg-slate-200 text-slate-700 border-0 font-semibold px-3 py-1.5">{appointment?.status}</Badge>
+        return { label: status, color: 'text-slate-500 bg-slate-50/50 ring-slate-500/30', icon: AlertCircle }
     }
+  }
+
+  const getStatusBadge = () => {
+    if (!appointment) return null
+    const info = getStatusInfo(appointment.status)
+    const Icon = info.icon
+    return (
+      <Badge variant="outline" className={`${info.color} text-[10px] sm:text-[11px] px-3 sm:px-5 py-1.5 sm:py-2.5 font-black uppercase tracking-widest border-0 shadow-lg backdrop-blur-md bg-white/10 rounded-xl ring-1`}>
+        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+        {info.label}
+      </Badge>
+    )
   }
 
   if (loading) {
@@ -331,389 +345,306 @@ export default function AppointmentDetailPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header Sticky - 100% width */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="w-full px-3 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-14 sm:h-16 gap-2">
-              <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-                <Link href="/dashboard/client/appointments">
-                  <Button variant="ghost" size="sm" className="hover:bg-slate-100 hover:text-slate-900 h-8 sm:h-9 px-2 sm:px-3">
-                    <ArrowLeft className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Volver</span>
-                  </Button>
-                </Link>
-                <Separator orientation="vertical" className="h-6 hidden sm:block" />
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Detalle de Cita</h1>
-                  <p className="text-xs text-gray-500 hidden sm:block truncate">{appointment.business.name}</p>
-                </div>
-              </div>
-              <div className="flex-shrink-0">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Universal Sticky Header */}
+        <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+          <div className="w-full px-6 py-4 flex items-center justify-between">
+            <div className="relative pl-6">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-gradient-to-b from-slate-700 to-slate-900 rounded-full shadow-[0_0_12px_rgba(30,41,59,0.2)]" />
+              <p className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-slate-500 mb-0.5">Gestión de Citas</p>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900">
+                Detalle de Cita
+              </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:block">
                 {getStatusBadge()}
               </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-          {/* Hero Section - 100% width, bg-slate-900 */}
-          <Card className="overflow-hidden border-0 shadow-lg">
-            <div className="bg-slate-900 p-4 sm:p-8 text-white">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
-                <div className="flex-1 w-full">
-                  <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">{appointment.business.name}</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {appointment.appointment_services.map((appService, index) => (
-                      <div
-                        key={index}
-                        className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20"
-                      >
-                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="text-sm sm:text-base font-medium">{appService.service.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="text-left sm:text-right w-full sm:w-auto">
-                  <p className="text-xs sm:text-sm text-white/70 font-medium mb-1">Total</p>
-                  <p className="text-3xl sm:text-4xl font-bold">{formatPrice(appointment.total_price)}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Main Content - 2 Columns Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 sm:gap-6">
-            {/* Left Column: Info Grid */}
-            <div className="space-y-4 sm:space-y-6">
-              {/* Appointment Info Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                {/* Date Card */}
-                <Card className="border-2 border-slate-200 hover:border-slate-400 transition-colors">
-                  <CardContent className="p-4 sm:p-6 text-center">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    <p className="text-xs text-slate-700 font-bold uppercase tracking-wide mb-1 sm:mb-2">Fecha</p>
-                    <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
-                      {formatSpanishDate(appointment.appointment_date, {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Time Card */}
-                <Card className="border-2 border-slate-200 hover:border-slate-400 transition-colors">
-                  <CardContent className="p-4 sm:p-6 text-center">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                      <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
-                    <p className="text-xs text-slate-700 font-bold uppercase tracking-wide mb-1 sm:mb-2">Hora</p>
-                    <p className="text-sm sm:text-base font-bold text-gray-900">
-                      {appointment.start_time.slice(0, 5)} - {appointment.end_time.slice(0, 5)}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Professional Card */}
-                <Card className="border-2 border-slate-200 hover:border-slate-400 transition-colors">
-                  <CardContent className="p-4 sm:p-6 text-center">
-                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 border-2 border-slate-200">
-                      <AvatarImage src={appointment.employee.avatar_url} alt={appointment.employee.first_name} />
-                      <AvatarFallback className="bg-slate-900 text-white">
-                        <User className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <p className="text-xs text-slate-700 font-bold uppercase tracking-wide mb-1 sm:mb-2">Profesional</p>
-                    <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
-                      {appointment.employee.first_name} {appointment.employee.last_name}
-                    </p>
-                    {appointment.employee.position && (
-                      <p className="text-xs text-slate-600 mt-1">{appointment.employee.position}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Location Card (if available) */}
-              {appointment.business.address && (
-                <Card className="border-2 border-slate-200">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <MapPin className="w-5 h-5 text-slate-700" />
-                      Ubicación
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-700 mb-3">{appointment.business.address}</p>
-                    {appointment.business.latitude && appointment.business.longitude && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowLocationModal(true)}
-                        className="border-2 hover:border-slate-900 hover:bg-slate-50 transition-colors"
-                      >
-                        <MapPin className="w-4 h-4 mr-2 text-slate-700" />
-                        <span className="text-slate-900">Ver en mapa</span>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Alert para citas PENDING - Edición de negocio */}
-              {appointment.status === 'pending' && appointment.pending_reason === 'business_edited' && (
-                <Alert className="border-2 border-yellow-300 bg-yellow-50">
-                  <AlertCircle className="h-5 w-5 text-yellow-600" />
-                  <AlertDescription className="text-sm text-yellow-800">
-                    <p className="font-semibold mb-1">⏳ Cita Pendiente de Confirmación</p>
-                    <p>
-                      El negocio ha modificado tu cita. Por favor, revisa los cambios y confirma si puedes asistir 
-                      en la nueva fecha y hora. Tienes <strong>24 horas</strong> para responder.
-                    </p>
-                    <p className="mt-2">
-                      Puedes <strong>aceptar</strong>, <strong>reprogramar</strong> o <strong>cancelar</strong> esta cita 
-                      sin restricciones de tiempo.
-                    </p>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Alert para citas PENDING - Negocio cerrado */}
-              {appointment.status === 'pending' && appointment.pending_reason === 'business_closed' && (
-                <Alert className="border-2 border-orange-400 bg-orange-50">
-                  <AlertCircle className="h-5 w-5 text-orange-600" />
-                  <AlertDescription className="text-sm text-orange-900">
-                    <p className="font-semibold mb-1">🔄 Reprogramación Requerida</p>
-                    <p>
-                      El negocio estará <strong>cerrado</strong> el día de tu cita. Necesitas reprogramar 
-                      para otra fecha disponible.
-                    </p>
-                    <p className="mt-2">
-                      Tienes <strong>7 días</strong> para reprogramar o cancelar. Si no respondes, 
-                      la cita se cancelará automáticamente.
-                    </p>
-                    <p className="mt-2 font-semibold">
-                      ⚠️ No podrás aceptar esta cita - debes elegir una nueva fecha.
-                    </p>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-
-            </div>
-
-            {/* Right Column: Actions */}
-            <div>
-              <Card className="border-0 shadow-lg lg:sticky lg:top-24">
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-base sm:text-lg font-semibold">¿Qué deseas hacer?</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 sm:space-y-3">
-                  {/* Accept Changes Button - Solo para citas pending por edición (NO para business_closed) */}
-                  {appointment.status === 'pending' && appointment.pending_reason === 'business_edited' && (
-                    <Button
-                      onClick={handleAcceptChanges}
-                      disabled={cancelling}
-                      className="w-full justify-start h-auto py-4 bg-green-600 hover:bg-green-700 text-white transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                          {cancelling ? (
-                            <Loader2 className="w-5 h-5 text-white animate-spin" />
-                          ) : (
-                            <CheckCircle className="w-5 h-5 text-white" />
-                          )}
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="font-bold text-white">{cancelling ? 'Aceptando...' : 'Aceptar Cambios'}</p>
-                          <p className="text-xs text-white/90">Confirmar nueva fecha y hora</p>
-                        </div>
-                      </div>
-                    </Button>
-                  )}
-
-                  {/* Modify Button */}
-                  {appointment.business.allow_client_reschedule && canRescheduleAppointment() ? (
-                    <Button
-                      onClick={() => setShowModifyModal(true)}
-                      className="w-full justify-start h-auto py-4 bg-slate-900 hover:bg-slate-800 text-white transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                          <Edit className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="font-bold text-white">Modificar Cita</p>
-                          <p className="text-xs text-white/90">Cambia fecha, hora o servicios</p>
-                        </div>
-                      </div>
-                    </Button>
-                  ) : (
-                    <Button disabled className="w-full justify-start h-auto py-4 opacity-50 cursor-not-allowed bg-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                          <Edit className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="font-bold text-slate-600">Modificar Cita</p>
-                          <p className="text-xs text-slate-500">No disponible</p>
-                        </div>
-                      </div>
-                    </Button>
-                  )}
-
-                  {/* Cancel Button */}
-                  {appointment.business.allow_client_cancellation && canCancelAppointment() ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          disabled={cancelling}
-                          variant="outline"
-                          className="w-full justify-start h-auto py-4 border-2 border-red-200 hover:border-red-500 hover:bg-red-50 text-red-700 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                              {cancelling ? (
-                                <Loader2 className="w-5 h-5 text-red-600 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-5 h-5 text-red-600" />
-                              )}
-                            </div>
-                            <div className="text-left flex-1">
-                              <p className="font-bold text-red-700">{cancelling ? 'Cancelando...' : 'Cancelar Cita'}</p>
-                              <p className="text-xs text-red-600">Cancelación permanente</p>
-                            </div>
-                          </div>
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle className="flex items-center gap-2 text-slate-900">
-                            <AlertCircle className="w-5 h-5 text-slate-700" />
-                            ¿Estás seguro de cancelar esta cita?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription className="text-base pt-2 text-slate-600">
-                            Esta acción <strong>no se puede deshacer</strong>. La cita será cancelada permanentemente y{' '}
-                            {appointment.business.name} será notificado de la cancelación.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="border-2 border-slate-200 hover:bg-slate-100">
-                            No, mantener cita
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleCancelAppointment}
-                            className="bg-slate-900 hover:bg-slate-800 text-white"
-                          >
-                            Sí, cancelar cita
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  ) : (
-                    <Button disabled variant="outline" className="w-full justify-start h-auto py-4 opacity-50 cursor-not-allowed border-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                          <Trash2 className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="font-bold text-slate-600">Cancelar Cita</p>
-                          <p className="text-xs text-slate-500">No disponible</p>
-                        </div>
-                      </div>
-                    </Button>
-                  )}
-
-                  {/* Contact Business */}
-                  {appointment.business.phone && (
-                    <>
-                      <Separator className="my-4" />
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="w-full border-2 hover:border-slate-900 hover:bg-slate-50 transition-colors"
-                      >
-                        <a href={`tel:${appointment.business.phone}`} className="flex items-center justify-center">
-                          <Phone className="w-4 h-4 mr-2 text-slate-700" />
-                          <span className="text-slate-900">Llamar al negocio</span>
-                        </a>
-                      </Button>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Alert para citas CONFIRMADAS con política cerrada */}
-              {appointment.status !== 'pending' && (!canCancelAppointment() || !canRescheduleAppointment()) && (
-                <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-                  <div className="flex items-start gap-2 mb-2">
-                    <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
-                    <p className="font-semibold text-red-900 text-sm">Ventana de modificación cerrada</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    {/* Columna 1: Tiempo */}
-                    <div className="flex gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-orange-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-gray-700">
-                          Tu cita es en <span className="font-semibold text-orange-700">{Math.floor(getHoursUntilAppointment())}h</span>
-                        </p>
-                        <p className="text-gray-500 mt-0.5">
-                          Se requieren {appointment.business.cancellation_policy_hours}h
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Columna 2: Contacto */}
-                    {appointment.business.phone && (
-                      <div className="flex gap-1.5">
-                        <Phone className="h-3.5 w-3.5 text-blue-600 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-gray-700 mb-0.5">Contacta al negocio:</p>
-                          <a 
-                            href={`tel:${appointment.business.phone}`} 
-                            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
-                          >
-                            {appointment.business.phone}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.back()}
+                className="rounded-xl hover:bg-slate-100 font-bold text-slate-500 h-10 px-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                <span>Volver</span>
+              </Button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Location Map Modal */}
-      {appointment.business.latitude && appointment.business.longitude && (
-        <LocationMapModal
-          isOpen={showLocationModal}
-          onClose={() => setShowLocationModal(false)}
-          latitude={appointment.business.latitude}
-          longitude={appointment.business.longitude}
-          businessName={appointment.business.name}
-          address={appointment.business.address || ''}
-          theme="client"
+        <div className="flex-1 w-full px-6 py-6 space-y-4">
+          {/* Section Hero: Compartimentado Premium */}
+          <div className="relative h-48 sm:h-56 rounded-3xl overflow-hidden shadow-xl group">
+            <div className="absolute inset-0">
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950"></div>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 to-transparent"></div>
+
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] sm:text-[11px] font-black text-white/50 uppercase tracking-[0.2em] mb-1">Establecimiento</p>
+                    <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tighter">
+                      {appointment.business.name}
+                    </h2>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {appointment.appointment_services.map((appService, index) => (
+                      <Badge key={index} className="bg-white/10 hover:bg-white/20 text-white border-0 text-[10px] font-bold px-3 py-1 rounded-lg backdrop-blur-md">
+                        {appService.service.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="flex items-end gap-3 shrink-0">
+                  <div className="sm:hidden mb-2">
+                    {getStatusBadge()}
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-md border border-white/10 p-3 sm:p-4 rounded-3xl shadow-xl min-w-[120px] text-right">
+                    <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em] mb-0.5">Total Reserva</p>
+                    <p className="text-xl sm:text-2xl font-black text-white tracking-tighter">
+                      {formatPrice(appointment.total_price)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left Column (8/12) */}
+            <div className="lg:col-span-9 space-y-4">
+              {/* Metrics (Universal SaaS scale) */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <Card className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-all bg-white group">
+                  <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 h-full">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-950 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 group-hover:scale-105 shadow-lg shadow-slate-900/10">
+                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="text-left min-w-0">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Fecha</p>
+                      <div className="text-sm sm:text-base font-black text-slate-900 tracking-tight capitalize truncate">
+                        {formatSpanishDate(appointment.appointment_date)}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-all bg-white group">
+                  <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 h-full">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-950 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 group-hover:scale-105 shadow-lg shadow-slate-900/10">
+                      <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                    <div className="text-left min-w-0">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Hora</p>
+                      <div className="text-sm sm:text-base font-black text-slate-900 tracking-tight truncate">
+                        {appointment.start_time.slice(0, 5)}
+                      </div>
+                      <p className="text-[8px] sm:text-[9px] font-medium text-slate-400 truncate">Llegada estimada</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-all bg-white group col-span-2 sm:col-span-1">
+                  <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 h-full">
+                    <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border border-slate-100 shrink-0 shadow-sm">
+                      <AvatarImage src={appointment.employee.avatar_url} />
+                      <AvatarFallback className="bg-slate-950 text-white font-black text-[9px]">
+                        {appointment.employee.first_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-left min-w-0">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Atención por</p>
+                      <div className="text-sm sm:text-base font-black text-slate-900 tracking-tight uppercase truncate">
+                        {appointment.employee.first_name}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Status Alertas */}
+              <div className="space-y-4">
+                {appointment.status === 'pending' && (
+                  <div className="relative overflow-hidden rounded-3xl border border-amber-200 bg-amber-50/50 p-6 flex items-start gap-4">
+                    <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
+                      <AlertCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-amber-900 tracking-tight">Estado: Pendiente de Confirmación</h3>
+                      <p className="text-amber-800 text-xs font-semibold leading-relaxed mt-1">
+                        {appointment.pending_reason === 'business_edited' 
+                          ? 'El negocio ha modificado los detalles. Por favor, revisa y acepta los cambios.'
+                          : 'Se requiere reprogramación debido al cierre temporal del establecimiento.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Services List and Location */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white">
+                  <CardHeader className="p-4 border-b border-slate-50">
+                    <CardTitle className="text-base font-black text-slate-900 tracking-tight">Servicios Reservados</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-slate-50">
+                      {appointment.appointment_services.map((appService, index) => (
+                        <div key={index} className="px-5 py-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                          <div className="space-y-0.5">
+                            <p className="font-black text-slate-900 uppercase tracking-tight text-[10px]">{appService.service.name}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">Duración: {appService.service.duration_minutes} min</p>
+                          </div>
+                          <p className="font-black text-slate-900 text-lg tracking-tight">{formatPrice(appService.price)}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bg-slate-950 p-4 sm:p-5 flex justify-between items-center text-white">
+                      <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] opacity-40">Total Final</p>
+                      <p className="text-xl font-black tracking-tighter">{formatPrice(appointment.total_price)}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {appointment.business.address && (
+                  <Card className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white flex flex-col h-full">
+                    <CardHeader className="p-4 border-b border-slate-50">
+                      <CardTitle className="text-base font-black text-slate-900 tracking-tight">Ubicación</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-5 flex flex-col justify-between flex-1">
+                      <div className="space-y-3">
+                        <p className="text-gray-500 font-medium text-xs leading-relaxed text-left">{appointment.business.address}</p>
+                      </div>
+                      {appointment.business.latitude && appointment.business.longitude && (
+                        <Button
+                          size="sm"
+                          onClick={() => setShowLocationModal(true)}
+                          className="bg-slate-950 hover:bg-slate-800 text-white font-black rounded-xl h-9 px-5 text-[10px] transition-all shadow-lg active:scale-95 w-full sm:w-fit mt-4"
+                        >
+                          Ver en Mapa
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column (3/12): Dashboard Panel style */}
+            <div className="lg:col-span-3">
+              <div className="lg:sticky lg:top-24 space-y-4">
+                <Card className="border-0 shadow-xl rounded-[2rem] bg-white overflow-hidden">
+                  <div className="bg-slate-50 p-5 pb-2">
+                    <div className="relative pl-6">
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-slate-900 rounded-full" />
+                      <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Acciones</p>
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight">Opciones</h2>
+                    </div>
+                  </div>
+                  <CardContent className="p-5 space-y-2.5">
+                    {appointment.status === 'pending' && appointment.pending_reason === 'business_edited' && (
+                      <Button
+                        onClick={handleAcceptChanges}
+                        disabled={cancelling}
+                        className="w-full h-11 bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-lg transition-all font-black uppercase tracking-wider text-xs active:scale-95"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Aceptar Cambios
+                      </Button>
+                    )}
+
+                    {appointment.business.allow_client_reschedule && canRescheduleAppointment() ? (
+                      <Button
+                        onClick={() => setShowModifyModal(true)}
+                        className="w-full h-11 bg-slate-950 hover:bg-slate-800 text-white rounded-xl transition-all font-black uppercase tracking-wider text-xs active:scale-95 shadow-sm"
+                      >
+                        <Edit className="w-4 h-4 mr-2" />
+                        Modificar Cita
+                      </Button>
+                    ) : (
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 opacity-60 flex items-center gap-3 text-slate-400 font-extrabold uppercase tracking-widest text-[9px]">
+                        <Edit className="w-3.5 h-3.5" />
+                        Reprogramación cerrada
+                      </div>
+                    )}
+
+                    {appointment.business.allow_client_cancellation && canCancelAppointment() ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            disabled={cancelling}
+                            variant="ghost"
+                            className="w-full h-11 text-rose-600 hover:bg-rose-50 rounded-xl font-extrabold uppercase tracking-wider text-xs"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Cancelar Cita
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="rounded-[2.5rem] p-8 border-0 shadow-2xl">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-2xl font-black tracking-tight">¿Confirmar Acción?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-500 font-medium leading-relaxed">
+                              La cancelación es inmediata y liberará el cupo para otros clientes.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="pt-6 gap-3">
+                            <AlertDialogCancel className="rounded-xl border-slate-100 font-bold h-11 flex-1">Cerrar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleCancelAppointment}
+                              className="bg-rose-600 hover:bg-rose-700 text-white font-black rounded-xl h-11 flex-1 shadow-lg shadow-rose-600/20"
+                            >
+                              Cancelar Cita
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 opacity-60 flex items-center gap-2.5 text-slate-400 font-extrabold uppercase tracking-widest text-[9px]">
+                        <Trash2 className="w-3 h-3" />
+                        Cancelación cerrada
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Info Card de Políticas */}
+                <div className="rounded-3xl bg-slate-950 p-6 shadow-xl text-white space-y-2 border border-white/5">
+                  <p className="text-[9px] font-extrabold text-white/30 uppercase tracking-[0.2em]">Importante</p>
+                  <h4 className="font-black tracking-tight text-white mb-2">Política del Establecimiento</h4>
+                  <p className="text-[11px] text-white/60 leading-relaxed font-medium">
+                    Cancelaciones y cambios permitidos hasta {appointment.business.cancellation_policy_hours} horas antes de la cita.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Universal Modals */}
+        {appointment.business.latitude && appointment.business.longitude && (
+          <LocationMapModal
+            isOpen={showLocationModal}
+            onClose={() => setShowLocationModal(false)}
+            latitude={appointment.business.latitude}
+            longitude={appointment.business.longitude}
+            businessName={appointment.business.name}
+            address={appointment.business.address || ''}
+            theme="client"
+          />
+        )}
+
+        <ModifyAppointmentDialog
+          isOpen={showModifyModal}
+          onClose={() => setShowModifyModal(false)}
+          appointment={appointment}
+          onSuccess={fetchAppointment}
         />
-      )}
-
-      {/* Modify Appointment Modal */}
-      <ModifyAppointmentDialog
-        isOpen={showModifyModal}
-        onClose={() => setShowModifyModal(false)}
-        appointment={appointment}
-        onSuccess={fetchAppointment}
-      />
+      </div>
     </>
   )
 }

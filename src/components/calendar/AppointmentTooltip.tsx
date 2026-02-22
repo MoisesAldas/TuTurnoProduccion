@@ -52,92 +52,99 @@ export default function AppointmentTooltip({
         transform: 'translate(-50%, -100%)'
       }}
     >
-      <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden w-64">
-        {/* Header compacto con gradiente */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-500 px-3 py-2">
+      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100/50 overflow-hidden w-64 backdrop-blur-sm">
+        {/* Header Premium Solid Color (Primary) */}
+        <div className="bg-primary px-4 py-3 shadow-lg">
           <div className="flex items-center justify-between text-white">
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              <span className="text-sm font-semibold">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-white/90" />
+              <span className="text-sm font-black tracking-tight">
                 {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
               </span>
             </div>
-            <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full">
-              <CalendarClock className="w-3 h-3" />
-              <span className="text-xs font-medium">{durationText}</span>
+            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-xl">
+              <CalendarClock className="w-3.5 h-3.5 text-white" />
+              <span className="text-[10px] font-black uppercase tracking-wider">{durationText}</span>
             </div>
           </div>
         </div>
 
-        {/* Content compacto */}
-        <div className="px-3 py-2.5 space-y-2">
+        {/* Content Refinado */}
+        <div className="px-4 py-4 space-y-3.5">
           {/* Cliente */}
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-50 rounded-lg">
-              <UserCircle className="w-3.5 h-3.5 text-blue-600" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 border border-primary/20">
+              <UserCircle className="w-4 h-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm truncate">{clientName}</p>
+              <span className="text-[9px] font-black text-primary uppercase tracking-widest block mb-0.5 opacity-80">
+                Cliente
+              </span>
+              <p className="font-black text-gray-900 text-sm truncate leading-none">{clientName}</p>
               {!appointment.client_id && (
-                <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded">
-                  WALK-IN
+                <span className="inline-block mt-1 text-[8px] font-black px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-lg uppercase tracking-widest">
+                  Walk-in
                 </span>
               )}
             </div>
           </div>
 
-          {/* Empleado */}
+          {/* Profesional (Employee) */}
           {employee && (
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-purple-50 rounded-lg">
-                <UserCheck className="w-3.5 h-3.5 text-purple-600" />
-              </div>
-              <p className="text-gray-700 text-sm truncate flex-1">
-                {employee.first_name} {employee.last_name}
-              </p>
-            </div>
-          )}
-
-          {/* Servicios - mostrar todos */}
-          {services.length > 0 && (
-            <div className="flex items-start gap-2">
-              <div className="p-1.5 bg-indigo-50 rounded-lg flex-shrink-0">
-                <ClipboardList className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-100">
+                <UserCheck className="w-4 h-4 text-slate-600" />
               </div>
               <div className="flex-1 min-w-0">
-                {services.length === 1 ? (
-                  <p className="text-gray-700 text-sm truncate">{services[0]}</p>
-                ) : (
-                  <div className="space-y-0.5">
-                    {services.map((service, idx) => (
-                      <p key={idx} className="text-gray-700 text-xs truncate">
-                        • {service}
-                      </p>
-                    ))}
-                  </div>
-                )}
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5 opacity-80">
+                  Profesional
+                </span>
+                <p className="text-gray-900 text-xs font-bold truncate leading-none">
+                  {employee.first_name} {employee.last_name}
+                </p>
               </div>
             </div>
           )}
 
-          {/* Phone - si existe */}
-          {clientPhone && (
-            <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg">
-              <Phone className="w-3 h-3 text-slate-600" />
-              <span className="text-xs font-mono text-slate-900">{clientPhone}</span>
+          {/* Servicios */}
+          {services.length > 0 && (
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-100">
+                <ClipboardList className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest block mb-0.5 opacity-80">
+                  {services.length === 1 ? 'Servicio' : 'Servicios'}
+                </span>
+                <div className="space-y-1">
+                  {services.map((service, idx) => (
+                    <p key={idx} className="text-gray-900 text-xs font-bold truncate leading-none">
+                      {service}
+                    </p>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Footer: Estado y Precio */}
-          <div className="flex items-center justify-between pt-2 mt-1 border-t-2 border-gray-200">
-            <div className="flex items-center gap-1.5">
-              <div className={`w-2 h-2 ${status.color} rounded-full`} />
-              <span className="text-xs text-gray-600 font-medium">{status.label}</span>
+          {/* Teléfono */}
+          {clientPhone && (
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100">
+              <Phone className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-xs font-bold text-gray-900 tracking-tight">{clientPhone}</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 rounded-lg">
+          )}
+
+          {/* Footer Final */}
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2">
+              <div className={`w-2.5 h-2.5 ${status.color} rounded-full shadow-sm ring-2 ring-white`} />
+              <span className="text-[10px] text-gray-600 font-black uppercase tracking-wider">{status.label}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm">
               <CircleDollarSign className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm font-bold text-emerald-700">
-                {appointment.total_price || '0'}
+              <span className="text-sm font-black text-emerald-700 tracking-tight">
+                ${appointment.total_price || '0'}
               </span>
             </div>
           </div>

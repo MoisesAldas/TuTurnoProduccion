@@ -63,14 +63,15 @@ export default function ClientAppointmentDetailsModal({
   if (!appointment) return null
 
   const getStatusInfo = (status: string) => {
+    const baseClass = "transition-all duration-300 pointer-events-none border-0 font-black uppercase text-[10px] tracking-tight"
     switch (status) {
-      case 'pending': return { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle }
-      case 'confirmed': return { label: 'Confirmada', color: 'bg-green-100 text-green-800', icon: CheckCircle }
-      case 'in_progress': return { label: 'En progreso', color: 'bg-blue-100 text-blue-800', icon: Clock }
-      case 'completed': return { label: 'Completada', color: 'bg-blue-100 text-blue-800', icon: CheckCircle }
-      case 'cancelled': return { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: XCircle }
-      case 'no_show': return { label: 'No asistió', color: 'bg-gray-100 text-gray-800', icon: XCircle }
-      default: return { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertTriangle }
+      case 'pending': return { label: 'Pendiente', color: `${baseClass} bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400`, icon: AlertTriangle }
+      case 'confirmed': return { label: 'Confirmada', color: `${baseClass} bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400`, icon: CheckCircle }
+      case 'in_progress': return { label: 'En progreso', color: `${baseClass} bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400`, icon: Clock }
+      case 'completed': return { label: 'Completada', color: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400`, icon: CheckCircle }
+      case 'cancelled': return { label: 'Cancelada', color: `${baseClass} bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400`, icon: XCircle }
+      case 'no_show': return { label: 'No asistió', color: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400`, icon: XCircle }
+      default: return { label: status, color: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400`, icon: AlertTriangle }
     }
   }
 
@@ -109,14 +110,14 @@ export default function ClientAppointmentDetailsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg max-h-[92vh] overflow-y-auto p-0 border-0 rounded-[2.5rem] shadow-3xl bg-slate-50 overflow-hidden">
         {/* Header with Business Info */}
-        <div className="sticky top-0 bg-white border-b z-10">
-          <div className="p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-100 z-20">
+          <div className="p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 {/* Business Photo */}
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0 shadow-sm border border-slate-200/50">
                   {appointment.business?.cover_photo_url ? (
                     <img
                       src={appointment.business.cover_photo_url}
@@ -125,82 +126,87 @@ export default function ClientAppointmentDetailsModal({
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Store className="w-6 h-6 text-slate-400" />
+                      <Store className="w-7 h-7 text-slate-300" />
                     </div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900 truncate">
+                   <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="text-[10px] uppercase font-black tracking-widest text-slate-400 px-1 py-0 border-0">Detalle</Badge>
+                   </div>
+                  <h2 className="text-xl font-black text-slate-900 truncate tracking-tight">
                     {appointment.business?.name || 'Negocio'}
                   </h2>
-                  <p className="text-xs text-gray-500">
-                    ID: #{appointment.id.slice(0, 8)}
-                  </p>
                 </div>
               </div>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={onClose}
-                className="flex-shrink-0 -mr-2"
+                className="flex-shrink-0 -mr-2 rounded-xl text-slate-400 hover:bg-slate-50"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </Button>
             </div>
 
             {/* Status Badge */}
-            <Badge className={`${statusInfo.color} text-sm px-3 py-1.5 font-medium rounded-full w-full justify-center`}>
-              {React.createElement(statusInfo.icon, { className: 'w-4 h-4 mr-1.5 inline' })}
+            <Badge variant="outline" className={`${statusInfo.color} text-[10px] px-4 py-2.5 font-black uppercase tracking-[0.15em] rounded-2xl w-full justify-center shadow-sm`}>
+              {React.createElement(statusInfo.icon, { className: 'w-4 h-4 mr-2' })}
               {statusInfo.label}
             </Badge>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
-          {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="border-gray-200 shadow-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <CalendarIcon className="w-4 h-4 text-slate-700" />
-                  <p className="text-xs font-medium text-gray-500 uppercase">Fecha</p>
+        <div className="p-5 space-y-5">
+          {/* Date & Time Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="border-0 shadow-sm rounded-2xl bg-white overflow-hidden group">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900">
+                    <CalendarIcon className="w-4 h-4" />
+                  </div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</p>
                 </div>
-                <p className="text-sm font-semibold text-gray-900 capitalize">
+                <p className="text-[15px] font-black text-slate-900 capitalize px-1">
                   {formatDateShort(appointment.appointment_date)}
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-gray-200 shadow-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Clock className="w-4 h-4 text-slate-700" />
-                  <p className="text-xs font-medium text-gray-500 uppercase">Hora</p>
+            <Card className="border-0 shadow-sm rounded-2xl bg-white overflow-hidden group">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-900">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hora</p>
                 </div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {appointment.start_time.slice(0, 5)} • {getDuration(appointment.start_time, appointment.end_time)}
+                <p className="text-[15px] font-black text-slate-900 px-1 flex items-baseline gap-1.5">
+                  {appointment.start_time.slice(0, 5)}
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">{getDuration(appointment.start_time, appointment.end_time)}</span>
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Review Section */}
+          {/* Review Section (Conditional) */}
           {appointment.status === 'completed' && !appointment.has_review && onReview && (
-            <Card className="bg-amber-50 border-amber-200 shadow-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between gap-3">
+            <Card className="bg-amber-500 border-0 shadow-xl shadow-amber-500/20 rounded-3xl overflow-hidden group">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 mb-0.5">¿Cómo fue tu experiencia?</p>
-                    <p className="text-xs text-gray-600">Califica este servicio</p>
+                    <p className="text-base font-black text-white mb-0.5 tracking-tight group-hover:scale-[1.02] transition-transform origin-left">¡Califica tu experiencia!</p>
+                    <p className="text-xs text-white/80 font-bold uppercase tracking-widest">Cuéntanos qué tal te fue</p>
                   </div>
                   <Button
                     size="sm"
                     onClick={onReview}
-                    className="bg-amber-600 hover:bg-amber-700 text-white flex-shrink-0"
+                    className="bg-white hover:bg-white/90 text-amber-600 font-black rounded-xl h-10 px-5 shadow-lg"
                   >
-                    <Star className="w-4 h-4 mr-1.5" />
-                    Calificar
+                    <Star className="w-4 h-4 mr-2" />
+                    Valorar
                   </Button>
                 </div>
               </CardContent>
@@ -208,58 +214,76 @@ export default function ClientAppointmentDetailsModal({
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {canModify() && (
               <Button
                 asChild
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white"
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white h-14 rounded-2xl font-black text-base shadow-xl shadow-slate-900/10 transition-all active:scale-95"
                 onClick={onClose}
               >
                 <Link href={`/dashboard/client/appointments/${appointment.id}`}>
-                  <Edit className="w-4 h-4 mr-2" />
+                  <Edit className="w-5 h-5 mr-3" />
                   Gestionar cita
                 </Link>
               </Button>
             )}
-            {appointment.status === 'completed' && (
-              <Button
+            
+            <div className="grid grid-cols-2 gap-3">
+               <Button
                 asChild
                 variant="outline"
-                className="w-full"
+                className="bg-white border-slate-200 h-13 rounded-2xl font-black text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all active:scale-95"
                 onClick={onClose}
               >
                 <Link href={`/business/${appointment.business?.id}/book`}>
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  Reservar otra vez
+                  Repetir
                 </Link>
               </Button>
-            )}
+              {appointment.business?.phone && (
+                 <Button
+                    asChild
+                    variant="outline"
+                    className="bg-blue-50 border-blue-100 h-13 rounded-2xl font-black text-blue-600 hover:bg-blue-100 transition-all active:scale-95 px-2"
+                  >
+                    <a href={`tel:${appointment.business.phone}`}>
+                      <Phone className="w-4 h-4 mr-2" />
+                      Llamar
+                    </a>
+                  </Button>
+              )}
+            </div>
           </div>
 
           {/* Services Summary */}
-          <Card className="border-gray-200 shadow-sm">
-            <CardContent className="p-4">
-              <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-slate-700" />
-                Servicios
-              </h3>
-              <div className="space-y-2">
+          <Card className="border-0 shadow-sm rounded-3xl bg-white overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-50">
+                <h3 className="text-[15px] font-black text-slate-900 flex items-center gap-2">
+                   <div className="p-1.5 bg-slate-100 rounded-lg">
+                    <Receipt className="w-4 h-4 text-slate-900" />
+                  </div>
+                  Resumen de Pago
+                </h3>
+              </div>
+              <div className="space-y-4">
                 {appointment.appointment_services.map((service, index) => (
-                  <div key={index} className="flex justify-between items-start pb-2 border-b border-gray-100 last:border-0">
-                    <div className="flex-1 pr-2">
-                      <p className="text-sm font-medium text-gray-900">
+                  <div key={index} className="flex justify-between items-start pb-3 border-b border-slate-50 last:border-0 last:pb-0">
+                    <div className="flex-1 pr-4">
+                      <p className="text-[13px] font-bold text-slate-700">
                         {service.service?.name || 'Servicio'}
                       </p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                    <p className="text-[13px] font-black text-slate-900">
                       {formatPrice(service.price)}
                     </p>
                   </div>
                 ))}
-                <div className="pt-2 mt-1">
-                  <div className="flex justify-between items-center bg-slate-100 px-3 py-2 rounded-lg">
-                    <p className="text-base font-bold text-gray-900">Total</p>
-                    <p className="text-base font-bold text-slate-900">
+                
+                <div className="pt-4 mt-2">
+                  <div className="flex justify-between items-center bg-slate-900 px-5 py-4 rounded-2xl shadow-lg shadow-slate-900/10">
+                    <p className="text-sm font-black text-white uppercase tracking-widest">Total</p>
+                    <p className="text-xl font-black text-white tracking-tighter tabular-nums">
                       {formatPrice(appointment.total_price)}
                     </p>
                   </div>
@@ -268,62 +292,64 @@ export default function ClientAppointmentDetailsModal({
             </CardContent>
           </Card>
 
-          {/* Business Info */}
-          <Card className="border-gray-200 shadow-sm">
-            <CardContent className="p-4">
-              <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Store className="w-5 h-5 text-slate-700" />
-                Información del Negocio
-              </h3>
-              <div className="space-y-3">
-                {appointment.business?.address && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Dirección</p>
-                    <p className="text-sm text-gray-900 font-medium">
-                      {appointment.business.address}
-                    </p>
+          {/* Information Sections */}
+          <div className="space-y-4">
+            {/* Professional Info */}
+            {appointment.employee && (
+               <Card className="border-0 shadow-sm rounded-2xl bg-white overflow-hidden p-4">
+                  <div className="flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-900">
+                        {appointment.employee.first_name[0]}{appointment.employee.last_name[0]}
+                     </div>
+                     <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Profesional</p>
+                        <p className="text-sm font-black text-slate-900">{appointment.employee.first_name} {appointment.employee.last_name}</p>
+                        {appointment.employee.position && (
+                           <p className="text-xs text-slate-500 font-bold uppercase tracking-tighter">{appointment.employee.position}</p>
+                        )}
+                     </div>
                   </div>
-                )}
-                {appointment.business?.phone && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Teléfono</p>
-                    <a
-                      href={`tel:${appointment.business.phone}`}
-                      className="text-sm text-slate-700 font-medium hover:text-slate-900 hover:underline"
-                    >
-                      {appointment.business.phone}
-                    </a>
-                  </div>
-                )}
-                {appointment.employee && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Profesional</p>
-                    <p className="text-sm text-gray-900 font-medium">
-                      {appointment.employee.first_name} {appointment.employee.last_name}
-                    </p>
-                    {appointment.employee.position && (
-                      <p className="text-xs text-gray-500">{appointment.employee.position}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+               </Card>
+            )}
 
-          {/* Client Notes */}
-          {appointment.client_notes && (
-            <Card className="border-blue-200 bg-blue-50/50 shadow-sm">
-              <CardContent className="p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-blue-600" />
-                  Notas de la Cita
-                </h3>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {appointment.client_notes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+            {/* Business Location */}
+            {appointment.business?.address && (
+               <Card className="border-0 shadow-sm rounded-2xl bg-white overflow-hidden p-4">
+                  <div className="flex gap-4">
+                     <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-900">
+                        <MapPin className="w-6 h-6" />
+                     </div>
+                     <div className="flex-1">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Ubicación</p>
+                        <p className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug">
+                          {appointment.business.address}
+                        </p>
+                     </div>
+                  </div>
+               </Card>
+            )}
+
+            {/* Client Notes */}
+            {appointment.client_notes && (
+              <Card className="border-0 bg-blue-50/50 shadow-sm rounded-2xl p-4 ring-1 ring-blue-100">
+                 <div className="flex gap-4">
+                    <div className="w-6 h-6 text-blue-600 flex-shrink-0">
+                       <AlertTriangle className="w-5 h-5" />
+                    </div>
+                    <div>
+                       <h3 className="text-[10px] font-black text-blue-900 mb-1.5 uppercase tracking-widest">
+                        Tus notas
+                      </h3>
+                      <p className="text-sm text-slate-600 leading-relaxed italic border-l-2 border-blue-200 pl-3">
+                        "{appointment.client_notes}"
+                      </p>
+                    </div>
+                 </div>
+              </Card>
+            )}
+            
+            <div className="pb-8"></div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

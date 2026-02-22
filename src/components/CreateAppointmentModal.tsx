@@ -505,43 +505,52 @@ export default function CreateAppointmentModal({
           className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
           onClick={(e) => e.stopPropagation()}
         >
-        {/* Header */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4 sm:p-6 rounded-t-2xl">
-          <div className="flex items-center justify-between mb-4">
+        {/* Header - Premium Design - Ultra Compacto */}
+        <div className="flex-shrink-0 bg-slate-50/50 backdrop-blur-md border-b border-gray-100 p-3 sm:p-5 rounded-t-3xl relative">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10  bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm border border-gray-100 group transition-all duration-300 hover:scale-105 active:scale-95">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
               </div>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                <span className="text-[7px] sm:text-[8px] font-black text-orange-600 uppercase tracking-[0.2em] block mb-0 opacity-80">
+                  Agenda de Citas
+                </span>
+                <h2 className="text-base sm:text-xl font-black text-gray-900 tracking-tight leading-none">
                   {appointment ? 'Editar Cita' : 'Nueva Cita'}
                 </h2>
-                <p className="text-xs text-gray-500">Paso {currentStep} de {totalSteps}: {getStepTitle(currentStep)}</p>
               </div>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Cerrar modal"
+              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl hover:bg-white hover:shadow-sm text-gray-400 hover:text-gray-600 transition-all"
             >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </Button>
           </div>
 
-          {/* Progress bar */}
-          <div className="flex gap-2">
+          {/* Stepper Premium */}
+          <div className="flex items-center gap-2">
             {[1, 2, 3, 4].map((step) => (
-              <div
-                key={step}
-                className={`flex-1 h-2 rounded-full transition-all ${
-                  step < currentStep
-                    ? ' bg-orange-600 hover:bg-orange-700'
-                    : step === currentStep
-                    ? 'bg-orange-400'
-                    : 'bg-gray-200'
-                }`}
-              />
+              <div key={step} className="flex-1 flex flex-col gap-2">
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    step < currentStep
+                      ? 'bg-orange-600'
+                      : step === currentStep
+                      ? 'bg-orange-600 w-full'
+                      : 'bg-gray-200 w-full'
+                  }`}
+                />
+                <span className={`text-[8px] font-black uppercase tracking-widest text-center transition-colors duration-300 ${
+                  step === currentStep ? 'text-orange-600' : 'text-gray-400'
+                }`}>
+                  {getStepTitle(step)}
+                </span>
+              </div>
             ))}
           </div>
         </div>
@@ -1043,14 +1052,14 @@ export default function CreateAppointmentModal({
           )}
         </form>
 
-        {/* Footer - Navigation */}
-        <div className="flex-shrink-0 bg-gray-50 border-t border-gray-200 p-4 sm:p-6 flex gap-3">
+        {/* Footer - Navigation Premium */}
+        <div className="flex-shrink-0 bg-white border-t border-gray-100 p-6 sm:p-8 flex gap-4">
           {currentStep > 1 && (
             <Button
               type="button"
               variant="outline"
               onClick={handlePrevious}
-              className="flex-1"
+              className="flex-1 h-12 rounded-2xl border-gray-100 shadow-sm font-black text-[10px] uppercase tracking-widest text-gray-500 hover:text-orange-600 hover:bg-orange-50/50 transition-all active:scale-95"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Anterior
@@ -1062,7 +1071,7 @@ export default function CreateAppointmentModal({
               type="button"
               onClick={handleNext}
               disabled={!validateStep(currentStep)}
-              className="flex-1  bg-orange-600 hover:bg-orange-700 text-white"
+              className="flex-1 h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-widest shadow-[0_4px_12px_rgba(234,88,12,0.2)] transition-all active:scale-95"
             >
               Siguiente
               <ChevronRight className="w-4 h-4 ml-2" />
@@ -1070,9 +1079,9 @@ export default function CreateAppointmentModal({
           ) : (
             <Button
               type="button"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={submitting}
-              className="flex-1  bg-orange-600 hover:bg-orange-700 text-white"
+              className="flex-1 h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-widest shadow-[0_4px_12px_rgba(234,88,12,0.2)] transition-all active:scale-95"
             >
               {submitting ? (
                 <>
@@ -1082,7 +1091,7 @@ export default function CreateAppointmentModal({
               ) : (
                 <>
                   <Check className="w-4 h-4 mr-2" />
-                  {appointment ? 'Actualizar Cita' : 'Crear Cita'}
+                  {appointment ? 'Actualizar Cita' : 'Confirmar Cita'}
                 </>
               )}
             </Button>

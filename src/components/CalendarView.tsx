@@ -9,7 +9,7 @@ import { toDateString } from '@/lib/dateUtils'
 import OverlappingAppointmentsDialog from './OverlappingAppointmentsDialog'
 import AppointmentCard from './calendar/AppointmentCard'
 import AppointmentTooltip from './calendar/AppointmentTooltip'
-
+import { Calendar, Clock, Users, ChevronLeft, ChevronRight, Plus, MoreHorizontal, CheckCircle2, XCircle, Clock as ClockIcon, User, Calendar as CalendarIcon } from 'lucide-react'
 import type { Employee, Appointment } from '@/types/database'
 
 // Lazy load AppointmentModal
@@ -474,14 +474,14 @@ export default function CalendarView({
     return (
       <>
         <div className="h-full flex flex-col">
-          {/* Header de días de la semana */}
-          <div className="flex border-b border-gray-200 bg-white sticky top-0 z-10">
+          {/* Header de días de la semana - Premium */}
+          <div className="flex border-b border-gray-100 bg-white/50 backdrop-blur-md sticky top-0 z-10 px-0 shadow-sm">
             {/* Columna de horas (placeholder) */}
-            <div className="w-16 flex-shrink-0 border-r border-gray-200" />
+            <div className="w-16 flex-shrink-0 border-r border-gray-100" />
 
             {/* Columnas de días */}
             {weekDates.map((date) => {
-              const isToday = date.toDateString() === new Date().toDateString()
+              const matchesToday = date.toDateString() === new Date().toDateString()
               const dayAppointments = appointments.filter(
                 apt => apt.appointment_date === toDateString(date)
               )
@@ -489,23 +489,30 @@ export default function CalendarView({
               return (
                 <div
                   key={date.toISOString()}
-                  className={`flex-1 min-w-[140px] p-3 border-r border-gray-200 last:border-r-0 ${
-                    isToday ? 'bg-orange-50' : ''
+                  className={`flex-1 min-w-[140px] p-3 border-r border-gray-100 last:border-r-0 relative transition-colors ${
+                    matchesToday ? 'bg-orange-50/30' : ''
                   }`}
                 >
-                  <div className="text-center">
-                    <p className="text-xs text-gray-500 uppercase">
+                  <div className="text-center relative py-1">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
                       {date.toLocaleDateString('es-ES', { weekday: 'short' })}
                     </p>
-                    <p className={`text-lg font-bold mt-1 ${
-                      isToday ? 'text-orange-600' : 'text-gray-900'
-                    }`}>
-                      {date.getDate()}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {dayAppointments.length} cita{dayAppointments.length !== 1 ? 's' : ''}
-                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                       <span className={`text-xl font-black ${
+                        matchesToday ? 'text-orange-600' : 'text-gray-900'
+                      }`}>
+                        {date.getDate()}
+                      </span>
+                      {dayAppointments.length > 0 && (
+                        <span className="text-[9px] font-black bg-white text-gray-600 border border-gray-100 px-1.5 py-0.5 rounded-lg shadow-sm">
+                          {dayAppointments.length}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {matchesToday && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full mx-6 opacity-80" />
+                  )}
                 </div>
               )
             })}
@@ -719,26 +726,32 @@ export default function CalendarView({
   return (
     <>
       <div className="h-full flex flex-col">
-        {/* Header de empleados - Oculto en móvil, visible en tablet+ */}
-        <div className="hidden md:flex border-b border-gray-200 bg-white sticky top-0 z-10">
+        {/* Header de empleados - Premium Design (Desktop) */}
+        <div className="hidden md:flex border-b border-gray-100 bg-white/50 backdrop-blur-md sticky top-0 z-10 shadow-sm px-0">
           {/* Columna de horas (placeholder) */}
-          <div className="w-16 flex-shrink-0 border-r border-gray-200" />
+          <div className="w-16 flex-shrink-0 border-r border-gray-100" />
 
           {/* Columnas de empleados */}
           {employees.map((employee) => (
             <div
               key={employee.id}
-              className="flex-1 min-w-[200px] py-4 border-r border-gray-200 last:border-r-0"
+              className="flex-1 min-w-[200px] py-4 border-r border-gray-100 last:border-r-0"
             >
-              <div className="flex flex-col items-center gap-2">
-                <Avatar className="w-12 h-12 border-2 border-orange-500">
-                  <AvatarImage src={employee.avatar_url} />
-                  <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white">
-                    {getInitials(employee.first_name, employee.last_name)}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative group">
+                  <Avatar className="w-14 h-14 border-2 border-white shadow-xl ring-2 ring-orange-500/10 group-hover:ring-orange-500/30 transition-all duration-300">
+                    <AvatarImage src={employee.avatar_url} />
+                    <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-600 text-white font-black">
+                      {getInitials(employee.first_name, employee.last_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
+                </div>
                 <div className="text-center">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <span className="text-[9px] font-black text-orange-600 uppercase tracking-[0.2em] block mb-0.5 opacity-80">
+                    Profesional
+                  </span>
+                  <p className="text-sm font-black text-gray-900 tracking-tight">
                     {employee.first_name} {employee.last_name}
                   </p>
                 </div>
@@ -747,8 +760,8 @@ export default function CalendarView({
           ))}
         </div>
 
-        {/* Vista móvil - Lista de citas */}
-        <div className="md:hidden flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Vista móvil - Lista de citas Premium & Responsive */}
+        <div className="md:hidden flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50/50">
           {employees.map((employee) => {
             const employeeAppointments = appointments.filter(
               (apt) => apt.employee_id === employee.id
@@ -756,92 +769,128 @@ export default function CalendarView({
             const employeeAbsence = absences.find((abs) => abs.employee_id === employee.id)
 
             return (
-              <div key={employee.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                {/* Header del empleado */}
-                <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-3 border-b border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10 border-2 border-orange-500">
+              <div key={employee.id} className="space-y-3">
+                {/* Header del empleado - Estilo Eyebrow */}
+                <div className="flex items-center gap-3 px-1">
+                  <div className="relative">
+                    <Avatar className="w-10 h-10 border-2 border-white shadow-md">
                       <AvatarImage src={employee.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-orange-600 to-amber-600 text-white text-sm">
+                      <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-500 text-white text-xs font-black">
                         {getInitials(employee.first_name, employee.last_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {employee.first_name} {employee.last_name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {employeeAppointments.length} cita{employeeAppointments.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase tracking-widest font-black text-orange-600 block mb-0.5">
+                      Profesional
+                    </span>
+                    <h3 className="text-sm font-black text-gray-900 leading-none">
+                      {employee.first_name} {employee.last_name}
+                    </h3>
+                  </div>
+                  <div className="ml-auto bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm border border-gray-100">
+                    <span className="text-[10px] font-black text-gray-600">
+                      {employeeAppointments.length} citas
+                    </span>
                   </div>
                 </div>
 
-                {/* Ausencia */}
+                {/* Ausencia con Estilo Premium */}
                 {employeeAbsence && (
-                  <div className="bg-gray-100 p-3 border-b border-gray-200">
-                    <p className="text-sm font-semibold text-gray-700">
-                      {employeeAbsence.reason === 'enfermedad' && '🤒 Enfermedad'}
-                      {employeeAbsence.reason === 'vacaciones' && '🏖️ Vacaciones'}
-                      {employeeAbsence.reason === 'personal' && '📅 Personal'}
-                      {employeeAbsence.reason === 'emergencia' && '🚨 Emergencia'}
-                      {employeeAbsence.reason === 'otro' && '📝 Otro'}
-                    </p>
-                    {employeeAbsence.notes && (
-                      <p className="text-xs text-gray-600 mt-1">{employeeAbsence.notes}</p>
-                    )}
+                  <div className="bg-white/60 backdrop-blur-sm border border-orange-100 p-3 rounded-2xl shadow-sm flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-orange-900 uppercase tracking-wider">
+                        No Disponible
+                      </p>
+                      <p className="text-[10px] text-orange-700 font-medium">
+                        {employeeAbsence.reason === 'enfermedad' && 'Ausencia por enfermedad'}
+                        {employeeAbsence.reason === 'vacaciones' && 'En vacaciones'}
+                        {employeeAbsence.reason === 'personal' && 'Asuntos personales'}
+                        {employeeAbsence.reason === 'emergencia' && 'Emergencia'}
+                        {employeeAbsence.reason === 'otro' && (employeeAbsence.notes || 'No disponible')}
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Lista de citas */}
-                {employeeAppointments.length > 0 ? (
-                  <div className="divide-y divide-gray-100">
-                    {employeeAppointments.map((appointment) => {
+                {/* Lista de citas - Premium Cards */}
+                <div className="space-y-3">
+                  {employeeAppointments.length > 0 ? (
+                    employeeAppointments.map((appointment) => {
                       const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
+                      const statusInfo = getStatusColor(appointment.status)
+                      
                       return (
                         <div
                           key={appointment.id}
-                          className={`p-3 cursor-pointer hover:bg-gray-50 transition-colors ${getStatusColor(
-                            appointment.status
-                          ).replace('border-l-4', 'border-l-4')}`}
-                          style={{ borderLeftWidth: '4px' }}
+                          className="group relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100/50 hover:shadow-md transition-all active:scale-[0.98]"
                           onClick={() => handleAppointmentClick(appointment)}
                         >
-                          <div className="flex items-start justify-between gap-3">
+                          {/* Status Indicator Bar */}
+                          <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
+                             appointment.status === 'confirmed' ? 'bg-emerald-500' :
+                             appointment.status === 'pending' ? 'bg-amber-500' :
+                             appointment.status === 'in_progress' ? 'bg-blue-500' :
+                             appointment.status === 'completed' ? 'bg-gray-400' :
+                             'bg-red-500'
+                          }`} />
+
+                          <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm truncate">
-                                {getClientName(appointment)}
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                  {appointment.start_time.substring(0, 5)} — {appointment.end_time.substring(0, 5)}
+                                </span>
                                 {!appointment.client_id && (
-                                  <span className="ml-1 text-xs font-normal text-orange-600">👤 Walk-in</span>
+                                  <span className="text-[8px] font-black bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
+                                    Walk-in
+                                  </span>
                                 )}
-                              </p>
-                              <p className="text-xs text-gray-600 truncate mt-0.5">{serviceName}</p>
-                              <p className="text-xs font-medium text-gray-700 mt-1">
-                                {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
+                              </div>
+                              <h4 className="text-sm font-black text-gray-900 truncate">
+                                {getClientName(appointment)}
+                              </h4>
+                              <p className="text-xs font-bold text-gray-500 mt-0.5 truncate uppercase tracking-tight">
+                                {serviceName}
                               </p>
                             </div>
-                            <div className="flex-shrink-0 text-right">
-                              <p className="text-sm font-semibold text-gray-900">
+
+                            <div className="flex flex-col items-end gap-1">
+                              <span className="text-sm font-black text-gray-900 bg-gray-50 px-3 py-1 rounded-xl border border-gray-100">
                                 ${appointment.total_price}
-                              </p>
+                              </span>
+                              <div className={`w-2 h-2 rounded-full ${
+                                appointment.status === 'confirmed' ? 'bg-emerald-500' :
+                                appointment.status === 'pending' ? 'bg-amber-500' :
+                                'bg-gray-300'
+                              } animate-pulse`} />
                             </div>
                           </div>
                         </div>
                       )
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-6 text-center text-gray-400 text-sm">
-                    Sin citas
-                  </div>
-                )}
+                    })
+                  ) : (
+                    <div className="py-8 text-center bg-white/40 rounded-3xl border border-dashed border-gray-200">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                        Sin citas agendadas
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}
 
           {appointments.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No hay citas programadas para este día</p>
+            <div className="text-center py-20">
+              <div className="w-16 h-16 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                <Calendar className="w-8 h-8 text-gray-200" />
+              </div>
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Agenda vacía</p>
             </div>
           )}
         </div>
@@ -1097,17 +1146,18 @@ function CurrentTimeLine({ startHour, endHour }: { startHour: number; endHour: n
 
   return (
     <div
-      className="absolute left-0 right-0 z-30 pointer-events-none"
+      className="absolute left-0 right-0 z-40 pointer-events-none"
       style={{ top: `${position}px` }}
     >
-      <div className="flex items-center">
-        <div className="w-2 h-2 bg-red-500 rounded-full -ml-1" />
-        <div className="flex-1 h-0.5 bg-red-500" />
+      <div className="flex items-center -mt-[3px]">
+        <div className="relative">
+          <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-[0_0_10px_rgba(239,68,68,0.5)] z-20" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-red-500/30 rounded-full animate-ping" />
+        </div>
+        <div className="flex-1 h-0.5 bg-gradient-to-r from-red-500 to-red-500/0" />
       </div>
     </div>
   )
-
-
 }
 
 

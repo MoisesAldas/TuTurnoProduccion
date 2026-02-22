@@ -485,108 +485,173 @@ export default function ClientProfilePage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Page Title */}
-        <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">
-            Mi Cuenta
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Gestiona tu perfil y configuración
-          </p>
-        </div>
-
-        {showSuccess && (
-            <div className="mb-6 flex items-center space-x-2 text-slate-700 bg-slate-100 p-3 rounded-lg border border-slate-300">
-                <CheckCircle className="w-5 h-5" />
-                <span className="text-sm font-medium">¡Perfil actualizado con éxito!</span>
-            </div>
-        )}
-
-        {/* Avatar Card */}
-        <Card className="mb-6">
-          <CardContent className="p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row items-center text-center sm:text-left">
-              <div className="relative mb-4 sm:mb-0 sm:mr-8">
-                <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white shadow-lg">
-                  <AvatarImage src={profile.avatar_url} alt={profile.first_name || profile.email} />
-                  <AvatarFallback className="bg-slate-200 text-slate-700 text-3xl font-medium">{(profile.first_name || profile.email)?.charAt(0)?.toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <Button
-                  size="sm"
-                  onClick={handleAvatarClick}
-                  className="absolute bottom-0 right-0 rounded-full h-10 w-10 p-0 bg-slate-900 hover:bg-slate-800 shadow-lg"
-                  aria-label="Cambiar foto de perfil"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </div>
-              <div className="flex-grow">
-                <h2 className={`${typography.h1} mb-2`}>
-                  {profile.first_name && profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.first_name ? profile.first_name : 'Mi Perfil'}
-                </h2>
-                <p className={typography.bodySmall + ' mb-4'}>{profile.email}</p>
-                <div className={`flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-2 ${typography.bodySmall}`}>
-                  <div className="flex items-center"><Calendar className="w-4 h-4 mr-1.5" />Miembro desde {formatDate(profile.created_at)}</div>
-                  <div className="flex items-center"><Shield className="w-4 h-4 mr-1.5" />Cuenta verificada</div>
+    <div className="min-h-screen bg-slate-50/50">
+      {/* Premium Integrated Header (Consistent with appointments) */}
+      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 sticky top-0 z-50 shadow-sm">
+        <div className="w-full px-6 py-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-widest font-black text-slate-400 border-slate-200 px-2 py-0">
+                    Panel Cliente
+                  </Badge>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Ajustes de Cuenta</span>
                 </div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-gray-50 flex items-center gap-3">
+                  Mi Perfil
+                  <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 dark:bg-slate-800">
+                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-900 dark:text-slate-100" />
+                  </div>
+                </h1>
               </div>
-              {!isEditing && (
-                <div className="mt-4 sm:mt-0 sm:ml-6 w-full sm:w-auto">
-                  <Button onClick={() => setIsEditing(true)} size="lg" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800">
-                    <Edit className="w-4 h-4 mr-2" />Editar Perfil
+            </div>
+
+            <div className="flex items-center gap-3">
+              {!isEditing ? (
+                <Button 
+                  onClick={() => setIsEditing(true)} 
+                  className="bg-slate-900 hover:bg-slate-800 shadow-xl hover:shadow-slate-900/20 transition-all duration-300 text-white font-black h-12 px-8 rounded-2xl"
+                >
+                  <Edit className="w-5 h-5 mr-3" />
+                  EDITAR PERFIL
+                </Button>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancel} 
+                    disabled={saving}
+                    className="h-12 border-slate-200 text-slate-600 font-black px-6 rounded-2xl hover:bg-slate-50 transition-all"
+                  >
+                    CANCELAR
+                  </Button>
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={saving}
+                    className="bg-slate-900 hover:bg-slate-800 shadow-xl hover:shadow-slate-900/20 text-white font-black h-12 px-8 rounded-2xl transition-all"
+                  >
+                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5 mr-3" />GUARDAR CAMBIOS</>}
                   </Button>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
 
-        {/* Tabs */}
+      <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+        {showSuccess && (
+          <div className="flex items-center gap-3 text-emerald-700 bg-emerald-50 p-4 rounded-2xl border border-emerald-100 animate-in fade-in slide-in-from-top-2 duration-300">
+            <CheckCircle className="w-5 h-5 shrink-0" />
+            <span className="text-xs font-bold uppercase tracking-tight">¡Perfil actualizado con éxito!</span>
+          </div>
+        )}
+
+        {/* Hero Section */}
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 rounded-[2.5rem] opacity-95" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent opacity-40 rounded-[2.5rem]" />
+          
+          <div className="relative p-6 sm:p-10 flex flex-col md:flex-row items-center gap-8">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-tr from-slate-500/20 to-white/20 rounded-full blur-sm group-hover:blur-md transition-all duration-500" />
+              <Avatar className="h-28 w-28 sm:h-36 sm:w-36 border-4 border-white/10 shadow-2xl relative">
+                <AvatarImage src={profile.avatar_url} alt={profile.first_name || profile.email} className="object-cover" />
+                <AvatarFallback className="bg-slate-800 text-white text-4xl font-black">
+                  {(profile.first_name || profile.email)?.charAt(0)?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <Button
+                size="sm"
+                onClick={handleAvatarClick}
+                className="absolute -bottom-1 -right-1 rounded-2xl h-10 w-10 p-0 bg-white hover:bg-slate-50 text-slate-950 shadow-xl transition-all active:scale-90"
+              >
+                <Camera className="h-4.5 w-4.5" />
+              </Button>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+            </div>
+
+            <div className="flex-1 text-center md:text-left space-y-3">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] opacity-80">Cuenta Verificada</p>
+                <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                  {profile.first_name && profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.first_name ? profile.first_name : 'Mi Perfil'}
+                </h2>
+                <div className="flex items-center justify-center md:justify-start gap-2 pt-1">
+                  <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
+                    <div className="w-1 h-1 bg-emerald-500 rounded-full mr-1.5 animate-pulse" />
+                    Estado Activo
+                  </Badge>
+                  {profile.is_business_owner && (
+                    <Badge variant="outline" className="bg-slate-500/10 border-slate-500/20 text-slate-600 font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
+                      Business Owner
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 pt-2">
+                <div className="flex items-center px-4 py-2 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm group/metric">
+                  <Mail className="w-3.5 h-3.5 text-slate-400 mr-2 group-hover/metric:text-white transition-colors" />
+                  <span className="text-[10px] font-bold text-white tracking-tight">{profile.email}</span>
+                </div>
+                <div className="flex items-center px-4 py-2 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm group/metric">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 mr-2 group-hover/metric:text-white transition-colors" />
+                  <span className="text-[10px] font-bold text-white tracking-tight">MIEMBRO DESDE {formatDate(profile.created_at).toUpperCase()}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden lg:block shrink-0">
+              <div className="text-right space-y-1 bg-white/5 p-5 rounded-[2rem] border border-white/10 backdrop-blur-sm">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest opacity-60">Última Actividad</p>
+                <div className="text-xl font-black text-white tracking-tighter leading-none">{formatDate(profile.updated_at).toUpperCase()}</div>
+                <div className="flex items-center justify-end gap-1.5 text-[9px] font-bold text-slate-400 uppercase pt-1">
+                  Sincronizado
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Premium Tabs Navigation */}
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
+          <TabsList className="flex items-center gap-1 p-1 bg-slate-100/50 rounded-2xl w-fit mb-6 border border-slate-200/60">
+            <TabsTrigger 
+              value="profile" 
+              className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm text-slate-400"
+            >
+              <User className="w-3.5 h-3.5 mr-2" />
               Perfil
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
+            <TabsTrigger 
+              value="settings" 
+              className="px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm text-slate-400"
+            >
+              <Settings className="w-3.5 h-3.5 mr-2" />
               Ajustes
             </TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
-          <TabsContent value="profile">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className={typography.h3}>Información Personal</CardTitle>
-                  {isEditing && (
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}><X className="w-4 h-4 mr-2" />Cancelar</Button>
-                      <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-800">
-                        {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</> : <><Save className="w-4 h-4 mr-2" />Guardar</>}
-                      </Button>
-                    </div>
-                  )}
+          <TabsContent value="profile" className="animate-in fade-in-50 duration-300 outline-none">
+            <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
+              <CardHeader className="p-5 border-b border-slate-50 flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardTitle className="text-base font-black text-slate-900 tracking-tight">Información Personal</CardTitle>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">DATOS DE CONTACTO Y PERFIL</p>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className={typography.label}>Nombre</Label>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</Label>
                     {isEditing ? (
-                      <>
+                      <div className="space-y-1">
                         <Input
-                          className={errors.first_name ? patterns.input.error : patterns.input.DEFAULT}
+                          className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.first_name ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
                           value={formData.first_name}
                           onChange={(e) => {
                             setFormData(prev => ({ ...prev, first_name: e.target.value }))
@@ -595,22 +660,24 @@ export default function ClientProfilePage() {
                           placeholder="Tu nombre"
                         />
                         {errors.first_name && (
-                          <p className="text-sm text-red-600 flex items-center gap-1">
-                            <XCircle className="w-4 h-4" />
-                            {errors.first_name}
+                          <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
+                            <XCircle className="w-3 h-3" /> {errors.first_name}
                           </p>
                         )}
-                      </>
+                      </div>
                     ) : (
-                      <p className="p-3 bg-slate-50 rounded-md border text-gray-800">{profile.first_name || 'No especificado'}</p>
+                      <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
+                        {profile.first_name || 'No especificado'}
+                      </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label className={typography.label}>Apellido</Label>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Apellido</Label>
                     {isEditing ? (
-                      <>
+                      <div className="space-y-1">
                         <Input
-                          className={errors.last_name ? patterns.input.error : patterns.input.DEFAULT}
+                          className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.last_name ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
                           value={formData.last_name}
                           onChange={(e) => {
                             setFormData(prev => ({ ...prev, last_name: e.target.value }))
@@ -619,26 +686,32 @@ export default function ClientProfilePage() {
                           placeholder="Tu apellido"
                         />
                         {errors.last_name && (
-                          <p className="text-sm text-red-600 flex items-center gap-1">
-                            <XCircle className="w-4 h-4" />
-                            {errors.last_name}
+                          <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
+                            <XCircle className="w-3 h-3" /> {errors.last_name}
                           </p>
                         )}
-                      </>
+                      </div>
                     ) : (
-                      <p className="p-3 bg-slate-50 rounded-md border text-gray-800">{profile.last_name || 'No especificado'}</p>
+                      <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
+                        {profile.last_name || 'No especificado'}
+                      </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label className={typography.label}>Email</Label>
-                    <p className="p-3 bg-slate-100 rounded-md border text-gray-500 cursor-not-allowed">{profile.email}</p>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Corporativo</Label>
+                    <div className="h-11 flex items-center px-4 bg-slate-100/50 rounded-xl border border-dashed border-slate-200 text-sm font-bold text-slate-400 cursor-not-allowed">
+                      <Mail className="w-3.5 h-3.5 mr-2 opacity-50" />
+                      {profile.email}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className={typography.label}>Teléfono</Label>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono Móvil</Label>
                     {isEditing ? (
-                      <>
+                      <div className="space-y-1">
                         <Input
-                          className={errors.phone ? patterns.input.error : patterns.input.DEFAULT}
+                          className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.phone ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
                           value={formData.phone}
                           onChange={(e) => {
                             setFormData(prev => ({ ...prev, phone: e.target.value }))
@@ -647,31 +720,55 @@ export default function ClientProfilePage() {
                           placeholder="+593 99 999 9999"
                         />
                         {errors.phone && (
-                          <p className="text-sm text-red-600 flex items-center gap-1">
-                            <XCircle className="w-4 h-4" />
-                            {errors.phone}
+                          <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
+                            <XCircle className="w-3 h-3" /> {errors.phone}
                           </p>
                         )}
-                      </>
+                      </div>
                     ) : (
-                      <p className="p-3 bg-slate-50 rounded-md border text-gray-800">{profile.phone || 'No especificado'}</p>
+                      <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
+                        <Phone className="w-3.5 h-3.5 mr-2 opacity-50" />
+                        {profile.phone || 'No especificado'}
+                      </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label className="font-medium">Tipo de Cuenta</Label>
-                    <div className="p-3 bg-slate-50 rounded-md border">
-                      <div className="flex items-center space-x-2">
-                        {profile.is_client && <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">Cliente</Badge>}
-                        {profile.is_business_owner && <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">Dueño de Negocio</Badge>}
+
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nivel de Acceso</Label>
+                    <div className="h-14 flex items-center justify-between px-5 bg-slate-950 rounded-2xl border border-slate-800 shadow-lg shadow-slate-900/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center">
+                          <Shield className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-white uppercase tracking-wider leading-none">Tipo de Cuenta</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">SISTEMA TU TURNO CLOUD</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {profile.is_client && (
+                          <Badge className="bg-emerald-500/20 border-emerald-500/30 text-emerald-400 font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
+                            CLIENTE
+                          </Badge>
+                        )}
+                        {profile.is_business_owner && (
+                          <Badge className="bg-white/10 border-white/20 text-white font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
+                            OWNER
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="pt-6 border-t">
-                  <h4 className="text-sm font-medium text-gray-900 mb-4">Información de la Cuenta</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div><strong>Creado:</strong> {formatDate(profile.created_at)}</div>
-                    <div><strong>Última actualización:</strong> {formatDate(profile.updated_at)}</div>
+
+                <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group/info">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1">Fecha de Registro</p>
+                    <p className="text-xs font-bold text-slate-700 group-hover/info:text-slate-950 transition-colors">{formatDate(profile.created_at)}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group/info">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1">Último Login</p>
+                    <p className="text-xs font-bold text-slate-700 group-hover/info:text-slate-950 transition-colors">{formatDate(profile.updated_at)}</p>
                   </div>
                 </div>
               </CardContent>
@@ -679,213 +776,166 @@ export default function ClientProfilePage() {
           </TabsContent>
 
           {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
-            {/* Notifications Card */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <CardTitle>Notificaciones</CardTitle>
-                    <CardDescription>Gestiona tus preferencias de notificaciones</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-gray-500" />
-                      <Label htmlFor="email-notifications" className="text-base font-medium">
-                        Notificaciones por Email
-                      </Label>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 ml-6">
-                      Recibe confirmaciones y recordatorios de tus citas
-                    </p>
-                  </div>
-                  <Switch 
-                    id="email-notifications"
-                    checked={settings.email_notifications} 
-                    onCheckedChange={(value) => updateSetting('email_notifications', value)} 
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-gray-500" />
-                      <Label htmlFor="promotional-messages" className="text-base font-medium">
-                        Mensajes Promocionales
-                      </Label>
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 ml-6">
-                      Ofertas exclusivas y descuentos especiales
-                    </p>
-                  </div>
-                  <Switch 
-                    id="promotional-messages"
-                    checked={settings.promotional_messages} 
-                    onCheckedChange={(value) => updateSetting('promotional_messages', value)} 
-                  />
-                </div>
-
-                <Separator />
-
-                <Button 
-                  onClick={handleSaveSettings} 
-                  disabled={settingsLoading} 
-                  className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800"
-                >
-                  {settingsLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Guardar Cambios
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Security Card */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <CardTitle>Seguridad</CardTitle>
-                    <CardDescription>Mantén tu cuenta segura</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Lock className="w-5 h-5 text-gray-500 mt-0.5" />
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-medium">Contraseña</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Actualiza tu contraseña regularmente para mantener tu cuenta segura
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <ChangePasswordCard
-                  userEmail={authState.user?.email || ''}
-                  userProvider={(authState.user as any)?.app_metadata?.provider || 'email'}
-                  inline={false}
-                  asButton={true}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Danger Zone Card */}
-            <Card className="border-red-200 dark:border-red-900">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-red-600 dark:text-red-400">Zona Peligrosa</CardTitle>
-                    <CardDescription>Acciones irreversibles</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <UserX className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
-                  <div className="flex-1 space-y-1">
-                    <h3 className="font-medium">Eliminar Cuenta</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Una vez eliminada tu cuenta, no hay vuelta atrás. Por favor, asegúrate de estar completamente seguro.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg p-4">
-                  <div className="flex items-start gap-2 mb-3">
-                    <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">
-                        Esta acción eliminará permanentemente:
-                      </p>
-                      <ul className="text-sm text-red-800 dark:text-red-300 space-y-1 list-disc list-inside">
-                        <li>Todos tus datos personales</li>
-                        <li>Tu historial completo de citas</li>
-                        <li>Todas tus preferencias y configuraciones</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="destructive" 
-                      disabled={deleting}
-                      className="w-full sm:w-auto"
-                    >
-                      {deleting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Eliminando...
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Eliminar Mi Cuenta
-                        </>
-                      )}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                          <AlertTriangle className="w-5 h-5 text-red-600" />
-                        </div>
-                        <AlertDialogTitle>
-                          ¿Estás absolutamente seguro?
-                        </AlertDialogTitle>
+          <TabsContent value="settings" className="space-y-4 animate-in fade-in-50 duration-300 outline-none pb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              <div className="lg:col-span-8 space-y-4">
+                {/* Notifications Card */}
+                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white">
+                  <CardHeader className="p-5 border-b border-slate-50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-slate-950 rounded-xl shadow-lg shadow-slate-900/10">
+                        <Bell className="w-3.5 h-3.5 text-white" />
                       </div>
-                      <AlertDialogDescription>
-                        Esta acción <strong>no se puede deshacer</strong>. Esto eliminará permanentemente tu cuenta y removerá todos tus datos de nuestros servidores.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="mt-4 gap-2">
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleDeleteAccount} 
-                        className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
+                      <div>
+                        <CardTitle className="text-base font-black text-slate-900 tracking-tight">Notificaciones</CardTitle>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">PREFERENCIAS DE COMUNICACIÓN</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-slate-50">
+                      <div className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group/row">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-slate-400 group-hover/row:text-slate-900 transition-colors" />
+                            <Label className="text-sm font-black text-slate-700">Email Notifications</Label>
+                          </div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-5.5">Alertas de citas y recordatorios</p>
+                        </div>
+                        <Switch 
+                          checked={settings.email_notifications} 
+                          onCheckedChange={(v) => updateSetting('email_notifications', v)}
+                          className="data-[state=checked]:bg-slate-950"
+                        />
+                      </div>
+
+                      <div className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group/row">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-3.5 h-3.5 text-slate-400 group-hover/row:text-slate-900 transition-colors" />
+                            <Label className="text-sm font-black text-slate-700">Promociones</Label>
+                          </div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-5.5">Ofertas y beneficios exclusivos</p>
+                        </div>
+                        <Switch 
+                          checked={settings.promotional_messages} 
+                          onCheckedChange={(v) => updateSetting('promotional_messages', v)}
+                          className="data-[state=checked]:bg-slate-950"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="p-5 bg-slate-50/80 border-t border-slate-100">
+                      <Button 
+                        onClick={handleSaveSettings} 
+                        disabled={settingsLoading} 
+                        className="h-10 px-6 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-black text-[10px] shadow-lg shadow-slate-950/20 active:scale-95 transition-all w-full sm:w-fit"
                       >
-                        Sí, eliminar mi cuenta
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardContent>
-            </Card>
+                        {settingsLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Save className="w-3.5 h-3.5 mr-2" />}
+                        GUARDAR PREFERENCIAS
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Security Card */}
+                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white">
+                  <CardHeader className="p-5 border-b border-slate-50">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-slate-950 rounded-xl shadow-lg shadow-slate-900/10">
+                        <Shield className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base font-black text-slate-900 tracking-tight">Seguridad</CardTitle>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">PROTECCIÓN DE CUENTA</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                        <Lock className="w-5 h-5 text-slate-900" />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <h3 className="text-sm font-black text-slate-900 uppercase">Credenciales</h3>
+                        <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
+                          La actualización periódica de tu contraseña garantiza la integridad de tu información y previene accesos no autorizados.
+                        </p>
+                        <div className="pt-3">
+                          <ChangePasswordCard
+                            userEmail={authState.user?.email || ''}
+                            userProvider={(authState.user as any)?.app_metadata?.provider || 'email'}
+                            inline={false}
+                            asButton={true}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Sidebar Settings */}
+              <div className="lg:col-span-4 space-y-4">
+                <Card className="border-rose-500/20 shadow-sm rounded-3xl overflow-hidden bg-white">
+                  <CardHeader className="p-5 bg-rose-50/50 border-b border-rose-100">
+                    <div className="flex items-center gap-3 text-rose-600">
+                      <div className="p-2 bg-rose-600 rounded-xl">
+                        <AlertTriangle className="w-3.5 h-3.5 text-white" />
+                      </div>
+                      <CardTitle className="text-base font-black uppercase tracking-tight">Zona de Riesgo</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-5 space-y-4">
+                    <p className="text-[11px] font-bold text-slate-500 leading-relaxed uppercase tracking-tighter">
+                      LA ELIMINACIÓN DE LA CUENTA ES PERMANENTE Y BORRARÁ TODO TU HISTORIAL Y DATOS.
+                    </p>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          disabled={deleting}
+                          className="h-11 w-full rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] shadow-lg shadow-rose-600/20 active:scale-95 transition-all"
+                        >
+                          {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-3.5 h-3.5 mr-2" /> ELIMINAR CUENTA</>}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="rounded-[2.5rem] border-0 p-8">
+                        <AlertDialogHeader>
+                          <div className="w-16 h-16 rounded-[2rem] bg-rose-50 flex items-center justify-center mb-4 mx-auto">
+                            <AlertTriangle className="w-8 h-8 text-rose-600" />
+                          </div>
+                          <AlertDialogTitle className="text-2xl font-black text-slate-900 text-center tracking-tighter">
+                            ¿CONFIRMAS LA ELIMINACIÓN?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="text-center text-slate-500 font-medium">
+                            Esta acción es <span className="text-rose-600 font-black uppercase tracking-widest">irreversible</span>. Perderás el acceso a todas tus citas y configuración.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter className="flex-col sm:flex-row gap-2 pt-4">
+                          <AlertDialogCancel className="h-11 rounded-2xl border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest flex-1">
+                            DETENER ACCIÓN
+                          </AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDeleteAccount} 
+                            className="h-11 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-widest flex-1 shadow-lg shadow-rose-600/20"
+                          >
+                            CONFIRMAR BORRADO
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 
         {/* Avatar Upload Dialog */}
         <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
-          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none">
             {selectedImageFile && !uploadingAvatar && (
               <ClientImageCropper
                 imageFile={selectedImageFile}
@@ -896,17 +946,17 @@ export default function ClientProfilePage() {
               />
             )}
             {uploadingAvatar && (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex items-center justify-center py-20 bg-white/10 backdrop-blur-md rounded-[2.5rem]">
                 <div className="text-center">
-                  <Loader2 className="w-12 h-12 animate-spin text-slate-900 mx-auto mb-4" />
-                  <p className="text-lg font-medium text-gray-900 mb-2">Subiendo foto...</p>
-                  <p className="text-sm text-gray-600">Por favor espera un momento</p>
+                  <Loader2 className="w-12 h-12 animate-spin text-white mx-auto mb-4" />
+                  <p className="text-lg font-black text-white mb-1 uppercase tracking-tighter">Subiendo foto...</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PROCESANDO TU IMAGEN</p>
                 </div>
               </div>
             )}
           </DialogContent>
         </Dialog>
-      </div>
+      </main>
     </div>
   )
 }

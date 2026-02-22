@@ -2,6 +2,8 @@
 
 Este documento define los principios de diseño aplicados al rediseño del Dashboard (Febrero 2024), con el objetivo de mantener una estética de alta gama, moderna y profesional ("Modern SaaS" / "Soft Minimalism").
 IMPORTANTE: Solo diseñar la interfaz de usuario, no la lógica de negocio.
+IMPORTANTE: Diseño responsivo adaptativo para dispositivos móviles.
+NO quitar nada que ya exista en el código.
 
 ## 1. Arquitectura de "Capas" y Elevación
 
@@ -28,11 +30,19 @@ Para los encabezados de sección, usar el patrón **"Eyebrow + Title"**:
 - **Título**: Grande, pesado y con poco espaciado entre letras para un look moderno.
   - _Clase:_ `text-2xl font-extrabold tracking-tight`
 
-### Layout del Header
+### Layout del Header (Consistente)
 
-- **Integrado**: Los encabezados de página no deben usar efectos de `sticky` o `backdrop-blur` por defecto. Deben estar integrados en el flujo de la página (`p-6` o `py-8`) para mantener una navegación limpia y aireada.
-- **Sin Sombras**: Evitar fondos sólidos con sombras en el header superior a menos que sea una vista de tabla muy larga donde la persistencia sea crítica.
-- **Full Width (100%)**: Las páginas del dashboard deben utilizar el 100% del ancho disponible para maximizar el espacio de trabajo. Evitar contenedores con `max-w-7xl` o similares. Usar `w-full` y `px-6` para mantener el aire en los laterales sin restringir el crecimiento del contenido.
+- **Estructura Requerida**:
+  - **Izquierda**: `Badge` tipo "Eyebrow" arriba de un `h1` (Título) acompañado de un mini-contenedor con icono.
+  - **Derecha**: Área de acciones con botones de estilo `rounded-2xl` y alto contraste (`bg-slate-900`).
+- **Integrado**: Los encabezados de página deben estar integrados en el flujo de la página (`p-6` o `py-8`) para mantener una navegación limpia.
+- **Sin Sombras**: Evitar fondos sólidos con sombras en el header superior.
+- **Alineación**: Usar `px-6` universal tanto para el Header como para el contenido principal `main` para garantizar una rejilla vertical perfecta.
+
+### Gestión de Alturas y Scroll
+
+- **No Hardcoded Heights**: Prohibido usar `h-[calc(100vh-120px)]` o similares para el contenedor principal.
+- **Flex-1 Strategy**: El layout principal del Dashboard ya provee un contenedor flexible. Usar `flex flex-col h-full overflow-hidden` en el contenedor raíz de la página y `flex-1` en el área de contenido para que se expanda automáticamente a llenar el espacio disponible (evitando huecos blancos).
 
 ## 3. Gráficos Minimalistas (Analytics)
 
@@ -66,6 +76,38 @@ Para formularios largos, las acciones principales deben estar siempre accesibles
 - **Estandarización**: Usar el naranja de marca con sombras profundas.
 - **Save Button**: `h-9 px-6 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-lg transition-all active:scale-95`.
 - **Ghost/Neutral**: `h-9 px-4 rounded-lg text-xs font-bold text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all`.
+
+## 8. Escalas de Tipografía y Espaciado (Standard SaaS)
+
+Para garantizar la "consistencia" absoluta entre las interfaces de Cliente y Negocio, usar estrictamente las siguientes clases:
+
+### Tipografía de Encabezado
+
+- **Título de Página (Main)**: `text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-gray-900`
+- **Título de Sección**: `text-2xl font-extrabold tracking-tight text-gray-900`
+- **Título de Card**: `text-lg font-black text-slate-900 tracking-tight`
+- **Eyebrow (Ceja)**: `text-[10px] uppercase tracking-[0.2em] font-extrabold text-slate-400 border-slate-200` (Estandarizar a Slate para un look más serio en dashboard).
+
+## 4. Integridad de Datos y Estado
+
+- **No Placeholders**: Eliminar textos como "Cliente Platinum", "Nivel Oro" o sistemas de puntos si no existen en la base de datos real.
+- **Badges de Estado**: Usar estados reales (ej: "Estado Activo") con animaciones de pulso (`pulse`) para indicar vida en la interfaz. Color: `emerald` para activo, `rose` para acción requerida.
+
+### Métricas y KPIs
+
+- **Valor Principal**: `text-2xl font-black tracking-tight text-gray-900`
+- **Etiqueta de Métrica**: `text-[10px] uppercase tracking-[0.1em] font-extrabold text-gray-400`
+- **Descripción/Nota**: `text-xs font-medium text-gray-500`
+
+### Espaciado y Contenedores
+
+- **Padding Global de Página**: `px-6 py-6`
+- **Padding de Card Estándar**: `p-6`
+- **Gap entre Cards**: `gap-6` (Desktop) / `gap-4` (Mobile)
+- **Radio de Borde (Rounding)**:
+  - Cards de Métricas: `rounded-[2rem]`
+  - Contenedores de Sección/Hero: `rounded-3xl`
+  - Botones/Inputs: `rounded-xl`
 
 ---
 

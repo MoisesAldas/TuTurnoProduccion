@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  Calendar, Clock, MapPin, User, Star, Plus, CheckCircle, XCircle, AlertCircle, History, Edit, DollarSign, Users, Briefcase, MoreVertical, Eye, Trash2, Search
+  Calendar, Clock, MapPin, User, Star, Plus, CheckCircle, XCircle, AlertCircle, History, Edit, DollarSign, Users, Briefcase, MoreVertical, Eye, Trash2, Search, Receipt
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
@@ -40,6 +40,7 @@ import Link from 'next/link'
 import ReviewModal from '@/components/ReviewModal'
 import { StatsCard } from '@/components/StatsCard'
 import { Pagination } from '@/components/Pagination'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import NotificationBell from '@/components/NotificationBell'
 
 // NOTE: All data fetching and state logic from the original file is preserved.
@@ -165,19 +166,59 @@ export default function ClientDashboard() {
   }
 
   const getStatusInfo = (status: Appointment['status']) => {
+    const baseClass = "transition-all duration-300 pointer-events-none border-0 font-black uppercase text-[10px] tracking-tight px-2.5 py-0.5"
     switch (status) {
-      case 'pending': return { label: 'Pendiente', variant: 'secondary', className: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-400 dark:border-yellow-800' }
-      case 'confirmed': return { label: 'Confirmada', variant: 'default', className: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:border-blue-800' }
-      case 'in_progress': return { label: 'En Progreso', variant: 'default', className: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/50 dark:text-purple-400 dark:border-purple-800' }
-      case 'completed': return { label: 'Completada', variant: 'default', className: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-400 dark:border-green-800' }
-      case 'cancelled': return { label: 'Cancelada', variant: 'destructive', className: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/50 dark:text-red-400 dark:border-red-800' }
-      case 'no_show': return { label: 'No asistió', variant: 'secondary', className: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700' }
-      default: return { label: status, variant: 'secondary', className: 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700' }
+      case 'pending': 
+        return { 
+          label: 'Pendiente', 
+          variant: 'outline' as const, 
+          className: `${baseClass} bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30` 
+        }
+      case 'confirmed': 
+        return { 
+          label: 'Confirmada', 
+          variant: 'outline' as const, 
+          className: `${baseClass} bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30` 
+        }
+      case 'in_progress': 
+        return { 
+          label: 'En Progreso', 
+          variant: 'outline' as const, 
+          className: `${baseClass} bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30` 
+        }
+      case 'completed': 
+        return { 
+          label: 'Completada', 
+          variant: 'outline' as const, 
+          className: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800` 
+        }
+      case 'cancelled': 
+        return { 
+          label: 'Cancelada', 
+          variant: 'outline' as const, 
+          className: `${baseClass} bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30` 
+        }
+      case 'no_show': 
+        return { 
+          label: 'No asistió', 
+          variant: 'outline' as const, 
+          className: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800` 
+        }
+      default: 
+        return { 
+          label: status, 
+          variant: 'outline' as const, 
+          className: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800` 
+        }
     }
   }
 
   const formatDate = (dateString: string) => {
     return formatSpanishDate(dateString, { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
+  const formatDateShort = (dateString: string) => {
+    return formatSpanishDate(dateString, { day: 'numeric', month: 'short' })
   }
 
   const formatTime = (timeString: string) => {
@@ -296,7 +337,7 @@ export default function ClientDashboard() {
     const Icon = statusIcons[status] || AlertCircle
 
     return (
-      <Badge className={`${statusInfo.className} gap-1`}>
+      <Badge variant={statusInfo.variant} className={`${statusInfo.className} gap-1.5 px-3 py-1 rounded-xl shadow-sm`}>
         <Icon className="h-3 w-3" />
         {statusInfo.label}
       </Badge>
@@ -320,24 +361,36 @@ export default function ClientDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Sticky Header */}
-      <div className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 sticky top-0 z-10">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-50">¡Hola, {authState.user?.first_name || 'Cliente'}!</h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Aquí tienes un resumen de tu actividad en TuTurno.
-              </p>
+      {/* Premium Integrated Header */}
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b dark:border-gray-800 sticky top-0 z-30">
+        <div className="w-full px-4 sm:px-6 py-4 lg:py-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-bold text-slate-500 border-slate-200">
+                    Resumen del Cliente
+                  </Badge>
+                  <span className="hidden sm:inline w-1 h-1 rounded-full bg-slate-300"></span>
+                  <span className="hidden sm:inline text-[10px] text-slate-400 font-medium">Dashboard</span>
+                </div>
+                <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-gray-50 flex items-center gap-2">
+                  ¡Hola, {authState.user?.first_name || 'Cliente'}!
+                  <span className="text-slate-400 text-lg wave-animation"></span>
+                </h1>
+              </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Button asChild className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 shadow-md hover:shadow-lg transition-all text-white">
+
+            <div className="flex items-center gap-3">
+              <Button asChild className="flex-1 sm:flex-none bg-slate-900 hover:bg-slate-800 shadow-md hover:shadow-lg transition-all text-white font-bold h-11 px-6 rounded-xl">
                 <Link href="/marketplace">
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-5 h-5 mr-2" />
                   Nueva Reserva
                 </Link>
               </Button>
-              <NotificationBell userId={authState.user?.id} />
+              <div className="flex items-center bg-gray-100/50 dark:bg-gray-800/50 p-1 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                 <NotificationBell userId={authState.user?.id} />
+              </div>
             </div>
           </div>
         </div>
@@ -356,217 +409,286 @@ export default function ClientDashboard() {
 
         {/* Upcoming Appointments */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-4">Tus Próximas Citas</h2>
+        
+          
           {upcomingAppointments.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcomingAppointments.map((apt, index) => (
-                <Card key={apt.id} className="hover:shadow-lg transition-all duration-200 group">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                       <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-50 line-clamp-1">{apt.business?.name}</CardTitle>
-                       <Badge className={`${getStatusInfo(apt.status).className} flex-shrink-0`}>{getStatusInfo(apt.status).label}</Badge>
+                <Card key={apt.id} className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 group rounded-[2.5rem] overflow-hidden bg-white dark:bg-gray-900 relative">
+                  {/* Premium Vertical Accent */}
+                  <div className="absolute left-0 top-12 bottom-12 w-1.5 bg-slate-900 rounded-r-full group-hover:h-20 transition-all duration-500"></div>
+                  
+                  <CardHeader className="pb-4 pt-8 px-8">
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                           <Badge variant="outline" className="text-[10px] uppercase tracking-widest font-black text-slate-500 border-slate-200 py-0 px-2">
+                             Reserva
+                           </Badge>
+                           <span className="text-[10px] font-bold text-slate-300">#{apt.id.slice(0, 6)}</span>
+                        </div>
+                        <CardTitle className="text-xl font-black text-gray-900 dark:text-gray-100 truncate group-hover:text-slate-900 transition-colors">
+                          {apt.business?.name}
+                        </CardTitle>
+                      </div>
+                      <Badge variant={getStatusInfo(apt.status).variant} className={`${getStatusInfo(apt.status).className} px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tight shadow-sm`}>
+                        {getStatusInfo(apt.status).label}
+                      </Badge>
                     </div>
-                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">{apt.appointment_services.map(s => s.service?.name).join(', ')}</p>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 mb-2">
+                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                         <Receipt className="w-3 h-3" /> Servicios
+                       </p>
+                       <p className="text-sm font-bold text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed italic">
+                         {apt.appointment_services.map(s => s.service?.name).join(', ')}
+                       </p>
+                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Calendar className="w-4 h-4 mr-3 text-slate-700"/>{formatDate(apt.appointment_date)}</div>
-                    <div className="flex items-center text-gray-600 dark:text-gray-400"><Clock className="w-4 h-4 mr-3 text-slate-700"/>{formatTime(apt.start_time)}</div>
-                    {apt.employee && <div className="flex items-center text-gray-600 dark:text-gray-400"><User className="w-4 h-4 mr-3 text-slate-700"/>{apt.employee.first_name} {apt.employee.last_name}</div>}
-                    {apt.business?.address && <div className="flex items-center text-gray-600 dark:text-gray-400"><MapPin className="w-4 h-4 mr-3 text-slate-700"/>{apt.business.address}</div>}
+                  
+                  <CardContent className="px-8 pb-6 py-2 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fecha</p>
+                        <div className="flex items-center text-sm font-black text-slate-900 dark:text-gray-100">
+                          <Calendar className="w-3.5 h-3.5 mr-2 text-slate-400" />
+                          {formatDateShort(apt.appointment_date)}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hora</p>
+                        <div className="flex items-center text-sm font-black text-slate-900 dark:text-gray-100">
+                          <Clock className="w-3.5 h-3.5 mr-2 text-slate-400" />
+                          {formatTime(apt.start_time)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-50 dark:border-gray-800">
+                      {apt.business?.address && (
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                            <MapPin className="w-3.5 h-3.5 text-slate-600" />
+                          </div>
+                          <p className="text-[11px] font-bold text-slate-500 leading-snug line-clamp-1 group-hover:line-clamp-none transition-all duration-300">
+                            {apt.business.address}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
-                  <div className="p-6 pt-3 flex items-center justify-between">
-                     <span className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatPrice(apt.total_price)}</span>
-                     <Button asChild variant="ghost" size="sm" className='bg-slate-900  hover:bg-slate-800 text-white'>
-                       <Link href={`/dashboard/client/appointments/${apt.id}`}><Edit className="w-4 h-4 mr-2 text-white"/>Ver Detalles</Link>
+
+                  <div className="px-8 pb-8 pt-2 flex items-center justify-between gap-4">
+                     <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
+                        <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                          {formatPrice(apt.total_price)}
+                        </span>
+                     </div>
+                     <Button asChild className="bg-slate-900 hover:bg-slate-800 shadow-lg hover:shadow-slate-900/20 transition-all text-white font-black rounded-2xl h-12 px-6">
+                       <Link href={`/dashboard/client/appointments/${apt.id}`}>
+                         Ver Detalles
+                       </Link>
                      </Button>
                   </div>
                 </Card>
               ))}
             </div>
           ) : (
-             <Card className="border-2 border-dashed border-gray-200 dark:border-gray-800">
-                <CardContent className="text-center py-16">
-                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Calendar className="w-10 h-10 text-slate-700 dark:text-slate-400" />
+             <Card className="border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[3rem] bg-white/30 backdrop-blur-sm">
+                <CardContent className="text-center py-20 px-6">
+                  <div className="relative inline-block mb-8">
+                    <div className="w-24 h-24 bg-slate-900 rounded-[2.5rem] flex items-center justify-center rotate-6 shadow-2xl">
+                      <Calendar className="w-12 h-12 text-white -rotate-6" />
+                    </div>
+                    <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white shadow-xl rounded-2xl flex items-center justify-center">
+                       <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                    </div>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Tu agenda está libre</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                    Explora miles de servicios y encuentra el perfecto para ti.
+                  <h3 className="text-2xl font-black text-gray-900 dark:text-gray-50 mb-3 tracking-tight">Tu agenda está libre</h3>
+                  <p className="text-slate-500 dark:text-gray-400 mb-10 max-w-sm mx-auto font-bold leading-relaxed">
+                    Descubre nuevos negocios y reserva servicios que se adapten a tu estilo de vida.
                   </p>
-                   <Button asChild className="bg-slate-900 hover:bg-slate-800 shadow-md hover:shadow-lg transition-all text-white">
+                   <Button asChild size="lg" className="bg-slate-900 hover:bg-slate-800 shadow-2xl hover:scale-105 transition-all text-white font-black px-10 rounded-2xl h-14">
                         <Link href="/marketplace">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Explorar Servicios
+                          <Plus className="w-5 h-5 mr-3" />
+                          Explorar el Marketplace
                         </Link>
-                      </Button>
+                   </Button>
                 </CardContent>
-              </Card>
+             </Card>
           )}
         </div>
 
-        {/* Recent Activity */}
+        {/* Recent Activity with DataTable */}
         {recentActivity.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Actividad Reciente</h2>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-8 bg-slate-900 rounded-full"></div>
+                <h2 className="text-2xl font-black tracking-tight text-gray-900 dark:text-gray-50">Actividad Reciente</h2>
+              </div>
+              <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded-lg">
+                {filteredActivity.length} Registros
+              </Badge>
+            </div>
 
-            {/* Search Bar */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar por negocio, servicio, profesional o estado..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+            <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden rounded-[2rem]">
+              <CardContent className="p-0">
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+                  <div className="relative group max-w-md">
+                    <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 transition-colors group-focus-within:text-slate-900" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar por negocio, servicio, profesional o estado..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-11 h-12 bg-gray-50 border-gray-100 dark:bg-gray-800 dark:border-gray-700 rounded-2xl focus:ring-slate-900/10 focus:border-slate-900 transition-all text-sm font-medium"
+                    />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Activity Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Lista de Citas</CardTitle>
-                <CardDescription>
-                  Mostrando {startIndex + 1}-{Math.min(endIndex, filteredActivity.length)} de {filteredActivity.length} citas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fecha y Hora</TableHead>
-                      <TableHead>Negocio</TableHead>
-                      <TableHead>Servicios</TableHead>
-                      <TableHead>Profesional</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedActivity.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
-                          No se encontraron citas
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-gray-50/50 dark:bg-gray-800/50">
+                      <TableRow className="hover:bg-transparent border-b border-gray-100 dark:border-gray-800">
+                        <TableHead className="font-bold text-slate-500 py-5 px-6 text-[11px] uppercase tracking-wider">Fecha y Hora</TableHead>
+                        <TableHead className="font-bold text-slate-500 py-5 px-6 text-[11px] uppercase tracking-wider">Negocio</TableHead>
+                        <TableHead className="font-bold text-slate-500 py-5 px-6 text-[11px] uppercase tracking-wider hidden md:table-cell">Servicios</TableHead>
+                        <TableHead className="font-bold text-slate-500 py-5 px-6 text-[11px] uppercase tracking-wider hidden lg:table-cell">Profesional</TableHead>
+                        <TableHead className="font-bold text-slate-500 py-5 px-6 text-[11px] uppercase tracking-wider">Estado</TableHead>
+                        <TableHead className="font-bold text-slate-500 py-5 px-6 text-[11px] uppercase tracking-wider">Total</TableHead>
+                        <TableHead className="text-right font-bold text-slate-500 py-5 px-6 text-[11px] uppercase tracking-wider">Acciones</TableHead>
                       </TableRow>
-                    ) : (
-                      paginatedActivity.map((appointment) => {
-                        const aptDate = parseDateString(appointment.appointment_date)
-                        const [hours, minutes] = appointment.start_time.split(':').map(Number)
-                        aptDate.setHours(hours, minutes)
-                        const canCancel = ['pending', 'confirmed'].includes(appointment.status)
-                        const canReview = appointment.status === 'completed' && !appointment.has_review
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedActivity.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-20 text-gray-500">
+                            No se encontraron citas
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedActivity.map((appointment) => {
+                          const canCancel = ['pending', 'confirmed'].includes(appointment.status)
+                          const canReview = appointment.status === 'completed' && !appointment.has_review
 
-                        return (
-                          <TableRow key={appointment.id}>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-sm font-medium">
-                                  <Calendar className="h-3 w-3 text-muted-foreground" />
-                                  {formatDate(appointment.appointment_date)}
+                          return (
+                            <TableRow key={appointment.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group">
+                              <TableCell className="py-4 px-6 whitespace-nowrap min-w-[180px]">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 text-sm font-black text-gray-900 dark:text-gray-100">
+                                    <Calendar className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-900 transition-colors" />
+                                    {formatDate(appointment.appointment_date)}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-tight">
+                                    <Clock className="h-3 w-3" />
+                                    {formatTime(appointment.start_time)}
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="font-medium">{appointment.business?.name}</div>
-                              {appointment.business?.address && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                  <MapPin className="h-3 w-3" />
-                                  <span className="line-clamp-1">{appointment.business.address}</span>
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="max-w-[200px]">
-                                <span className="text-sm line-clamp-2">
-                                  {appointment.appointment_services.map(s => s.service?.name).join(', ')}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {appointment.employee ? (
-                                <div className="flex items-center gap-2">
-                                  <User className="h-3 w-3 text-muted-foreground" />
-                                  <span className="text-sm">
-                                    {appointment.employee.first_name} {appointment.employee.last_name}
+                              </TableCell>
+                              <TableCell className="py-4 px-6 min-w-[100px] max-w-[120px]">
+                                <div className="font-black text-gray-900 dark:text-gray-100 truncate">{appointment.business?.name}</div>
+                                {appointment.business?.address && (
+                                  <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 mt-1 line-clamp-1">
+                                    <MapPin className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">{appointment.business.address}</span>
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell className="py-4 px-6 hidden md:table-cell min-w-[140px]">
+                                <div className="max-w-[180px]">
+                                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 line-clamp-1">
+                                    {appointment.appointment_services.map(s => s.service?.name).join(', ')}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase block mt-0.5">
+                                    {appointment.appointment_services.length} Servicio{appointment.appointment_services.length > 1 ? 's' : ''}
                                   </span>
                                 </div>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">Sin asignar</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {getStatusBadge(appointment.status)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="font-semibold">
-                                {formatPrice(appointment.total_price)}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem asChild>
-                                    <Link href={`/dashboard/client/appointments/${appointment.id}`} className="cursor-pointer">
-                                      <Eye className="mr-2 h-4 w-4" />
-                                      Ver Detalles
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  {canReview && (
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        setSelectedAppointment(appointment)
-                                        setReviewModalOpen(true)
-                                      }}
-                                      className="cursor-pointer"
-                                    >
-                                      <Star className="mr-2 h-4 w-4" />
-                                      Escribir Reseña
+                              </TableCell>
+                              <TableCell className="py-4 px-6 text-sm min-w-[140px]">
+                                {appointment.employee ? (
+                                  <div className="flex items-center gap-2.5">
+                                    <Avatar className="h-7 w-7 border border-gray-200">
+                                      <AvatarImage src={appointment.employee.avatar_url} />
+                                      <AvatarFallback className="bg-slate-900 text-white text-[10px]">
+                                        {appointment.employee.first_name[0]}{appointment.employee.last_name[0]}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-bold text-gray-800 dark:text-gray-200">
+                                      {appointment.employee.first_name}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px] font-bold text-slate-400 border-slate-200">Sin asignar</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                {getStatusBadge(appointment.status)}
+                              </TableCell>
+                              <TableCell className="py-4 px-6">
+                                <div className="font-black text-slate-900 dark:text-slate-100 text-base">
+                                  {formatPrice(appointment.total_price)}
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4 px-6 text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-52 rounded-2xl p-1.5 shadow-xl border-gray-200">
+                                    <DropdownMenuItem asChild className="rounded-xl focus:bg-slate-50 cursor-pointer">
+                                      <Link href={`/dashboard/client/appointments/${appointment.id}`}>
+                                        <Eye className="mr-2 h-4 w-4 text-slate-600" />
+                                        <span className="font-bold">Ver Detalles</span>
+                                      </Link>
                                     </DropdownMenuItem>
-                                  )}
-                                  {canCancel && (
-                                    <>
-                                      <DropdownMenuSeparator />
+                                    {canReview && (
                                       <DropdownMenuItem
                                         onClick={() => {
                                           setSelectedAppointment(appointment)
-                                          setShowCancelDialog(true)
+                                          setReviewModalOpen(true)
                                         }}
-                                        className="cursor-pointer text-red-600 focus:text-red-600"
+                                        className="rounded-xl focus:bg-amber-50 cursor-pointer text-amber-700"
                                       >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Cancelar Cita
+                                        <Star className="mr-2 h-4 w-4" />
+                                        <span className="font-bold">Escribir Reseña</span>
                                       </DropdownMenuItem>
-                                    </>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })
-                    )}
-                  </TableBody>
-                </Table>
+                                    )}
+                                    {canCancel && (
+                                      <>
+                                        <DropdownMenuSeparator className="my-1.5" />
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            setSelectedAppointment(appointment)
+                                            setShowCancelDialog(true)
+                                          }}
+                                          className="rounded-xl focus:bg-red-50 cursor-pointer text-red-600"
+                                        >
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          <span className="font-bold">Cancelar Cita</span>
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
 
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
+                <div className="p-6 bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>

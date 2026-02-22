@@ -17,7 +17,7 @@ import {
   Calendar as CalendarIcon, Clock, MapPin, Phone,
   User, Star, Edit, Trash2, CheckCircle,
   XCircle, MoreVertical, Search, AlertTriangle,
-  Store, Receipt, CreditCard, Hash
+  Store, Receipt, CreditCard, Hash, PlusSquare
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
@@ -295,14 +295,15 @@ export default function ClientAppointmentsPage() {
   }
 
   const getStatusInfo = (status: string) => {
+    const baseClass = "transition-all duration-300 pointer-events-none border-0 font-black uppercase text-[10px] tracking-tight hover:opacity-100"
     switch (status) {
-      case 'pending': return { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle }
-      case 'confirmed': return { label: 'Confirmada', color: 'bg-green-100 text-green-800', icon: CheckCircle }
-      case 'in_progress': return { label: 'En progreso', color: 'bg-blue-100 text-blue-800', icon: Clock }
-      case 'completed': return { label: 'Completada', color: 'bg-blue-100 text-blue-800', icon: CheckCircle }
-      case 'cancelled': return { label: 'Cancelada', color: 'bg-red-100 text-red-800', icon: XCircle }
-      case 'no_show': return { label: 'No asistió', color: 'bg-gray-100 text-gray-800', icon: XCircle }
-      default: return { label: status, color: 'bg-gray-100 text-gray-800', icon: AlertTriangle }
+      case 'pending': return { label: 'Pendiente', color: `${baseClass} bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 hover:bg-amber-50`, icon: AlertTriangle }
+      case 'confirmed': return { label: 'Confirmada', color: `${baseClass} bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 hover:bg-emerald-50`, icon: CheckCircle }
+      case 'in_progress': return { label: 'En progreso', color: `${baseClass} bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 hover:bg-blue-50`, icon: Clock }
+      case 'completed': return { label: 'Completada', color: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100`, icon: CheckCircle }
+      case 'cancelled': return { label: 'Cancelada', color: `${baseClass} bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 hover:bg-rose-50`, icon: XCircle }
+      case 'no_show': return { label: 'No asistió', color: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100`, icon: XCircle }
+      default: return { label: status, color: `${baseClass} bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100`, icon: AlertTriangle }
     }
   }
 
@@ -379,31 +380,66 @@ export default function ClientAppointmentsPage() {
   }
 
   return (
-    <>
-      <div className="h-full flex flex-col lg:flex-row overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Premium Integrated Header */}
+      <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 flex-shrink-0 z-30 shadow-sm">
+        <div className="w-full px-6 py-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-widest font-black text-slate-400 border-slate-200 px-2 py-0">
+                    Panel Cliente
+                  </Badge>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-200"></span>
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Gestión de Citas</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-gray-50 flex items-center gap-3">
+                  Mis Citas
+                  <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-100 dark:bg-slate-800">
+                    <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-900 dark:text-slate-100" />
+                  </div>
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button asChild className="flex-1 sm:flex-none bg-slate-900 hover:bg-slate-800 shadow-xl hover:shadow-slate-900/20 transition-all duration-300 text-white font-black h-12 px-8 rounded-2xl">
+                <Link href="/marketplace">
+                  <PlusSquare className="w-5 h-5 mr-3" />
+                  Nueva Reserva
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-gray-50">
         {/* Left Panel - Appointments List */}
         <div className="w-full lg:w-96 border-r bg-white flex flex-col overflow-hidden">
           {/* Search and Filters */}
-          <div className="p-4 border-b space-y-3 flex-shrink-0">
+          <div className="p-4 border-b space-y-4 flex-shrink-0 bg-slate-50/30">
             <div className="relative group">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 transition-colors group-focus-within:text-slate-700" />
+              <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 transition-all group-focus-within:text-slate-900 group-focus-within:scale-110" />
               <Input
                 type="text"
-                placeholder="Buscar negocios..."
+                placeholder="Buscar por negocio, servicio..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-50 border-gray-200 focus:bg-white focus:border-slate-700 focus:ring-2 focus:ring-slate-700/20 transition-all duration-200"
+                className="pl-11 h-11 bg-white border-slate-200 rounded-2xl focus:border-slate-900 focus:ring-slate-900/5 transition-all duration-300 shadow-sm font-medium"
               />
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-2 px-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <style dangerouslySetInnerHTML={{ __html: '.scrollbar-hide::-webkit-scrollbar { display: none; }' }} />
               <Button
                 variant={filter === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter('all')}
-                className={`flex-shrink-0 rounded-full transition-all duration-200 ${
+                className={`flex-shrink-0 rounded-xl px-4 h-8 font-black uppercase text-[9px] tracking-wider transition-all duration-300 ${
                   filter === 'all'
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-500/25 hover:shadow-lg hover:bg-slate-800'
-                    : 'hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
+                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800'
+                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Todas
@@ -412,10 +448,10 @@ export default function ClientAppointmentsPage() {
                 variant={filter === 'upcoming' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter('upcoming')}
-                className={`flex-shrink-0 rounded-full transition-all duration-200 ${
+                className={`flex-shrink-0 rounded-xl px-4 h-8 font-black uppercase text-[9px] tracking-wider transition-all duration-300 ${
                   filter === 'upcoming'
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-500/25 hover:shadow-lg hover:bg-slate-800'
-                    : 'hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
+                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800'
+                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Próximas
@@ -424,10 +460,10 @@ export default function ClientAppointmentsPage() {
                 variant={filter === 'past' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter('past')}
-                className={`flex-shrink-0 rounded-full transition-all duration-200 ${
+                className={`flex-shrink-0 rounded-xl px-4 h-8 font-black uppercase text-[9px] tracking-wider transition-all duration-300 ${
                   filter === 'past'
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-500/25 hover:shadow-lg hover:bg-slate-800'
-                    : 'hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
+                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800'
+                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Pasadas
@@ -436,10 +472,10 @@ export default function ClientAppointmentsPage() {
                 variant={filter === 'cancelled' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setFilter('cancelled')}
-                className={`flex-shrink-0 rounded-full transition-all duration-200 ${
+                className={`flex-shrink-0 rounded-xl px-4 h-8 font-black uppercase text-[9px] tracking-wider transition-all duration-300 ${
                   filter === 'cancelled'
-                    ? 'bg-slate-900 text-white shadow-md shadow-slate-500/25 hover:shadow-lg hover:bg-slate-800'
-                    : 'hover:bg-slate-100 hover:text-slate-900 hover:border-slate-300'
+                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800'
+                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Canceladas
@@ -475,49 +511,66 @@ export default function ClientAppointmentsPage() {
                         setShowMobileDetailsModal(true)
                       }
                     }}
-                    className={`w-full p-4 text-left transition-all duration-200 ${
+                    className={`w-full p-4 text-left transition-all duration-500 relative group overflow-hidden border-b border-gray-50 dark:border-gray-800 last:border-0 ${
                       selectedAppointment?.id === appointment.id
-                        ? 'bg-slate-100 border-l-4 border-l-slate-900 shadow-sm'
-                        : 'hover:bg-gray-50/80 hover:shadow-sm'
+                        ? 'bg-slate-50 dark:bg-slate-800/40'
+                        : 'bg-white dark:bg-gray-900 hover:bg-slate-50/50 dark:hover:bg-slate-800/20'
                     }`}
                   >
-                    <div className="flex gap-3">
+                    {/* Selected Indicator */}
+                    {selectedAppointment?.id === appointment.id && (
+                      <div className="absolute left-0 top-3 bottom-3 w-1.5 bg-slate-900 rounded-r-full shadow-[2px_0_10px_rgba(15,23,42,0.1)] transition-all duration-500"></div>
+                    )}
+                    
+                    <div className="flex gap-4">
                       {/* Business Photo */}
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 flex-shrink-0 ring-1 ring-gray-200/50 shadow-sm">
+                      <div className="w-16 h-16 rounded-[1.25rem] overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 border border-slate-200/50 dark:border-slate-700/50 shadow-sm group-hover:shadow-md transition-all duration-500 group-hover:scale-[1.03]">
                         {appointment.business?.cover_photo_url ? (
                           <img
                             src={appointment.business.cover_photo_url}
                             alt={appointment.business.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                            <Store className="w-6 h-6 text-slate-400" />
+                          <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                            <Store className="w-6 h-6 text-slate-400 group-hover:text-slate-600 transition-colors" />
                           </div>
                         )}
                       </div>
 
                       {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate mb-0.5">
-                          {appointment.business?.name || 'Negocio'}
-                        </h3>
-                        <p className="text-sm text-gray-500 mb-1.5">
-                          {formatDateShort(appointment.appointment_date)} a las {appointment.start_time.slice(0, 5)}
-                        </p>
+                      <div className="flex-1 min-w-0 py-0.5">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className={`font-black tracking-tight truncate transition-all duration-300 ${
+                            selectedAppointment?.id === appointment.id ? 'text-slate-900 dark:text-white text-base' : 'text-gray-900 dark:text-gray-100 text-[15px]'
+                          }`}>
+                            {appointment.business?.name || 'Negocio'}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5">
+                          <div className="flex items-center gap-1">
+                            <CalendarIcon className="w-3 h-3 text-slate-400" />
+                            {formatDateShort(appointment.appointment_date)}
+                          </div>
+                          <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            {appointment.start_time.slice(0, 5)}
+                          </div>
+                        </div>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-slate-900">
+                          <p className="text-[15px] font-black text-slate-900 dark:text-white tracking-tighter">
                             {formatPrice(appointment.total_price)}
                           </p>
-                          <p className="text-xs text-gray-400">
-                            {appointment.appointment_services.length} servicio{appointment.appointment_services.length > 1 ? 's' : ''}
-                          </p>
+                          <Badge variant="outline" className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-[9px] font-black uppercase px-2 py-0 border-0 group-hover:bg-white dark:group-hover:bg-slate-800 transition-colors">
+                            {appointment.appointment_services.length} Serv.
+                          </Badge>
                         </div>
                       </div>
                     </div>
                   </button>
                 ))}
-              </div>
+            </div>
             )}
           </div>
         </div>
@@ -526,35 +579,45 @@ export default function ClientAppointmentsPage() {
         <div className="hidden lg:flex flex-1 flex-col overflow-hidden bg-gray-50">
           {selectedAppointment ? (
             <div className="flex flex-col h-full">
-              {/* Hero Header with Cover Image */}
-              <div className="relative h-80 flex-shrink-0 overflow-hidden">
+              {/* Premium Hero Header */}
+              <div className="relative h-72 flex-shrink-0 overflow-hidden shadow-2xl">
                 {/* Background Image */}
                 {selectedAppointment.business?.cover_photo_url ? (
                   <img
                     src={selectedAppointment.business.cover_photo_url}
                     alt={selectedAppointment.business.name}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover scale-105"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950"></div>
                 )}
                 
-                {/* Overlay Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+                {/* Premium Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
                 
                 {/* Content */}
-                <div className="absolute inset-0 flex flex-col justify-end p-6">
-                  <div className="flex items-end justify-between">
+                <div className="absolute inset-x-0 bottom-0 p-8">
+                  <div className="flex items-end justify-between gap-6">
                     <div className="flex-1">
-                      <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                         <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-sm">
+                            <Store className="w-4 h-4 text-white" />
+                         </div>
+                         <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] drop-shadow-sm">Detalle de Reserva</p>
+                      </div>
+                      <h1 className="text-4xl font-black text-white mb-3 tracking-tighter drop-shadow-2xl">
                         {selectedAppointment.business?.name || 'Negocio'}
                       </h1>
-                      <p className="text-sm text-white/90 drop-shadow">
-                        ID: #{selectedAppointment.id.slice(0, 8)}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <p className="text-xs text-white/70 font-bold tracking-wide">
+                          REF ID: <span className="text-white font-black">{selectedAppointment.id.slice(0, 8).toUpperCase()}</span>
+                        </p>
+                        <span className="w-1 h-1 rounded-full bg-white/30"></span>
+                        <p className="text-xs text-white/70 font-bold">Reserva realizada el {new Date(selectedAppointment.created_at).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <Badge className={`${getStatusInfo(selectedAppointment.status).color} text-sm px-3 py-1.5 font-medium rounded-full shadow-lg`}>
-                      {React.createElement(getStatusInfo(selectedAppointment.status).icon, { className: 'w-4 h-4 mr-1.5 inline' })}
+                    <Badge variant="outline" className={`${getStatusInfo(selectedAppointment.status).color} text-[11px] px-5 py-2.5 font-black uppercase tracking-widest border-0 shadow-2xl backdrop-blur-md bg-white/10 dark:bg-black/20 rounded-2xl ring-1 ring-white/20`}>
+                      {React.createElement(getStatusInfo(selectedAppointment.status).icon, { className: 'w-4 h-4 mr-2' })}
                       {getStatusInfo(selectedAppointment.status).label}
                     </Badge>
                   </div>
@@ -562,184 +625,199 @@ export default function ClientAppointmentsPage() {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Key Information - 5 Column Grid */}
-                <div className="grid grid-cols-5 gap-3">
-                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <CalendarIcon className="w-6 h-6 text-white" />
+              <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-slate-50/50">
+                {/* Metrics Grid - 5 Columns */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+                  <Card className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-8px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden group bg-white">
+                    <CardContent className="p-6 text-center">
+                      <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-lg shadow-slate-900/20">
+                        <CalendarIcon className="w-7 h-7 text-white" />
                       </div>
-                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Fecha</p>
-                      <p className="text-sm font-bold text-gray-900 leading-tight capitalize">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Fecha</p>
+                      <p className="text-[15px] font-black text-slate-900 leading-tight capitalize">
                         {formatDateShort(selectedAppointment.appointment_date)}
                       </p>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <Clock className="w-6 h-6 text-white" />
+                  <Card className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-8px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden group bg-white">
+                    <CardContent className="p-6 text-center">
+                      <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all duration-500 group-hover:scale-110 group-hover:-rotate-3 shadow-lg shadow-slate-900/20">
+                        <Clock className="w-7 h-7 text-white" />
                       </div>
-                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Hora</p>
-                      <p className="text-sm font-bold text-gray-900">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Hora</p>
+                      <p className="text-[15px] font-black text-slate-900">
                         {selectedAppointment.start_time.slice(0, 5)}
                       </p>
-                      <p className="text-xs text-slate-600 mt-1">
-                        {getDuration(selectedAppointment.start_time, selectedAppointment.end_time)}
-                      </p>
+                      <div className="inline-flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full mt-3">
+                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">
+                          {getDuration(selectedAppointment.start_time, selectedAppointment.end_time)}
+                        </span>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <CardContent className="p-5 text-center">
-                      <Avatar className="w-12 h-12 mx-auto mb-3 border-2 border-slate-200">
+                  <Card className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-8px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden group bg-white">
+                    <CardContent className="p-6 text-center">
+                      <Avatar className="w-14 h-14 mx-auto mb-4 border-2 border-slate-100 ring-4 ring-slate-50 transition-all duration-500 group-hover:scale-110 shadow-md">
                         <AvatarImage src={selectedAppointment.employee?.avatar_url} alt={selectedAppointment.employee?.first_name} />
-                        <AvatarFallback className="bg-slate-900 text-white">
-                          <User className="w-6 h-6" />
+                        <AvatarFallback className="bg-slate-900 text-white font-black text-lg">
+                          {selectedAppointment.employee?.first_name?.[0]}{selectedAppointment.employee?.last_name?.[0]}
                         </AvatarFallback>
                       </Avatar>
-                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Profesional</p>
-                      <p className="text-sm font-bold text-gray-900 leading-tight">
-                        {selectedAppointment.employee?.first_name} {selectedAppointment.employee?.last_name}
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Profesional</p>
+                      <p className="text-[15px] font-black text-slate-900 leading-tight line-clamp-1">
+                        {selectedAppointment.employee?.first_name}
                       </p>
                       {selectedAppointment.employee?.position && (
-                        <p className="text-xs text-slate-600 mt-1">{selectedAppointment.employee.position}</p>
+                        <p className="text-[10px] text-slate-500 font-bold mt-1.5 line-clamp-1 uppercase tracking-tighter">{selectedAppointment.employee.position}</p>
                       )}
                     </CardContent>
                   </Card>
 
                   <Card 
-                    className="border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                    className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-8px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden group cursor-pointer bg-white"
                     onClick={() => setShowMapModal(true)}
                   >
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <MapPin className="w-6 h-6 text-white" />
+                    <CardContent className="p-6 text-center">
+                      <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-slate-900/20">
+                        <MapPin className="w-7 h-7 text-white" />
                       </div>
-                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Ubicación</p>
-                      <p className="text-sm font-bold text-gray-900 leading-tight">
-                        Ver mapa
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Ubicación</p>
+                      <p className="text-[15px] font-black text-slate-900 group-hover:underline underline-offset-4">
+                        Ver Mapa
                       </p>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-3">
-                        <Receipt className="w-6 h-6 text-white" />
+                  <Card className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-8px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden group bg-white">
+                    <CardContent className="p-6 text-center">
+                      <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-all duration-500 group-hover:scale-110 group-hover:-rotate-6 shadow-lg shadow-slate-900/20">
+                        <Receipt className="w-7 h-7 text-white" />
                       </div>
-                      <p className="text-xs font-bold text-slate-600 uppercase tracking-wide mb-2">Servicios</p>
-                      <p className="text-sm font-bold text-gray-900 leading-tight">
-                        {selectedAppointment.appointment_services.length} servicio{selectedAppointment.appointment_services.length > 1 ? 's' : ''}
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Servicios</p>
+                      <p className="text-[15px] font-black text-slate-900 leading-tight">
+                        {selectedAppointment.appointment_services.length} Total
                       </p>
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Action Buttons - Dynamic Layout */}
+                {/* Action Buttons - Premium Dynamic Layout */}
                 {(() => {
                   const buttons = []
                   
-                  // Gestionar Cita - Slate
+                  // Gestionar Cita - Slate 900
                   if (canModify(selectedAppointment)) {
                     buttons.push(
                       <Button
                         key="manage"
                         asChild
-                        className="bg-slate-900 hover:bg-slate-800 text-white h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                        className="bg-slate-900 hover:bg-slate-800 text-white h-14 text-base font-black shadow-xl hover:shadow-slate-900/20 transition-all duration-300 rounded-2xl"
                       >
                         <Link href={`/dashboard/client/appointments/${selectedAppointment.id}`}>
-                          <Edit className="w-5 h-5 mr-2" />
+                          <Edit className="w-5 h-5 mr-3" />
                           Gestionar cita
                         </Link>
                       </Button>
                     )
                   }
                   
-                  // Llamar al Negocio - Blue
+                  // Llamar al Negocio - Blue 600
                   if (selectedAppointment.business?.phone) {
                     buttons.push(
                       <Button
                         key="call"
                         asChild
-                        className="bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-14 text-base font-black shadow-xl hover:shadow-blue-600/20 transition-all duration-300 rounded-2xl"
                       >
                         <a href={`tel:${selectedAppointment.business.phone}`}>
-                          <Phone className="w-5 h-5 mr-2" />
-                          Llamar
+                          <Phone className="w-5 h-5 mr-3" />
+                          Llamar ahora
                         </a>
                       </Button>
                     )
                   }
                   
-                  // Dejar Reseña - Amber
+                  // Dejar Reseña - Amber 600
                   if (selectedAppointment.status === 'completed' && !selectedAppointment.has_review) {
                     buttons.push(
                       <Button
                         key="review"
                         onClick={() => setShowReviewModal(true)}
-                        className="bg-amber-600 hover:bg-amber-700 text-white h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                        className="bg-amber-600 hover:bg-amber-700 text-white h-14 text-base font-black shadow-xl hover:shadow-amber-600/20 transition-all duration-300 rounded-2xl"
                       >
-                        <Star className="w-5 h-5 mr-2" />
-                        Calificar
+                        <Star className="w-5 h-5 mr-3" />
+                        Calificar servicio
                       </Button>
                     )
                   }
                   
-                  // Determine grid class based on button count
-                  const gridClass = buttons.length === 1 
-                    ? 'grid grid-cols-1 gap-3' 
-                    : buttons.length === 2 
-                    ? 'grid grid-cols-2 gap-3' 
-                    : 'grid grid-cols-3 gap-3'
+                  const count = buttons.length
+                  const gridClass = count === 1 ? 'grid grid-cols-1' : count === 2 ? 'grid grid-cols-2 gap-4' : 'grid grid-cols-3 gap-4'
                   
                   return <div className={gridClass}>{buttons}</div>
                 })()}
 
-                {/* Services Summary - Full Width */}
-                <Card className="border-slate-200 shadow-sm">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <Receipt className="w-5 h-5 text-slate-700" />
-                      Resumen de Servicios
-                    </h3>
-                    <div className="space-y-3">
+                {/* Services Summary - Premium Card */}
+                <Card className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
+                  <CardContent className="p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-black text-slate-900 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                          <Receipt className="w-5 h-5 text-slate-900" />
+                        </div>
+                        Detalle de Servicios
+                      </h3>
+                      <Badge variant="outline" className="bg-slate-50 text-slate-400 border-slate-200 font-black px-3 py-1 rounded-lg uppercase tracking-tighter text-[10px]">
+                        {selectedAppointment.appointment_services.length} items
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-4">
                       {selectedAppointment.appointment_services.map((service, index) => (
-                        <div key={index} className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
+                        <div key={index} className="flex justify-between items-center py-4 border-b border-slate-50 last:border-0 group">
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-900">
+                            <p className="font-black text-slate-900 group-hover:text-slate-600 transition-colors">
                               {service.service?.name || 'Servicio'}
                             </p>
+                            {service.service?.description && (
+                              <p className="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">Servicio Profesional</p>
+                            )}
                           </div>
-                          <p className="text-lg font-bold text-slate-900">
+                          <p className="text-lg font-black text-slate-900 tabular-nums tracking-tighter">
                             {formatPrice(service.price)}
                           </p>
                         </div>
                       ))}
-                      <div className="pt-3 mt-2 border-t-2 border-slate-200">
-                        <div className="flex justify-between items-center bg-slate-900 px-4 py-3 rounded-lg">
-                          <p className="text-lg font-bold text-white">Total</p>
-                          <p className="text-2xl font-bold text-white">
-                            {formatPrice(selectedAppointment.total_price)}
-                          </p>
+                      
+                      <div className="mt-8 pt-2">
+                        <div className="flex justify-between items-center bg-slate-900 p-6 rounded-[1.5rem] shadow-2xl shadow-slate-900/30 group hover:scale-[1.01] transition-transform duration-500">
+                          <div>
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total a Pagar</p>
+                            <p className="text-2xl font-black text-white tracking-tighter">Monto Final</p>
+                          </div>
+                          <div className="text-right">
+                             <p className="text-4xl font-black text-white tracking-tighter tabular-nums drop-shadow-lg">
+                                {formatPrice(selectedAppointment.total_price)}
+                             </p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Client Notes Section */}
+                {/* Client Notes Section - Premium Alert */}
                 {selectedAppointment.client_notes && (
-                  <Card className="border-blue-200 bg-blue-50/50 shadow-sm">
-                    <CardContent className="p-5">
-                      <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5 text-blue-600" />
-                        Notas de la Cita
+                  <Card className="border-0 bg-blue-50/40 dark:bg-blue-900/10 shadow-sm rounded-[1.5rem] overflow-hidden ring-1 ring-blue-100 dark:ring-blue-900/30">
+                    <CardContent className="p-6">
+                      <h3 className="text-xs font-black text-blue-900 dark:text-blue-400 mb-3 flex items-center gap-2 uppercase tracking-[0.15em]">
+                        <AlertTriangle className="w-4 h-4" />
+                        Notas de la Reserva
                       </h3>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {selectedAppointment.client_notes}
+                      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic pr-4 border-l-2 border-blue-200 pl-4 ml-1">
+                        "{selectedAppointment.client_notes}"
                       </p>
                     </CardContent>
                   </Card>
@@ -747,13 +825,15 @@ export default function ClientAppointmentsPage() {
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center p-8">
+            <div className="h-full flex items-center justify-center p-8 bg-slate-50/30">
               <div className="text-center max-w-sm">
-                <div className="w-24 h-24 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <CalendarIcon className="w-12 h-12 text-slate-400" />
+                <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-slate-200/50">
+                  <CalendarIcon className="w-12 h-12 text-slate-200" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Selecciona una cita</h3>
-                <p className="text-gray-500">Elige una cita de la lista para ver los detalles</p>
+                <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">Gestiona tusReservas</h3>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                  Selecciona una cita de la lista lateral para ver el detalle completo, contactar al negocio o calificar tu experiencia.
+                </p>
               </div>
             </div>
           )}
@@ -814,6 +894,6 @@ export default function ClientAppointmentsPage() {
           time: selectedAppointment.start_time.slice(0, 5)
         } : undefined}
       />
-    </>
+    </div>
   )
 }

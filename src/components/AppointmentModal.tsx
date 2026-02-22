@@ -387,33 +387,46 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
           className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header con gradiente */}
-          <div className="relative bg-orange-600 rounded-t-2xl p-4 sm:p-5">
-            {/* Botón Cerrar */}
-            <button
-              onClick={onClose}
-              className="absolute top-3 right-3 p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white z-10"
-              aria-label="Cerrar modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          {/* Header con color sólido Premium - Ultra Compacto */}
+          <div className="relative overflow-hidden pt-4 pb-3 sm:pt-6 sm:pb-4 px-5 sm:px-8 bg-primary shadow-lg sm:shadow-xl rounded-t-2xl">
+            {/* Patrón de fondo sutil */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+            </div>
 
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Calendar className="w-5 h-5 text-white" />
+            {/* Botón Cerrar Premium - Ultra Ajustado */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-black/10 hover:bg-black/20 text-white border-none transition-all duration-300 z-10"
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+
+            <div className="relative flex items-center gap-3 sm:gap-5">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg border border-white/20 flex-shrink-0">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               
-              <div className="flex-1 min-w-0 pr-8">
-                <h2 className="text-lg sm:text-xl font-bold text-white leading-tight truncate">
-                  Detalles de la Cita
-                </h2>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                  <span className="text-[8px] sm:text-[9px] font-black text-white/80 uppercase tracking-[0.2em]">
+                    Cita #{appointment.id.substring(0, 8)}
+                  </span>
+                </div>
                 
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <Badge className={`${statusConfig.className} border shadow-sm px-2 py-0 h-5 text-[10px] font-semibold uppercase tracking-wider`}>
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${statusConfig.dotColor}`} />
+                <h2 className="text-lg sm:text-2xl font-black text-white leading-none tracking-tight mb-2">
+                  Información Cita
+                </h2>
+
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <Badge className={`${statusConfig.className} border shadow-lg px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest bg-white text-gray-900 border-white`}>
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${statusConfig.dotColor} shadow-[0_0_8px_currentColor]`} />
                     {statusConfig.label}
                   </Badge>
-                  <p className="text-white/90 text-xs font-medium truncate">
+                  <p className="text-white text-[10px] sm:text-xs font-bold flex items-center gap-1">
+                    <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     {formatDate(appointment.appointment_date)}
                   </p>
                 </div>
@@ -427,7 +440,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
               {/* Cliente */}
               <div className="md:col-span-2 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-sm transition-shadow">
                 <div className="flex items-center gap-2 mb-4">
-                  <User className="w-4 h-4 text-orange-600" />
+                  <User className="w-4 h-4 text-primary" />
                   <h3 className="font-semibold text-gray-900">Cliente</h3>
                   {appointment.business_client_id && (
                     <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
@@ -677,17 +690,17 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                   </DropdownMenu>
                 )}
 
-                {/* Botones principales - Alineados horizontalmente con espacio igual */}
-                <div className="flex-1 flex flex-wrap gap-2">
+                {/* Botones principales - Premium Style */}
+                <div className="flex-1 flex flex-wrap gap-3">
                   {/* Botón Ver Comprobante */}
                   {paymentReceipt && (
                     <Button
                       onClick={() => setReceiptViewerOpen(true)}
                       variant="outline"
-                      className="flex-1 min-w-[140px] border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-all hover:scale-105"
+                      className="flex-1 min-w-[140px] h-11 rounded-xl border-orange-100 shadow-sm font-black text-[9px] uppercase tracking-widest text-orange-600 hover:bg-orange-50/50 hover:text-orange-700 hover:border-orange-200 transition-all active:scale-95"
                     >
                       <FileImage className="w-4 h-4 mr-2" />
-                      <span className="truncate">Ver Comprobante</span>
+                      <span className="truncate">Comprobante</span>
                     </Button>
                   )}
 
@@ -695,15 +708,15 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                   {hasPendingPayment && !checkingPayment && ['confirmed', 'in_progress', 'completed'].includes(appointment.status) && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="flex-1 min-w-[160px]">
+                        <div className="flex-1 min-w-[180px]">
                           <Button
                             onClick={handleOpenCheckout}
                             disabled={updating || !canTakeAction}
                             data-checkout-trigger
-                            className={`w-full shadow-lg transition-all duration-300 ${
+                            className={`w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all duration-300 active:scale-95 ${
                               canTakeAction && !updating
-                                ? 'bg-gray-900 hover:bg-gray-800 text-white hover:shadow-xl hover:scale-105'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                ? 'bg-gray-900 hover:bg-black text-white'
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed border-none shadow-none'
                             }`}
                           >
                             <DollarSign className="w-4 h-4 mr-2" />
@@ -724,7 +737,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                     <Button
                       onClick={handleReactivate}
                       disabled={updating}
-                      className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700 text-white transition-all hover:scale-105"
+                      className="flex-1 min-w-[160px] h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest shadow-lg transition-all active:scale-95"
                     >
                       <Check className="w-4 h-4 mr-2" />
                       <span className="truncate">Reactivar Cita</span>
@@ -737,9 +750,9 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                       onClick={handleCancel}
                       disabled={updating}
                       variant="outline"
-                      className="flex-1 min-w-[120px] text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all hover:scale-105"
+                      className="flex-1 min-w-[120px] h-11 rounded-xl border-red-50 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-100 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
                     >
-                      <span className="truncate">Cancelar Cita</span>
+                      <span className="truncate">Cancelar</span>
                     </Button>
                   )}
 
@@ -747,7 +760,7 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                   <Button
                     onClick={onClose}
                     variant="outline"
-                    className="flex-1 min-w-[100px] hover:bg-gray-100 transition-all hover:scale-105"
+                    className="flex-1 min-w-[100px] h-11 rounded-xl border-gray-100 shadow-sm font-black text-[9px] uppercase tracking-widest text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-all active:scale-95"
                   >
                     Cerrar
                   </Button>

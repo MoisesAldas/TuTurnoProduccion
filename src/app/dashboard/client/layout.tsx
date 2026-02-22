@@ -76,7 +76,7 @@ const ClientDashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="flex h-screen overflow-hidden min-h-screen bg-gray-50 dark:bg-slate-950 theme-slate">
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
