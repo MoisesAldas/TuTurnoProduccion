@@ -300,13 +300,13 @@ export default function ImageCropper({
     // Convertir a blob y crear archivo
     canvas.toBlob((blob) => {
       if (blob) {
-        const croppedFile = new File([blob], imageFile.name, {
-          type: imageFile.type,
+        const croppedFile = new File([blob], 'image.webp', {
+          type: 'image/webp',
           lastModified: Date.now()
         })
         onSave(croppedFile)
       }
-    }, imageFile.type, 0.98)
+    }, 'image/webp', 0.8)
   }
 
   return (

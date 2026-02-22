@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Camera, Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
-import { compressImage, validateImageFile, formatFileSize } from '@/lib/imageUtils'
+import { compressImage, validateImageFile, formatFileSize, convertToWebP } from '@/lib/imageUtils'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -160,12 +160,12 @@ export default function BusinessPhotoGallery({ businessId, compact = false }: Bu
         return
       }
 
-      // Comprimir imagen (sin recorte, mantiene aspect ratio original)
-      console.log('🗜️ Comprimiendo imagen...')
-      const compressedFile = await compressImage(file, {
+      // Comprimir y convertir a WebP (mantiene aspect ratio original)
+      console.log('🗜️ Optimizando imagen...')
+      const compressedFile = await convertToWebP(file, {
         maxWidth: 1920,
         maxHeight: 1920,
-        quality: 0.92,
+        quality: 0.85,
         maxSizeKB: 1000
       })
 

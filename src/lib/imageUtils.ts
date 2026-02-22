@@ -5,13 +5,15 @@ export interface ImageCompressionOptions {
   maxHeight?: number
   quality?: number // 0.1 a 1.0
   maxSizeKB?: number
+  format?: 'image/webp' | 'image/jpeg' | 'image/png'
 }
 
 export const DEFAULT_COMPRESSION_OPTIONS: ImageCompressionOptions = {
   maxWidth: 800,
   maxHeight: 800,
   quality: 0.8,
-  maxSizeKB: 500 // 500KB máximo
+  maxSizeKB: 500, // 500KB máximo
+  format: 'image/webp'
 }
 
 /**
@@ -48,6 +50,8 @@ export const compressImage = (
       ctx.drawImage(img, 0, 0, newWidth, newHeight)
 
       // Convertir a blob con compresión
+      const outputFormat = options.format || file.type
+      
       canvas.toBlob(
         (blob) => {
           if (!blob) {
@@ -69,15 +73,21 @@ export const compressImage = (
             return
           }
 
+          // Generar nombre de archivo con extensión correcta
+          let fileName = file.name
+          if (outputFormat === 'image/webp' && !fileName.toLowerCase().endsWith('.webp')) {
+            fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp"
+          }
+
           // Crear nuevo archivo comprimido
-          const compressedFile = new File([blob], file.name, {
-            type: file.type,
+          const compressedFile = new File([blob], fileName, {
+            type: outputFormat,
             lastModified: Date.now()
           })
 
           resolve(compressedFile)
         },
-        file.type,
+        outputFormat,
         options.quality || DEFAULT_COMPRESSION_OPTIONS.quality
       )
     }
@@ -174,6 +184,18 @@ export const compressReceiptImage = async (file: File): Promise<File> => {
     maxWidth: 1200,
     maxHeight: 1200,
     quality: 0.90,
-    maxSizeKB: 500
+    maxSizeKB: 500,
+    format: 'image/webp'
+  })
+}
+
+/**
+ * Convierte cualquier imagen a WebP con optimización estándar
+ */
+export const convertToWebP = async (file: File, options?: Partial<ImageCompressionOptions>): Promise<File> => {
+  return compressImage(file, {
+    ...DEFAULT_COMPRESSION_OPTIONS,
+    ...options,
+    format: 'image/webp'
   })
 }

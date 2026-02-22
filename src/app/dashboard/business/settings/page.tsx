@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
-import { compressImage, validateImageFile } from '@/lib/imageUtils'
+import { compressImage, validateImageFile, convertToWebP } from '@/lib/imageUtils'
 import ImageCropperEasy from '@/components/ImageCropperEasy'
 import BusinessPhotoGallery from '@/components/BusinessPhotoGallery'
 import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
@@ -310,11 +310,11 @@ export default function UnifiedSettingsPage() {
       setUploadingLogo(true)
       setShowLogoCropper(false)
 
-      const compressedFile = await compressImage(croppedFile, {
+      const compressedFile = await convertToWebP(croppedFile, {
         maxWidth: 500,
         maxHeight: 500,
-        quality: 0.98,
-        maxSizeKB: 800
+        quality: 0.85,
+        maxSizeKB: 500
       })
 
       setLogoFile(compressedFile)
@@ -347,11 +347,11 @@ export default function UnifiedSettingsPage() {
       setUploadingCover(true)
       setShowCoverCropper(false)
 
-      const compressedFile = await compressImage(croppedFile, {
-        maxWidth: 2000,
-        maxHeight: 1000,
-        quality: 0.98,
-        maxSizeKB: 2500
+      const compressedFile = await convertToWebP(croppedFile, {
+        maxWidth: 1920,
+        maxHeight: 1080,
+        quality: 0.82,
+        maxSizeKB: 1000
       })
 
       setCoverFile(compressedFile)

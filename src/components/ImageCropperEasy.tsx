@@ -112,7 +112,7 @@ export default function ImageCropperEasy({
     return new Promise((resolve) => {
       canvas.toBlob((blob) => {
         resolve(blob)
-      }, imageFile.type, 0.98)
+      }, 'image/webp', 0.8)
     })
   }
 
@@ -124,8 +124,8 @@ export default function ImageCropperEasy({
       const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels)
 
       if (croppedBlob) {
-        const croppedFile = new File([croppedBlob], imageFile.name, {
-          type: imageFile.type,
+        const croppedFile = new File([croppedBlob], 'image.webp', {
+          type: 'image/webp',
           lastModified: Date.now()
         })
         onSave(croppedFile)

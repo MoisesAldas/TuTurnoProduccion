@@ -28,7 +28,7 @@ import { Switch } from '@/components/ui/switch'
 import { Save, User, Mail, Phone, Briefcase, Camera, Upload, X, AlertCircle, Trash2, Loader2, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
-import { compressImage, validateImageFile, formatFileSize } from '@/lib/imageUtils'
+import { compressImage, validateImageFile, formatFileSize, convertToWebP } from '@/lib/imageUtils'
 import BusinessImageCropper from '@/components/BusinessImageCropper'
 import { employeeFormSchema, type EmployeeFormData } from '@/lib/validation'
 
@@ -138,10 +138,10 @@ export default function EditEmployeeModal({
       setUploadingAvatar(true)
       setShowCropper(false)
 
-      const compressedFile = await compressImage(croppedFile, {
+      const compressedFile = await convertToWebP(croppedFile, {
         maxWidth: 500,
         maxHeight: 500,
-        quality: 0.98,
+        quality: 0.8,
         maxSizeKB: 300
       })
 

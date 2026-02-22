@@ -76,11 +76,11 @@ async function getCroppedImg(
   return new Promise((resolve) => {
     canvas.toBlob((blob) => {
       if (blob) {
-        resolve(new File([blob], 'cropped.png', { type: 'image/png' }))
+        resolve(new File([blob], 'image.webp', { type: 'image/webp' }))
       } else {
         resolve(null)
       }
-    }, 'image/png')
+    }, 'image/webp', 0.8)
   })
 }
 
