@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { X, User, Phone, Mail, Clock, DollarSign, Calendar, FileText, AlertCircle, Edit, Check, MoreVertical, FileImage } from 'lucide-react'
+import { X, User, Phone, Mail, Clock, DollarSign, Calendar, FileText, AlertCircle, Edit, Check, MoreVertical, FileImage, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -92,8 +92,13 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
   const [checkingPayment, setCheckingPayment] = useState(false)
   const [receiptViewerOpen, setReceiptViewerOpen] = useState(false)
   const [paymentReceipt, setPaymentReceipt] = useState<{url: string, reference: string} | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
   const { toast } = useToast()
+
+  // An appointment is deletable by the business only if it was NOT created by a registered client
+  const isDeletable = appointment.client_id === null
 
   // Verificar si la cita ya ha comenzado
   const canTakeAction = useAppointmentStarted(
@@ -241,6 +246,45 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
       })
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      setDeleting(true)
+
+      // Delete appointment_services first (child records)
+      const { error: servicesError } = await supabase
+        .from('appointment_services')
+        .delete()
+        .eq('appointment_id', appointment.id)
+
+      if (servicesError) throw servicesError
+
+      // Now delete the appointment itself
+      const { error: appointmentError } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointment.id)
+
+      if (appointmentError) throw appointmentError
+
+      toast({
+        title: 'Cita eliminada',
+        description: 'La cita ha sido eliminada correctamente.',
+      })
+      onUpdate()
+      onClose()
+    } catch (error) {
+      console.error('Error deleting appointment:', error)
+      toast({
+        variant: 'destructive',
+        title: 'Error al eliminar',
+        description: 'No se pudo eliminar la cita.',
+      })
+    } finally {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
     }
   }
 
@@ -706,19 +750,19 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                   {hasPendingPayment && !checkingPayment && ['confirmed', 'in_progress', 'completed'].includes(appointment.status) && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="flex-1 min-w-[180px]">
+                        <div className="flex-1 min-w-[210px] sm:min-w-[220px]">
                           <Button
                             onClick={handleOpenCheckout}
                             disabled={updating || !canTakeAction}
                             data-checkout-trigger
-                            className={`w-full h-11 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all duration-300 active:scale-95 ${
+                            className={`w-full h-11 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-lg transition-all duration-300 active:scale-95 ${
                               canTakeAction && !updating
                                 ? 'bg-gray-900 hover:bg-black text-white'
                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed border-none shadow-none'
                             }`}
                           >
                             <DollarSign className="w-4 h-4 mr-2" />
-                            <span className="truncate">{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
+                            <span>{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
                           </Button>
                         </div>
                       </TooltipTrigger>
@@ -742,23 +786,62 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                     </Button>
                   )}
 
+                  {/* Botón Eliminar cita - solo para citas creadas por el negocio */}
+                  {isDeletable && (
+                    <>
+                      {showDeleteConfirm ? (
+                        <div className="flex-1 min-w-[240px] flex items-center gap-2 bg-red-50 border border-red-300 rounded-xl px-4 py-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                          <span className="text-[9px] font-black text-red-800 uppercase tracking-widest flex-1 leading-tight">
+                            ¿Eliminar permanentemente?
+                          </span>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={handleDelete}
+                              disabled={deleting}
+                              className="h-8 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95"
+                            >
+                              {deleting ? '...' : 'Sí'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setShowDeleteConfirm(false)}
+                              disabled={deleting}
+                              className="h-8 px-3 rounded-lg font-black text-[10px] uppercase tracking-widest text-gray-600 hover:bg-red-100/50 hover:text-red-700 transition-all active:scale-95"
+                            >
+                              No
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => setShowDeleteConfirm(true)}
+                          variant="outline"
+                          className="h-11 w-11 rounded-xl border-red-50 text-red-500 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-all active:scale-95 flex-shrink-0"
+                          title="Eliminar cita"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </>
+                  )}
+
                   {/* Botón Cancelar cita */}
                   {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
                     <Button
                       onClick={handleCancel}
                       disabled={updating}
-                      variant="outline"
-                      className="flex-1 min-w-[120px] h-11 rounded-xl border-red-50 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-100 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95"
+                      className="flex-1 min-w-[110px] h-11 rounded-xl bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 shadow-sm"
                     >
-                      <span className="truncate">Cancelar</span>
+                      <span>Cancelar</span>
                     </Button>
                   )}
 
                   {/* Botón Cerrar */}
                   <Button
                     onClick={onClose}
-                    variant="outline"
-                    className="flex-1 min-w-[100px] h-11 rounded-xl border-gray-100 shadow-sm font-black text-[9px] uppercase tracking-widest text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-all active:scale-95"
+                    className="flex-1 min-w-[100px] h-11 rounded-xl bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 shadow-sm"
                   >
                     Cerrar
                   </Button>

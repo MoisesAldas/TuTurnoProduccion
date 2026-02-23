@@ -62,6 +62,7 @@ export default function CreateAppointmentModal({
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [isOpen, setIsOpen] = useState(true) // Local state for Radix cleanup
   const [showRegisteredDropdown, setShowRegisteredDropdown] = useState(false)
   const [showBusinessClientDropdown, setShowBusinessClientDropdown] = useState(false)
 
@@ -193,6 +194,8 @@ export default function CreateAppointmentModal({
         .from('appointments')
         .select('client_id, users!appointments_client_id_fkey(id, first_name, last_name, phone, email)')
         .eq('business_id', businessId)
+        .not('client_id', 'is', null)
+        .limit(200) // Optimization: Limit to most recent 200 appointments to extract clients
 
       if (appointmentsData) {
         const uniqueClients = Array.from(
@@ -489,6 +492,14 @@ export default function CreateAppointmentModal({
     setCurrentStep(prev => Math.max(prev - 1, 1))
   }
 
+  const handleClose = () => {
+    setIsOpen(false)
+    // Small timeout to allow Radix cleanup before unmounting
+    setTimeout(() => {
+      onClose()
+    }, 200)
+  }
+
   const getStepTitle = (step: number): string => {
     switch (step) {
       case 1: return 'Cliente'
@@ -511,24 +522,30 @@ export default function CreateAppointmentModal({
   }
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="max-w-4xl p-0 border-none bg-transparent shadow-none" showCloseButton={false}>
-        <div 
-          className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
-          onClick={(e) => e.stopPropagation()}
-        >
-        {/* Header - Premium Design - Ultra Compacto */}
-        <div className="flex-shrink-0 bg-slate-50/50 backdrop-blur-md border-b border-gray-100 p-3 sm:p-5 rounded-t-3xl relative">
-          <div className="flex items-center justify-between mb-3">
+        {loading ? (
+          <div className="bg-white rounded-2xl shadow-2xl w-full p-12 flex flex-col items-center justify-center min-h-[400px]">
+            <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
+            <p className="text-gray-600 font-medium">Cargando datos de la cita...</p>
+          </div>
+        ) : (
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+        {/* Header - Premium Design - Ultra Compacto - Sincronizado con AppointmentModal */}
+        <div className="flex-shrink-0 bg-primary shadow-lg sm:shadow-xl rounded-t-2xl p-3 sm:p-5 relative overflow-hidden">
+          <div className="flex items-center justify-between mb-3 relative z-10">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm border border-gray-100 group transition-all duration-300 hover:scale-105 active:scale-95">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-md rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg border border-white/20 group transition-all duration-300 hover:scale-105 active:scale-95">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <span className="text-[7px] sm:text-[8px] font-black text-orange-600 uppercase tracking-[0.2em] block mb-0 opacity-80">
+                <span className="text-[7px] sm:text-[8px] font-black text-white/80 uppercase tracking-[0.2em] block mb-0">
                   Agenda de Citas
                 </span>
-                <h2 className="text-base sm:text-xl font-black text-gray-900 tracking-tight leading-none">
+                <h2 className="text-base sm:text-xl font-black text-white tracking-tight leading-none">
                   {appointment ? 'Editar Cita' : 'Nueva Cita'}
                 </h2>
               </div>
@@ -537,28 +554,26 @@ export default function CreateAppointmentModal({
               type="button"
               variant="ghost"
               size="icon"
-              onClick={onClose}
-              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl hover:bg-white hover:shadow-sm text-gray-400 hover:text-gray-600 transition-all"
+              onClick={handleClose}
+              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-black/10 hover:bg-black/20 text-white border-none transition-all duration-300"
             >
               <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
           </div>
 
-          {/* Stepper Premium */}
-          <div className="flex items-center gap-2">
+          {/* Stepper Premium - Ajustado para fondo naranja */}
+          <div className="flex items-center gap-2 relative z-10">
             {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex-1 flex flex-col gap-2">
                 <div
                   className={`h-1.5 rounded-full transition-all duration-500 ${
-                    step < currentStep
-                      ? 'bg-orange-600'
-                      : step === currentStep
-                      ? 'bg-orange-600 w-full'
-                      : 'bg-gray-200 w-full'
+                    step <= currentStep
+                      ? 'bg-white'
+                      : 'bg-white/30'
                   }`}
                 />
                 <span className={`text-[8px] font-black uppercase tracking-widest text-center transition-colors duration-300 ${
-                  step === currentStep ? 'text-orange-600' : 'text-gray-400'
+                  step === currentStep ? 'text-white' : 'text-white/60'
                 }`}>
                   {getStepTitle(step)}
                 </span>
@@ -1110,7 +1125,8 @@ export default function CreateAppointmentModal({
           )}
         </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </DialogContent>
+  </Dialog>
   )
 }

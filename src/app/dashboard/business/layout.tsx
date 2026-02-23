@@ -368,7 +368,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         {pathname !== '/dashboard/business' && (
           <header className="hidden lg:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-30">
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-xl font-black tracking-tight text-gray-900">
                 {businessName || 'Mi Negocio'}
               </h1>
             </div>

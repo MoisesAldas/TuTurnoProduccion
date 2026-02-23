@@ -28,7 +28,7 @@ interface ServiceEmployeesBadgeProps {
 
 export default function ServiceEmployeesBadge({
   serviceId,
-  className = '',
+  className = 'hover:bg-slate-200',
   variant = 'compact'
 }: ServiceEmployeesBadgeProps) {
   const [employees, setEmployees] = useState<Employee[]>([])

@@ -120,6 +120,26 @@ export default function AppointmentsPage() {
     selectedEmployeesRef.current = selectedEmployees
   }, [selectedEmployees])
 
+  // ========================================
+  // FAIL-SAFE: Restaurar interactividad si Radix falla al limpiar el body
+  // ========================================
+  useEffect(() => {
+    // Si no hay ningún modal principal abierto, forzar limpieza del body
+    if (!showCreateModal && !editingAppointment && !showAppointmentModal && !showSettingsModal) {
+      const timer = setTimeout(() => {
+        if (document.body.style.pointerEvents === 'none') {
+          console.log('🔄 [FAIL-SAFE] Restaurando pointer-events: auto');
+          document.body.style.pointerEvents = 'auto';
+        }
+        if (document.body.style.overflow === 'hidden') {
+          console.log('🔄 [FAIL-SAFE] Restaurando overflow: auto');
+          document.body.style.overflow = 'auto';
+        }
+      }, 200); // Pequeño margen para permitir que las animaciones terminen
+      return () => clearTimeout(timer);
+    }
+  }, [showCreateModal, editingAppointment, showAppointmentModal, showSettingsModal]);
+
   useEffect(() => {
     if (authState.user) {
       fetchBusinessData()
@@ -197,7 +217,8 @@ export default function AppointmentsPage() {
     } catch (error) {
       console.error('❌ [BUSINESS] Error fetching business data:', error)
     } finally {
-      setLoading(false)
+      // Small delay to prevent initial flash and ensure hydration
+      setTimeout(() => setLoading(false), 200)
     }
   }
 
@@ -355,6 +376,37 @@ export default function AppointmentsPage() {
     }
   }
 
+  // Memoized handlers for realtime events
+  const onInsert = (newAppointment: Appointment) => {
+    const matchesDate = viewTypeRef.current === 'day'
+      ? newAppointment.appointment_date === toDateString(selectedDateRef.current)
+      : isWithinWeekRange(newAppointment.appointment_date)
+
+    const matchesEmployee = selectedEmployeesRef.current.includes(newAppointment.employee_id)
+
+    if (matchesDate && matchesEmployee) {
+      fetchSingleAppointment(newAppointment.id)
+    }
+  }
+
+  const onUpdate = (updatedAppointment: Appointment) => {
+    const matchesDate = viewTypeRef.current === 'day'
+      ? updatedAppointment.appointment_date === toDateString(selectedDateRef.current)
+      : isWithinWeekRange(updatedAppointment.appointment_date)
+
+    const matchesEmployee = selectedEmployeesRef.current.includes(updatedAppointment.employee_id)
+
+    if (matchesDate && matchesEmployee) {
+      fetchSingleAppointment(updatedAppointment.id)
+    } else {
+      setAppointments(prev => prev.filter(apt => apt.id !== updatedAppointment.id))
+    }
+  }
+
+  const onDelete = (appointmentId: string) => {
+    setAppointments(prev => prev.filter(apt => apt.id !== appointmentId))
+  }
+
   // ========================================
   // REALTIME: Helper para verificar si está en rango de semana
   // ========================================
@@ -380,40 +432,9 @@ export default function AppointmentsPage() {
   // El hook maneja internamente el caso cuando businessId es undefined
   useRealtimeAppointments({
     businessId: shouldUseRealtime ? business.id : undefined,
-    onInsert: (newAppointment) => {
-      // Verificar si la cita es de la fecha actual (usando refs para evitar stale closures)
-      const matchesDate = viewTypeRef.current === 'day'
-        ? newAppointment.appointment_date === toDateString(selectedDateRef.current)
-        : isWithinWeekRange(newAppointment.appointment_date)
-
-      // Verificar si es del empleado seleccionado
-      const matchesEmployee = selectedEmployeesRef.current.includes(newAppointment.employee_id)
-
-      if (matchesDate && matchesEmployee) {
-        // Fetch completo para traer relaciones (users, services, etc.)
-        fetchSingleAppointment(newAppointment.id)
-      }
-    },
-    onUpdate: (updatedAppointment) => {
-      // Verificar si la cita sigue en el rango visible (usando refs para evitar stale closures)
-      const matchesDate = viewTypeRef.current === 'day'
-        ? updatedAppointment.appointment_date === toDateString(selectedDateRef.current)
-        : isWithinWeekRange(updatedAppointment.appointment_date)
-
-      const matchesEmployee = selectedEmployeesRef.current.includes(updatedAppointment.employee_id)
-
-      if (matchesDate && matchesEmployee) {
-        // Fetch completo para asegurar datos frescos con relaciones
-        fetchSingleAppointment(updatedAppointment.id)
-      } else {
-        // Si ya no coincide con filtros, removerla
-        setAppointments(prev => prev.filter(apt => apt.id !== updatedAppointment.id))
-      }
-    },
-    onDelete: (appointmentId) => {
-      // Remover del estado local
-      setAppointments(prev => prev.filter(apt => apt.id !== appointmentId))
-    }
+    onInsert,
+    onUpdate,
+    onDelete
   })
 
   const handlePreviousDay = () => {
@@ -506,7 +527,15 @@ export default function AppointmentsPage() {
   }
 
   const handleEditAppointment = (appointment: Appointment) => {
-    setEditingAppointment(appointment)
+    // Coordinated state change to prevent backdrop ghosting
+    setShowAppointmentModal(false)
+    setSelectedAppointment(null)
+    
+    // Tiny delay to allow Detail Modal to unmount
+    setTimeout(() => {
+      setEditingAppointment(appointment)
+      setShowCreateModal(false) // Just in case
+    }, 100)
   }
 
   const handleAppointmentClick = (appointment: Appointment) => {
@@ -516,7 +545,8 @@ export default function AppointmentsPage() {
 
   const handleCloseAppointmentModal = () => {
     setShowAppointmentModal(false)
-    setSelectedAppointment(null)
+    // Delay clearing selection to avoid glitchy transitions
+    setTimeout(() => setSelectedAppointment(null), 300)
   }
 
   const handleUpdateOverlappingSetting = async (enabled: boolean) => {

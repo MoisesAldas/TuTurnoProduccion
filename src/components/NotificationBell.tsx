@@ -273,7 +273,7 @@ function NotificationBell({ userId }: NotificationBellProps) {
       <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] p-0 rounded-2xl overflow-hidden" align="end">
         {/* Header */}
         <div className="px-4 py-3 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-          <h3 className="font-semibold text-gray-900 text-base">Notificaciones</h3>
+          <h3 className="font-black tracking-tight text-gray-900 text-base">Notificaciones</h3>
           <button
             onClick={() => setOpen(false)}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
