@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
         end_time,
         total_price,
         client_id,
+        business_client_id,
         employee_id,
         business_id,
         businesses (
@@ -90,6 +91,12 @@ export async function POST(request: NextRequest) {
           position
         ),
         users!appointments_client_id_fkey (
+          email,
+          first_name,
+          last_name,
+          phone
+        ),
+        business_clients (
           email,
           first_name,
           last_name,
@@ -108,13 +115,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validar que el cliente esté registrado (no walk-in)
-    if (!appointment.client_id || !appointment.users) {
-      console.log("⚠️ Walk-in client detected, skipping email notification");
+    // Resolver cliente: prioridad users (registered) → business_clients
+    // Cast a any para asegurar acceso a campos join que TS puede ver como arrays
+    const authUser = Array.isArray(appointment.users)
+      ? (appointment.users[0] as Client | null)
+      : (appointment.users as any as Client | null);
+
+    const businessClient = Array.isArray(appointment.business_clients)
+      ? (appointment.business_clients[0] as Client | null)
+      : (appointment.business_clients as any as Client | null);
+
+    const client: Client | null = authUser?.email
+      ? authUser
+      : businessClient?.email
+        ? businessClient
+        : null;
+
+    // Validar que el cliente tenga email (no walk-in real sin datos)
+    if (!client?.email) {
+      console.log(
+        "⚠️ Walk-in client or client without email detected, skipping email notification",
+      );
       return NextResponse.json(
         {
           success: true,
-          message: "Walk-in client, no email sent",
+          message: "Walk-in client (no email), no email sent",
         },
         { status: 200 },
       );
@@ -200,10 +225,6 @@ export async function POST(request: NextRequest) {
     const newEmployee = Array.isArray(appointment.employees)
       ? (appointment.employees[0] as Employee)
       : (appointment.employees as Employee);
-
-    const client = Array.isArray(appointment.users)
-      ? (appointment.users[0] as Client)
-      : (appointment.users as Client);
 
     // Verificar datos necesarios
     if (

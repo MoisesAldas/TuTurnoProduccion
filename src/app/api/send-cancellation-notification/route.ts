@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (!appointmentId) {
       return NextResponse.json(
         { error: "appointmentId es requerido" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
           autoRefreshToken: false,
           persistSession: false,
         },
-      }
+      },
     );
 
     // Obtener datos de la cita
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
         end_time,
         total_price,
         client_id,
+        business_client_id,
         businesses (
           name,
           address,
@@ -77,8 +78,14 @@ export async function POST(request: NextRequest) {
           first_name,
           last_name,
           phone
+        ),
+        business_clients (
+          email,
+          first_name,
+          last_name,
+          phone
         )
-      `
+      `,
       )
       .eq("id", appointmentId)
       .single();
@@ -87,19 +94,38 @@ export async function POST(request: NextRequest) {
       console.error("Error fetching appointment:", appointmentError);
       return NextResponse.json(
         { error: "Cita no encontrada" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    // Validar que el cliente esté registrado (no walk-in)
-    if (!appointment.client_id || !appointment.users) {
-      console.log("⚠️ Walk-in client detected, skipping email notification");
+    // Resolver cliente: prioridad users (registered) → business_clients
+    // Cast a any para evitar errores de TS con la estructura de joins (a veces arrays)
+    const authUser = Array.isArray(appointment.users)
+      ? (appointment.users[0] as Client | null)
+      : (appointment.users as any as Client | null);
+
+    const businessClient = Array.isArray(appointment.business_clients)
+      ? (appointment.business_clients[0] as Client | null)
+      : (appointment.business_clients as any as Client | null);
+
+    const client: Client | null = authUser?.email
+      ? authUser
+      : businessClient?.email
+        ? businessClient
+        : null;
+
+    // Validar que el cliente tenga email (registered o business_client)
+    // walk_in appointments tienen ambos como NULL o sin email registrado
+    if (!client?.email) {
+      console.log(
+        "⚠️ Walk-in client or client without email detected, skipping email notification",
+      );
       return NextResponse.json(
         {
           success: true,
-          message: "Walk-in client, no email sent",
+          message: "Walk-in client (no email), no email sent",
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -114,7 +140,7 @@ export async function POST(request: NextRequest) {
           name,
           duration_minutes
         )
-      `
+      `,
       )
       .eq("appointment_id", appointmentId);
 
@@ -126,7 +152,7 @@ export async function POST(request: NextRequest) {
       console.error("Error fetching appointment services:", servicesError);
       return NextResponse.json(
         { error: "Servicios no encontrados" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -138,10 +164,6 @@ export async function POST(request: NextRequest) {
     const employee = Array.isArray(appointment.employees)
       ? (appointment.employees[0] as Employee)
       : (appointment.employees as Employee);
-
-    const client = Array.isArray(appointment.users)
-      ? (appointment.users[0] as Client)
-      : (appointment.users as Client);
 
     // Procesar TODOS los servicios
     const services = appointmentServices.map((as) => {
@@ -172,7 +194,7 @@ export async function POST(request: NextRequest) {
 
     // Formatear fecha en español
     const appointmentDate = new Date(
-      appointment.appointment_date + "T00:00:00"
+      appointment.appointment_date + "T00:00:00",
     );
     const formattedDate = appointmentDate.toLocaleDateString("es-EC", {
       weekday: "long",
@@ -214,7 +236,7 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
         },
         body: JSON.stringify(emailData),
-      }
+      },
     );
 
     let clientEmailSuccess = false;
@@ -245,7 +267,7 @@ export async function POST(request: NextRequest) {
     if (businessOwner) {
       console.log(
         "📧 Sending cancellation notification to BUSINESS:",
-        businessOwner.email
+        businessOwner.email,
       );
 
       const businessEmailData = {
@@ -268,14 +290,14 @@ export async function POST(request: NextRequest) {
             Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
           },
           body: JSON.stringify(businessEmailData),
-        }
+        },
       );
 
       if (businessEmailResponse.ok) {
         const businessResult = await businessEmailResponse.json();
         console.log(
           "✅ Business notification email sent successfully:",
-          businessResult
+          businessResult,
         );
         businessEmailSuccess = true;
       } else {
@@ -284,7 +306,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       console.warn(
-        "⚠️ Business owner not found, skipping business notification email"
+        "⚠️ Business owner not found, skipping business notification email",
       );
     }
 
@@ -298,7 +320,7 @@ export async function POST(request: NextRequest) {
           businessEmail: businessEmailSuccess ? "sent" : "failed",
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("💥 Error in send-cancellation-notification:", error);
@@ -307,7 +329,7 @@ export async function POST(request: NextRequest) {
         error: "Error al enviar la notificación",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

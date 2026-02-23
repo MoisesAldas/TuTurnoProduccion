@@ -406,6 +406,18 @@ export default function CreateAppointmentModal({
 
       if (servicesError) throw servicesError
 
+      // 📧 Enviar email de confirmación (solo para clientes con email: registered y business_client)
+      // Fire-and-forget: si falla el email, la cita ya quedó guardada y el modal se cierra igual
+      if (!appointment && clientType !== 'walk_in') {
+        fetch('/api/send-appointment-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appointmentId }),
+        }).catch((emailError) => {
+          console.warn('⚠️ Email de confirmación falló (cita guardada correctamente):', emailError)
+        })
+      }
+
       toast({
         title: appointment ? '¡Cita actualizada exitosamente!' : '¡Cita creada exitosamente!',
         description: `Cita para ${clientType === 'walk_in' ? walkInName : 'el cliente'} ${appointment ? 'actualizada' : 'confirmada'}.`,

@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
         total_price,
         client_notes,
         client_id,
+        business_client_id,
         business_id,
         employee_id,
         businesses (
@@ -77,6 +78,12 @@ export async function POST(request: NextRequest) {
           position
         ),
         users!appointments_client_id_fkey (
+          email,
+          first_name,
+          last_name,
+          phone
+        ),
+        business_clients (
           email,
           first_name,
           last_name,
@@ -144,9 +151,31 @@ export async function POST(request: NextRequest) {
       ? (appointment.employees[0] as Employee)
       : (appointment.employees as Employee);
 
-    const client = Array.isArray(appointment.users)
-      ? (appointment.users[0] as Client)
-      : (appointment.users as Client);
+    // Resolver el cliente: prioridad users (registered) → business_clients
+    // walk_in no tiene ninguno → se descarta con mensaje claro
+    const authUser = Array.isArray(appointment.users)
+      ? (appointment.users[0] as Client | null)
+      : (appointment.users as Client | null);
+
+    const businessClientRaw = Array.isArray(appointment.business_clients)
+      ? (appointment.business_clients[0] as Client | null)
+      : (appointment.business_clients as Client | null);
+
+    const client: Client | null = authUser?.email
+      ? authUser
+      : businessClientRaw?.email
+        ? businessClientRaw
+        : null;
+
+    console.log(
+      `👥 Client resolved from: ${
+        authUser?.email
+          ? "users (registered)"
+          : businessClientRaw?.email
+            ? "business_clients"
+            : "NONE (walk_in)"
+      }`,
+    );
 
     // Verificar que todos los datos necesarios estén presentes
     if (!business?.name || !business?.address) {
@@ -168,9 +197,14 @@ export async function POST(request: NextRequest) {
       );
     }
     if (!client?.email || !client?.first_name || !client?.last_name) {
+      // walk_in o business_client sin email — no hay correo que enviar
       return NextResponse.json(
-        { error: "Datos del cliente no encontrados o incompletos" },
-        { status: 404 },
+        {
+          error:
+            "Cliente sin email (walk_in o sin datos de contacto): no se envía correo",
+          skipped: true,
+        },
+        { status: 400 },
       );
     }
 

@@ -83,7 +83,7 @@ export default function AppointmentTooltip({
               <p className="font-black text-gray-900 text-sm truncate leading-none">{clientName}</p>
               {!appointment.client_id && (
                 <span className="inline-block mt-1 text-[8px] font-black px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-lg uppercase tracking-widest">
-                  Walk-in
+                  Sin registrar
                 </span>
               )}
             </div>
