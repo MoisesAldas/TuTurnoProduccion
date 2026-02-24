@@ -31,6 +31,7 @@ import {
   RefreshCw,
   Clock
 } from 'lucide-react'
+import { ExportDropdown } from '@/components/ui/ExportDropdown'
 import { formatCurrency } from '@/lib/utils'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -174,16 +175,15 @@ export default function CashRegisterReportsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-             <Button
-                onClick={handleExportPDF}
-                variant="outline"
-                className="h-10 px-5 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 font-bold text-gray-600 dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 transition-all duration-300"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Exportar PDF
-              </Button>
-          </div>
+            <ExportDropdown
+              onExport={async (format) => {
+                if (format === 'excel') handleExportExcel()
+                else if (format === 'pdf') handleExportPDF()
+              }}
+              filename={`reporte-caja-${selectedDate}`}
+              pdfTitle="Análisis de Caja"
+              className="h-10 px-5 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 font-bold text-gray-600 dark:text-gray-300"
+            />
         </div>
 
         {/* Date Selector, Controls & Navigation - Integrated */}

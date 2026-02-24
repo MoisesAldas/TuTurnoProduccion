@@ -27,7 +27,7 @@ interface MonthlyAppointmentsChartProps {
 const chartConfig = {
   appointment_count: {
     label: "Citas",
-    color: "hsl(24.6 95% 53.1%)", // Orange-600
+    color: "#ea580c", // Orange-600
   },
   revenue: {
     label: "Ingresos",
@@ -158,6 +158,7 @@ export function MonthlyAppointmentsChart({ data, loading = false, error }: Month
             <Area
               dataKey={activeChart}
               type="monotone"
+              name={chartConfig[activeChart].label}
               stroke={chartConfig[activeChart].color}
               strokeWidth={4}
               fillOpacity={1}

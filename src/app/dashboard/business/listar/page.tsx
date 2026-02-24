@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { ChevronLeft, ChevronRight, Download, FileText, FileSpreadsheet, FileBarChart, Loader2, Calendar, Users, Search as SearchIcon, RotateCcw, List as ListIcon, User, Clock, DollarSign, Briefcase, MoreVertical, Eye, Edit, Check, XCircle, AlertCircle, CreditCard, Building } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { ExportDropdown, ExportFormat as UniversalExportFormat } from '@/components/ui/ExportDropdown'
 import { DataTable } from '@/components/ui/data-table'
 import AppointmentModal from '@/components/AppointmentModal'
 import CreateAppointmentModal from '@/components/CreateAppointmentModal'
@@ -597,58 +598,16 @@ const [detailAppointment, setDetailAppointment] = useState<Appointment | null>(n
               </div>
             )}
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="h-11 px-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm transition-all duration-300 flex items-center gap-2"
-                >
-                  <Download className="w-4.5 h-4.5 text-orange-600" />
-                  <span>Exportar Datos</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 p-2 rounded-[1.5rem] border-0 shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
-                <DropdownMenuLabel className="px-3 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Formato de Salida
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator className="my-1 bg-gray-50" />
-                
-                <DropdownMenuItem onClick={handleExportCSV} className="rounded-xl p-3 cursor-pointer focus:bg-orange-50 dark:focus:bg-orange-900/20 group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">CSV</p>
-                      <p className="text-[10px] text-gray-500">Valores por comas</p>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={handleExportExcel} className="rounded-xl p-3 cursor-pointer focus:bg-orange-50 dark:focus:bg-orange-900/20 group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">Excel</p>
-                      <p className="text-[10px] text-gray-500">Hoja de cálculo</p>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem onClick={handleExportPDF} className="rounded-xl p-3 cursor-pointer focus:bg-orange-50 dark:focus:bg-orange-900/20 group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <FileBarChart className="w-5 h-5 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">PDF</p>
-                      <p className="text-[10px] text-gray-500">Reporte Profesional</p>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ExportDropdown
+              onExport={async (format: UniversalExportFormat) => {
+                if (format === 'excel') await handleExportExcel()
+                else if (format === 'pdf') await handleExportPDF()
+              }}
+              filename={`citas-${new Date().toISOString().split('T')[0]}`}
+              pdfTitle="Listado de Citas"
+              className="h-11 px-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-700 dark:text-gray-200"
+              triggerLabel="Exportar Datos"
+            />
           </div>
         </div>
       </div>

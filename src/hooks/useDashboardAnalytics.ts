@@ -216,6 +216,7 @@ export function useDashboardAnalytics(
       // Transform employee revenue data from appointments query
       const transformedEmployeeRevenue: EmployeeRevenueDetailed[] = [];
       const revenueByEmployee = new Map<string, number>();
+      const countByEmployee = new Map<string, number>();
 
       (employeeRevenueResult.data || []).forEach((item: any) => {
         const empId = item.employee_id;
@@ -224,8 +225,11 @@ export function useDashboardAnalytics(
         }`.trim();
         const invoiceTotal = item.invoices?.total || 0;
 
-        const current = revenueByEmployee.get(empId) || 0;
-        revenueByEmployee.set(empId, current + invoiceTotal);
+        const currentRevenue = revenueByEmployee.get(empId) || 0;
+        revenueByEmployee.set(empId, currentRevenue + invoiceTotal);
+
+        const currentCount = countByEmployee.get(empId) || 0;
+        countByEmployee.set(empId, currentCount + 1);
 
         // Store employee name for later
         if (!transformedEmployeeRevenue.find((e) => e.employee_id === empId)) {
@@ -235,6 +239,7 @@ export function useDashboardAnalytics(
             employee_id: empId,
             employee_name: empName,
             total_revenue: 0, // Will be updated below
+            appointment_count: 0, // Will be updated below
           });
         }
       });
@@ -242,6 +247,7 @@ export function useDashboardAnalytics(
       // Update totals
       transformedEmployeeRevenue.forEach((emp) => {
         emp.total_revenue = revenueByEmployee.get(emp.employee_id) || 0;
+        emp.appointment_count = countByEmployee.get(emp.employee_id) || 0;
       });
 
       // Update monthly data cache if we fetched new data

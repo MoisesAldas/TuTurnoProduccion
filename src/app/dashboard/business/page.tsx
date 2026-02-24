@@ -470,56 +470,86 @@ export default function BusinessDashboard() {
                 {/* Métricas Generales */}
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Total Clientes"
-                    value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
-                    description="Únicos en período"
-                    icon={Users}
-                    variant="orange"
-                  />
-                </motion.div>
-                <motion.div variants={itemVariants}>
-                  <StatsCard
-                    title="Total Citas (Todos los Estados)"
+                    title="Demanda Total"
                     value={data?.totalAppointmentsAllStatuses?.toString() || '0'}
-                    description="Incluye canceladas y no asistio"
+                    description="Volumen bruto de reservas"
                     icon={Calendar}
                     variant="purple"
+                    trend={data?.kpis?.appointments_change_percent !== undefined ? { value: data.kpis.appointments_change_percent } : undefined}
                   />
                 </motion.div>
+
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Total Citas"
-                    value={totalAppointments.toString()}
-                    description="En período"
+                    title="Citas Efectivas"
+                    value={data?.kpis?.total_appointments?.toString() || '0'}
+                    description="Confirmadas y completadas"
                     icon={Calendar}
                     variant="green"
                   />
                 </motion.div>
+
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Tasa de Completitud"
-                    value={`${data?.kpis?.completion_rate?.toFixed(1) || '0'}%`}
-                    description="Citas completadas"
-                    icon={TrendingUp}
+                    title="Citas Facturadas"
+                    value={data?.kpis?.completed_appointments?.toString() || '0'}
+                    description="Servicios finalizados con éxito"
+                    icon={BarChart3}
                     variant="blue"
+                    trend={data?.kpis?.completed_change_percent !== undefined ? { value: data.kpis.completed_change_percent } : undefined}
                   />
                 </motion.div>
+
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Citas Canceladas"
+                    value={data?.kpis?.cancelled_appointments?.toString() || '0'}
+                    description="Reservas no concretadas"
+                    icon={TrendingDown}
+                    variant="red"
+                    trend={data?.kpis?.cancelled_change_percent !== undefined ? { value: data.kpis.cancelled_change_percent } : undefined}
+                  />
+                </motion.div>
+
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Tasa de Éxito"
+                    value={`${data?.kpis?.completion_rate?.toFixed(1) || '0'}%`}
+                    description="Ratio de completitud"
+                    icon={TrendingUp}
+                    variant="orange"
+                    trend={data?.kpis?.completion_rate_change_percent !== undefined ? { value: data.kpis.completion_rate_change_percent } : undefined}
+                  />
+                </motion.div>
+
                 <motion.div variants={itemVariants}>
                   <StatsCard
                     title="Ingresos Totales"
                     value={formatCurrency(data?.revenueAnalytics?.total_revenue || 0)}
-                    description="Facturado"
+                    description="Monto neto facturado"
                     icon={DollarSign}
                     variant="purple"
+                    trend={data?.kpis?.revenue_change_percent !== undefined ? { value: data.kpis.revenue_change_percent } : undefined}
                   />
                 </motion.div>
+
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Precio Promedio Servicio"
+                    title="Ticket Promedio"
                     value={formatCurrency(data?.revenueAnalytics?.average_ticket || 0)}
-                    description={`${data?.revenueAnalytics?.total_invoices || 0} facturas`}
+                    description={`${data?.revenueAnalytics?.total_invoices || 0} facturas cobradas`}
                     icon={Receipt}
                     variant="orange"
+                  />
+                </motion.div>
+
+                <motion.div variants={itemVariants}>
+                  <StatsCard
+                    title="Base de Clientes"
+                    value={data?.uniqueClients?.total_unique_clients?.toString() || '0'}
+                    description="Clientes únicos detectados"
+                    icon={Users}
+                    variant="blue"
                   />
                 </motion.div>
 
@@ -529,34 +559,34 @@ export default function BusinessDashboard() {
                 {/* Mejores Períodos */}
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Día con Más Citas"
+                    title="Día de Mayor Actividad"
                     value={maxDay.date_label}
-                    description={`${maxDay.appointment_count} citas`}
+                    description={`${maxDay.appointment_count} citas efectivas`}
                     icon={TrendingUp}
                     variant="green"
                   />
                 </motion.div>
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Día con Menos Citas"
+                    title="Día de Menor Actividad"
                     value={minDay.date_label}
-                    description={`${minDay.appointment_count} citas`}
+                    description={`${minDay.appointment_count} citas efectivas`}
                     icon={TrendingDown}
                     variant="red"
                   />
                 </motion.div>
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Mes con Más Citas"
+                    title="Mes de Mayor Actividad"
                     value={maxMonth.month_label}
-                    description={`${maxMonth.appointment_count} citas`}
+                    description={`${maxMonth.appointment_count} citas efectivas`}
                     icon={Star}
                     variant="orange"
                   />
                 </motion.div>
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Día con Más Ventas"
+                    title="Día de Mayor Venta"
                     value={translateDateLabel(data?.revenueAnalytics?.best_day_label || 'N/A')}
                     description={formatCurrency(data?.revenueAnalytics?.best_day_revenue || 0)}
                     icon={DollarSign}
@@ -565,7 +595,7 @@ export default function BusinessDashboard() {
                 </motion.div>
                 <motion.div variants={itemVariants}>
                   <StatsCard
-                    title="Mes con Más Ventas"
+                    title="Mes de Mayor Venta"
                     value={translateDateLabel(data?.revenueAnalytics?.best_month_label || 'N/A')}
                     description={formatCurrency(data?.revenueAnalytics?.best_month_revenue || 0)}
                     icon={Calendar}

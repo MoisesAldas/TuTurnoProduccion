@@ -658,7 +658,7 @@ export default function AppointmentsPage() {
             variant="outline"
             size="sm"
             onClick={handleToday}
-            className="hidden sm:flex h-8 px-4 rounded-xl border-gray-100 shadow-sm bg-white text-gray-500 hover:text-orange-600 font-bold text-[9px] uppercase tracking-widest"
+            className="h-8 w-8 p-0 rounded-xl border-gray-100 shadow-sm bg-white text-gray-400 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-100 transition-all active:scale-95"
           >
             Hoy
           </Button>

@@ -381,7 +381,10 @@ export default function ClientDashboard() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center w-full md:w-auto gap-3">
+            <div className="flex items-center justify-center w-full md:w-auto gap-4">
+              <div className="hidden md:block">
+                <NotificationBell userId={authState.user?.id} />
+              </div>
               <Button asChild className="w-full md:w-auto bg-slate-900 hover:bg-slate-800 shadow-xl hover:shadow-slate-900/20 transition-all duration-300 text-white font-black h-10 px-8 rounded-2xl text-xs tracking-tight">
                 <Link href="/marketplace">
                   <Plus className="w-4 h-4 mr-2" />

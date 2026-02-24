@@ -32,17 +32,19 @@ export const EmployeeRevenueBarChart = ({
 }: EmployeeRevenueBarChartProps) => {
   
   const chartData = useMemo(() => {
-    // Group by employee and sum revenue
-    const employeeMap = new Map<string, { name: string, revenue: number }>()
+    // Group by employee and sum revenue + appointments
+    const employeeMap = new Map<string, { name: string, revenue: number, count: number }>()
     
     data.forEach(item => {
       const existing = employeeMap.get(item.employee_id)
       if (existing) {
         existing.revenue += item.total_revenue
+        existing.count += item.appointment_count
       } else {
         employeeMap.set(item.employee_id, {
           name: item.employee_name,
-          revenue: item.total_revenue
+          revenue: item.total_revenue,
+          count: item.appointment_count
         })
       }
     })
@@ -52,7 +54,9 @@ export const EmployeeRevenueBarChart = ({
       .sort((a, b) => b.revenue - a.revenue)
       .map((item, index) => ({
         ...item,
-        fill: EMPLOYEE_COLORS[index % EMPLOYEE_COLORS.length]
+        // Calculate average ticket
+        avgTicket: item.count > 0 ? item.revenue / item.count : 0,
+        fill: index === 0 ? 'hsl(24.6 95% 53.1%)' : EMPLOYEE_COLORS[index % EMPLOYEE_COLORS.length]
       }))
   }, [data])
 
@@ -77,7 +81,7 @@ export const EmployeeRevenueBarChart = ({
     chartData.forEach((item, index) => {
       config[`employee_${index}`] = {
         label: item.name,
-        color: EMPLOYEE_COLORS[index % EMPLOYEE_COLORS.length],
+        color: item.fill,
       }
     })
     return config
@@ -87,7 +91,7 @@ export const EmployeeRevenueBarChart = ({
     return (
       <BaseChartCard
         title="Ingresos por Empleado"
-        description="Distribución de ingresos por empleado"
+        description="Distribución de ingresos y eficiencia"
         loading={loading}
         error={error}
       >
@@ -99,26 +103,52 @@ export const EmployeeRevenueBarChart = ({
   return (
     <BaseChartCard
       title="Ingresos por Empleado"
-      description="Distribución de ingresos por empleado"
+      description="Porcentaje de facturación por colaborador"
       loading={loading}
       error={error}
     >
       <div className="flex flex-col items-center justify-center min-h-[350px]">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square w-full max-w-[300px]"
+          className="mx-auto aspect-square w-full max-w-[350px]"
         >
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 space-y-2 min-w-[180px]">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-50 border-b border-gray-100 dark:border-gray-700/50 pb-1.5">
+                        {data.name}
+                      </p>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ingreso Total</span>
+                          <span className="text-sm font-black text-gray-900 dark:text-gray-50">{formatCurrency(data.revenue)}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Citas Totales</span>
+                          <span className="text-sm font-bold text-slate-600 dark:text-slate-400">{data.count}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 pt-1 border-t border-gray-50 dark:border-gray-700/30">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ticket Promedio</span>
+                          <span className="text-sm font-black text-primary">{formatCurrency(data.avgTicket)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
             />
             <Pie
               data={chartData}
               dataKey="revenue"
               nameKey="name"
-              innerRadius={50}
-              outerRadius={100}
+              innerRadius={65}
+              outerRadius={110}
               strokeWidth={8}
               stroke="transparent"
             >
@@ -126,7 +156,7 @@ export const EmployeeRevenueBarChart = ({
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.fill} 
-                  className="stroke-background dark:stroke-gray-900"
+                  className="stroke-background dark:stroke-gray-900 outline-none"
                 />
               ))}
               <Label
@@ -162,13 +192,13 @@ export const EmployeeRevenueBarChart = ({
           </PieChart>
         </ChartContainer>
 
-        <div className="mt-8 space-y-3 w-full">
-          <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-gray-50 text-base">
+        <div className="mt-8 space-y-3 w-full text-center">
+          <div className="flex items-center justify-center gap-2 font-bold text-gray-900 dark:text-gray-50 text-base">
             <TrendingUp className="h-5 w-5 text-orange-500" />
-            <span>{topEmployee?.name} lidera con {topEmployeePercentage}%</span>
+            <span>{topEmployee?.name} genera el {topEmployeePercentage}%</span>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Mostrando ingresos de {chartData.length} {chartData.length === 1 ? 'empleado' : 'empleados'}
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+            Ticket promedio general: <span className="font-bold text-gray-700 dark:text-gray-200">{formatCurrency(totalRevenue / (chartData.reduce((a, b) => a + b.count, 0) || 1))}</span>
           </p>
         </div>
       </div>

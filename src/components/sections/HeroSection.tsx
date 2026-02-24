@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { ArrowRight, PlayCircle, Sparkles, Shield, Zap } from "lucide-react"
+import { ArrowRight, PlayCircle, Sparkles, Shield, Zap, Briefcase, User, LogIn } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { BadgeDollarSign } from "lucide-react"
@@ -18,21 +18,14 @@ export default function HeroSection() {
 
   return (
     <section className="relative bg-[#ffffff] dark:bg-[#0d0d0f] pt-28 pb-20 md:pt-24 md:pb-28 overflow-hidden">
-
-      {/* ─── Background Texture ─── */}
-    
-
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-[48%_52%] gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
 
             {/* ─────────────────────────────────────────
                 LEFT COLUMN — Copy & CTAs
             ───────────────────────────────────────── */}
             <div className="text-center lg:text-left">
-
-              {/* Badge pill */}
-           
 
               {/* Headline */}
               <h1 className={`text-5xl md:text-6xl lg:text-[4.25rem] font-extrabold leading-[1.08] tracking-tight text-gray-900 dark:text-white mb-6 text-balance transition-all duration-700 ease-out delay-100 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
@@ -43,7 +36,15 @@ export default function HeroSection() {
                   <span className="relative z-10 text-orange-600">Tu negocio</span>
                   {/* Underline accent */}
                   <svg className="absolute -bottom-1 left-0 w-full" viewBox="0 0 200 10" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 8 Q50 2 100 6 Q150 10 200 4" stroke="#f97316" strokeWidth="3" strokeLinecap="round"/>
+                    <path 
+                      d="M0 8 Q50 2 100 6 Q150 10 200 4" 
+                      stroke="#f97316" 
+                      strokeWidth="3" 
+                      strokeLinecap="round"
+                      className={`transition-all duration-1000 ease-in-out ${isMounted ? 'stroke-dashoffset-0' : 'stroke-dashoffset-200'}`}
+                      strokeDasharray="200"
+                      strokeDashoffset="200"
+                    />
                   </svg>
                 </span>
                 {' '}
@@ -53,12 +54,12 @@ export default function HeroSection() {
               </h1>
 
               {/* Subheadline */}
-              <p className={`text-lg md:text-xl text-gray-500 dark:text-gray-400 text-balance mb-10 leading-relaxed max-w-xl mx-auto lg:mx-0 transition-all duration-700 ease-out delay-200 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <p className={`text-lg md:text-xl text-gray-600 dark:text-gray-400 text-balance mb-6 md:mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 transition-all duration-700 ease-out delay-200 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 Automatiza tus citas, gestiona clientes y optimiza ingresos — todo desde un solo lugar. Sin comisiones. Sin complicaciones.
               </p>
 
               {/* CTAs */}
-              <div className={`flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-12 transition-all duration-700 ease-out delay-300 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className={`flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-6 transition-all duration-700 ease-out delay-300 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 <Button
                   size="lg"
                   onClick={() => router.push('/auth/business/register')}
@@ -67,24 +68,44 @@ export default function HeroSection() {
                   {/* Shine sweep */}
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
                   <span className="relative flex items-center">
-                    Empieza Gratis
-                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <Briefcase className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
+                    Registra tu Negocio
                   </span>
                 </Button>
 
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => {}}
-                  className="group border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-orange-300 dark:hover:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30 px-8 py-7 text-base font-semibold rounded-2xl transition-all duration-300"
+                  onClick={() => router.push('/auth/client/register')}
+                  className="group border-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-900 dark:hover:border-slate-600 hover:bg-slate-900 hover:text-white dark:hover:bg-slate-800 px-8 py-7 text-base font-semibold rounded-2xl transition-all duration-300"
                 >
-                  <PlayCircle className="mr-2 w-5 h-5 group-hover:scale-110 group-hover:text-orange-500 transition-all" />
-                  Ver Demo
+                  <User className="mr-2 w-5 h-5 group-hover:scale-110 transition-all" />
+                  Reservar Cita
                 </Button>
               </div>
 
+              {/* Login links */}
+              <div className={`flex flex-wrap items-center justify-center lg:justify-start gap-x-2 gap-y-1 text-sm text-gray-500 mb-6 transition-all duration-700 ease-out delay-[350ms] ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                <span>¿Ya tienes cuenta?</span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => router.push('/auth/business/login')} 
+                    className="text-orange-600 font-bold hover:underline transition-all"
+                  >
+                    Dueño de Negocio
+                  </button>
+                  <span className="text-gray-300 dark:text-gray-700">|</span>
+                  <button 
+                    onClick={() => router.push('/auth/client/login')} 
+                    className="text-slate-900 dark:text-gray-200 font-bold hover:underline transition-all"
+                  >
+                    Cliente
+                  </button>
+                </div>
+              </div>
+
               {/* Social proof */}
-              <div className={`flex flex-col sm:flex-row items-center lg:items-start gap-5 transition-all duration-700 ease-out delay-400 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className={`flex flex-col sm:flex-row items-center lg:items-start gap-4 transition-all duration-700 ease-out delay-400 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 {/* Avatars */}
                 <div className="flex -space-x-2.5">
                   {[
@@ -117,13 +138,13 @@ export default function HeroSection() {
               </div>
 
               {/* Trust chips */}
-              <div className={`hidden lg:flex items-center gap-3 mt-8 transition-all duration-700 ease-out delay-500 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <div className={`hidden lg:flex items-center gap-3 mt-4 transition-all duration-700 ease-out delay-500 ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
                 {[
                   { icon: <Shield className="w-3.5 h-3.5" />, label: 'Datos seguros' },
                   { icon: <Zap className="w-3.5 h-3.5" />, label: 'Configuración en 5 min' },
                   { icon: <BadgeDollarSign className="w-3.5 h-3.5" />, label: 'Sin comisiones' },
                 ].map(({ icon, label }) => (
-                  <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-white/5 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700">
+                  <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 bg-white dark:bg-white/5 px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
                     <span className="text-orange-500">{icon}</span>
                     {label}
                   </div>
@@ -283,25 +304,13 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              {/* Card: Rating */}
-              <div className={`absolute bottom-6 right-1 z-20 transition-all duration-1000 delay-1000 ${isMounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6'}`}
-                style={{ animation: isMounted ? 'float 4.5s ease-in-out 1.5s infinite' : undefined }}>
-                <div className="bg-white dark:bg-[#18181b] border border-slate-200 dark:border-slate-700/60 rounded-2xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.10)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-amber-400 text-base">★</span>
-                    ))}
-                    <span className="ml-1 text-sm font-extrabold text-slate-900 dark:text-white">5.0</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400">Basado en 100+ reseñas</p>
-                </div>
-              </div>
+              {/* Card: Rating removed for balance */}
 
               {/* Card: Notificación nueva cita */}
               <div className={`absolute top-[38%] -right-12 z-20 transition-all duration-1000 delay-[1100ms] ${isMounted ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6'}`}
                 style={{ animation: isMounted ? 'float 3.6s ease-in-out 0.8s infinite' : undefined }}>
-                <div className="flex items-center gap-3 bg-white dark:bg-[#18181b] border border-slate-200 dark:border-slate-700/60 rounded-2xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.10)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-w-[200px]">
-                  <div className="w-9 h-9 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 bg-orange-50/50 dark:bg-[#18181b] backdrop-blur-sm border border-orange-100 dark:border-slate-700/60 rounded-2xl px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.10)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] max-w-[200px]">
+                  <div className="w-9 h-9 rounded-xl bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
                     <span className="text-lg">📅</span>
                   </div>
                   <div className="min-w-0">
@@ -312,8 +321,6 @@ export default function HeroSection() {
               </div>
 
             </div>
-            {/* END RIGHT COLUMN */}
-
           </div>
         </div>
       </div>
@@ -331,6 +338,12 @@ export default function HeroSection() {
         @keyframes pulse-glow {
           0%, 100% { opacity: 0.4; }
           50%       { opacity: 0.8; }
+        }
+        .stroke-dashoffset-200 {
+          stroke-dashoffset: 200;
+        }
+        .stroke-dashoffset-0 {
+          stroke-dashoffset: 0;
         }
       `}</style>
     </section>

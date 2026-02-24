@@ -18,7 +18,7 @@ import {
   PDF_COLORS,
   FONT_SIZES,
   MARGINS,
-  PAGE_LAYOUT, // ¡Añade esto!
+  PAGE_LAYOUT,
   TABLE_STYLES,
   formatPDFCurrency,
   formatPDFPercentage,
@@ -27,6 +27,7 @@ import {
 import {
   addPage,
   checkPageBreak,
+  addFooter,
   addAllFooters,
   addSectionHeader,
   addSubsectionHeader,
@@ -110,28 +111,26 @@ export const generatePDFDocument = async (
   // 3. Revenue Section (Monthly Table)
   // SIEMPRE usar monthlyRevenue (nunca dailyRevenue) para mantener PDF compacto
   if (data.monthlyRevenue.length > 0) {
+    currentY = checkPageBreak(doc, 40);
+    if (currentY > MARGINS.PAGE_TOP) currentY += MARGINS.SECTION_SPACING;
     currentY = await createRevenueSection(doc, data, currentY);
   }
 
   // 4. Operational Performance (Employees + Services)
   if (data.employees.length > 0 || data.services.length > 0) {
-    // Check if we need a page break because of low space
-    if (currentY > 220) {
-      addPage(doc);
-      currentY = MARGINS.PAGE_TOP;
-    } else {
-      currentY += 5; // Small gap
-    }
-
     if (data.employees.length > 0) {
+      // Ensure space for Title + Table Header + at least 3 rows (approx 45mm)
+      currentY = checkPageBreak(doc, 45);
+      if (currentY > MARGINS.PAGE_TOP) currentY += MARGINS.SECTION_SPACING;
+
       currentY = await createEmployeesSection(doc, data, currentY);
     }
 
     if (data.services.length > 0) {
-      // Small gap between sections if on same page
-      if (data.employees.length > 0 && currentY < 220) {
-        currentY += 5;
-      }
+      // Ensure space for next section
+      currentY = checkPageBreak(doc, 45);
+      if (currentY > MARGINS.PAGE_TOP) currentY += MARGINS.SECTION_SPACING;
+
       currentY = await createServicesSection(doc, data, currentY);
     }
   }
@@ -139,23 +138,21 @@ export const generatePDFDocument = async (
   // 5. Payments
   if (data.payments.length > 0) {
     // Check page break
-    if (currentY > 220) {
-      addPage(doc);
-      currentY = MARGINS.PAGE_TOP;
-    } else {
-      currentY += 5;
-    }
+    currentY = checkPageBreak(doc, 40);
+    if (currentY > MARGINS.PAGE_TOP) currentY += MARGINS.SECTION_SPACING;
 
     await createPaymentsSection(doc, data, currentY);
   }
 
   // ==================================================================
-  // FINAL: ADD FOOTERS TO ALL PAGES
+  // FINAL: ADD FOOTERS ONLY TO THE FIRST PAGE
   // ==================================================================
   const formattedDate = format(new Date(), "dd 'de' MMMM, yyyy", {
     locale: es,
   });
-  addAllFooters(doc, formattedDate);
+  const totalPages = doc.getNumberOfPages();
+  doc.setPage(1);
+  addFooter(doc, 1, totalPages, formattedDate);
 
   return doc;
 };
@@ -425,13 +422,12 @@ async function createExecutiveSummary(
       halign: "center",
     },
     columnStyles: {
-      0: { halign: "left", fontStyle: "bold", cellWidth: 60 },
-      1: { halign: "center", cellWidth: 40 },
-      2: { halign: "center", cellWidth: 40 },
-      3: { halign: "center", cellWidth: 35 },
+      0: { halign: "left", fontStyle: "bold" },
+      1: { halign: "center" },
+      2: { halign: "left", fontStyle: "bold" },
+      3: { halign: "center" },
     },
     margin: { left: MARGINS.PAGE_LEFT, right: MARGINS.PAGE_RIGHT },
-    tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
   });
 
   return (doc as any).lastAutoTable.finalY + 8;
@@ -470,7 +466,6 @@ async function createRevenueSection(
         3: { halign: "center" },
       },
       margin: { left: MARGINS.PAGE_LEFT, right: MARGINS.PAGE_RIGHT },
-      tableWidth: PAGE_LAYOUT.CONTENT_WIDTH,
     });
 
     y = (doc as any).lastAutoTable.finalY + MARGINS.SECTION_SPACING;

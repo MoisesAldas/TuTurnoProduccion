@@ -458,638 +458,9 @@ export default function CalendarView({
     )
   }
 
-  if (employees.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p className="text-gray-500 mb-2">No hay empleados seleccionados</p>
-          <p className="text-sm text-gray-400">Selecciona al menos un empleado para ver las citas</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Render week view
-  if (viewType === 'week') {
-    return (
-      <>
-        <div className="h-full flex flex-col">
-          {/* Header de días de la semana - Premium */}
-          <div className="flex border-b border-gray-100 bg-white/50 backdrop-blur-md sticky top-0 z-10 px-0 shadow-sm">
-            {/* Columna de horas (placeholder) */}
-            <div className="w-16 flex-shrink-0 border-r border-gray-100" />
-
-            {/* Columnas de días */}
-            {weekDates.map((date) => {
-              const matchesToday = date.toDateString() === new Date().toDateString()
-              const dayAppointments = appointments.filter(
-                apt => apt.appointment_date === toDateString(date)
-              )
-
-              return (
-                <div
-                  key={date.toISOString()}
-                  className={`flex-1 min-w-[140px] p-3 border-r border-gray-100 last:border-r-0 relative transition-colors ${
-                    matchesToday ? 'bg-orange-50/30' : ''
-                  }`}
-                >
-                  <div className="text-center relative py-1">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
-                      {date.toLocaleDateString('es-ES', { weekday: 'short' })}
-                    </p>
-                    <div className="flex items-center justify-center gap-2">
-                       <span className={`text-xl font-black ${
-                        matchesToday ? 'text-orange-600' : 'text-gray-900'
-                      }`}>
-                        {date.getDate()}
-                      </span>
-                      {dayAppointments.length > 0 && (
-                        <span className="text-[9px] font-black bg-white text-gray-600 border border-gray-100 px-1.5 py-0.5 rounded-lg shadow-sm">
-                          {dayAppointments.length}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {matchesToday && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full mx-6 opacity-80" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Grid del calendario semanal */}
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto overflow-x-auto"
-            style={{ scrollBehavior: 'smooth' }}
-          >
-            <div className="flex min-h-full">
-              {/* Columna de horas */}
-              <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-gray-50">
-                {HOURS.map((hour) => (
-                  <div
-                    key={hour}
-                    className="relative"
-                    style={{ height: `${HOUR_HEIGHT}px` }}
-                  >
-                    <span className="absolute -top-2 right-2 text-xs text-gray-500">
-                      {hour.toString().padStart(2, '0')}:00
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Columnas de días con citas */}
-              {weekDates.map((date) => {
-                const dateStr = toDateString(date)
-                const dayAppointments = appointments.filter(
-                  apt => apt.appointment_date === dateStr
-                )
-                const dayAbsences = absences.filter(
-                  abs => abs.absence_date === dateStr
-                )
-                const isToday = date.toDateString() === new Date().toDateString()
-                const isDropTarget = dropTarget?.date === dateStr
-
-                return (
-                  <div
-                    key={dateStr}
-                    className={`flex-1 min-w-[140px] border-r border-gray-200 last:border-r-0 relative ${
-                      isToday ? 'bg-orange-50/30' : 'bg-white'
-                    } ${isDropTarget ? 'bg-blue-50/50' : ''} cursor-pointer hover:bg-gray-50/50 transition-colors`}
-                    style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}
-                    onDragOver={(e) => handleDragOver(e, employees[0]?.id, dateStr)}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, employees[0]?.id, dateStr)}
-                    onClick={(e) => {
-                      // For week view, we'll create appointments with the first employee by default
-                      const rect = e.currentTarget.getBoundingClientRect()
-                      const relativeY = e.clientY - rect.top
-                      const totalMinutes = (relativeY / HOUR_HEIGHT) * 60
-                      const hours = Math.floor(totalMinutes / 60) + START_HOUR
-                      const minutes = Math.round((totalMinutes % 60) / 15) * 15
-                      const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-
-                      if (onCreateAppointment) {
-                        onCreateAppointment(date, timeString, employees[0]?.id)
-                      }
-                    }}
-                  >
-                    {/* Líneas horizontales de horas */}
-                    {HOURS.map((hour) => (
-                      <div
-                        key={hour}
-                        className="absolute w-full border-b border-gray-100"
-                        style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
-                      />
-                    ))}
-
-                    {/* Citas del día */}
-                    {(() => {
-                      // Agrupar citas superpuestas
-                      const appointmentGroups = groupOverlappingAppointments(dayAppointments)
-
-                      return appointmentGroups.map((group, groupIndex) => {
-                        // Si solo hay una cita en el grupo, renderizar normalmente
-                        if (group.length === 1) {
-                          const appointment = group[0]
-                          const top = getTimePositionMemo(appointment.start_time)
-                          const height = getAppointmentHeightMemo(appointment.start_time, appointment.end_time)
-                          const employee = employees.find(e => e.id === appointment.employee_id)
-                          const isDragging = draggingAppointment?.id === appointment.id
-
-                          return (
-                            <AppointmentCard
-                              key={appointment.id}
-                              appointment={appointment}
-                              top={top}
-                              height={height}
-                              clientName={getClientName(appointment)}
-                              employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
-                              isDragging={isDragging}
-                              onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
-                              onMouseLeave={handleAppointmentLeave}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleAppointmentClick(appointment)
-                              }}
-                              onDragStart={(e) => handleDragStart(e, appointment)}
-                              onDragEnd={handleDragEnd}
-                            />
-                          )
-                        }
-
-                        // Si hay múltiples citas superpuestas, renderizar con Popover
-                        const firstAppointment = group[0]
-                        const top = getTimePositionMemo(firstAppointment.start_time)
-                        const height = getAppointmentHeightMemo(firstAppointment.start_time, firstAppointment.end_time)
-                        const employee = employees.find(e => e.id === firstAppointment.employee_id)
-                        const isDragging = draggingAppointment?.id === firstAppointment.id
-
-                        return (
-                          <div
-                            key={`week-${dateStr}-${groupIndex}`}
-                            className="absolute inset-x-0"
-                            style={{
-                              top: `${top}px`,
-                              height: `${height}px`
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setOverlappingAppointments(group)
-                              setOverlappingDialogOpen(true)
-                            }}
-                          >
-                            <AppointmentCard
-                              appointment={firstAppointment}
-                              height={height}
-                              clientName={getClientName(firstAppointment)}
-                              employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
-                              isDragging={isDragging}
-                              onDragStart={(e) => handleDragStart(e, firstAppointment)}
-                              onDragEnd={handleDragEnd}
-                              draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
-                            />
-                            
-                            {/* Badge de citas adicionales */}
-                            <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white z-30">
-                              +{group.length - 1}
-                            </div>
-                          </div>
-                        )
-                      })
-                    })()}
-
-                    {/* Drop preview indicator */}
-                    {draggingAppointment && isDropTarget && dropTarget?.time && (
-                      <div
-                        className="absolute inset-x-1 rounded-lg border-2 border-dashed border-blue-400 bg-blue-100/30 z-10 pointer-events-none"
-                        style={{
-                          top: `${getTimePositionMemo(dropTarget.time)}px`,
-                          height: `${(draggingAppointment.appointment_services?.[0]?.services?.duration_minutes || 60) * (HOUR_HEIGHT / 60)}px`
-                        }}
-                      >
-                        <div className="flex items-center justify-center h-full">
-                          <p className="text-xs font-semibold text-blue-600">
-                            Soltar aquí
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Línea de hora actual (si es hoy) */}
-                    {isToday && <CurrentTimeLine startHour={START_HOUR} endHour={END_HOUR} />}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Modal de detalles */}
-        {showModal && selectedAppointment && (
-          <AppointmentModal
-            appointment={selectedAppointment}
-            onClose={handleCloseModal}
-            onUpdate={handleAppointmentUpdate}
-            onEdit={
-              onEditAppointment
-                ? () => {
-                    handleCloseModal()
-                    onEditAppointment(selectedAppointment)
-                  }
-                : undefined
-            }
-          />
-        )}
-
-        {/* Render Tooltip */}
-        {renderTooltip()}
-
-        {/* Dialog de citas superpuestas */}
-        <OverlappingAppointmentsDialog
-          isOpen={overlappingDialogOpen}
-          onClose={() => setOverlappingDialogOpen(false)}
-          appointments={overlappingAppointments}
-          employees={employees}
-          onAppointmentClick={handleAppointmentClick}
-        />
-
-        {/* Tooltip */}
-        
-      </>
-    )
-  }
-
-  // Render day view
-  return (
+  // Render common elements (Modals, Tooltips)
+  const commonElements = (
     <>
-      <div className="h-full flex flex-col">
-        {/* Desktop View - Horizontal Scroll Container */}
-        <div className="hidden md:flex flex-1 flex-col overflow-x-auto scrollbar-thin scrollbar-thumb-orange-200">
-          <div className="flex-1 flex flex-col min-w-max">
-            {/* Header de empleados - Premium Design (Desktop) - Sticky Top & Left Corner */}
-            <div className="flex border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 shadow-sm px-0">
-              {/* Columna de horas (Esquina superior izquierda sticky) */}
-              <div className="w-16 flex-shrink-0 border-r border-gray-100 sticky left-0 z-40 bg-white/95 backdrop-blur-md" />
-
-              {/* Columnas de empleados */}
-              {employees.map((employee) => (
-                <div
-                  key={employee.id}
-                  className="w-[220px] py-4 border-r border-gray-100 last:border-r-0"
-                >
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="relative group">
-                      <Avatar className="w-14 h-14 border-2 border-white shadow-xl ring-2 ring-orange-500/10 group-hover:ring-orange-500/30 transition-all duration-300">
-                        <AvatarImage src={employee.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-600 text-white font-black">
-                          {getInitials(employee.first_name, employee.last_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
-                    </div>
-                    <div className="text-center">
-                      <span className="text-[9px] font-black text-orange-600 uppercase tracking-[0.2em] block mb-0.5 opacity-80">
-                        Profesional
-                      </span>
-                      <p className="text-sm font-black text-gray-900 tracking-tight">
-                        {employee.first_name} {employee.last_name}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Grid del calendario - Desktop */}
-            <div
-              ref={scrollContainerRef}
-              className="flex-1 overflow-y-auto"
-              style={{ scrollBehavior: 'smooth' }}
-            >
-              <div className="flex min-h-full">
-                {/* Columna de horas - Sticky Left */}
-                <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-gray-50/95 backdrop-blur-sm sticky left-0 z-20">
-                  {HOURS.map((hour) => (
-                    <div
-                      key={hour}
-                      className="relative"
-                      style={{ height: `${HOUR_HEIGHT}px` }}
-                    >
-                      <span className="absolute -top-2 right-2 text-xs text-gray-500 font-bold">
-                        {hour.toString().padStart(2, '0')}:00
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Columnas de empleados con citas */}
-                {employees.map((employee) => {
-                  const employeeAppointments = appointments.filter(
-                    (apt) => apt.employee_id === employee.id
-                  )
-                  const employeeAbsence = absences.find((abs) => abs.employee_id === employee.id)
-                  const isDropTarget = dropTarget?.employeeId === employee.id
-
-                  return (
-                    <div
-                      key={employee.id}
-                      className={`w-[220px] border-r border-gray-200 last:border-r-0 relative bg-white cursor-pointer hover:bg-gray-50/50 transition-colors ${
-                        isDropTarget ? 'bg-blue-50/50' : ''
-                      }`}
-                      style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}
-                      onDragOver={(e) => handleDragOver(e, employee.id)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, employee.id)}
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect()
-                        handleTimeSlotClick(employee.id, e.clientY, rect.top)
-                      }}
-                    >
-                      {/* Líneas horizontales de horas */}
-                      {HOURS.map((hour) => (
-                        <div
-                          key={hour}
-                          className="absolute w-full border-b border-gray-100"
-                          style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
-                        />
-                      ))}
-
-                      {/* Ausencia del empleado (si existe) */}
-                      {employeeAbsence && (
-                        <div
-                          className="absolute inset-x-0 bg-gray-200/80 border-2 border-gray-400 border-dashed flex items-center justify-center z-10 cursor-not-allowed"
-                          style={{
-                            top: employeeAbsence.is_full_day
-                              ? 0
-                              : getTimePositionMemo(employeeAbsence.start_time || '08:00'),
-                            height: employeeAbsence.is_full_day
-                              ? '100%'
-                              : getAppointmentHeightMemo(
-                                  employeeAbsence.start_time || '08:00',
-                                  employeeAbsence.end_time || '20:00'
-                                )
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="text-center p-2">
-                            <p className="text-sm font-semibold text-gray-700">
-                              {employeeAbsence.reason === 'enfermedad' && '🤒 Enfermedad'}
-                              {employeeAbsence.reason === 'vacaciones' && '🏖️ Vacaciones'}
-                              {employeeAbsence.reason === 'personal' && '📅 Personal'}
-                              {employeeAbsence.reason === 'emergencia' && '🚨 Emergencia'}
-                              {employeeAbsence.reason === 'otro' && '📝 Otro'}
-                            </p>
-                            {employeeAbsence.notes && (
-                              <p className="text-xs text-gray-600 mt-1">{employeeAbsence.notes}</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Citas del empleado */}
-                      {(() => {
-                        // Agrupar citas superpuestas
-                        const appointmentGroups = groupOverlappingAppointments(employeeAppointments)
-
-                        return appointmentGroups.map((group, groupIndex) => {
-                          // Si solo hay una cita en el grupo, renderizar normalmente
-                          if (group.length === 1) {
-                            const appointment = group[0]
-                            const top = getTimePositionMemo(appointment.start_time)
-                            const height = getAppointmentHeightMemo(appointment.start_time, appointment.end_time)
-                            const isDragging = draggingAppointment?.id === appointment.id
-
-                            return (
-                              <AppointmentCard
-                                key={appointment.id}
-                                appointment={appointment}
-                                top={top}
-                                height={height}
-                                clientName={getClientName(appointment)}
-                                isDragging={isDragging}
-                                onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
-                                onMouseLeave={handleAppointmentLeave}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleAppointmentClick(appointment)
-                                }}
-                                onDragStart={(e) => handleDragStart(e, appointment)}
-                                onDragEnd={handleDragEnd}
-                              />
-                            )
-                          }
-
-                          // Si hay múltiples citas superpuestas, renderizar con Popover
-                          const firstAppointment = group[0]
-                          const top = getTimePositionMemo(firstAppointment.start_time)
-                          const height = getAppointmentHeightMemo(firstAppointment.start_time, firstAppointment.end_time)
-                          const employee = employees.find(e => e.id === firstAppointment.employee_id)
-                          const isDragging = draggingAppointment?.id === firstAppointment.id
-
-                          return (
-                            <div
-                              key={`day-${employee?.id}-${groupIndex}`}
-                              className="absolute inset-x-0"
-                              style={{
-                                top: `${top}px`,
-                                height: `${height}px`
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setOverlappingAppointments(group)
-                                setOverlappingDialogOpen(true)
-                              }}
-                            >
-                              <AppointmentCard
-                                appointment={firstAppointment}
-                                height={height}
-                                clientName={getClientName(firstAppointment)}
-                                employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
-                                isDragging={isDragging}
-                                onDragStart={(e) => handleDragStart(e, firstAppointment)}
-                                onDragEnd={handleDragEnd}
-                                draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
-                              />
-                              
-                              {/* Badge de citas adicionales */}
-                              <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-white z-30">
-                                +{group.length - 1}
-                              </div>
-                            </div>
-                          )
-                        })
-                      })()}
-
-                      {/* Drop preview indicator */}
-                      {draggingAppointment && isDropTarget && dropTarget?.time && (
-                        <div
-                          className="absolute inset-x-1 rounded-lg border-2 border-dashed border-blue-400 bg-blue-100/30 z-10 pointer-events-none"
-                          style={{
-                            top: `${getTimePositionMemo(dropTarget.time)}px`,
-                            height: `${(draggingAppointment.appointment_services?.[0]?.services?.duration_minutes || 60) * (HOUR_HEIGHT / 60)}px`
-                          }}
-                        >
-                          <div className="flex items-center justify-center h-full">
-                            <p className="text-xs font-semibold text-blue-600">
-                              Soltar aquí
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Línea de hora actual (si es hoy) */}
-                      {selectedDate.toDateString() === new Date().toDateString() && (
-                        <CurrentTimeLine startHour={START_HOUR} endHour={END_HOUR} />
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Vista móvil - Lista de citas Premium & Responsive */}
-        <div className="md:hidden flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50/50">
-          {employees.map((employee) => {
-            const employeeAppointments = appointments.filter(
-              (apt) => apt.employee_id === employee.id
-            )
-            const employeeAbsence = absences.find((abs) => abs.employee_id === employee.id)
-
-            return (
-              <div key={employee.id} className="space-y-3">
-                {/* Header del empleado - Estilo Eyebrow */}
-                <div className="flex items-center gap-3 px-1">
-                  <div className="relative">
-                    <Avatar className="w-10 h-10 border-2 border-white shadow-md">
-                      <AvatarImage src={employee.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-500 text-white text-xs font-black">
-                        {getInitials(employee.first_name, employee.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] uppercase tracking-widest font-black text-orange-600 block mb-0.5">
-                      Profesional
-                    </span>
-                    <h3 className="text-sm font-black text-gray-900 leading-none">
-                      {employee.first_name} {employee.last_name}
-                    </h3>
-                  </div>
-                  <div className="ml-auto bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm border border-gray-100">
-                    <span className="text-[10px] font-black text-gray-600">
-                      {employeeAppointments.length} citas
-                    </span>
-                  </div>
-                </div>
-
-                {/* Ausencia con Estilo Premium */}
-                {employeeAbsence && (
-                  <div className="bg-white/60 backdrop-blur-sm border border-orange-100 p-3 rounded-2xl shadow-sm flex items-center gap-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Calendar className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-orange-900 uppercase tracking-wider">
-                        No Disponible
-                      </p>
-                      <p className="text-[10px] text-orange-700 font-medium">
-                        {employeeAbsence.reason === 'enfermedad' && 'Ausencia por enfermedad'}
-                        {employeeAbsence.reason === 'vacaciones' && 'En vacaciones'}
-                        {employeeAbsence.reason === 'personal' && 'Asuntos personales'}
-                        {employeeAbsence.reason === 'emergencia' && 'Emergencia'}
-                        {employeeAbsence.reason === 'otro' && (employeeAbsence.notes || 'No disponible')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Lista de citas - Premium Cards */}
-                <div className="space-y-3">
-                  {employeeAppointments.length > 0 ? (
-                    employeeAppointments.map((appointment) => {
-                      const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
-                      const statusInfo = getStatusColor(appointment.status)
-                      
-                      return (
-                        <div
-                          key={appointment.id}
-                          className="group relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100/50 hover:shadow-md transition-all active:scale-[0.98]"
-                          onClick={() => handleAppointmentClick(appointment)}
-                        >
-                          {/* Status Indicator Bar */}
-                          <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
-                             appointment.status === 'confirmed' ? 'bg-emerald-500' :
-                             appointment.status === 'pending' ? 'bg-amber-500' :
-                             appointment.status === 'in_progress' ? 'bg-blue-500' :
-                             appointment.status === 'completed' ? 'bg-gray-400' :
-                             'bg-red-500'
-                          }`} />
-
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                  {appointment.start_time.substring(0, 5)} — {appointment.end_time.substring(0, 5)}
-                                </span>
-                                {!appointment.client_id && (
-                                  <span className="text-[8px] font-black bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
-                                    Walk-in
-                                  </span>
-                                )}
-                              </div>
-                              <h4 className="text-sm font-black text-gray-900 truncate">
-                                {getClientName(appointment)}
-                              </h4>
-                              <p className="text-xs font-bold text-gray-500 mt-0.5 truncate uppercase tracking-tight">
-                                {serviceName}
-                              </p>
-                            </div>
-
-                            <div className="flex flex-col items-end gap-1">
-                              <span className="text-sm font-black text-gray-900 bg-gray-50 px-3 py-1 rounded-xl border border-gray-100">
-                                ${appointment.total_price}
-                              </span>
-                              <div className={`w-2 h-2 rounded-full ${
-                                appointment.status === 'confirmed' ? 'bg-emerald-500' :
-                                appointment.status === 'pending' ? 'bg-amber-500' :
-                                'bg-gray-300'
-                              } animate-pulse`} />
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })
-                  ) : (
-                    <div className="py-8 text-center bg-white/40 rounded-3xl border border-dashed border-gray-200">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                        Sin citas agendadas
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-
-          {appointments.length === 0 && (
-            <div className="text-center py-20">
-              <div className="w-16 h-16 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                <Calendar className="w-8 h-8 text-gray-200" />
-              </div>
-              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Agenda vacía</p>
-            </div>
-          )}
-        </div>
-
-
-      </div>
-
       {/* Modal de detalles */}
       {showModal && selectedAppointment && (
         <AppointmentModal
@@ -1097,7 +468,7 @@ export default function CalendarView({
           onClose={handleCloseModal}
           onUpdate={handleAppointmentUpdate}
           onEdit={
-            onEditAppointment
+            selectedAppointment
               ? () => {
                   handleCloseModal()
                   onEditAppointment(selectedAppointment)
@@ -1118,15 +489,585 @@ export default function CalendarView({
         employees={employees}
         onAppointmentClick={handleAppointmentClick}
       />
+    </>
+  )
 
-      {/* Tooltip */}
-     
+  if (employees.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <p className="text-gray-500 mb-2">No hay empleados seleccionados</p>
+          <p className="text-sm text-gray-400">Selecciona al menos un empleado para ver las citas</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="h-full flex flex-col">
+        {viewType === 'week' ? (
+          /* Render week view */
+          <div 
+            ref={scrollContainerRef}
+            className="flex-1 overflow-auto scrollbar-thin relative"
+            style={{ scrollBehavior: 'smooth' }}
+          >
+            <div className="w-max min-w-full min-h-full flex flex-col">
+              {/* Header de días de la semana - Sticky Top */}
+              <div className="flex border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50 px-0 shadow-sm min-w-full">
+                {/* Columna de horas (placeholder sticky total) */}
+                <div className="w-16 flex-shrink-0 border-r border-gray-100 sticky left-0 z-[60] bg-white" />
+
+                {/* Columnas de días */}
+                {weekDates.map((date) => {
+                  const matchesToday = date.toDateString() === new Date().toDateString()
+                  const dayAppointments = appointments.filter(
+                    apt => apt.appointment_date === toDateString(date)
+                  )
+
+                  return (
+                    <div
+                      key={date.toISOString()}
+                      className={`flex-1 min-w-[140px] p-3 border-r border-gray-100 last:border-r-0 relative transition-colors ${
+                        matchesToday ? 'bg-orange-50/30' : ''
+                      }`}
+                    >
+                      <div className="text-center relative py-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                          {date.toLocaleDateString('es-ES', { weekday: 'short' })}
+                        </p>
+                        <div className="flex items-center justify-center gap-2">
+                          <span className={`text-xl font-black ${
+                            matchesToday ? 'text-orange-600' : 'text-gray-900'
+                          }`}>
+                            {date.getDate()}
+                          </span>
+                          {dayAppointments.length > 0 && (
+                            <span className="text-[9px] font-black bg-white text-gray-600 border border-gray-100 px-1.5 py-0.5 rounded-lg shadow-sm">
+                              {dayAppointments.length}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {matchesToday && (
+                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full mx-6 opacity-80" />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Grid del calendario semanal - Unified */}
+              <div className="flex flex-1 min-w-full relative">
+                {/* Columna de horas - Sticky Left */}
+                <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-40">
+                  {HOURS.map((hour) => (
+                    <div
+                      key={hour}
+                      className="relative border-b border-gray-100"
+                      style={{ height: `${HOUR_HEIGHT}px` }}
+                    >
+                      <span className="absolute -top-2 right-2 text-xs text-gray-500">
+                        {hour.toString().padStart(2, '0')}:00
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Columnas de días con citas */}
+                {weekDates.map((date) => {
+                  const dateStr = toDateString(date)
+                  const dayAppointments = appointments.filter(
+                    apt => apt.appointment_date === dateStr
+                  )
+                  const isToday = date.toDateString() === new Date().toDateString()
+                  const isDropTarget = dropTarget?.date === dateStr
+
+                  return (
+                    <div
+                      key={dateStr}
+                      className={`flex-1 min-w-[140px] border-r border-gray-200 last:border-r-0 relative ${
+                        isToday ? 'bg-orange-50/30' : 'bg-white'
+                      } ${isDropTarget ? 'bg-blue-50/50' : ''} cursor-pointer hover:bg-gray-50/50 transition-colors`}
+                      style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}
+                      onDragOver={(e) => handleDragOver(e, employees[0]?.id, dateStr)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, employees[0]?.id, dateStr)}
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        const relativeY = e.clientY - rect.top
+                        const totalMinutes = (relativeY / HOUR_HEIGHT) * 60
+                        const hours = Math.floor(totalMinutes / 60) + START_HOUR
+                        const minutes = Math.round((totalMinutes % 60) / 15) * 15
+                        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+
+                        if (onCreateAppointment) {
+                          onCreateAppointment(date, timeString, employees[0]?.id)
+                        }
+                      }}
+                    >
+                      {/* Líneas horizontales de horas */}
+                      {HOURS.map((hour) => (
+                        <div
+                          key={hour}
+                          className="absolute w-full border-b border-gray-100"
+                          style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
+                        />
+                      ))}
+
+                      {/* Citas del día */}
+                      {(() => {
+                        const appointmentGroups = groupOverlappingAppointments(dayAppointments)
+                        return appointmentGroups.map((group, groupIndex) => {
+                          if (group.length === 1) {
+                            const appointment = group[0]
+                            const top = getTimePositionMemo(appointment.start_time)
+                            const height = getAppointmentHeightMemo(appointment.start_time, appointment.end_time)
+                            const employee = employees.find(e => e.id === appointment.employee_id)
+                            const isDragging = draggingAppointment?.id === appointment.id
+
+                            return (
+                              <AppointmentCard
+                                key={appointment.id}
+                                appointment={appointment}
+                                top={top}
+                                height={height}
+                                clientName={getClientName(appointment)}
+                                employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
+                                isDragging={isDragging}
+                                onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
+                                onMouseLeave={handleAppointmentLeave}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleAppointmentClick(appointment)
+                                }}
+                                onDragStart={(e) => handleDragStart(e, appointment)}
+                                onDragEnd={handleDragEnd}
+                              />
+                            )
+                          }
+
+                          const firstAppointment = group[0]
+                          const top = getTimePositionMemo(firstAppointment.start_time)
+                          const height = getAppointmentHeightMemo(firstAppointment.start_time, firstAppointment.end_time)
+                          const employee = employees.find(e => e.id === firstAppointment.employee_id)
+                          const isDragging = draggingAppointment?.id === firstAppointment.id
+
+                          return (
+                            <div
+                              key={`week-${dateStr}-${groupIndex}`}
+                              className="absolute inset-x-0 z-30"
+                              style={{
+                                top: `${top}px`,
+                                height: `${height}px`
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setOverlappingAppointments(group)
+                                setOverlappingDialogOpen(true)
+                              }}
+                            >
+                              <AppointmentCard
+                                appointment={firstAppointment}
+                                height={height}
+                                clientName={getClientName(firstAppointment)}
+                                employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
+                                isDragging={isDragging}
+                                onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                                onDragEnd={handleDragEnd}
+                                draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                              />
+                              <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg border-2 border-white z-30">
+                                +{group.length - 1}
+                              </div>
+                            </div>
+                          )
+                        })
+                      })()}
+
+                      {/* Drop preview */}
+                      {draggingAppointment && isDropTarget && dropTarget?.time && (
+                        <div
+                          className="absolute inset-x-1 rounded-lg border-2 border-dashed border-blue-400 bg-blue-100/30 z-10 pointer-events-none"
+                          style={{
+                            top: `${getTimePositionMemo(dropTarget.time)}px`,
+                            height: `${(draggingAppointment.appointment_services?.[0]?.services?.duration_minutes || 60) * (HOUR_HEIGHT / 60)}px`
+                          }}
+                        >
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-xs font-semibold text-blue-600">Soltar aquí</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+
+                {/* Línea de hora actual global que cruza toda la semana - Corregida posición */}
+                {weekDates.some(d => d.toDateString() === new Date().toDateString()) && (
+                  <CurrentTimeLine startHour={START_HOUR} endHour={END_HOUR} />
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Render Day View */
+          <div 
+            ref={scrollContainerRef}
+            className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-orange-200 relative pt-0"
+            style={{ scrollBehavior: 'smooth' }}
+          >
+            <div className="flex-1 md:flex flex-col hidden sm:block">
+              <div className="w-max min-w-full min-h-full flex flex-col">
+                {/* Header de empleados - Premium Design (Desktop) - Sticky Top */}
+                <div className="flex border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm px-0 min-w-full">
+                  {/* Columna de horas (Esquina superior izquierda sticky total) */}
+                  <div className="w-16 flex-shrink-0 border-r border-gray-100 sticky left-0 z-[60] bg-white" />
+
+                  {/* Columnas de empleados */}
+                  {employees.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className="flex-1 min-w-[220px] py-4 border-r border-gray-100 last:border-r-0"
+                    >
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="relative group">
+                          <Avatar className="w-14 h-14 border-2 border-white shadow-xl ring-2 ring-orange-500/10 group-hover:ring-orange-500/30 transition-all duration-300">
+                            <AvatarImage src={employee.avatar_url} />
+                            <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-600 text-white font-black">
+                              {getInitials(employee.first_name, employee.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
+                        </div>
+                        <div className="text-center">
+                          <span className="text-[9px] font-black text-orange-600 uppercase tracking-[0.2em] block mb-0.5 opacity-80">
+                            Profesional
+                          </span>
+                          <p className="text-sm font-black text-gray-900 tracking-tight">
+                            {employee.first_name} {employee.last_name}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grid del calendario - Desktop */}
+                <div className="flex min-h-full min-w-full relative">
+                  {/* Columna de horas - Sticky Left */}
+                  <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-40">
+                    {HOURS.map((hour) => (
+                      <div
+                        key={hour}
+                        className="relative border-b border-gray-100"
+                        style={{ height: `${HOUR_HEIGHT}px` }}
+                      >
+                        <span className="absolute -top-2 right-2 text-xs text-gray-500 font-bold">
+                          {hour.toString().padStart(2, '0')}:00
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Columnas de empleados con citas */}
+                  {employees.map((employee) => {
+                    const employeeAppointments = appointments.filter(
+                      (apt) => apt.employee_id === employee.id
+                    )
+                    const employeeAbsence = absences.find((abs) => abs.employee_id === employee.id)
+                    const isDropTarget = dropTarget?.employeeId === employee.id
+
+                    return (
+                      <div
+                        key={employee.id}
+                        className={`flex-1 min-w-[220px] border-r border-gray-200 last:border-r-0 relative bg-white cursor-pointer hover:bg-gray-50/50 transition-colors ${
+                          isDropTarget ? 'bg-blue-50/50' : ''
+                        }`}
+                        style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}
+                        onDragOver={(e) => handleDragOver(e, employee.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, employee.id)}
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          handleTimeSlotClick(employee.id, e.clientY, rect.top)
+                        }}
+                      >
+                        {/* Líneas horizontales de horas */}
+                        {HOURS.map((hour) => (
+                          <div
+                            key={hour}
+                            className="absolute w-full border-b border-gray-100"
+                            style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
+                          />
+                        ))}
+
+                        {/* Ausencia del empleado */}
+                        {employeeAbsence && (
+                          <div
+                            className="absolute inset-x-0 bg-gray-200/80 border-2 border-gray-400 border-dashed flex items-center justify-center z-10 cursor-not-allowed"
+                            style={{
+                              top: employeeAbsence.is_full_day ? 0 : getTimePositionMemo(employeeAbsence.start_time || '08:00'),
+                              height: employeeAbsence.is_full_day ? '100%' : getAppointmentHeightMemo(employeeAbsence.start_time || '08:00', employeeAbsence.end_time || '20:00')
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="text-center p-2">
+                              <p className="text-sm font-semibold text-gray-700">
+                                {employeeAbsence.reason === 'enfermedad' && '🤒 Enfermedad'}
+                                {employeeAbsence.reason === 'vacaciones' && '🏖️ Vacaciones'}
+                                {employeeAbsence.reason === 'personal' && '📅 Personal'}
+                                {employeeAbsence.reason === 'emergencia' && '🚨 Emergencia'}
+                                {employeeAbsence.reason === 'otro' && '📝 Otro'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Citas del empleado */}
+                        {(() => {
+                          const appointmentGroups = groupOverlappingAppointments(employeeAppointments)
+                          return appointmentGroups.map((group, groupIndex) => {
+                            if (group.length === 1) {
+                              const appointment = group[0]
+                              const top = getTimePositionMemo(appointment.start_time)
+                              const height = getAppointmentHeightMemo(appointment.start_time, appointment.end_time)
+                              const isDragging = draggingAppointment?.id === appointment.id
+
+                              return (
+                                <AppointmentCard
+                                  key={appointment.id}
+                                  appointment={appointment}
+                                  top={top}
+                                  height={height}
+                                  clientName={getClientName(appointment)}
+                                  isDragging={isDragging}
+                                  onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
+                                  onMouseLeave={handleAppointmentLeave}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleAppointmentClick(appointment)
+                                  }}
+                                  onDragStart={(e) => handleDragStart(e, appointment)}
+                                  onDragEnd={handleDragEnd}
+                                />
+                              )
+                            }
+
+                            const firstAppointment = group[0]
+                            const top = getTimePositionMemo(firstAppointment.start_time)
+                            const height = getAppointmentHeightMemo(firstAppointment.start_time, firstAppointment.end_time)
+                            const employee = employees.find(e => e.id === firstAppointment.employee_id)
+                            const isDragging = draggingAppointment?.id === firstAppointment.id
+
+                            return (
+                              <div
+                                key={`day-${employee?.id}-${groupIndex}`}
+                                className="absolute inset-x-0 z-30"
+                                style={{ top: `${top}px`, height: `${height}px` }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setOverlappingAppointments(group)
+                                  setOverlappingDialogOpen(true)
+                                }}
+                              >
+                                <AppointmentCard
+                                  appointment={firstAppointment}
+                                  height={height}
+                                  clientName={getClientName(firstAppointment)}
+                                  employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
+                                  isDragging={isDragging}
+                                  onDragStart={(e) => handleDragStart(e, firstAppointment)}
+                                  onDragEnd={handleDragEnd}
+                                  draggable={firstAppointment.status !== 'completed' && firstAppointment.status !== 'cancelled'}
+                                />
+                                <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg border-2 border-white z-30">
+                                  +{group.length - 1}
+                                </div>
+                              </div>
+                            )
+                          })
+                        })()}
+
+                        {/* Drop preview indicator */}
+                        {draggingAppointment && isDropTarget && dropTarget?.time && (
+                          <div
+                            className="absolute inset-x-1 rounded-lg border-2 border-dashed border-blue-400 bg-blue-100/30 z-10 pointer-events-none"
+                            style={{
+                              top: `${getTimePositionMemo(dropTarget.time)}px`,
+                              height: `${(draggingAppointment.appointment_services?.[0]?.services?.duration_minutes || 60) * (HOUR_HEIGHT / 60)}px`
+                            }}
+                          >
+                            <div className="flex items-center justify-center h-full">
+                              <p className="text-xs font-semibold text-blue-600">Soltar aquí</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {/* Línea de hora actual unificada */}
+                  {selectedDate.toDateString() === new Date().toDateString() && (
+                    <CurrentTimeLine startHour={START_HOUR} endHour={END_HOUR} />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Vista móvil - Lista de citas Premium & Responsive */}
+            <div className="md:hidden flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50/50">
+              {employees.map((employee) => {
+                const employeeAppointments = appointments.filter(
+                  (apt) => apt.employee_id === employee.id
+                )
+                const employeeAbsence = absences.find((abs) => abs.employee_id === employee.id)
+
+                return (
+                  <div key={employee.id} className="space-y-3">
+                    {/* Header del empleado - Estilo Eyebrow */}
+                    <div className="flex items-center gap-3 px-1">
+                      <div className="relative">
+                        <Avatar className="w-10 h-10 border-2 border-white shadow-md">
+                          <AvatarImage src={employee.avatar_url} />
+                          <AvatarFallback className="bg-gradient-to-br from-orange-500 to-amber-500 text-white text-xs font-black">
+                            {getInitials(employee.first_name, employee.last_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase tracking-widest font-black text-orange-600 block mb-0.5">
+                          Profesional
+                        </span>
+                        <h3 className="text-sm font-black text-gray-900 leading-none">
+                          {employee.first_name} {employee.last_name}
+                        </h3>
+                      </div>
+                      <div className="ml-auto bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm border border-gray-100">
+                        <span className="text-[10px] font-black text-gray-600">
+                          {employeeAppointments.length} citas
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Ausencia con Estilo Premium */}
+                    {employeeAbsence && (
+                      <div className="bg-white/60 backdrop-blur-sm border border-orange-100 p-3 rounded-2xl shadow-sm flex items-center gap-3">
+                        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <CalendarIcon className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-orange-900 uppercase tracking-wider">
+                            No Disponible
+                          </p>
+                          <p className="text-[10px] text-orange-700 font-medium">
+                            {employeeAbsence.reason === 'enfermedad' && 'Ausencia por enfermedad'}
+                            {employeeAbsence.reason === 'vacaciones' && 'En vacaciones'}
+                            {employeeAbsence.reason === 'personal' && 'Asuntos personales'}
+                            {employeeAbsence.reason === 'emergencia' && 'Emergencia'}
+                            {employeeAbsence.reason === 'otro' && (employeeAbsence.notes || 'No disponible')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Lista de citas - Premium Cards */}
+                    <div className="space-y-3">
+                      {employeeAppointments.length > 0 ? (
+                        employeeAppointments.map((appointment) => {
+                          const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
+                          
+                          return (
+                            <div
+                              key={appointment.id}
+                              className="group relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100/50 hover:shadow-md transition-all active:scale-[0.98]"
+                              onClick={() => handleAppointmentClick(appointment)}
+                            >
+                              {/* Status Indicator Bar */}
+                              <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-full ${
+                                 appointment.status === 'confirmed' ? 'bg-emerald-500' :
+                                 appointment.status === 'pending' ? 'bg-amber-500' :
+                                 appointment.status === 'in_progress' ? 'bg-blue-500' :
+                                 appointment.status === 'completed' ? 'bg-gray-400' :
+                                 'bg-red-500'
+                              }`} />
+
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                      {appointment.start_time.substring(0, 5)} — {appointment.end_time.substring(0, 5)}
+                                    </span>
+                                    {!appointment.client_id && (
+                                      <span className="text-[8px] font-black bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-md uppercase tracking-tighter">
+                                        Walk-in
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h4 className="text-sm font-black text-gray-900 truncate">
+                                    {getClientName(appointment)}
+                                  </h4>
+                                  <p className="text-xs font-bold text-gray-500 mt-0.5 truncate uppercase tracking-tight">
+                                    {serviceName}
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-1">
+                                  <span className="text-sm font-black text-gray-900 bg-gray-50 px-3 py-1 rounded-xl border border-gray-100">
+                                    ${appointment.total_price}
+                                  </span>
+                                  <div className={`w-2 h-2 rounded-full ${
+                                    appointment.status === 'confirmed' ? 'bg-emerald-500' :
+                                    appointment.status === 'pending' ? 'bg-amber-500' :
+                                    'bg-gray-300'
+                                  } animate-pulse`} />
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <div className="py-8 text-center bg-white/40 rounded-3xl border border-dashed border-gray-200">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                            Sin citas agendadas
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+
+              {appointments.length === 0 && (
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                    <CalendarIcon className="w-8 h-8 text-gray-200" />
+                  </div>
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Agenda vacía</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+  
+      {/* Common Absolute Elements */}
+      {commonElements}
     </>
   )
 }
 
 // Componente para la línea de hora actual
-function CurrentTimeLine({ startHour, endHour }: { startHour: number; endHour: number }) {
+function CurrentTimeLine({ 
+  startHour, 
+  endHour, 
+  hideDot = false 
+}: { 
+  startHour: number; 
+  endHour: number;
+  hideDot?: boolean;
+}) {
   const [position, setPosition] = useState(0)
 
   useEffect(() => {
@@ -1135,16 +1076,17 @@ function CurrentTimeLine({ startHour, endHour }: { startHour: number; endHour: n
       const hours = now.getHours()
       const minutes = now.getMinutes()
 
-      if (hours >= startHour && hours <= endHour) {
+      if (hours >= startHour && hours < endHour) {
         const totalMinutes = (hours - startHour) * 60 + minutes
         const pos = (totalMinutes / 60) * HOUR_HEIGHT
         setPosition(pos)
+      } else {
+        setPosition(0)
       }
     }
 
     updatePosition()
-    const interval = setInterval(updatePosition, 60000) // Actualizar cada minuto
-
+    const interval = setInterval(updatePosition, 30000) // Actualizar cada 30seg
     return () => clearInterval(interval)
   }, [startHour, endHour])
 
@@ -1156,14 +1098,20 @@ function CurrentTimeLine({ startHour, endHour }: { startHour: number; endHour: n
       style={{ top: `${position}px` }}
     >
       <div className="flex items-center -mt-[3px]">
-        <div className="relative">
-          <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-[0_0_10px_rgba(239,68,68,0.5)] z-20" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-red-500/30 rounded-full animate-ping" />
-        </div>
-        <div className="flex-1 h-0.5 bg-gradient-to-r from-red-500 to-red-500/0" />
+        {/* Indicator dot */}
+        {!hideDot && (
+          <div className="sticky left-16 z-50 w-0 flex justify-end pr-0">
+             <div className="relative -ml-1.5">
+              <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-xl z-20" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-red-500/30 rounded-full animate-ping" />
+            </div>
+          </div>
+        )}
+        <div className={`flex-1 h-0.5 bg-red-500/100 ${hideDot ? '' : 'ml-16'}`} />
       </div>
     </div>
   )
 }
+
 
 

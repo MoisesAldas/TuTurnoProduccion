@@ -89,7 +89,7 @@ export default function AppointmentCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}
-      className={`${top !== undefined ? 'absolute' : ''} inset-x-1 rounded-2xl border-l-[6px] shadow-[0_4px_15px_-3px_rgba(0,0,0,0.08)] cursor-move hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 z-20 overflow-hidden ${getStatusColor(
+      className={`${top !== undefined ? 'absolute' : ''} inset-x-1 rounded-2xl border-l-[6px] shadow-[0_4px_15px_-3px_rgba(0,0,0,0.08)] cursor-move hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 z-30 overflow-hidden ${getStatusColor(
         appointment.status
       )} ${isDragging ? 'opacity-50 scale-95 shadow-2xl' : ''}`}
       style={style}

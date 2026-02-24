@@ -58,12 +58,18 @@ export interface DashboardKPIs {
   total_revenue: number;
   total_appointments: number;
   completion_rate: number;
+  completed_appointments: number;
+  cancelled_appointments: number;
   prev_total_revenue: number;
   prev_total_appointments: number;
   prev_completion_rate: number;
+  prev_completed_appointments: number;
+  prev_cancelled_appointments: number;
   revenue_change_percent: number;
   appointments_change_percent: number;
   completion_rate_change_percent: number;
+  completed_change_percent: number;
+  cancelled_change_percent: number;
 }
 
 // ========================================
@@ -97,6 +103,7 @@ export interface EmployeeRevenueDetailed {
   employee_id: string;
   employee_name: string;
   total_revenue: number;
+  appointment_count: number;
 }
 
 export interface PaymentMethodData {

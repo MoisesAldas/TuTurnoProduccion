@@ -38,6 +38,12 @@ import InvoiceConfigSection from '@/components/InvoiceConfigSection'
 import CancellationLimitSettings from '@/components/business/CancellationLimitSettings'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter, useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
+const AccountManagementModal = dynamic(
+  () => import('@/components/settings/AccountManagementModal'),
+  { ssr: false }
+)
 import type { Business } from '@/types/database'
 import {
   businessInfoSchema,
@@ -69,6 +75,7 @@ export default function UnifiedSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [specialHours, setSpecialHours] = useState<SpecialHour[]>([])
+  const [showAccountModal, setShowAccountModal] = useState(false)
   const [loadingSpecialHours, setLoadingSpecialHours] = useState(false)
 
   // Estados para logo
@@ -752,14 +759,25 @@ export default function UnifiedSettingsPage() {
               <form onSubmit={handleSubmitInfo(onSubmitInfo)} className="space-y-4">
                 <Card className="border-0 shadow-[0_8px_30px_rgba(0,0,0,0.03)] dark:bg-gray-900 rounded-[2rem] overflow-hidden">
                   <CardHeader className="px-6 pt-6 pb-2">
-                    <div className="flex flex-col gap-0.5 relative pl-5">
-                      <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
-                      <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
-                        General
-                      </span>
-                      <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
-                        Información del Negocio
-                      </CardTitle>
+                    <div className="flex items-start justify-between">
+                      <div className="flex flex-col gap-0.5 relative pl-5">
+                        <div className="absolute left-0 w-1 h-6 bg-orange-500 rounded-full mt-0.5" />
+                        <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600">
+                          General
+                        </span>
+                        <CardTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">
+                          Información del Negocio
+                        </CardTitle>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAccountModal(true)}
+                        title="Seguridad de la cuenta"
+                        className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 hover:text-orange-600 transition-colors py-1 px-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Gestionar Cuenta</span>
+                      </button>
                     </div>
                   </CardHeader>
                   <CardContent className="px-6 pb-6">
@@ -971,6 +989,7 @@ export default function UnifiedSettingsPage() {
                   </CardContent>
                 </Card>
 
+
                 {/* Sticky Action Bar - Compact */}
                 <div className="sticky bottom-4 z-20 flex justify-end">
                   <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 p-1.5 rounded-xl shadow-2xl flex items-center gap-2">
@@ -994,6 +1013,15 @@ export default function UnifiedSettingsPage() {
                   </div>
                 </div>
               </form>
+            )}
+
+            {/* Account Management Modal — rendered outside the form to avoid nesting issues */}
+            {showAccountModal && (
+              <AccountManagementModal
+                open={showAccountModal}
+                onClose={() => setShowAccountModal(false)}
+                businessName={business?.name || 'Mi Negocio'}
+              />
             )}
 
             {/* Visual Identity Section - Compacted */}

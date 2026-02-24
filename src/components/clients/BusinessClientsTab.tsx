@@ -12,12 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { ExportDropdown, ExportFormat as UniversalExportFormat } from '@/components/ui/ExportDropdown'
 import {
   Users,
   Phone,
@@ -233,24 +228,12 @@ export default function BusinessClientsTab({
             </div>
 
             <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="rounded-2xl border-gray-100 dark:border-gray-800 h-11 px-5 font-bold text-xs hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400 transition-all">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="rounded-2xl border-gray-100 dark:border-gray-800 shadow-xl p-1.5" align="end">
-                  <DropdownMenuItem onClick={() => onExport('excel')} className="rounded-xl py-2.5 cursor-pointer">
-                    <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
-                    <span className="font-semibold">Excel (XLSX)</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onExport('pdf')} className="rounded-xl py-2.5 cursor-pointer">
-                    <FileSpreadsheet className="w-4 h-4 mr-2 text-red-600" />
-                    <span className="font-semibold">PDF (Reporte)</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ExportDropdown
+                onExport={async (format: UniversalExportFormat) => onExport(format)}
+                filename="clientes"
+                pdfTitle="Listado de Clientes"
+                className="h-11 px-5"
+              />
             </div>
           </div>
         </div>

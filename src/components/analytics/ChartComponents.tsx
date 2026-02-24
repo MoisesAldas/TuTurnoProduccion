@@ -65,11 +65,24 @@ export const capitalizeFirstLetter = (string: string) => {
 }
 
 export const formatMonthDateSpanish = (dateStr: string) => {
+  if (!dateStr) return '';
   try {
-    const date = new Date(dateStr);
-    const month = date.toLocaleDateString('es-ES', { month: 'short' });
-    const year = date.getFullYear();
-    return `${capitalizeFirstLetter(month)} ${year}`;
+    // Si es formato ISO YYYY-MM-DD, lo parseamos manualmente para evitar shift de zona horaria
+    const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    let date: Date;
+    
+    if (isoMatch) {
+      const year = parseInt(isoMatch[1]);
+      const month = parseInt(isoMatch[2]) - 1;
+      const day = parseInt(isoMatch[3]);
+      date = new Date(year, month, day);
+    } else {
+      date = new Date(dateStr);
+    }
+
+    const monthName = date.toLocaleDateString('es-ES', { month: 'short' });
+    const yearNum = date.getFullYear();
+    return `${capitalizeFirstLetter(monthName)} ${yearNum}`;
   } catch (e) {
     return dateStr;
   }

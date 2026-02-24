@@ -9,33 +9,25 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Edit, Save, X, Camera, User, Mail, Phone,
   Calendar, Shield, Loader2, CheckCircle, XCircle,
-  Bell, Globe, Lock, AlertTriangle, UserX, Trash2, Settings
+  Bell, Globe, Settings
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
 import { typography, patterns, colors } from '@/lib/design-tokens'
 import ClientImageCropper from '@/components/ClientImageCropper'
-import ChangePasswordCard from '@/components/ChangePasswordCard'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
+
+const AccountManagementModal = dynamic(
+  () => import('@/components/settings/AccountManagementModal'),
+  { ssr: false }
+)
 
 interface UserProfile {
   id: string
@@ -88,6 +80,7 @@ export default function ClientProfilePage() {
   })
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showAccountModal, setShowAccountModal] = useState(false)
 
   const { authState, signOut } = useAuth()
   const { toast } = useToast()
@@ -617,323 +610,161 @@ export default function ClientProfilePage() {
           </div>
         </div>
 
-        {/* Premium Tabs Navigation */}
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="flex items-center gap-1.5 p-1.5 bg-slate-100/60 dark:bg-slate-800/60 rounded-2xl w-full max-w-[440px] mx-auto mb-10 border border-slate-200/60 dark:border-slate-700/60 h-13 shadow-sm relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
-            <TabsTrigger 
-              value="profile" 
-              className="flex-1 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-950 dark:data-[state=active]:text-white data-[state=active]:shadow-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 z-10 h-10"
-            >
-              <User className="w-4 h-4 mr-2" />
-              Perfil
-            </TabsTrigger>
-            <TabsTrigger 
-              value="settings" 
-              className="flex-1 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-slate-950 dark:data-[state=active]:text-white data-[state=active]:shadow-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 z-10 h-10"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Ajustes
-            </TabsTrigger>
-          </TabsList>
+        {/* Single page layout — two columns on large screens */}
+          <div className="grid grid-cols-1 gap-5 pb-12">
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="animate-in fade-in-50 duration-300 outline-none">
-            <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white">
-              <CardHeader className="p-5 border-b border-slate-50 flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardTitle className="text-base font-black text-slate-900 tracking-tight">Información Personal</CardTitle>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">DATOS DE CONTACTO Y PERFIL</p>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</Label>
-                    {isEditing ? (
-                      <div className="space-y-1">
-                        <Input
-                          className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.first_name ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
-                          value={formData.first_name}
-                          onChange={(e) => {
-                            setFormData(prev => ({ ...prev, first_name: e.target.value }))
-                            if (errors.first_name) setErrors(prev => ({ ...prev, first_name: '' }))
-                          }}
-                          placeholder="Tu nombre"
-                        />
-                        {errors.first_name && (
-                          <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
-                            <XCircle className="w-3 h-3" /> {errors.first_name}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
-                        {profile.first_name || 'No especificado'}
-                      </div>
-                    )}
+            {/* ── Información Personal ─────────────────────── */}
+            <div className="lg:col-span-7">
+              <Card className="border-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] overflow-hidden bg-white h-full">
+                <CardHeader className="p-5 border-b border-slate-50 flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardTitle className="text-base font-black text-slate-900 tracking-tight">Información Personal</CardTitle>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">DATOS DE CONTACTO Y PERFIL</p>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Apellido</Label>
-                    {isEditing ? (
-                      <div className="space-y-1">
-                        <Input
-                          className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.last_name ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
-                          value={formData.last_name}
-                          onChange={(e) => {
-                            setFormData(prev => ({ ...prev, last_name: e.target.value }))
-                            if (errors.last_name) setErrors(prev => ({ ...prev, last_name: '' }))
-                          }}
-                          placeholder="Tu apellido"
-                        />
-                        {errors.last_name && (
-                          <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
-                            <XCircle className="w-3 h-3" /> {errors.last_name}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
-                        {profile.last_name || 'No especificado'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Corporativo</Label>
-                    <div className="h-11 flex items-center px-4 bg-slate-100/50 rounded-xl border border-dashed border-slate-200 text-sm font-bold text-slate-400 cursor-not-allowed">
-                      <Mail className="w-3.5 h-3.5 mr-2 opacity-50" />
-                      {profile.email}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono Móvil</Label>
-                    {isEditing ? (
-                      <div className="space-y-1">
-                        <Input
-                          className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.phone ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
-                          value={formData.phone}
-                          onChange={(e) => {
-                            setFormData(prev => ({ ...prev, phone: e.target.value }))
-                            if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }))
-                          }}
-                          placeholder="+593 99 999 9999"
-                        />
-                        {errors.phone && (
-                          <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
-                            <XCircle className="w-3 h-3" /> {errors.phone}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
-                        <Phone className="w-3.5 h-3.5 mr-2 opacity-50" />
-                        {profile.phone || 'No especificado'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-1.5 md:col-span-2">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nivel de Acceso</Label>
-                    <div className="h-14 flex items-center justify-between px-5 bg-slate-950 rounded-2xl border border-slate-800 shadow-lg shadow-slate-900/20">
-                      <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center">
-                          <Shield className="w-3.5 h-3.5 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-black text-white uppercase tracking-wider leading-none">Tipo de Cuenta</p>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">SISTEMA TU TURNO CLOUD</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {profile.is_client && (
-                          <Badge className="bg-emerald-500/20 border-emerald-500/30 text-emerald-400 font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
-                            CLIENTE
-                          </Badge>
-                        )}
-                        {profile.is_business_owner && (
-                          <Badge className="bg-white/10 border-white/20 text-white font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
-                            OWNER
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group/info">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1">Fecha de Registro</p>
-                    <p className="text-xs font-bold text-slate-700 group-hover/info:text-slate-950 transition-colors">{formatDate(profile.created_at)}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group/info">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1">Último Login</p>
-                    <p className="text-xs font-bold text-slate-700 group-hover/info:text-slate-950 transition-colors">{formatDate(profile.updated_at)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-4 animate-in fade-in-50 duration-300 outline-none pb-12">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-              <div className="lg:col-span-8 space-y-4">
-                {/* Notifications Card */}
-                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white">
-                  <CardHeader className="p-5 border-b border-slate-50">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-slate-950 rounded-xl shadow-lg shadow-slate-900/10">
-                        <Bell className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-base font-black text-slate-900 tracking-tight">Notificaciones</CardTitle>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">PREFERENCIAS DE COMUNICACIÓN</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-slate-50">
-                      <div className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group/row">
+                  <button
+                    type="button"
+                    onClick={() => setShowAccountModal(true)}
+                    title="Seguridad de la cuenta"
+                    className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-900 transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Gestionar Cuenta</span>
+                  </button>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</Label>
+                      {isEditing ? (
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-3.5 h-3.5 text-slate-400 group-hover/row:text-slate-900 transition-colors" />
-                            <Label className="text-sm font-black text-slate-700">Email Notifications</Label>
-                          </div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-5.5">Alertas de citas y recordatorios</p>
-                        </div>
-                        <Switch 
-                          checked={settings.email_notifications} 
-                          onCheckedChange={(v) => updateSetting('email_notifications', v)}
-                          className="data-[state=checked]:bg-slate-950"
-                        />
-                      </div>
-
-                      <div className="p-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group/row">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Globe className="w-3.5 h-3.5 text-slate-400 group-hover/row:text-slate-900 transition-colors" />
-                            <Label className="text-sm font-black text-slate-700">Promociones</Label>
-                          </div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-5.5">Ofertas y beneficios exclusivos</p>
-                        </div>
-                        <Switch 
-                          checked={settings.promotional_messages} 
-                          onCheckedChange={(v) => updateSetting('promotional_messages', v)}
-                          className="data-[state=checked]:bg-slate-950"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="p-5 bg-slate-50/80 border-t border-slate-100">
-                      <Button 
-                        onClick={handleSaveSettings} 
-                        disabled={settingsLoading} 
-                        className="h-10 px-6 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-black text-[10px] shadow-lg shadow-slate-950/20 active:scale-95 transition-all w-full sm:w-fit"
-                      >
-                        {settingsLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> : <Save className="w-3.5 h-3.5 mr-2" />}
-                        GUARDAR PREFERENCIAS
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Security Card */}
-                <Card className="border-0 shadow-sm rounded-3xl overflow-hidden bg-white">
-                  <CardHeader className="p-5 border-b border-slate-50">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-slate-950 rounded-xl shadow-lg shadow-slate-900/10">
-                        <Shield className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-base font-black text-slate-900 tracking-tight">Seguridad</CardTitle>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">PROTECCIÓN DE CUENTA</p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
-                        <Lock className="w-5 h-5 text-slate-900" />
-                      </div>
-                      <div className="flex-1 space-y-1">
-                        <h3 className="text-sm font-black text-slate-900 uppercase">Credenciales</h3>
-                        <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
-                          La actualización periódica de tu contraseña garantiza la integridad de tu información y previene accesos no autorizados.
-                        </p>
-                        <div className="pt-3">
-                          <ChangePasswordCard
-                            userEmail={authState.user?.email || ''}
-                            userProvider={(authState.user as any)?.app_metadata?.provider || 'email'}
-                            inline={false}
-                            asButton={true}
+                          <Input
+                            className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.first_name ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
+                            value={formData.first_name}
+                            onChange={(e) => {
+                              setFormData(prev => ({ ...prev, first_name: e.target.value }))
+                              if (errors.first_name) setErrors(prev => ({ ...prev, first_name: '' }))
+                            }}
+                            placeholder="Tu nombre"
                           />
+                          {errors.first_name && (
+                            <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
+                              <XCircle className="w-3 h-3" /> {errors.first_name}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
+                          {profile.first_name || 'No especificado'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Apellido</Label>
+                      {isEditing ? (
+                        <div className="space-y-1">
+                          <Input
+                            className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.last_name ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
+                            value={formData.last_name}
+                            onChange={(e) => {
+                              setFormData(prev => ({ ...prev, last_name: e.target.value }))
+                              if (errors.last_name) setErrors(prev => ({ ...prev, last_name: '' }))
+                            }}
+                            placeholder="Tu apellido"
+                          />
+                          {errors.last_name && (
+                            <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
+                              <XCircle className="w-3 h-3" /> {errors.last_name}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
+                          {profile.last_name || 'No especificado'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</Label>
+                      <div className="h-11 flex items-center px-4 bg-slate-100/50 rounded-xl border border-dashed border-slate-200 text-sm font-bold text-slate-400 cursor-not-allowed">
+                        <Mail className="w-3.5 h-3.5 mr-2 opacity-50" />
+                        {profile.email}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono Móvil</Label>
+                      {isEditing ? (
+                        <div className="space-y-1">
+                          <Input
+                            className={`h-11 rounded-xl border-slate-200 focus:ring-slate-950 transition-all ${errors.phone ? 'border-rose-500 bg-rose-50/30' : 'bg-slate-50/50'}`}
+                            value={formData.phone}
+                            onChange={(e) => {
+                              setFormData(prev => ({ ...prev, phone: e.target.value }))
+                              if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }))
+                            }}
+                            placeholder="+593 99 999 9999"
+                          />
+                          {errors.phone && (
+                            <p className="text-[10px] font-bold text-rose-500 uppercase flex items-center gap-1 ml-1 animate-in slide-in-from-left-1">
+                              <XCircle className="w-3 h-3" /> {errors.phone}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="h-11 flex items-center px-4 bg-slate-50/80 rounded-xl border border-slate-100 text-sm font-bold text-slate-700">
+                          <Phone className="w-3.5 h-3.5 mr-2 opacity-50" />
+                          {profile.phone || 'No especificado'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nivel de Acceso</Label>
+                      <div className="h-14 flex items-center justify-between px-5 bg-slate-950 rounded-2xl border border-slate-800 shadow-lg shadow-slate-900/20">
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 bg-white/10 rounded-lg flex items-center justify-center">
+                            <Shield className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-white uppercase tracking-wider leading-none">Tipo de Cuenta</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">SISTEMA TU TURNO CLOUD</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {profile.is_client && (
+                            <Badge className="bg-emerald-500/20 border-emerald-500/30 text-emerald-400 font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
+                              CLIENTE
+                            </Badge>
+                          )}
+                          {profile.is_business_owner && (
+                            <Badge className="bg-white/10 border-white/20 text-white font-bold text-[9px] px-2.5 py-0.5 tracking-wider uppercase">
+                              OWNER
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
 
-              {/* Sidebar Settings */}
-              <div className="lg:col-span-4 space-y-4">
-                <Card className="border-rose-500/20 shadow-sm rounded-3xl overflow-hidden bg-white">
-                  <CardHeader className="p-5 bg-rose-50/50 border-b border-rose-100">
-                    <div className="flex items-center gap-3 text-rose-600">
-                      <div className="p-2 bg-rose-600 rounded-xl">
-                        <AlertTriangle className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <CardTitle className="text-base font-black uppercase tracking-tight">Zona de Riesgo</CardTitle>
+                  <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group/info">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1">Fecha de Registro</p>
+                      <p className="text-xs font-bold text-slate-700 group-hover/info:text-slate-950 transition-colors">{formatDate(profile.created_at)}</p>
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-5 space-y-4">
-                    <p className="text-[11px] font-bold text-slate-500 leading-relaxed uppercase tracking-tighter">
-                      LA ELIMINACIÓN DE LA CUENTA ES PERMANENTE Y BORRARÁ TODO TU HISTORIAL Y DATOS.
-                    </p>
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="destructive" 
-                          disabled={deleting}
-                          className="h-11 w-full rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] shadow-lg shadow-rose-600/20 active:scale-95 transition-all"
-                        >
-                          {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-3.5 h-3.5 mr-2" /> ELIMINAR CUENTA</>}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="rounded-[2.5rem] border-0 p-8">
-                        <AlertDialogHeader>
-                          <div className="w-16 h-16 rounded-[2rem] bg-rose-50 flex items-center justify-center mb-4 mx-auto">
-                            <AlertTriangle className="w-8 h-8 text-rose-600" />
-                          </div>
-                          <AlertDialogTitle className="text-2xl font-black text-slate-900 text-center tracking-tighter">
-                            ¿CONFIRMAS LA ELIMINACIÓN?
-                          </AlertDialogTitle>
-                          <AlertDialogDescription className="text-center text-slate-500 font-medium">
-                            Esta acción es <span className="text-rose-600 font-black uppercase tracking-widest">irreversible</span>. Perderás el acceso a todas tus citas y configuración.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter className="flex-col sm:flex-row gap-2 pt-4">
-                          <AlertDialogCancel className="h-11 rounded-2xl border-slate-200 text-slate-500 font-black text-[10px] uppercase tracking-widest flex-1">
-                            DETENER ACCIÓN
-                          </AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleDeleteAccount} 
-                            className="h-11 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-[10px] uppercase tracking-widest flex-1 shadow-lg shadow-rose-600/20"
-                          >
-                            CONFIRMAR BORRADO
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </CardContent>
-                </Card>
-              </div>
+                    <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 group/info">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] mb-1">Último Login</p>
+                      <p className="text-xs font-bold text-slate-700 group-hover/info:text-slate-950 transition-colors">{formatDate(profile.updated_at)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </TabsContent>
-        </Tabs>
+
+            {/* ── Notificaciones ───────────────────────────── */}
+         
+          </div>
 
         {/* Avatar Upload Dialog */}
         <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
@@ -958,6 +789,14 @@ export default function ClientProfilePage() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Account Management Modal */}
+        <AccountManagementModal
+          open={showAccountModal}
+          onClose={() => setShowAccountModal(false)}
+          businessName={profile ? `${profile.first_name} ${profile.last_name}`.trim() : ''}
+          variant="client"
+        />
       </main>
     </div>
   )
