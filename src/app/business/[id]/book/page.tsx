@@ -585,7 +585,6 @@ export default function BookingPage() {
       const endMins = endMinutes % 60
       const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`
 
-      // Formatear fecha correctamente sin problemas de zona horaria
       const formatDateForDB = (date: Date) => {
         const year = date.getFullYear()
         const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -593,59 +592,38 @@ export default function BookingPage() {
         return `${year}-${month}-${day}`
       }
 
-      const appointmentData = {
-        business_id: businessId,
-        client_id: authState.user.id,
-        employee_id: selectedEmployee.id,
-        appointment_date: formatDateForDB(selectedDate),
-        start_time: startTime,
-        end_time: endTime,
-        total_price: totalPrice, // Total price of all selected services
-        status: 'pending', // Cambiado a pending para evitar problemas con notificaciones
-        client_notes: clientNotes || null
-      }
+      // 🚀 Use RPC for atomic booking creation
+      // This creates the appointment and its services in a single transaction
+      const { data: appointmentId, error: bookingError } = await supabase.rpc('create_complete_appointment', {
+        p_business_id: businessId,
+        p_client_id: authState.user.id,
+        p_employee_id: selectedEmployee.id,
+        p_appointment_date: formatDateForDB(selectedDate),
+        p_start_time: startTime,
+        p_end_time: endTime,
+        p_total_price: totalPrice,
+        p_client_notes: clientNotes || null,
+        p_services: selectedServices.map(s => ({ service_id: s.id, price: s.price }))
+      })
 
-      // Crear la cita
-      const { data: appointment, error: appointmentError } = await supabase
-        .from('appointments')
-        .insert([appointmentData])
-        .select()
-        .single()
+      if (bookingError) {
+        console.error('Error in atomic booking:', bookingError)
+        
+        // Handle unique constraint error (conflict)
+        if (bookingError.code === '23505') {
+          toast({
+            variant: 'destructive',
+            title: 'Horario ya ocupado',
+            description: 'Lo sentimos, este horario acaba de ser reservado por otro cliente. Por favor elige otro horario.',
+          })
+          // Refresh slots to show current availability
+          generateTimeSlots()
+          setCurrentStep('datetime')
+          return
+        }
 
-      if (appointmentError) {
-        console.error('Error creating appointment:', appointmentError)
         alert('Error al crear la cita. Por favor intenta de nuevo.')
         return
-      }
-
-      // Create multiple appointment_services records (one for each selected service)
-      const appointmentServicesData = selectedServices.map(service => ({
-        appointment_id: appointment.id,
-        service_id: service.id,
-        price: service.price
-      }))
-
-      const { error: servicesError } = await supabase
-        .from('appointment_services')
-        .insert(appointmentServicesData)
-
-      if (servicesError) {
-        console.error('Error creating appointment services:', servicesError)
-        // Si falla, eliminar la cita creada
-        await supabase.from('appointments').delete().eq('id', appointment.id)
-        alert('Error al crear la cita. Por favor intenta de nuevo.')
-        return
-      }
-
-      // Intentar confirmar la cita (esto puede fallar por las notificaciones pero no es crítico)
-      try {
-        await supabase
-          .from('appointments')
-          .update({ status: 'confirmed' })
-          .eq('id', appointment.id)
-      } catch (confirmError) {
-        console.warn('Warning: Could not auto-confirm appointment, but appointment was created successfully:', confirmError)
-        // No es crítico si falla, la cita se creó exitosamente
       }
 
       // 🔥 ENVIAR EMAIL DE CONFIRMACIÓN DE CITA
@@ -656,17 +634,15 @@ export default function BookingPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            appointmentId: appointment.id
+            appointmentId: appointmentId
           })
         })
 
         if (!emailResponse.ok) {
           console.warn('Failed to send appointment confirmation email')
-          // No bloqueamos el flujo si el email falla
         }
       } catch (emailError) {
         console.warn('Error sending appointment confirmation email:', emailError)
-        // No bloqueamos el flujo si el email falla
       }
 
       setCurrentStep('confirmation')

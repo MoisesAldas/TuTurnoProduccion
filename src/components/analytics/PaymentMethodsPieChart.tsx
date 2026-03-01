@@ -96,14 +96,7 @@ export const PaymentMethodsPieChart = ({
                         className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: method.color }}
                       />
-                      <span className="text-xs font-bold text-gray-900 dark:text-gray-50 flex items-center gap-2">
-                        {method.name}
-                        {isHighTicket && (
-                          <span className="text-[9px] bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-full font-black uppercase tracking-tight">
-                            Alta Gama
-                          </span>
-                        )}
-                      </span>
+                      
                     </div>
                     <span className="text-xs font-black text-slate-500 dark:text-slate-400">
                       {method.percentage.toFixed(1)}%
