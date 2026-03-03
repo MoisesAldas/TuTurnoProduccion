@@ -453,7 +453,10 @@ export default function CalendarView({
         appointment={appointment}
         position={position}
         clientName={getClientName(appointment)}
-        employee={employee}
+        employees={appointment.appointment_services?.map(as => {
+          const emp = employees.find(e => e.id === as.employee_id);
+          return emp ? { id: emp.id, first_name: emp.first_name, last_name: emp.last_name } : null;
+        }).filter(Boolean) as any}
       />
     )
   }
@@ -774,7 +777,8 @@ export default function CalendarView({
                   {/* Columnas de empleados con citas */}
                   {employees.map((employee) => {
                     const employeeAppointments = appointments.filter(
-                      (apt) => apt.employee_id === employee.id
+                      (apt) => apt.employee_id === employee.id || 
+                      apt.appointment_services?.some(as => as.employee_id === employee.id)
                     )
                     const employeeAbsence = absences.find((abs) => abs.employee_id === employee.id)
                     const isDropTarget = dropTarget?.employeeId === employee.id
@@ -830,10 +834,26 @@ export default function CalendarView({
                           const appointmentGroups = groupOverlappingAppointments(employeeAppointments)
                           return appointmentGroups.map((group, groupIndex) => {
                             if (group.length === 1) {
-                              const appointment = group[0]
-                              const top = getTimePositionMemo(appointment.start_time)
-                              const height = getAppointmentHeightMemo(appointment.start_time, appointment.end_time)
-                              const isDragging = draggingAppointment?.id === appointment.id
+                              const appointment = group[0];
+                              // Granular Model: Calculate start/end specific to this employee
+                              const employeeServices = appointment.appointment_services?.filter(
+                                (as: any) => as.employee_id === employee.id
+                              ) || [];
+
+                              let start = appointment.start_time;
+                              let end = appointment.end_time;
+
+                              if (employeeServices.length > 0) {
+                                // Get the min start and max end for this employee's services
+                                const startTimes = employeeServices.map((as: any) => as.start_time || appointment.start_time);
+                                const endTimes = employeeServices.map((as: any) => as.end_time || appointment.end_time);
+                                start = startTimes.sort()[0];
+                                end = endTimes.sort().reverse()[0];
+                              }
+
+                              const top = getTimePositionMemo(start);
+                              const height = getAppointmentHeightMemo(start, end);
+                              const isDragging = draggingAppointment?.id === appointment.id;
 
                               return (
                                 <AppointmentCard
@@ -842,6 +862,8 @@ export default function CalendarView({
                                   top={top}
                                   height={height}
                                   clientName={getClientName(appointment)}
+                                  employeeName={employee.first_name} // Column context
+                                  employeeId={employee.id} // Context for filtering
                                   isDragging={isDragging}
                                   onMouseEnter={(e) => handleAppointmentHover(e, appointment)}
                                   onMouseLeave={handleAppointmentLeave}
@@ -852,20 +874,35 @@ export default function CalendarView({
                                   onDragStart={(e) => handleDragStart(e, appointment)}
                                   onDragEnd={handleDragEnd}
                                 />
-                              )
+                              );
                             }
 
                             const firstAppointment = group[0]
-                            const top = getTimePositionMemo(firstAppointment.start_time)
-                            const height = getAppointmentHeightMemo(firstAppointment.start_time, firstAppointment.end_time)
-                            const employee = employees.find(e => e.id === firstAppointment.employee_id)
                             const isDragging = draggingAppointment?.id === firstAppointment.id
+
+                            // Granular calculation for groups
+                            const employeeServices = firstAppointment.appointment_services?.filter(
+                              (as: any) => as.employee_id === employee.id
+                            ) || [];
+
+                            let g_start = firstAppointment.start_time;
+                            let g_end = firstAppointment.end_time;
+
+                            if (employeeServices.length > 0) {
+                              const startTimes = employeeServices.map((as: any) => as.start_time || firstAppointment.start_time);
+                              const endTimes = employeeServices.map((as: any) => as.end_time || firstAppointment.end_time);
+                              g_start = startTimes.sort()[0];
+                              g_end = endTimes.sort().reverse()[0];
+                            }
+
+                            const g_top = getTimePositionMemo(g_start);
+                            const g_height = getAppointmentHeightMemo(g_start, g_end);
 
                             return (
                               <div
                                 key={`day-${employee?.id}-${groupIndex}`}
                                 className="absolute inset-x-0 z-30"
-                                style={{ top: `${top}px`, height: `${height}px` }}
+                                style={{ top: `${g_top}px`, height: `${g_height}px` }}
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   setOverlappingAppointments(group)
@@ -874,9 +911,10 @@ export default function CalendarView({
                               >
                                 <AppointmentCard
                                   appointment={firstAppointment}
-                                  height={height}
+                                  height={g_height}
                                   clientName={getClientName(firstAppointment)}
                                   employeeName={employee ? `${employee.first_name} ${employee.last_name}` : undefined}
+                                  employeeId={employee?.id} // Context for filtering
                                   isDragging={isDragging}
                                   onDragStart={(e) => handleDragStart(e, firstAppointment)}
                                   onDragEnd={handleDragEnd}
@@ -886,7 +924,7 @@ export default function CalendarView({
                                   +{group.length - 1}
                                 </div>
                               </div>
-                            )
+                            );
                           })
                         })()}
 

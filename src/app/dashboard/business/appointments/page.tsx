@@ -246,7 +246,9 @@ export default function AppointmentsPage() {
             appointment_services(
               service_id,
               price,
-              services(name, duration_minutes)
+              employee_id,
+              services(name, duration_minutes),
+              employees(first_name, last_name, avatar_url, position)
             )
           `)
           .eq('business_id', business.id)
@@ -280,7 +282,9 @@ export default function AppointmentsPage() {
             appointment_services(
               service_id,
               price,
-              services(name, duration_minutes)
+              employee_id,
+              services(name, duration_minutes),
+              employees(first_name, last_name, avatar_url, position)
             )
           `)
           .eq('business_id', business.id)
@@ -306,12 +310,13 @@ export default function AppointmentsPage() {
             appointment_services(
               service_id,
               price,
-              services(name, duration_minutes)
+              employee_id,
+              services(name, duration_minutes),
+              employees(first_name, last_name, avatar_url, position)
             )
           `)
           .eq('business_id', business.id)
           .eq('appointment_date', dateStr)
-          .in('employee_id', selectedEmployees.length > 0 ? selectedEmployees : [''])
           .order('start_time')
 
         if (error) throw error
@@ -339,7 +344,9 @@ export default function AppointmentsPage() {
           appointment_services(
             service_id,
             price,
-            services(name, duration_minutes)
+            employee_id,
+            services(name, duration_minutes),
+            employees(first_name, last_name, avatar_url, position)
           )
         `)
         .eq('id', appointmentId)
@@ -394,9 +401,14 @@ export default function AppointmentsPage() {
       ? updatedAppointment.appointment_date === toDateString(selectedDateRef.current)
       : isWithinWeekRange(updatedAppointment.appointment_date)
 
-    const matchesEmployee = selectedEmployeesRef.current.includes(updatedAppointment.employee_id)
+    const isMainEmployeeMatch = selectedEmployeesRef.current.includes(updatedAppointment.employee_id)
+    
+    // Check if any employee assigned to the services is in the selected list
+    const isServiceEmployeeMatch = updatedAppointment.appointment_services?.some(
+      as => selectedEmployeesRef.current.includes(as.employee_id)
+    )
 
-    if (matchesDate && matchesEmployee) {
+    if (matchesDate && (isMainEmployeeMatch || isServiceEmployeeMatch)) {
       fetchSingleAppointment(updatedAppointment.id)
     } else {
       setAppointments(prev => prev.filter(apt => apt.id !== updatedAppointment.id))

@@ -6,11 +6,11 @@ interface AppointmentTooltipProps {
   appointment: Appointment
   position: { x: number; y: number }
   clientName: string
-  employee?: {
+  employees?: Array<{
     id: string
     first_name: string
     last_name: string
-  }
+  }>
 }
 
 const statusConfig = {
@@ -26,10 +26,16 @@ export default function AppointmentTooltip({
   appointment,
   position,
   clientName,
-  employee
+  employees = []
 }: AppointmentTooltipProps) {
-  // Obtener todos los servicios
-  const services = appointment.appointment_services?.map(as => as.services?.name).filter(Boolean) || []
+  // Group services by employee
+  const servicesByEmployee = appointment.appointment_services?.reduce((acc, as) => {
+    const empId = as.employee_id || appointment.employee_id;
+    if (!acc[empId]) acc[empId] = [];
+    if (as.services?.name) acc[empId].push(as.services.name);
+    return acc;
+  }, {} as Record<string, string[]>) || {};
+
   const status = statusConfig[appointment.status as keyof typeof statusConfig] || statusConfig.pending
   
   // Calcular duración
@@ -89,43 +95,44 @@ export default function AppointmentTooltip({
             </div>
           </div>
 
-          {/* Profesional (Employee) */}
-          {employee && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-100">
-                <UserCheck className="w-4 h-4 text-slate-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5 opacity-80">
-                  Profesional
-                </span>
-                <p className="text-gray-900 text-xs font-bold truncate leading-none">
-                  {employee.first_name} {employee.last_name}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Servicios */}
-          {services.length > 0 && (
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-blue-100">
-                <ClipboardList className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest block mb-0.5 opacity-80">
-                  {services.length === 1 ? 'Servicio' : 'Servicios'}
-                </span>
-                <div className="space-y-1">
-                  {services.map((service, idx) => (
-                    <p key={idx} className="text-gray-900 text-xs font-bold truncate leading-none">
-                      {service}
+          {/* Profesionales y Servicios agrupados */}
+          {Object.entries(servicesByEmployee).map(([empId, empServices]) => {
+            const empInfo = employees.find(e => e.id === empId);
+            return (
+              <div key={empId} className="space-y-2 pb-2 last:pb-0 border-b border-gray-50 last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-100">
+                    <UserCheck className="w-4 h-4 text-slate-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5 opacity-80">
+                      Profesional
+                    </span>
+                    <p className="text-gray-900 text-xs font-bold truncate leading-none">
+                      {empInfo ? `${empInfo.first_name} ${empInfo.last_name}` : 'Desconocido'}
                     </p>
-                  ))}
+                  </div>
                 </div>
+                
+                {empServices.length > 0 && (
+                  <div className="flex items-start gap-3 ml-2">
+                    <div className="w-4 h-4 mt-0.5 flex items-center justify-center">
+                      <ClipboardList className="w-3 h-3 text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="space-y-1">
+                        {empServices.map((service, idx) => (
+                          <p key={idx} className="text-gray-700 text-[11px] font-medium truncate leading-tight italic">
+                            {service}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })}
 
           {/* Teléfono */}
           {clientPhone && (

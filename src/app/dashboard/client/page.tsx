@@ -65,6 +65,12 @@ interface Appointment {
       name: string
       description?: string
     } | null
+    employee_id?: string
+    employees?: {
+      first_name: string
+      last_name: string
+      avatar_url?: string
+    } | null
     price: number
   }[]
   employee?: {
@@ -122,6 +128,8 @@ export default function ClientDashboard() {
           employee:employees(id, first_name, last_name, position, avatar_url),
           appointment_services(
             service:services(id, name, description),
+            employee_id,
+            employees(first_name, last_name, avatar_url, position),
             price
           ),
           reviews(id)
@@ -606,21 +614,38 @@ export default function ClientDashboard() {
                                 </div>
                               </TableCell>
                               <TableCell className="py-4 px-6 text-sm min-w-[140px]">
-                                {appointment.employee ? (
-                                  <div className="flex items-center gap-2.5">
-                                    <Avatar className="h-7 w-7 border border-gray-200">
-                                      <AvatarImage src={appointment.employee.avatar_url} />
-                                      <AvatarFallback className="bg-slate-900 text-white text-[10px]">
-                                        {appointment.employee.first_name[0]}{appointment.employee.last_name[0]}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span className="font-bold text-gray-800 dark:text-gray-200">
-                                      {appointment.employee.first_name}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <Badge variant="outline" className="text-[10px] font-bold text-slate-400 border-slate-200">Sin asignar</Badge>
-                                )}
+                                <div className="flex flex-col gap-2">
+                                  {/* Mostrar todos los profesionales de la cita */}
+                                  {Array.from(new Set([
+                                    appointment.employee?.id,
+                                    ...(appointment.appointment_services?.map(as => as.employee_id).filter(Boolean) || [])
+                                  ])).map((empId, idx) => {
+                                    if (!empId) return null;
+                                    const as = appointment.appointment_services?.find(s => s.employee_id === empId);
+                                    const empInfo = empId === appointment.employee?.id
+                                      ? appointment.employee
+                                      : as?.employees;
+
+                                    if (!empInfo) return null;
+
+                                    return (
+                                      <div key={empId || idx} className="flex items-center gap-2">
+                                        <Avatar className="h-6 w-6 border border-gray-200">
+                                          <AvatarImage src={empInfo.avatar_url} />
+                                          <AvatarFallback className="bg-slate-900 text-white text-[8px]">
+                                            {empInfo.first_name[0]}{empInfo.last_name[0]}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-bold text-gray-800 dark:text-gray-200 text-xs">
+                                          {empInfo.first_name}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                  {(!appointment.employee && (!appointment.appointment_services || appointment.appointment_services.every(as => !as.employee_id))) && (
+                                    <Badge variant="outline" className="text-[10px] font-bold text-slate-400 border-slate-200">Sin asignar</Badge>
+                                  )}
+                                </div>
                               </TableCell>
                               <TableCell className="py-4 px-6">
                                 {getStatusBadge(appointment.status)}

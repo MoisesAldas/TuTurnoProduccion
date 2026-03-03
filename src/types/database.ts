@@ -117,10 +117,17 @@ export interface Appointment {
   };
   appointment_services?: Array<{
     service_id: string;
+    employee_id: string;
     price: number;
     services?: {
       name: string;
       duration_minutes: number;
+    };
+    employees?: {
+      first_name: string;
+      last_name: string;
+      avatar_url?: string;
+      position?: string;
     };
   }>;
 }

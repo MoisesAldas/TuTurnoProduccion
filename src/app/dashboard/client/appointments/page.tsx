@@ -57,6 +57,13 @@ interface Appointment {
       name: string
       description?: string
     } | null
+    employee_id?: string
+    employees?: {
+      first_name: string
+      last_name: string
+      avatar_url?: string
+      position?: string
+    } | null
     price: number
   }[]
   employee?: {
@@ -124,6 +131,8 @@ export default function ClientAppointmentsPage() {
           employee:employees(id, first_name, last_name, position, avatar_url),
           appointment_services(
             service:services(id, name, description),
+            employee_id,
+            employees(id, first_name, last_name, position, avatar_url),
             price
           )
         `)
@@ -657,23 +666,45 @@ export default function ClientAppointmentsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-8px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden group bg-white">
-                    <CardContent className="p-6 text-center">
-                      <Avatar className="w-14 h-14 mx-auto mb-4 border-2 border-slate-100 ring-4 ring-slate-50 transition-all duration-500 group-hover:scale-110 shadow-md">
-                        <AvatarImage src={selectedAppointment.employee?.avatar_url} alt={selectedAppointment.employee?.first_name} />
-                        <AvatarFallback className="bg-slate-900 text-white font-black text-lg">
-                          {selectedAppointment.employee?.first_name?.[0]}{selectedAppointment.employee?.last_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Profesional</p>
-                      <p className="text-[15px] font-black text-slate-900 leading-tight line-clamp-1">
-                        {selectedAppointment.employee?.first_name}
-                      </p>
-                      {selectedAppointment.employee?.position && (
-                        <p className="text-[10px] text-slate-500 font-bold mt-1.5 line-clamp-1 uppercase tracking-tighter">{selectedAppointment.employee.position}</p>
-                      )}
-                    </CardContent>
-                  </Card>
+                  {/* Profesionales Grid */}
+                  <div className="lg:col-span-2 space-y-3">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Profesionales</p>
+                    <div className="flex flex-wrap gap-4">
+                      {Array.from(new Set([
+                        selectedAppointment.employee?.id,
+                        ...(selectedAppointment.appointment_services?.map(as => as.employee_id).filter(Boolean) || [])
+                      ])).map((empId, idx) => {
+                        if (!empId) return null;
+                        const as = selectedAppointment.appointment_services?.find(s => s.employee_id === empId);
+                        const empInfo = empId === selectedAppointment.employee?.id
+                          ? selectedAppointment.employee
+                          : as?.employees;
+                        
+                        if (!empInfo) return null;
+
+                        return (
+                          <div key={empId || idx} className="flex items-center gap-3 bg-white p-3 pr-5 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
+                            <Avatar className="w-10 h-10 border-2 border-slate-50 shadow-sm">
+                              <AvatarImage src={empInfo.avatar_url} alt={empInfo.first_name} />
+                              <AvatarFallback className="bg-slate-900 text-white font-black text-xs">
+                                {empInfo.first_name[0]}{empInfo.last_name[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-left">
+                              <p className="text-xs font-black text-slate-900 leading-tight">
+                                {empInfo.first_name} {empInfo.last_name}
+                              </p>
+                              {empInfo.position && (
+                                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">
+                                  {empInfo.position}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <Card 
                     className="border-0 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-8px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2rem] overflow-hidden group cursor-pointer bg-white"
@@ -777,10 +808,17 @@ export default function ClientAppointmentsPage() {
                     <div className="space-y-4">
                       {selectedAppointment.appointment_services.map((service, index) => (
                         <div key={index} className="flex justify-between items-center py-4 border-b border-slate-50 last:border-0 group">
-                          <div className="flex-1">
-                            <p className="font-black text-slate-900 group-hover:text-slate-600 transition-colors">
-                              {service.service?.name || 'Servicio'}
-                            </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-black text-slate-900 group-hover:text-slate-600 transition-colors truncate">
+                                {service.service?.name || 'Servicio'}
+                              </p>
+                              {service.employees && (
+                                <Badge variant="outline" className="text-[8px] h-3.5 py-0 px-1 font-black bg-slate-50 uppercase tracking-tighter shrink-0 border-0">
+                                  Por: {service.employees.first_name}
+                                </Badge>
+                              )}
+                            </div>
                             {service.service?.description && (
                               <p className="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">Servicio Profesional</p>
                             )}

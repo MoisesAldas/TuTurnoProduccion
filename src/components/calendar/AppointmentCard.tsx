@@ -1,5 +1,5 @@
 import React from 'react'
-import { Clock, UserCircle, UserCheck, ClipboardList, CircleDollarSign, Circle } from 'lucide-react'
+import { Clock, UserCircle, UserCheck, ClipboardList, CircleDollarSign, Circle, Users } from 'lucide-react'
 import type { Appointment } from '@/types/database'
 
 interface AppointmentCardProps {
@@ -8,6 +8,7 @@ interface AppointmentCardProps {
   height: number
   clientName: string
   employeeName?: string
+  employeeId?: string // Context for granular service filtering
   isDragging?: boolean
   onMouseEnter?: (e: React.MouseEvent) => void
   onMouseLeave?: () => void
@@ -47,6 +48,7 @@ export default function AppointmentCard({
   height,
   clientName,
   employeeName,
+  employeeId,
   isDragging = false,
   onMouseEnter,
   onMouseLeave,
@@ -59,8 +61,20 @@ export default function AppointmentCard({
   const endTime = appointment.end_time.substring(0, 5)
   const isWalkIn = !appointment.client_id
   
-  // Obtener todos los servicios
-  const services = appointment.appointment_services?.map(as => as.services?.name).filter(Boolean) || []
+  // Obtener todos los servicios (filtrados por empleado si se provee el ID)
+  const allServices = appointment.appointment_services || []
+  const filteredServices = employeeId 
+    ? allServices.filter(as => as.employee_id === employeeId)
+    : allServices
+
+  const services = filteredServices.map(as => as.services?.name).filter(Boolean) || []
+  
+  // Multi-employee detection
+  const assignedEmployees = Array.from(new Set(
+    allServices.map(as => as.employee_id).filter(Boolean) || []
+  ))
+  const isMultiEmployee = assignedEmployees.length > 1
+
   const serviceDisplay = services.length === 1 
     ? services[0] 
     : services.length > 1 
@@ -110,6 +124,11 @@ export default function AppointmentCard({
               <span className="text-[9px] font-black text-emerald-700 bg-emerald-100/60 px-1 rounded-md shadow-sm">
                 ${appointment.total_price}
               </span>
+            )}
+            {!isVerySmall && isMultiEmployee && (
+              <div className="flex items-center gap-0.5 bg-blue-100/80 px-1 rounded-md border border-blue-200 shadow-sm" title="Múltiples profesionales">
+                <Users className="w-2.5 h-2.5 text-blue-600" />
+              </div>
             )}
             {!isVerySmall && (
               <div className={`w-1.5 h-1.5 ${statusBadge.bg} rounded-full flex-shrink-0 shadow-[0_0_8px_rgba(0,0,0,0.1)]`} />

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { X, User, Phone, Mail, Clock, DollarSign, Calendar, FileText, AlertCircle, Edit, Check, MoreVertical, FileImage, Trash2 } from 'lucide-react'
+import { X, User, Phone, Mail, Clock, DollarSign, Calendar, FileText, AlertCircle, Edit, Check, MoreVertical, FileImage, Trash2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -70,9 +70,17 @@ interface Appointment {
     last_name: string
   }
   appointment_services?: Array<{
+    service_id?: string
+    employee_id?: string
     services?: {
       name: string
       duration_minutes: number
+    }
+    employees?: {
+      first_name: string
+      last_name: string
+      avatar_url?: string
+      position?: string
     }
     price: number
   }>
@@ -543,15 +551,36 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                 </div>
               </div>
 
-              {/* Empleado */}
-              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="w-4 h-4 text-orange-600" />
-                  <h3 className="font-semibold text-gray-900">Empleado</h3>
+              {/* Empleados involucrados */}
+              <div className="md:col-span-2 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-sm transition-shadow">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-4 h-4 text-orange-600" />
+                  <h3 className="font-semibold text-gray-900">Profesionales Involucrados</h3>
                 </div>
-                <p className="text-gray-700 font-medium">
-                  {appointment.employees?.first_name} {appointment.employees?.last_name}
-                </p>
+                <div className="flex flex-wrap gap-4">
+                  {Array.from(new Set([
+                    appointment.employee_id,
+                    ...(appointment.appointment_services?.map(as => as.employee_id).filter(Boolean) || [])
+                  ])).map((empId, idx) => {
+                    const as = appointment.appointment_services?.find(s => s.employee_id === empId);
+                    const empName = empId === appointment.employee_id 
+                      ? `${appointment.employees?.first_name} ${appointment.employees?.last_name}`
+                      : as?.employees 
+                        ? `${as.employees.first_name} ${as.employees.last_name}`
+                        : 'Profesional';
+
+                    return (
+                      <div key={empId || idx} className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg border border-gray-100 shadow-sm">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="bg-orange-100 text-orange-600 text-xs font-bold">
+                            {empName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className="text-gray-700 font-medium text-sm">{empName}</p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Horario */}
@@ -579,7 +608,14 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
                     <div key={index} className="flex justify-between items-center pb-3 border-b border-gray-200 last:border-0 last:pb-0">
                       <div className="flex items-center gap-2 flex-1">
                         <div className="w-2 h-2 rounded-full bg-orange-500" />
-                        <span className="text-gray-700 font-medium">{service.services?.name}</span>
+                        <div className="flex flex-col">
+                          <span className="text-gray-700 font-medium">{service.services?.name}</span>
+                          {service.employees && (
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
+                              Por: {service.employees.first_name} {service.employees.last_name}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <span className="font-semibold text-gray-900">{formatPrice(service.price)}</span>
                     </div>

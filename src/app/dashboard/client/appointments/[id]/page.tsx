@@ -62,6 +62,13 @@ interface Appointment {
       description?: string
       duration_minutes: number
     }
+    employee_id?: string
+    employees?: {
+      first_name: string
+      last_name: string
+      avatar_url?: string
+      position?: string
+    }
     price: number
   }[]
   employee: {
@@ -119,6 +126,8 @@ export default function AppointmentDetailPage() {
           employee:employees(id, first_name, last_name, position, avatar_url),
           appointment_services(
             service:services(id, name, description, duration_minutes),
+            employee_id,
+            employees(id, first_name, last_name, position, avatar_url),
             price
           )
         `)
@@ -459,22 +468,48 @@ export default function AppointmentDetailPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-all bg-white group col-span-2 sm:col-span-1">
-                  <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 h-full">
-                    <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border border-slate-100 shrink-0 shadow-sm">
-                      <AvatarImage src={appointment.employee.avatar_url} />
-                      <AvatarFallback className="bg-slate-950 text-white font-black text-[9px]">
-                        {appointment.employee.first_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-left min-w-0">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Atención por</p>
-                      <div className="text-sm sm:text-base font-black text-slate-900 tracking-tight uppercase truncate">
-                        {appointment.employee.first_name}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Profesionales */}
+                <div className="flex flex-col gap-3">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Profesionales Asignados</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Array.from(new Set([
+                      appointment.employee.id,
+                      ...(appointment.appointment_services?.map(as => as.employee_id).filter(Boolean) || [])
+                    ])).map((empId, idx) => {
+                      const as = appointment.appointment_services?.find(s => s.employee_id === empId);
+                      const empInfo = empId === appointment.employee.id
+                        ? appointment.employee
+                        : as?.employees;
+                      
+                      const empName = empInfo 
+                        ? `${empInfo.first_name} ${empInfo.last_name}`
+                        : 'Profesional';
+
+                      return (
+                        <Card key={empId || idx} className="border-0 shadow-sm rounded-2xl hover:shadow-md transition-all bg-white group">
+                          <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4 h-full">
+                            <Avatar className="w-9 h-9 sm:w-10 sm:h-10 border border-slate-100 shrink-0 shadow-sm">
+                              <AvatarImage src={empInfo?.avatar_url} />
+                              <AvatarFallback className="bg-slate-950 text-white font-black text-[9px]">
+                                {empName.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="text-left min-w-0">
+                              <p className="text-[10px] font-black text-slate-900 tracking-tight uppercase truncate">
+                                {empName}
+                              </p>
+                              {empInfo?.position && (
+                                <p className="text-[8px] sm:text-[9px] font-medium text-slate-400 truncate uppercase tracking-tighter">
+                                  {empInfo.position}
+                                </p>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Status Alertas */}
@@ -506,11 +541,18 @@ export default function AppointmentDetailPage() {
                     <div className="divide-y divide-slate-50">
                       {appointment.appointment_services.map((appService, index) => (
                         <div key={index} className="px-5 py-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                          <div className="space-y-0.5">
-                            <p className="font-black text-slate-900 uppercase tracking-tight text-[10px]">{appService.service.name}</p>
+                          <div className="space-y-0.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-black text-slate-900 uppercase tracking-tight text-[10px] truncate">{appService.service.name}</p>
+                              {appService.employees && (
+                                <Badge variant="outline" className="text-[8px] h-3.5 py-0 px-1 font-black bg-slate-50 uppercase tracking-tighter shrink-0">
+                                  Por: {appService.employees.first_name}
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-[10px] text-gray-400 font-medium">Duración: {appService.service.duration_minutes} min</p>
                           </div>
-                          <p className="font-black text-slate-900 text-lg tracking-tight">{formatPrice(appService.price)}</p>
+                          <p className="font-black text-slate-900 text-lg tracking-tight ml-4">{formatPrice(appService.price)}</p>
                         </div>
                       ))}
                     </div>

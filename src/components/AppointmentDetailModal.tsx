@@ -256,39 +256,55 @@ export default function AppointmentDetailModal({
             </Card>
           </div>
 
-          {/* Empleado */}
-          {employee && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Briefcase className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                  Profesional Asignado
-                </h3>
-              </div>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={employee.avatar_url} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                        {employee.first_name?.[0]}{employee.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-gray-100">
-                        {employee.first_name} {employee.last_name}
-                      </p>
-                      {employee.position && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {employee.position}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Profesionales */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                Profesionales Asignados
+              </h3>
             </div>
-          )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {Array.from(new Set([
+                appointment.employee_id,
+                ...(appointment.appointment_services?.map(as => as.employee_id).filter(Boolean) || [])
+              ])).map((empId, idx) => {
+                const as = appointment.appointment_services?.find(s => s.employee_id === empId);
+                const empInfo = empId === appointment.employee_id
+                  ? appointment.employees
+                  : as?.employees;
+                
+                const empName = empInfo 
+                  ? `${empInfo.first_name} ${empInfo.last_name}`
+                  : 'Profesional';
+
+                return (
+                  <Card key={empId || idx}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={empInfo?.avatar_url} />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-xs">
+                            {empName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                            {empName}
+                          </p>
+                          {empInfo?.position && (
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">
+                              {empInfo.position}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Servicios */}
           <div>
@@ -304,12 +320,19 @@ export default function AppointmentDetailModal({
                   <div key={index}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-gray-100">
+                        <p className="font-medium text-gray-900 dark:text-gray-100 italic">
                           {service.services?.name || 'Servicio'}
                         </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {service.services?.duration_minutes || 0} minutos
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                            {service.services?.duration_minutes || 0} minutos
+                          </span>
+                          {service.employees && (
+                            <Badge variant="outline" className="text-[9px] h-4 py-0 px-1 font-bold bg-slate-50">
+                              Por: {service.employees.first_name}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <p className="font-semibold text-gray-900 dark:text-gray-100">
                         {formatPrice(service.price)}
