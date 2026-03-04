@@ -1,40 +1,26 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useDebouncedCallback } from 'use-debounce'
-import { X, Calendar, Clock, User as UserIcon, Briefcase, FileText, ChevronRight, ChevronLeft, Check, Search, UserCheck, Building2, UserCircle, Info } from 'lucide-react'
+import React from 'react'
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useToast } from '@/hooks/use-toast'
-import { createClient } from '@/lib/supabaseClient'
-import { toDateString } from '@/lib/dateUtils'
-import type { Employee, Service, Appointment } from '@/types/database'
-
-type Client = {
-  id: string
-  email: string
-  first_name: string
-  last_name: string
-  phone?: string
-  avatar_url?: string
-}
-
-// Business-managed client (from public.business_clients)
-type BusinessClient = {
-  id: string
-  first_name: string
-  last_name: string | null
-  phone: string | null
-  email: string | null
-  is_active: boolean
-}
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Check, 
+  X,
+  Plus
+} from 'lucide-react'
+import { useCreateAppointment } from '@/hooks/useCreateAppointment'
+import { ClientStep } from './create-appointment/ClientStep'
+import { ServiceStep } from './create-appointment/ServiceStep'
+import { DateTimeStep } from './create-appointment/DateTimeStep'
+import { ConfirmationStep } from './create-appointment/ConfirmationStep'
+import type { Appointment } from '@/types/database'
 
 interface CreateAppointmentModalProps {
   businessId: string
@@ -55,1078 +41,228 @@ export default function CreateAppointmentModal({
   onClose,
   onSuccess
 }: CreateAppointmentModalProps) {
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [services, setServices] = useState<Service[]>([])
-  const [clients, setClients] = useState<Client[]>([])
-  const [businessClients, setBusinessClients] = useState<BusinessClient[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [isOpen, setIsOpen] = useState(true) // Local state for Radix cleanup
-  const [showRegisteredDropdown, setShowRegisteredDropdown] = useState(false)
-  const [showBusinessClientDropdown, setShowBusinessClientDropdown] = useState(false)
+  const { state, actions } = useCreateAppointment({
+    businessId,
+    selectedDate,
+    selectedTime,
+    selectedEmployeeId,
+    appointment,
+    onClose,
+    onSuccess
+  })
 
-  // Form state
-  const [currentStep, setCurrentStep] = useState(1)
-  const [clientType, setClientType] = useState<'registered' | 'business_client' | 'walk_in'>('walk_in')
-  const [selectedClientId, setSelectedClientId] = useState('')
-  const [selectedBusinessClientId, setSelectedBusinessClientId] = useState('')
-  const [walkInName, setWalkInName] = useState('')
-  const [walkInPhone, setWalkInPhone] = useState('')
-  const [selectedEmployeeIdState, setSelectedEmployeeIdState] = useState(selectedEmployeeId || '')
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([])
-  const [appointmentDate, setAppointmentDate] = useState(toDateString(selectedDate))
-  const [startTime, setStartTime] = useState(selectedTime || '09:00')
-  const [notes, setNotes] = useState('')
-  const [clientNotes, setClientNotes] = useState('')
+  const {
+    loading, submitting, currentStep, totalSteps,
+    employees, services, clients, businessClients,
+    clientType, selectedClientId, selectedBusinessClientId, walkInName, walkInPhone,
+    appointmentDate, startTime, selectedServiceIds, notes, clientNotes,
+    filteredClients, totalPrice, totalDuration, endTime,
+    searchTerm, showRegisteredDropdown, showBusinessClientDropdown, serviceAssignments
+  } = state
 
-  const totalSteps = 4
-  const supabase = createClient()
-  const { toast } = useToast()
+  const {
+    setCurrentStep, setClientType, setSelectedClientId, setSelectedBusinessClientId,
+    setWalkInName, setWalkInPhone, setAppointmentDate, setStartTime, setNotes, setClientNotes,
+    setSearchTerm, setShowRegisteredDropdown, setShowBusinessClientDropdown,
+    toggleService, assignEmployeeToService, handleSubmit, handleNext, handlePrevious,
+    debouncedSearch
+  } = actions
 
-  // Debounced search for business clients
-  const debouncedSearch = useDebouncedCallback(
-    async (searchValue: string) => {
-      const term = searchValue.trim()
-      const { data } = await supabase.rpc('list_business_clients', {
-        p_business_id: businessId,
-        p_search: term || null,
-        p_only_active: true,
-        p_limit: 50,
-        p_offset: 0,
-        p_sort_by: 'first_name',
-        p_sort_dir: 'asc',
-      })
-      setBusinessClients((data as any) || [])
-    },
-    300 // 300ms delay
-  )
-
-  useEffect(() => {
-    fetchData()
-  }, [businessId])
-
-  // Reset search term when client type changes
-  useEffect(() => {
-    setSearchTerm('')
-  }, [clientType])
-
-  // Populate form fields when editing an appointment
-  useEffect(() => {
-    if (appointment) {
-      // VALIDACIÓN: No permitir editar citas pendientes
-      if (appointment.status === 'pending') {
-        toast({
-          variant: 'destructive',
-          title: 'No se puede editar',
-          description: 'Esta cita está pendiente de confirmación del cliente. Espera su respuesta antes de editarla.',
-        })
-        onClose()
-        return
-      }
-
-      // Set client type and info
-      if (appointment.client_id) {
-        setClientType('registered')
-        setSelectedClientId(appointment.client_id)
-      } else if ((appointment as any).business_client_id) {
-        setClientType('business_client')
-        setSelectedBusinessClientId((appointment as any).business_client_id)
-      } else {
-        setClientType('walk_in')
-        setWalkInName(appointment.walk_in_client_name || '')
-        setWalkInPhone(appointment.walk_in_client_phone || '')
-      }
-
-      // Set employee
-      setSelectedEmployeeIdState(appointment.employee_id)
-
-      // Set services
-      if (appointment.appointment_services) {
-        setSelectedServiceIds(appointment.appointment_services.map(s => s.service_id))
-      }
-
-      // Set date and time
-      setAppointmentDate(appointment.appointment_date)
-      setStartTime(appointment.start_time.substring(0, 5)) // Remove seconds
-
-      // Set notes
-      setNotes(appointment.notes || '')
-      setClientNotes(appointment.client_notes || '')
-    }
-  }, [appointment])
-
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-
-      const { data: employeesData, error: employeesError } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name, is_active')
-        .eq('business_id', businessId)
-        .eq('is_active', true)
-        .order('first_name')
-
-      if (employeesError) throw employeesError
-      setEmployees((employeesData || []).map(emp => ({
-        ...emp,
-        business_id: businessId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })))
-
-      const { data: servicesData, error: servicesError } = await supabase
-        .from('services')
-        .select('id, name, price, duration_minutes, is_active')
-        .eq('business_id', businessId)
-        .eq('is_active', true)
-        .order('name')
-
-      if (servicesError) throw servicesError
-      setServices((servicesData || []).map(service => ({
-        ...service,
-        business_id: businessId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })))
-
-      const { data: appointmentsData } = await supabase
-        .from('appointments')
-        .select('client_id, users!appointments_client_id_fkey(id, first_name, last_name, phone, email)')
-        .eq('business_id', businessId)
-        .not('client_id', 'is', null)
-        .limit(200) // Optimization: Limit to most recent 200 appointments to extract clients
-
-      if (appointmentsData) {
-        const uniqueClients = Array.from(
-          new Map(
-            appointmentsData
-              .filter(apt => apt.users)
-              .map(apt => {
-                const user = apt.users as any
-                return [
-                  user.id,
-                  {
-                    id: user.id,
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    phone: user.phone,
-                    email: user.email
-                  } as Client
-                ]
-              })
-          ).values()
-        ) as Client[]
-
-        setClients(uniqueClients)
-      }
-
-      // Load a first page of business clients (active)
-      const { data: bcData, error: bcError } = await supabase.rpc('list_business_clients', {
-        p_business_id: businessId,
-        p_search: null,
-        p_only_active: true,
-        p_limit: 50,
-        p_offset: 0,
-        p_sort_by: 'first_name',
-        p_sort_dir: 'asc',
-      })
-      if (bcError) throw bcError
-      setBusinessClients((bcData as any) || [])
-
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Memoized calculations to avoid recalculating on every render
-  const endTime = useMemo(() => {
-    if (!startTime || selectedServiceIds.length === 0) return ''
-
-    const totalDuration = selectedServiceIds.reduce((total, serviceId) => {
-      const service = services.find(s => s.id === serviceId)
-      return total + (service?.duration_minutes || 0)
-    }, 0)
-
-    const [hours, minutes] = startTime.split(':').map(Number)
-    const startDate = new Date()
-    startDate.setHours(hours, minutes, 0, 0)
-    startDate.setMinutes(startDate.getMinutes() + totalDuration)
-
-    return startDate.toTimeString().substring(0, 5)
-  }, [startTime, selectedServiceIds, services])
-
-  const totalPrice = useMemo(() => {
-    return selectedServiceIds.reduce((total, serviceId) => {
-      const service = services.find(s => s.id === serviceId)
-      return total + (service?.price || 0)
-    }, 0)
-  }, [selectedServiceIds, services])
-
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-
-    const hasValidClient = clientType === 'registered'
-      ? selectedClientId
-      : clientType === 'business_client'
-      ? selectedBusinessClientId
-      : walkInName.trim()
-
-    if (!hasValidClient || !selectedEmployeeIdState || selectedServiceIds.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Campos incompletos',
-        description: 'Por favor completa todos los campos obligatorios',
-      })
-      return
-    }
-
-    try {
-      setSubmitting(true)
-
-      const appointmentData: any = {
-        business_id: businessId,
-        employee_id: selectedEmployeeIdState,
-        appointment_date: appointmentDate,
-        start_time: startTime,
-        end_time: endTime,
-        total_price: totalPrice,
-        notes: notes || null,
-        client_notes: clientNotes || null
-      }
-
-      // Only set status on creation more
-      if (!appointment) {
-        appointmentData.status = 'confirmed'
-      }
-
-      if (clientType === 'registered') {
-        appointmentData.client_id = selectedClientId
-        appointmentData.walk_in_client_name = null
-        appointmentData.walk_in_client_phone = null
-        appointmentData.business_client_id = null
-      } else if (clientType === 'business_client') {
-        appointmentData.client_id = null
-        appointmentData.business_client_id = selectedBusinessClientId
-        appointmentData.walk_in_client_name = null
-        appointmentData.walk_in_client_phone = null
-      } else {
-        appointmentData.client_id = null
-        appointmentData.business_client_id = null
-        appointmentData.walk_in_client_name = walkInName.trim()
-        appointmentData.walk_in_client_phone = walkInPhone.trim() || null
-      }
-
-      let appointmentId: string
-
-      if (appointment) {
-        // EDIT MODE: Update existing appointment
-        const { error: appointmentError } = await supabase
-          .from('appointments')
-          .update(appointmentData)
-          .eq('id', appointment.id)
-
-        if (appointmentError) throw appointmentError
-        appointmentId = appointment.id
-
-        // Send rescheduled email if appointment was edited
-        const hasChanges =
-          appointment.appointment_date !== appointmentDate ||
-          appointment.start_time.substring(0, 5) !== startTime ||
-          appointment.employee_id !== selectedEmployeeIdState
-
-        if (hasChanges) {
-          // NUEVO: Cambiar estado a pending cuando hay cambios significativos
-          const { error: statusError } = await supabase
-            .from('appointments')
-            .update({ 
-              status: 'pending',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', appointment.id)
-
-          if (statusError) {
-            console.error('❌ Error updating status to pending:', statusError)
-          } else {
-            console.log('✅ Appointment status changed to pending - awaiting client confirmation')
-          }
-
-          // Enviar email de reprogramación
-          try {
-            await fetch('/api/send-rescheduled-notification', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                appointmentId: appointment.id,
-                changes: {
-                  oldDate: appointment.appointment_date !== appointmentDate ? appointment.appointment_date : undefined,
-                  oldTime: appointment.start_time.substring(0, 5) !== startTime ? appointment.start_time : undefined,
-                  oldEndTime: appointment.end_time,
-                  oldEmployeeId: appointment.employee_id !== selectedEmployeeIdState ? appointment.employee_id : undefined
-                }
-              })
-            })
-          } catch (emailError) {
-            console.warn('⚠️ Failed to send rescheduled email:', emailError)
-            // Don't block the operation if email fails
-          }
-        }
-
-        // Delete existing services
-        const { error: deleteError } = await supabase
-          .from('appointment_services')
-          .delete()
-          .eq('appointment_id', appointment.id)
-
-        if (deleteError) throw deleteError
-      } else {
-        // CREATE MODE: Insert new appointment
-        const { data: createdAppointment, error: appointmentError } = await supabase
-          .from('appointments')
-          .insert(appointmentData)
-          .select()
-          .single()
-
-        if (appointmentError) throw appointmentError
-        appointmentId = createdAppointment.id
-      }
-
-      // Insert services (for both create and edit)
-      const appointmentServices = selectedServiceIds.map(serviceId => {
-        const service = services.find(s => s.id === serviceId)
-        return {
-          appointment_id: appointmentId,
-          service_id: serviceId,
-          price: service?.price || 0
-        }
-      })
-
-      const { error: servicesError } = await supabase
-        .from('appointment_services')
-        .insert(appointmentServices)
-
-      if (servicesError) throw servicesError
-
-      // 📧 Enviar email de confirmación (solo para clientes con email: registered y business_client)
-      // Fire-and-forget: si falla el email, la cita ya quedó guardada y el modal se cierra igual
-      if (!appointment && clientType !== 'walk_in') {
-        fetch('/api/send-appointment-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ appointmentId }),
-        }).catch((emailError) => {
-          console.warn('⚠️ Email de confirmación falló (cita guardada correctamente):', emailError)
-        })
-      }
-
-      toast({
-        title: appointment ? '¡Cita actualizada exitosamente!' : '¡Cita creada exitosamente!',
-        description: `Cita para ${clientType === 'walk_in' ? walkInName : 'el cliente'} ${appointment ? 'actualizada' : 'confirmada'}.`,
-      })
-
-      // Cerrar modal después de 1 segundo
-      setTimeout(() => {
-        onSuccess()
-      }, 1000)
-
-    } catch (error) {
-      console.error('Error saving appointment:', error)
-      toast({
-        variant: 'destructive',
-        title: appointment ? 'Error al actualizar la cita' : 'Error al crear la cita',
-        description: 'Por favor intenta de nuevo.',
-      })
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const filteredClients = clients.filter(client =>
-    `${client.first_name} ${client.last_name} ${client.phone || ''} ${client.email || ''}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  )
-
-  const toggleService = (serviceId: string) => {
-    setSelectedServiceIds(prev =>
-      prev.includes(serviceId)
-        ? prev.filter(id => id !== serviceId)
-        : [...prev, serviceId]
-    )
-  }
-
-  const validateStep = (step: number): boolean => {
+  const getStepTitle = (step: number) => {
     switch (step) {
-      case 1:
-        return clientType === 'registered'
-          ? !!selectedClientId
-          : clientType === 'business_client'
-          ? !!selectedBusinessClientId
-          : !!walkInName.trim()
-      case 2:
-        return selectedServiceIds.length > 0 && !!selectedEmployeeIdState
-      case 3:
-        return !!appointmentDate && !!startTime
-      case 4:
-        return true
-      default:
-        return false
+      case 1: return 'Información del Cliente'
+      case 2: return 'Servicios y Profesionales'
+      case 3: return 'Fecha y Horario'
+      case 4: return 'Confirmar Reserva'
+      default: return 'Nueva Cita'
     }
-  }
-
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, totalSteps))
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Campos incompletos',
-        description: 'Por favor completa todos los campos obligatorios',
-      })
-    }
-  }
-
-  const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1))
-  }
-
-  const handleClose = () => {
-    setIsOpen(false)
-    // Small timeout to allow Radix cleanup before unmounting
-    setTimeout(() => {
-      onClose()
-    }, 200)
-  }
-
-  const getStepTitle = (step: number): string => {
-    switch (step) {
-      case 1: return 'Cliente'
-      case 2: return 'Servicio'
-      case 3: return 'Fecha y Hora'
-      case 4: return 'Confirmación'
-      default: return ''
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full p-8 text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-4xl p-0 border-none bg-transparent shadow-none" showCloseButton={false}>
-        {loading ? (
-          <div className="bg-white rounded-2xl shadow-2xl w-full p-12 flex flex-col items-center justify-center min-h-[400px]">
-            <div className="animate-spin w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full mb-4"></div>
-            <p className="text-gray-600 font-medium">Cargando datos de la cita...</p>
-          </div>
-        ) : (
-          <div 
-            className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-        {/* Header - Premium Design - Ultra Compacto - Sincronizado con AppointmentModal */}
-        <div className="flex-shrink-0 bg-primary shadow-lg sm:shadow-xl rounded-t-2xl p-3 sm:p-5 relative overflow-hidden">
-          <div className="flex items-center justify-between mb-3 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-md rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg border border-white/20 group transition-all duration-300 hover:scale-105 active:scale-95">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent 
+        showCloseButton={false}
+        className="w-[calc(100%-1rem)] sm:w-full max-w-[550px] p-0 overflow-hidden rounded-[24px] sm:rounded-[32px] border-none shadow-2xl bg-white animate-in zoom-in-95 duration-300"
+      >
+        
+        {/* Header Premium */}
+        <DialogHeader className="p-4 sm:p-6 pb-0 relative overflow-hidden">
+          <div className="flex items-center justify-between relative z-10">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="px-2 py-0.5 bg-orange-50 rounded-full border border-orange-100">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Paso {currentStep} de {totalSteps}</span>
+                </div>
+                {appointment && (
+                  <div className="px-2 py-0.5 bg-blue-50 rounded-full border border-blue-100">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Editando Cita</span>
+                  </div>
+                )}
               </div>
-              <div>
-                <span className="text-[7px] sm:text-[8px] font-black text-white/80 uppercase tracking-[0.2em] block mb-0">
-                  Agenda de Citas
-                </span>
-                <h2 className="text-base sm:text-xl font-black text-white tracking-tight leading-none">
-                  {appointment ? 'Editar Cita' : 'Nueva Cita'}
-                </h2>
-              </div>
+              <DialogTitle className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-none italic">
+                {getStepTitle(currentStep)}
+              </DialogTitle>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleClose}
-              className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-black/10 hover:bg-black/20 text-white border-none transition-all duration-300"
+            <button 
+              onClick={onClose}
+              className="p-1.5 sm:p-3 bg-gray-50 hover:bg-gray-100 rounded-xl sm:rounded-2xl transition-all duration-300 group shadow-sm active:scale-95"
             >
-              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </Button>
+              <X className="w-4 h-4 sm:w-5 h-5 text-gray-400 group-hover:text-gray-900 group-hover:rotate-90 transition-all duration-500" />
+            </button>
           </div>
-
-          {/* Stepper Premium - Ajustado para fondo naranja */}
-          <div className="flex items-center gap-2 relative z-10">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex-1 flex flex-col gap-2">
-                <div
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                    step <= currentStep
-                      ? 'bg-white'
-                      : 'bg-white/30'
-                  }`}
-                />
-                <span className={`text-[8px] font-black uppercase tracking-widest text-center transition-colors duration-300 ${
-                  step === currentStep ? 'text-white' : 'text-white/60'
-                }`}>
-                  {getStepTitle(step)}
-                </span>
-              </div>
+          
+          {/* Progress Bar Elegante */}
+          <div className="w-full h-1 bg-gray-100 rounded-full mt-1 overflow-hidden flex gap-1 p-0.5">
+            {[1, 2, 3, 4].map((s) => (
+              <div 
+                key={s}
+                className={`flex-1 rounded-full transition-all duration-700 ${
+                  currentStep >= s ? 'bg-primary' : 'bg-gray-200/50'
+                }`}
+              />
             ))}
           </div>
-        </div>
+        </DialogHeader>
 
-        {/* Content - Scrollable */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {/* Step 1: Cliente */}
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2 text-base font-semibold">
-                  <UserIcon className="w-5 h-5 text-orange-600" />
-                  Tipo de cliente *
-                </Label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <label
-                    className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition-all ${
-                      clientType === 'walk_in'
-                        ? 'border-orange-600 bg-orange-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="clientType"
-                      value="walk_in"
-                      checked={clientType === 'walk_in'}
-                      onChange={(e) => setClientType(e.target.value as any)}
-                      className="sr-only"
-                    />
-                    <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-0">
-                      <div className="flex justify-center sm:mb-2">
-                        <UserCircle className="w-8 h-8 text-orange-600" />
-                      </div>
-                      <div className="flex-1 sm:flex-none">
-                        <p className="font-medium text-gray-900">Sin registro</p>
-                        <p className="text-xs text-gray-500 mt-1">Cliente sin cuenta</p>
-                      </div>
-                    </div>
-                  </label>
-                  <label
-                    className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition-all ${
-                      clientType === 'registered'
-                        ? 'border-orange-600 bg-orange-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="clientType"
-                      value="registered"
-                      checked={clientType === 'registered'}
-                      onChange={(e) => setClientType(e.target.value as any)}
-                      className="sr-only"
-                    />
-                    <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-0">
-                      <div className="flex justify-center sm:mb-2">
-                        <UserCheck className="w-8 h-8 text-green-600" />
-                      </div>
-                      <div className="flex-1 sm:flex-none">
-                        <p className="font-medium text-gray-900">Registrado</p>
-                        <p className="text-xs text-gray-500 mt-1">Con cuenta TuTurno</p>
-                      </div>
-                    </div>
-                  </label>
-                  <label
-                    className={`border-2 rounded-xl p-3 sm:p-4 cursor-pointer transition-all ${
-                      clientType === 'business_client'
-                        ? 'border-orange-600 bg-orange-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="clientType"
-                      value="business_client"
-                      checked={clientType === 'business_client'}
-                      onChange={(e) => setClientType(e.target.value as any)}
-                      className="sr-only"
-                    />
-                    <div className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-0">
-                      <div className="flex justify-center sm:mb-2">
-                        <Building2 className="w-8 h-8 text-blue-600" />
-                      </div>
-                      <div className="flex-1 sm:flex-none">
-                        <p className="font-medium text-gray-900">Mis clientes</p>
-                        <p className="text-xs text-gray-500 mt-1">Guardados por ti</p>
-                      </div>
-                    </div>
-                  </label>
+        <div className="px-5 sm:px-8 py-0 max-h-[50vh] overflow-y-auto scrollbar-hide">
+          {loading ? (
+            <div className="py-20 flex flex-col items-center justify-center space-y-4">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-gray-100 border-t-primary rounded-full animate-spin shadow-sm" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                 </div>
               </div>
-
-              {clientType === 'walk_in' && (
-                <div className="space-y-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="walk-in-name">Nombre del cliente *</Label>
-                    <Input
-                      id="walk-in-name"
-                      type="text"
-                      placeholder="Ej: Juan Pérez"
-                      value={walkInName}
-                      onChange={(e) => setWalkInName(e.target.value)}
-                      className="text-base"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="walk-in-phone">Teléfono (opcional)</Label>
-                    <Input
-                      id="walk-in-phone"
-                      type="tel"
-                      placeholder="0999123456"
-                      maxLength={10}
-                      value={walkInPhone}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10)
-                        setWalkInPhone(value)
-                      }}
-                      className="text-base"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-600 flex items-start gap-2">
-                    <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <span>Este cliente no necesita una cuenta. Los datos se guardan solo para esta cita.</span>
-                  </p>
-                </div>
-              )}
-
-              {clientType === 'registered' && (
-                <div className="space-y-3">
-                  <Label htmlFor="client">Cliente registrado *</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                    <Input
-                      id="client-search"
-                      type="text"
-                      placeholder="Buscar o seleccionar cliente..."
-                      value={
-                        selectedClientId
-                          ? (() => {
-                              const client = clients.find(c => c.id === selectedClientId)
-                              return client ? `${client.first_name} ${client.last_name}` : searchTerm
-                            })()
-                          : searchTerm
-                      }
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value)
-                        setSelectedClientId('')
-                        setShowRegisteredDropdown(true)
-                      }}
-                      onFocus={() => {
-                        setSearchTerm('')
-                        setShowRegisteredDropdown(true)
-                      }}
-                      onBlur={() => {
-                        // Delay to allow click on dropdown items
-                        setTimeout(() => setShowRegisteredDropdown(false), 200)
-                      }}
-                      className="text-base pl-10"
-                    />
-                    {showRegisteredDropdown && !selectedClientId && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {filteredClients.length > 0 ? (
-                          filteredClients.map((client) => (
-                            <button
-                              key={client.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedClientId(client.id)
-                                setSearchTerm('')
-                                setShowRegisteredDropdown(false)
-                              }}
-                              className="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors border-b last:border-b-0"
-                            >
-                              <div className="font-medium text-gray-900">
-                                {client.first_name} {client.last_name}
-                              </div>
-                              {client.phone && (
-                                <div className="text-sm text-gray-600">{client.phone}</div>
-                              )}
-                              {client.email && (
-                                <div className="text-sm text-gray-500">{client.email}</div>
-                              )}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center text-sm text-gray-500">
-                            {clients.length === 0 ? 'No hay clientes registrados' : 'No se encontraron clientes'}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {selectedClientId && (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <Check className="w-4 h-4" />
-                      Cliente seleccionado
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {clientType === 'business_client' && (
-                <div className="space-y-3">
-                  <Label htmlFor="bc-client">Cliente del negocio *</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                    <Input
-                      id="bc-client-search"
-                      type="text"
-                      placeholder="Buscar o seleccionar cliente..."
-                      value={
-                        selectedBusinessClientId
-                          ? (() => {
-                              const client = businessClients.find(c => c.id === selectedBusinessClientId)
-                              return client ? `${client.first_name} ${client.last_name || ''}` : searchTerm
-                            })()
-                          : searchTerm
-                      }
-                      onChange={(e) => {
-                        const value = e.target.value
-                        setSearchTerm(value)
-                        setSelectedBusinessClientId('')
-                        setShowBusinessClientDropdown(true)
-                        debouncedSearch(value)
-                      }}
-                      onFocus={() => {
-                        setSearchTerm('')
-                        setShowBusinessClientDropdown(true)
-                      }}
-                      onBlur={() => {
-                        // Delay to allow click on dropdown items
-                        setTimeout(() => setShowBusinessClientDropdown(false), 200)
-                      }}
-                      className="text-base pl-10"
-                    />
-                    {showBusinessClientDropdown && !selectedBusinessClientId && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {businessClients.length > 0 ? (
-                          businessClients.map((c) => (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedBusinessClientId(c.id)
-                                setSearchTerm('')
-                                setShowBusinessClientDropdown(false)
-                              }}
-                              className="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors border-b last:border-b-0"
-                            >
-                              <div className="font-medium text-gray-900">
-                                {c.first_name} {c.last_name || ''}
-                              </div>
-                              {c.phone && (
-                                <div className="text-sm text-gray-600">{c.phone}</div>
-                              )}
-                              {c.email && (
-                                <div className="text-sm text-gray-500">{c.email}</div>
-                              )}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center text-sm text-gray-500">
-                            {businessClients.length === 0 ? 'No hay clientes guardados' : 'No se encontraron clientes'}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {selectedBusinessClientId && (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <Check className="w-4 h-4" />
-                      Cliente seleccionado
-                    </div>
-                  )}
-                </div>
-              )}
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-gray-400 animate-pulse">Cargando...</p>
             </div>
-          )}
-
-          {/* Step 2: Servicio y Empleado */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2 text-base font-semibold">
-                  <Briefcase className="w-5 h-5 text-orange-600" />
-                  Servicios * (selecciona uno o más)
-                </Label>
-                <div className="border rounded-lg p-3 space-y-2 max-h-64 overflow-y-auto">
-                  {services.map((service) => (
-                    <label
-                      key={service.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all border-2 ${
-                        selectedServiceIds.includes(service.id)
-                          ? 'bg-orange-50 border-orange-300'
-                          : 'hover:bg-gray-50 border-transparent'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedServiceIds.includes(service.id)}
-                        onChange={() => toggleService(service.id)}
-                        className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{service.name}</p>
-                        <p className="text-xs text-gray-500">{service.duration_minutes} min</p>
-                      </div>
-                      <span className="text-sm font-semibold text-gray-900">${service.price}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="employee" className="flex items-center gap-2 text-base font-semibold">
-                  <UserIcon className="w-5 h-5 text-orange-600" />
-                  Empleado *
-                </Label>
-                <Select value={selectedEmployeeIdState} onValueChange={setSelectedEmployeeIdState}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un empleado" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[200]">
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.first_name} {employee.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Fecha y Hora */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="date" className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-orange-600" />
-                    Fecha *
-                  </Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={appointmentDate}
-                    onChange={(e) => setAppointmentDate(e.target.value)}
-                    className="text-base"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="time" className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-orange-600" />
-                    Hora de inicio *
-                  </Label>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="text-base"
-                  />
-                </div>
-              </div>
-
-              {selectedServiceIds.length > 0 && (
-                <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Resumen de horario</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Duración total:</span>
-                      <span className="font-medium text-gray-900">
-                        {selectedServiceIds.reduce((total, id) => {
-                          const service = services.find(s => s.id === id)
-                          return total + (service?.duration_minutes || 0)
-                        }, 0)} minutos
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Hora de fin:</span>
-                      <span className="font-medium text-gray-900">{endTime}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Step 4: Confirmación */}
-          {currentStep === 4 && (
-            <div className="space-y-6">
-              {/* Resumen */}
-              <div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-lg p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Check className="w-5 h-5 text-orange-600" />
-                  Resumen de la cita
-                </h3>
-
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Cliente</p>
-                    <p className="font-semibold text-gray-900">
-                      {clientType === 'walk_in'
-                        ? `${walkInName} ${walkInPhone ? `(${walkInPhone})` : ''}`
-                        : clients.find(c => c.id === selectedClientId)
-                          ? `${clients.find(c => c.id === selectedClientId)?.first_name} ${clients.find(c => c.id === selectedClientId)?.last_name}`
-                          : 'No seleccionado'}
-                      <span className="ml-2 text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
-                        {clientType === 'walk_in' ? 'Sin cita previa' : 'Registrado'}
-                      </span>
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Empleado</p>
-                    <p className="font-semibold text-gray-900">
-                      {employees.find(e => e.id === selectedEmployeeIdState)
-                        ? `${employees.find(e => e.id === selectedEmployeeIdState)?.first_name} ${employees.find(e => e.id === selectedEmployeeIdState)?.last_name}`
-                        : 'No seleccionado'}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Servicios ({selectedServiceIds.length})</p>
-                    {selectedServiceIds.map(id => {
-                      const service = services.find(s => s.id === id)
-                      return service ? (
-                        <div key={id} className="flex justify-between items-center text-sm mb-1">
-                          <span className="text-gray-900">{service.name}</span>
-                          <span className="font-medium text-gray-900">${service.price}</span>
-                        </div>
-                      ) : null
-                    })}
-                  </div>
-
-                  <div className="pt-3 border-t border-orange-300">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm text-gray-600">Fecha y hora:</span>
-                      <span className="font-medium text-gray-900">
-                        {new Date(appointmentDate).toLocaleDateString('es-ES')} • {startTime}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Duración:</span>
-                      <span className="font-medium text-gray-900">
-                        {selectedServiceIds.reduce((total, id) => {
-                          const service = services.find(s => s.id === id)
-                          return total + (service?.duration_minutes || 0)
-                        }, 0)} min
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t-2 border-orange-300">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-gray-900">Total:</span>
-                      <span className="text-2xl font-bold text-orange-600">
-                        ${totalPrice.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notas */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="client-notes" className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-orange-600" />
-                    Notas del cliente (opcional)
-                  </Label>
-                  <Textarea
-                    id="client-notes"
-                    value={clientNotes}
-                    onChange={(e) => setClientNotes(e.target.value)}
-                    placeholder="Notas o solicitudes especiales del cliente..."
-                    rows={2}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes" className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-orange-600" />
-                    Notas internas (opcional)
-                  </Label>
-                  <Textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Notas internas para el negocio..."
-                    rows={2}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </form>
-
-        {/* Footer - Navigation Premium */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-100 p-6 sm:p-8 flex gap-4">
-          {currentStep > 1 && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handlePrevious}
-              className="flex-1 h-12 rounded-2xl border-gray-100 shadow-sm font-black text-[10px] uppercase tracking-widest text-gray-500 hover:text-orange-600 hover:bg-orange-50/50 transition-all active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Anterior
-            </Button>
-          )}
-
-          {currentStep < totalSteps ? (
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={!validateStep(currentStep)}
-              className="flex-1 h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-widest shadow-[0_4px_12px_rgba(234,88,12,0.2)] transition-all active:scale-95"
-            >
-              Siguiente
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
           ) : (
-            <Button
-              type="button"
-              onClick={() => handleSubmit()}
-              disabled={submitting}
-              className="flex-1 h-12 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black text-[10px] uppercase tracking-widest shadow-[0_4px_12px_rgba(234,88,12,0.2)] transition-all active:scale-95"
-            >
-              {submitting ? (
-                <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  {appointment ? 'Actualizando...' : 'Creando...'}
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  {appointment ? 'Actualizar Cita' : 'Confirmar Cita'}
-                </>
+            <>
+              {currentStep === 1 && (
+                <ClientStep
+                  clientType={clientType}
+                  setClientType={setClientType}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  selectedClientId={selectedClientId}
+                  setSelectedClientId={setSelectedClientId}
+                  selectedBusinessClientId={selectedBusinessClientId}
+                  setSelectedBusinessClientId={setSelectedBusinessClientId}
+                  walkInName={walkInName}
+                  setWalkInName={setWalkInName}
+                  walkInPhone={walkInPhone}
+                  setWalkInPhone={setWalkInPhone}
+                  clients={clients}
+                  businessClients={businessClients}
+                  filteredClients={filteredClients}
+                  showRegisteredDropdown={showRegisteredDropdown}
+                  setShowRegisteredDropdown={setShowRegisteredDropdown}
+                  showBusinessClientDropdown={showBusinessClientDropdown}
+                  setShowBusinessClientDropdown={setShowBusinessClientDropdown}
+                  debouncedSearch={debouncedSearch}
+                />
               )}
-            </Button>
+
+              {currentStep === 2 && (
+                <ServiceStep
+                  services={services}
+                  employees={employees}
+                  selectedServiceIds={selectedServiceIds}
+                  toggleService={toggleService}
+                  serviceAssignments={serviceAssignments}
+                  assignEmployeeToService={assignEmployeeToService}
+                />
+              )}
+
+              {currentStep === 3 && (
+                <DateTimeStep
+                  appointmentDate={appointmentDate}
+                  setAppointmentDate={setAppointmentDate}
+                  startTime={startTime}
+                  setStartTime={setStartTime}
+                  endTime={endTime}
+                  duration={totalDuration}
+                />
+              )}
+
+              {currentStep === 4 && (
+                <ConfirmationStep
+                  clientType={clientType}
+                  selectedClientId={selectedClientId}
+                  selectedBusinessClientId={selectedBusinessClientId}
+                  walkInName={walkInName}
+                  walkInPhone={walkInPhone}
+                  clients={clients}
+                  businessClients={businessClients}
+                  selectedServiceIds={selectedServiceIds}
+                  services={services}
+                  employees={employees}
+                  serviceAssignments={serviceAssignments}
+                  appointmentDate={appointmentDate}
+                  startTime={startTime}
+                  totalPrice={totalPrice}
+                  totalDuration={totalDuration}
+                  clientNotes={clientNotes}
+                  setClientNotes={setClientNotes}
+                  notes={notes}
+                  setNotes={setNotes}
+                  appointment={appointment}
+                />
+              )}
+            </>
           )}
         </div>
+
+        {/* Footer de Navegación Premium */}
+        <div className="p-4 sm:p-6 pt-0 bg-white flex items-center justify-between gap-3 sm:gap-4">
+          <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3px]" />
+            Reserva Segura
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4 flex-1 sm:flex-none justify-end">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={handlePrevious}
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl border border-gray-100 flex items-center justify-center hover:bg-gray-50 hover:border-gray-200 transition-all duration-300 active:scale-90 shadow-sm"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 h-5 text-gray-500" />
+              </button>
+            )}
+
+            <div className="flex-1 sm:w-64">
+              {currentStep < totalSteps ? (
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-full h-10 sm:h-12 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group active:scale-95"
+                >
+                  {currentStep === 1 && "Ver Servicios"}
+                  {currentStep === 2 && "Elegir Horario"}
+                  {currentStep === 3 && "Revisar Cita"}
+                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="w-full h-10 sm:h-12 rounded-2xl bg-primary hover:bg-orange-600 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-[0_8px_30px_rgb(234,88,12,0.3)] transition-all duration-300 flex items-center justify-center gap-3 active:scale-95"
+                >
+                  {submitting ? (
+                    <div className="w-4 h-4 sm:w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 sm:w-5 h-5 stroke-[4px]" />
+                      Finalizar Reserva
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
-      )}
-    </DialogContent>
-  </Dialog>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -19,7 +19,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, memo } from 'react'
-import { Bell, X, Check, CalendarPlus, CalendarX, CalendarClock } from 'lucide-react'
+import { Bell, X, Check, CalendarPlus, CalendarX, CalendarClock, Smartphone } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -27,6 +27,7 @@ import { useNotifications } from '@/hooks/useNotifications'
 import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter } from 'next/navigation'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 interface NotificationBellProps {
   userId: string | undefined
@@ -115,6 +116,7 @@ function NotificationBell({ userId }: NotificationBellProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
   const router = useRouter()
+  const { permission, requestPermission } = usePushNotifications(userId)
 
   const {
     notifications,
@@ -273,7 +275,24 @@ function NotificationBell({ userId }: NotificationBellProps) {
       <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] p-0 rounded-2xl overflow-hidden" align="end">
         {/* Header */}
         <div className="px-4 py-3 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-          <h3 className="font-black tracking-tight text-gray-900 text-base">Notificaciones</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-black tracking-tight text-gray-900 text-base">Notificaciones</h3>
+            {permission !== 'granted' ? (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-gray-400 hover:text-orange-600 hover:bg-orange-50"
+                onClick={requestPermission}
+                title="Activar notificaciones push"
+              >
+                <Smartphone className="w-4 h-4 opacity-50" />
+              </Button>
+            ) : (
+              <div className="flex items-center text-emerald-600" title="Notificaciones push activadas">
+                <Smartphone className="w-4 h-4" />
+              </div>
+            )}
+          </div>
           <button
             onClick={() => setOpen(false)}
             className="p-1 hover:bg-gray-100 rounded transition-colors"

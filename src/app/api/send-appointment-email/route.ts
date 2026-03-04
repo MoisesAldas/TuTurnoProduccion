@@ -294,6 +294,28 @@ export async function POST(request: NextRequest) {
       console.error("⚠️ Failed to send client email:", errorText);
     }
 
+    // 📱 PUSH 1: Notificación al CLIENTE
+    if (clientEmailSuccess && appointment.client_id) {
+      console.log("📱 Sending push notification to CLIENT...");
+      try {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/api/notifications/send-push`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: appointment.client_id,
+              title: "¡Cita Confirmada!",
+              body: `Tu cita en ${business.name} para el ${capitalizedDate} ha sido confirmada.`,
+              data: { appointmentId: appointment.id },
+            }),
+          },
+        );
+      } catch (err) {
+        console.error("⚠️ Error sending client push:", err);
+      }
+    }
+
     // 📧 EMAIL 2: Notificación al NEGOCIO (naranja)
     let businessEmailSuccess = false;
     if (businessOwner) {
@@ -350,6 +372,28 @@ export async function POST(request: NextRequest) {
         const errorText = await businessEmailResponse.text();
         console.error("⚠️ Failed to send business email:", errorText);
         console.error("Response status:", businessEmailResponse.status);
+      }
+
+      // 📱 PUSH 2: Notificación al NEGOCIO
+      if (businessEmailSuccess) {
+        console.log("📱 Sending push notification to BUSINESS OWNER...");
+        try {
+          await fetch(
+            `${process.env.NEXT_PUBLIC_SITE_URL}/api/notifications/send-push`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: business.owner_id,
+                title: "Nueva Reserva",
+                body: `${client.first_name} ha reservado una cita para el ${capitalizedDate}.`,
+                data: { appointmentId: appointment.id },
+              }),
+            },
+          );
+        } catch (err) {
+          console.error("⚠️ Error sending business push:", err);
+        }
       }
     } else {
       console.warn(
