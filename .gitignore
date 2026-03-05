@@ -49,3 +49,7 @@ gha-creds-*.json
 **/public/sw.js.map
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
+
+# Firebase Secrets
+src/hooks/*.json
+*-firebase-adminsdk-*.json

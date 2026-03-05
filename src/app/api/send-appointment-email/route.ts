@@ -305,9 +305,12 @@ export async function POST(request: NextRequest) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               userId: appointment.client_id,
-              title: "¡Cita Confirmada!",
-              body: `Tu cita en ${business.name} para el ${capitalizedDate} ha sido confirmada.`,
-              data: { appointmentId: appointment.id },
+              title: "¡Cita Confirmada! ✅",
+              body: `Tu cita en ${business.name} para el ${capitalizedDate} ha sido confirmada. Haz clic para ver detalles.`,
+              data: {
+                appointmentId: appointment.id,
+                url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/client/appointments/${appointment.id}`,
+              },
             }),
           },
         );
@@ -385,9 +388,12 @@ export async function POST(request: NextRequest) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 userId: business.owner_id,
-                title: "Nueva Reserva",
-                body: `${client.first_name} ha reservado una cita para el ${capitalizedDate}.`,
-                data: { appointmentId: appointment.id },
+                title: "Nueva Reserva Recibida 📅",
+                body: `${client.first_name} ha reservado para el ${capitalizedDate}. Haz clic para gestionar.`,
+                data: {
+                  appointmentId: appointment.id,
+                  url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/business/appointments?date=${appointment.appointment_date}`,
+                },
               }),
             },
           );

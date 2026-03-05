@@ -40,6 +40,11 @@ export async function POST(req: NextRequest) {
         body,
       },
       data: data || {},
+      webpush: {
+        fcmOptions: {
+          link: data?.url || `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`,
+        },
+      },
       tokens,
     };
 
