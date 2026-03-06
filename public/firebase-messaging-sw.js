@@ -5,14 +5,16 @@ importScripts(
   "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js",
 );
 
+// La configuración se pasa a través de parámetros de URL al registrar el service worker
+const urlParams = new URLSearchParams(self.location.search);
 const firebaseConfig = {
-  apiKey: "AIzaSyDgXE6ZPCI5t5j7yCDzY0z_rv9mEEFcwRk",
-  authDomain: "tuturno-c8de5.firebaseapp.com",
-  projectId: "tuturno-c8de5",
-  storageBucket: "tuturno-c8de5.firebasestorage.app",
-  messagingSenderId: "181133777428",
-  appId: "1:181133777428:web:0b8b1ad761a951e3072501",
-  measurementId: "G-WCRE9HN6TF",
+  apiKey: urlParams.get("apiKey"),
+  authDomain: urlParams.get("authDomain"),
+  projectId: urlParams.get("projectId"),
+  storageBucket: urlParams.get("storageBucket"),
+  messagingSenderId: urlParams.get("messagingSenderId"),
+  appId: urlParams.get("appId"),
+  measurementId: urlParams.get("measurementId"),
 };
 
 firebase.initializeApp(firebaseConfig);

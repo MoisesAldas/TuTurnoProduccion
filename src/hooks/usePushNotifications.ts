@@ -46,6 +46,24 @@ export function usePushNotifications(userId: string | undefined) {
       setPermission(status);
 
       if (status === "granted") {
+        // Registrar el service worker con la configuración como parámetros de consulta
+        if ("serviceWorker" in navigator) {
+          const config = {
+            apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+            authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+            messagingSenderId:
+              process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+            appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+            measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+          };
+          const params = new URLSearchParams(config as any).toString();
+          await navigator.serviceWorker.register(
+            `/firebase-messaging-sw.js?${params}`,
+          );
+        }
+
         const currentToken = await getToken(messaging, {
           vapidKey:
             "BAV6-eX_5JkeziNoo55crpo4utMeg1v1WqdvhdmorHC8Wuavn0yEd3FkQAGjG1tPW2nWQBiCKK9NRRFkV54hdIg",
