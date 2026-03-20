@@ -5,7 +5,7 @@ import { Poppins } from "next/font/google"; // Optimized font loading
 import "./globals.css";
 import { AuthProvider } from '@/hooks/useAuth'
 import { ThemeProvider } from "@/components/theme-provider"
-// import "@fontsource/poppins/900.css"; // Removing direct fontsource import for next/font optimization
+import { Analytics } from "@vercel/analytics/react"
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 
@@ -87,6 +87,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
+            <Analytics />
             <Toaster />
             <SonnerToaster position="top-right" richColors />
           </AuthProvider>

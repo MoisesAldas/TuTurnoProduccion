@@ -14,6 +14,7 @@ import CTASection from '@/components/sections/CTASection'
 import Footer from '@/components/sections/Footer'
 import { useLandingScroll } from '@/hooks/useScrollReveal'
 import StickyCTA from '@/components/StickyCTA'
+import WhatsAppFloatingButton from '@/components/WhatsAppFloatingButton'
 
 export default function HomePage() {
   // Force the viewport to be the scroll container (overrides body overflow-y-auto from layout.tsx)
@@ -44,6 +45,7 @@ export default function HomePage() {
         <Footer />
       </motion.div>
       <StickyCTA />
+      <WhatsAppFloatingButton />
     </>
   )
 }
