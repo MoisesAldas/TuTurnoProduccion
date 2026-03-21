@@ -58,7 +58,7 @@ export default function AppointmentTooltip({
         transform: 'translate(-50%, -100%)'
       }}
     >
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100/50 overflow-hidden w-64 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-950/95 rounded-3xl shadow-2xl border border-gray-100/50 dark:border-gray-800 overflow-hidden w-64 backdrop-blur-md">
         {/* Header Premium Solid Color (Primary) */}
         <div className="bg-primary px-4 py-3 shadow-lg">
           <div className="flex items-center justify-between text-white">
@@ -86,9 +86,9 @@ export default function AppointmentTooltip({
               <span className="text-[9px] font-black text-primary uppercase tracking-widest block mb-0.5 opacity-80">
                 Cliente
               </span>
-              <p className="font-black text-gray-900 text-sm truncate leading-none">{clientName}</p>
+              <p className="font-black text-gray-900 dark:text-white text-sm truncate leading-none">{clientName}</p>
               {!appointment.client_id && (
-                <span className="inline-block mt-1 text-[8px] font-black px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-lg uppercase tracking-widest">
+                <span className="inline-block mt-1 text-[8px] font-black px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-lg uppercase tracking-widest">
                   Sin registrar
                 </span>
               )}
@@ -99,16 +99,16 @@ export default function AppointmentTooltip({
           {Object.entries(servicesByEmployee).map(([empId, empServices]) => {
             const empInfo = employees.find(e => e.id === empId);
             return (
-              <div key={empId} className="space-y-2 pb-2 last:pb-0 border-b border-gray-50 last:border-0">
+              <div key={empId} className="space-y-2 pb-2 last:pb-0 border-b border-gray-50 dark:border-gray-800/50 last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-100">
-                    <UserCheck className="w-4 h-4 text-slate-600" />
+                  <div className="w-8 h-8 bg-slate-50 dark:bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 border border-slate-100 dark:border-gray-700">
+                    <UserCheck className="w-4 h-4 text-slate-600 dark:text-gray-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-0.5 opacity-80">
+                    <span className="text-[9px] font-black text-slate-500 dark:text-gray-500 uppercase tracking-widest block mb-0.5 opacity-80">
                       Profesional
                     </span>
-                    <p className="text-gray-900 text-xs font-bold truncate leading-none">
+                    <p className="text-gray-900 dark:text-gray-200 text-xs font-bold truncate leading-none">
                       {empInfo ? `${empInfo.first_name} ${empInfo.last_name}` : 'Desconocido'}
                     </p>
                   </div>
@@ -122,7 +122,7 @@ export default function AppointmentTooltip({
                     <div className="flex-1 min-w-0">
                       <div className="space-y-1">
                         {empServices.map((service, idx) => (
-                          <p key={idx} className="text-gray-700 text-[11px] font-medium truncate leading-tight italic">
+                          <p key={idx} className="text-gray-700 dark:text-gray-400 text-[11px] font-medium truncate leading-tight italic">
                             {service}
                           </p>
                         ))}
@@ -136,21 +136,21 @@ export default function AppointmentTooltip({
 
           {/* Teléfono */}
           {clientPhone && (
-            <div className="flex items-center gap-2.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100">
-              <Phone className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs font-bold text-gray-900 tracking-tight">{clientPhone}</span>
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
+              <Phone className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+              <span className="text-xs font-bold text-gray-900 dark:text-gray-200 tracking-tight">{clientPhone}</span>
             </div>
           )}
 
           {/* Footer Final */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-2">
-              <div className={`w-2.5 h-2.5 ${status.color} rounded-full shadow-sm ring-2 ring-white`} />
-              <span className="text-[10px] text-gray-600 font-black uppercase tracking-wider">{status.label}</span>
+              <div className={`w-2.5 h-2.5 ${status.color} rounded-full shadow-sm ring-2 ring-white dark:ring-gray-950`} />
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-black uppercase tracking-wider">{status.label}</span>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm">
-              <CircleDollarSign className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm font-black text-emerald-700 tracking-tight">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
+              <CircleDollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-sm font-black text-emerald-700 dark:text-emerald-400 tracking-tight">
                 ${appointment.total_price || '0'}
               </span>
             </div>
@@ -161,7 +161,7 @@ export default function AppointmentTooltip({
       {/* Flecha */}
       <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-full">
         <div 
-          className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white"
+          className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white dark:border-t-gray-950"
           style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}
         />
       </div>

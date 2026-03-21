@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import {Loader2} from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -397,210 +399,226 @@ export default function EmployeeAbsencesModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-orange-600" />
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto p-0 border-none shadow-2xl bg-white dark:bg-gray-900 rounded-[2.5rem] overflow-hidden">
+          <div className="px-6 py-8 sm:px-8">
+            <DialogHeader className="mb-6">
+              <div className="flex flex-col gap-0.5 relative pl-5">
+                <div className="absolute left-0 w-1 h-6 bg-primary rounded-full mt-0.5" />
+                <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-primary italic">Gestión de Personal</span>
+                <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white italic">
+                  Ausencias y Permisos
+                </DialogTitle>
               </div>
-              <div>
-                <span>Ausencias y Permisos</span>
-                <span className="block text-sm font-normal text-gray-600 mt-0.5">{employeeName}</span>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
+              <DialogDescription className="text-sm font-medium text-gray-500 dark:text-gray-400 pl-5">
+                Configura los periodos de inactividad para <span className="text-primary font-bold">{employeeName}</span>
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            {/* Botón para mostrar/ocultar formulario */}
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              size="sm"
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              {showForm ? (
-                <>
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Ver Ausencias
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Registrar Ausencia
-                </>
-              )}
-            </Button>
+            <div className="space-y-6">
+              {/* Botón para mostrar/ocultar formulario */}
+              <Button
+                onClick={() => setShowForm(!showForm)}
+                size="lg"
+                className={`w-full rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-500 shadow-xl active:scale-95 ${
+                  showForm 
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' 
+                    : 'bg-primary hover:bg-orange-600 text-white shadow-orange-500/20'
+                }`}
+              >
+                {showForm ? (
+                  <>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Ver Historial de Ausencias
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Registrar Nueva Ausencia
+                  </>
+                )}
+              </Button>
 
-            {/* Formulario */}
-            {showForm && (
-              <form onSubmit={handleSubmit} className="border-2 border-orange-200 rounded-lg p-6 bg-orange-50/30">
-                <h4 className="font-semibold text-lg mb-4 text-gray-900">Nueva Ausencia</h4>
+              {/* Formulario */}
+              {showForm && (
+                <form onSubmit={handleSubmit} className="border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] p-6 bg-gray-50/30 dark:bg-gray-800/30 animate-in slide-in-from-top-4 duration-500">
+                  <h4 className="font-black text-lg mb-6 text-gray-900 dark:text-white italic uppercase tracking-tight">Detalle del Permiso</h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <Label htmlFor="absence_date" className="text-sm font-medium">Fecha *</Label>
-                    <Input
-                      id="absence_date"
-                      type="date"
-                      value={formData.absence_date}
-                      onChange={(e) => setFormData({...formData, absence_date: e.target.value})}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="mt-1.5"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="absence_date" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Fecha de Ausencia *</Label>
+                      <Input
+                        id="absence_date"
+                        type="date"
+                        value={formData.absence_date}
+                        onChange={(e) => setFormData({...formData, absence_date: e.target.value})}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 font-bold focus-visible:ring-primary"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="reason" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Motivo / Justificación *</Label>
+                      <Select value={formData.reason} onValueChange={(value) => setFormData({...formData, reason: value})}>
+                        <SelectTrigger className="h-12 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-xl focus:ring-primary font-bold">
+                          <SelectValue placeholder="Selecciona un motivo" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-900 shadow-2xl font-bold">
+                          {reasonOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value} className="text-xs hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer">
+                              {option.emoji} {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-4 mb-6 p-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800">
+                    <Switch
+                      checked={formData.is_full_day}
+                      onCheckedChange={(checked) => setFormData({...formData, is_full_day: checked})}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                    <div className="space-y-0.5">
+                      <Label className="font-black text-xs text-gray-900 dark:text-white uppercase tracking-widest cursor-pointer">Jornada Completa</Label>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Desactiva para ausencias por horas</p>
+                    </div>
+                  </div>
+
+                  {!formData.is_full_day && (
+                    <div className="grid grid-cols-2 gap-6 mb-6 animate-in zoom-in-95 duration-300">
+                      <div className="space-y-2">
+                        <Label htmlFor="start_time" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Desde *</Label>
+                        <Input
+                          id="start_time"
+                          type="time"
+                          value={formData.start_time}
+                          onChange={(e) => setFormData({...formData, start_time: e.target.value})}
+                          className="h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 font-bold focus-visible:ring-primary"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="end_time" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Hasta *</Label>
+                        <Input
+                          id="end_time"
+                          type="time"
+                          value={formData.end_time}
+                          onChange={(e) => setFormData({...formData, end_time: e.target.value})}
+                          className="h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 font-bold focus-visible:ring-primary"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mb-6 space-y-2">
+                    <Label htmlFor="notes" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Notas Internas</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      placeholder="Información adicional (opcional)..."
+                      rows={2}
+                      className="rounded-2xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 font-bold focus-visible:ring-primary text-sm min-h-[80px] resize-none"
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="reason" className="text-sm font-medium">Motivo *</Label>
-                    <Select value={formData.reason} onValueChange={(value) => setFormData({...formData, reason: value})}>
-                      <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="Selecciona un motivo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {reasonOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.emoji} {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 mb-4 p-3 bg-white rounded-lg border">
-                  <Switch
-                    checked={formData.is_full_day}
-                    onCheckedChange={(checked) => setFormData({...formData, is_full_day: checked})}
-                    className="data-[state=checked]:bg-orange-600"
-                  />
-                  <Label className="font-medium cursor-pointer">Día completo</Label>
-                </div>
-
-                {!formData.is_full_day && (
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <Label htmlFor="start_time" className="text-sm font-medium">Hora inicio *</Label>
-                      <Input
-                        id="start_time"
-                        type="time"
-                        value={formData.start_time}
-                        onChange={(e) => setFormData({...formData, start_time: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="end_time" className="text-sm font-medium">Hora fin *</Label>
-                      <Input
-                        id="end_time"
-                        type="time"
-                        value={formData.end_time}
-                        onChange={(e) => setFormData({...formData, end_time: e.target.value})}
-                        className="mt-1.5"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <Label htmlFor="notes" className="text-sm font-medium">Notas adicionales</Label>
-                  <Textarea
-                    id="notes"
-                    value={formData.notes}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                    placeholder="Información adicional sobre la ausencia..."
-                    rows={3}
-                    className="mt-1.5"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    type="submit"
-                    disabled={saving}
-                    className="flex-1 bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    {saving ? (
-                      <>
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                        Guardando...
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Registrar Ausencia
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowForm(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </form>
-            )}
-
-            {/* Lista de ausencias */}
-            {!showForm && (
-              <div className="space-y-3">
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full"></div>
-                  </div>
-                ) : absences.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
-                    <CalendarX className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <p className="text-gray-600 font-medium mb-1">No hay ausencias registradas</p>
-                    <p className="text-sm text-gray-500">Las ausencias que registres aparecerán aquí</p>
-                  </div>
-                ) : (
-                  absences.map((absence) => (
-                    <div
-                      key={absence.id}
-                      className="border-2 border-gray-200 rounded-lg p-5 hover:shadow-md transition-all bg-white"
+                  <div className="flex gap-3">
+                    <Button
+                      type="submit"
+                      disabled={saving}
+                      className="flex-1 h-12 bg-primary hover:bg-orange-600 text-white rounded-xl shadow-xl shadow-orange-500/20 font-black text-xs uppercase tracking-widest transition-all active:scale-95"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <span className="text-lg font-semibold text-gray-900">
-                              {formatDate(absence.absence_date)}
-                            </span>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getReasonColor(absence.reason)}`}>
-                              {getReasonEmoji(absence.reason)} {getReasonLabel(absence.reason)}
-                            </span>
-                          </div>
+                      {saving ? (
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                      ) : (
+                        <Plus className="w-4 h-4 mr-2" />
+                      )}
+                      Finalizar Registro
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setShowForm(false)}
+                      className="h-12 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest text-gray-400"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </form>
+              )}
 
-                          <div className="flex items-center text-sm text-gray-600 mb-2 bg-gray-50 px-3 py-2 rounded-md">
-                            <Clock className="w-4 h-4 mr-2 text-orange-600 flex-shrink-0" />
-                            {absence.is_full_day ? (
-                              <span className="font-medium">Día completo</span>
-                            ) : (
-                              <span><span className="font-medium">{absence.start_time}</span> - <span className="font-medium">{absence.end_time}</span></span>
-                            )}
-                          </div>
-
-                          {absence.notes && (
-                            <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-200">{absence.notes}</p>
-                          )}
-                        </div>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setAbsenceToDelete(absence.id)
-                            setDeleteDialogOpen(true)
-                          }}
-                          className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+              {/* Lista de ausencias */}
+              {!showForm && (
+                <div className="space-y-4">
+                  {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                      <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Consultando Agenda...</p>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
+                  ) : absences.length === 0 ? (
+                    <div className="text-center py-20 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[2.5rem] bg-gray-50/50 dark:bg-gray-800/30 group">
+                      <div className="w-20 h-20 rounded-[2rem] bg-white dark:bg-gray-900 flex items-center justify-center shadow-sm mx-auto mb-6 transition-transform group-hover:scale-110 duration-500">
+                        <CalendarX className="w-10 h-10 text-gray-200 dark:text-gray-700" />
+                      </div>
+                      <p className="text-gray-400 dark:text-gray-500 font-black uppercase tracking-widest text-xs italic">No hay ausencias registradas</p>
+                    </div>
+                  ) : (
+                    absences.map((absence) => (
+                      <div
+                        key={absence.id}
+                        className="group border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] p-5 hover:shadow-xl hover:border-primary/20 dark:hover:border-primary/30 transition-all duration-500 bg-white dark:bg-gray-800/50 relative overflow-hidden"
+                      >
+                        <div className="flex items-start justify-between gap-4 relative z-10">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-3 mb-4">
+                              <span className="text-lg font-black text-gray-900 dark:text-white tracking-tight">
+                                {formatDate(absence.absence_date)}
+                              </span>
+                              <Badge className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border-none shadow-sm ${getReasonColor(absence.reason)} bg-opacity-90`}>
+                                {getReasonEmoji(absence.reason)} {getReasonLabel(absence.reason)}
+                              </Badge>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-900/50 px-3 py-1.5 rounded-xl border border-gray-100 dark:border-gray-800">
+                                <Clock className="w-4 h-4 text-primary" />
+                                {absence.is_full_day ? (
+                                  <span className="font-bold text-[11px] uppercase tracking-wider">Día completo</span>
+                                ) : (
+                                  <span className="font-bold text-[11px] uppercase tracking-wider">{absence.start_time} — {absence.end_time}</span>
+                                )}
+                              </div>
+                              
+                              {absence.notes && (
+                                <p className="text-xs font-medium italic opacity-80 truncate max-w-xs">
+                                  "{absence.notes}"
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              setAbsenceToDelete(absence.id)
+                              setDeleteDialogOpen(true)
+                            }}
+                            className="h-10 w-10 rounded-xl text-red-600 border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950 transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {/* Background Decor */}
+                        <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                           <Calendar className="w-24 h-24 text-primary" />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

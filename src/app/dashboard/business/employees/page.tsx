@@ -275,7 +275,7 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950/50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-6">
       <div className="w-full space-y-8">
         {/* Premium Header - Integrated */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">

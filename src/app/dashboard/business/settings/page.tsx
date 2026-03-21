@@ -25,7 +25,7 @@ import {
 import {
   Save, Building, Mail, Phone, Globe, MapPin, Upload, Camera, X, Trash2,
   Image as ImageIcon, Settings, Shield, Clock, Calendar, Bell, Receipt,
-  CheckCircle2, Info, AlertCircle
+  CheckCircle2, Info, AlertCircle, Palette
 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
@@ -36,6 +36,7 @@ import MapboxLocationPicker from '@/components/ui/mapbox-location-picker'
 import SpecialHoursManager from '@/components/SpecialHoursManager'
 import InvoiceConfigSection from '@/components/InvoiceConfigSection'
 import CancellationLimitSettings from '@/components/business/CancellationLimitSettings'
+import AppearanceSettings from '@/components/AppearanceSettings'
 import { useToast } from '@/hooks/use-toast'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -646,6 +647,7 @@ export default function UnifiedSettingsPage() {
   const navigationItems = [
     { id: 'profile' as Section, label: 'Perfil del Negocio', icon: Building },
     { id: 'visual' as Section, label: 'Identidad Visual', icon: ImageIcon },
+    { id: 'appearance' as Section, label: 'Apariencia', icon: Palette },
     { id: 'location' as Section, label: 'Ubicación', icon: MapPin },
     { id: 'policies' as Section, label: 'Políticas', icon: Shield },
     { id: 'booking' as Section, label: 'Reservas', icon: Clock },
@@ -666,13 +668,13 @@ export default function UnifiedSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-0">
       {/* Integrated Header - Compacted */}
       <div className="w-full px-6 pt-6 pb-2">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="flex flex-col gap-0.5 relative pl-6">
-            <div className="absolute left-0 w-1 h-8 bg-orange-500 rounded-full mt-1" />
-            <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-orange-600/80">
+            <div className="absolute left-0 top-1 w-1.5 h-8 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_12px_rgba(251,146,60,0.3)]" />
+            <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-orange-600 dark:text-orange-500">
               Configuración de Negocio
             </span>
             <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
@@ -1727,6 +1729,15 @@ export default function UnifiedSettingsPage() {
               <div className="space-y-6">
                 <InvoiceConfigSection />
               </div>
+            )}
+
+            {/* Appearance Section */}
+            {activeSection === 'appearance' && business && (
+              <AppearanceSettings 
+                businessId={business.id}
+                initialSettings={business.visual_settings}
+                onUpdate={fetchBusiness}
+              />
             )}
           </div>
         </div>

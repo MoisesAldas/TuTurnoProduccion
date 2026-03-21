@@ -62,6 +62,7 @@ export interface Database {
           business_category_id: string | null
           logo_url: string | null
           cover_image_url: string | null
+          visual_settings: any | null
           is_active: boolean
           timezone: string
           created_at: string

@@ -82,7 +82,7 @@ export default function CreateAppointmentModal({
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
         showCloseButton={false}
-        className="w-[calc(100%-1rem)] sm:w-full max-w-[550px] p-0 overflow-hidden rounded-[24px] sm:rounded-[32px] border-none shadow-2xl bg-white animate-in zoom-in-95 duration-300"
+        className="w-[calc(100%-1rem)] sm:w-full max-w-[550px] p-0 overflow-hidden rounded-[24px] sm:rounded-[32px] border-none shadow-2xl bg-white dark:bg-gray-900 animate-in zoom-in-95 duration-300"
       >
         
         {/* Header Premium */}
@@ -90,34 +90,34 @@ export default function CreateAppointmentModal({
           <div className="flex items-center justify-between relative z-10">
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-1">
-                <div className="px-2 py-0.5 bg-orange-50 rounded-full border border-orange-100">
+                <div className="px-2 py-0.5 bg-orange-50 dark:bg-orange-950/30 rounded-full border border-orange-100 dark:border-orange-900/50">
                   <span className="text-[10px] font-black uppercase tracking-widest text-primary">Paso {currentStep} de {totalSteps}</span>
                 </div>
                 {appointment && (
-                  <div className="px-2 py-0.5 bg-blue-50 rounded-full border border-blue-100">
+                  <div className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30 rounded-full border border-blue-100 dark:border-blue-900/50">
                     <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Editando Cita</span>
                   </div>
                 )}
               </div>
-              <DialogTitle className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight leading-none italic">
+              <DialogTitle className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-none italic">
                 {getStepTitle(currentStep)}
               </DialogTitle>
             </div>
             <button 
               onClick={onClose}
-              className="p-1.5 sm:p-3 bg-gray-50 hover:bg-gray-100 rounded-xl sm:rounded-2xl transition-all duration-300 group shadow-sm active:scale-95"
+              className="p-1.5 sm:p-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl sm:rounded-2xl transition-all duration-300 group shadow-sm active:scale-95"
             >
-              <X className="w-4 h-4 sm:w-5 h-5 text-gray-400 group-hover:text-gray-900 group-hover:rotate-90 transition-all duration-500" />
+              <X className="w-4 h-4 sm:w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white group-hover:rotate-90 transition-all duration-500" />
             </button>
           </div>
           
           {/* Progress Bar Elegante */}
-          <div className="w-full h-1 bg-gray-100 rounded-full mt-1 overflow-hidden flex gap-1 p-0.5">
+          <div className="w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full mt-1 overflow-hidden flex gap-1 p-0.5">
             {[1, 2, 3, 4].map((s) => (
               <div 
                 key={s}
                 className={`flex-1 rounded-full transition-all duration-700 ${
-                  currentStep >= s ? 'bg-primary' : 'bg-gray-200/50'
+                  currentStep >= s ? 'bg-primary' : 'bg-gray-200/50 dark:bg-gray-700/50'
                 }`}
               />
             ))}
@@ -128,12 +128,12 @@ export default function CreateAppointmentModal({
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center space-y-4">
               <div className="relative">
-                <div className="w-12 h-12 border-4 border-gray-100 border-t-primary rounded-full animate-spin shadow-sm" />
+                <div className="w-12 h-12 border-4 border-gray-100 dark:border-gray-800 border-t-primary rounded-full animate-spin shadow-sm" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                 </div>
               </div>
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-gray-400 animate-pulse">Cargando...</p>
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500 animate-pulse">Cargando...</p>
             </div>
           ) : (
             <>
@@ -213,8 +213,8 @@ export default function CreateAppointmentModal({
         </div>
 
         {/* Footer de Navegación Premium */}
-        <div className="p-4 sm:p-6 pt-0 bg-white flex items-center justify-between gap-3 sm:gap-4">
-          <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
+        <div className="p-4 sm:p-6 pt-0 bg-white dark:bg-gray-900 flex items-center justify-between gap-3 sm:gap-4">
+          <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
             <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3px]" />
             Reserva Segura
           </div>
@@ -224,9 +224,9 @@ export default function CreateAppointmentModal({
               <button
                 type="button"
                 onClick={handlePrevious}
-                className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl border border-gray-100 flex items-center justify-center hover:bg-gray-50 hover:border-gray-200 transition-all duration-300 active:scale-90 shadow-sm"
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl border border-gray-100 dark:border-gray-800 flex items-center justify-center bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-700 transition-all duration-300 active:scale-90 shadow-sm"
               >
-                <ChevronLeft className="w-4 h-4 sm:w-5 h-5 text-gray-500" />
+                <ChevronLeft className="w-4 h-4 sm:w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
             )}
 
@@ -235,7 +235,7 @@ export default function CreateAppointmentModal({
                 <Button
                   type="button"
                   onClick={handleNext}
-                  className="w-full h-10 sm:h-12 rounded-2xl bg-gray-900 hover:bg-black text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group active:scale-95"
+                  className="w-full h-10 sm:h-12 rounded-2xl bg-gray-900 dark:bg-black hover:bg-black dark:hover:bg-gray-950 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl transition-all duration-300 flex items-center justify-center gap-2 group active:scale-95"
                 >
                   {currentStep === 1 && "Ver Servicios"}
                   {currentStep === 2 && "Elegir Horario"}

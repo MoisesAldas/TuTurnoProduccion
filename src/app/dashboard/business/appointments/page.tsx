@@ -604,37 +604,37 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-slate-950">
       {/* Header Premium Section - Adaptive Single Row Layout */}
-      <div className="w-full bg-white/80 backdrop-blur-md border-b border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-4 py-3 lg:px-6 lg:py-2.5 sticky top-0 z-30 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
+      <div className="w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-4 py-3 lg:px-6 lg:py-2.5 sticky top-0 z-30 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]">
         {/* Left Side: Brand & Quick Navigation */}
         <div className="flex items-center justify-between lg:justify-start gap-4 lg:gap-8 w-full lg:w-auto">
           <div className="flex items-center gap-4">
             <div className="relative pl-4 py-1">
               <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 bg-gradient-to-b from-orange-500 to-orange-600 rounded-full shadow-[0_0_10px_rgba(251,146,60,0.3)]" />
-              <h1 className="text-lg font-black tracking-tight text-gray-900 leading-none">
+              <h1 className="text-lg font-black tracking-tight text-gray-900 dark:text-white leading-none">
                 Citas
               </h1>
             </div>
 
             {/* Navigation Group (Adaptive) */}
-            <div className="flex items-center bg-gray-100/80 rounded-xl p-1 gap-0.5">
+            <div className="flex items-center bg-gray-100/80 dark:bg-gray-800/80 rounded-xl p-1 gap-0.5">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handlePreviousDay}
-                className="h-7 w-7 p-0 rounded-lg hover:bg-white hover:shadow-sm"
+                className="h-7 w-7 p-0 rounded-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm"
               >
-                <ChevronLeft className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronLeft className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </Button>
               
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
-                  <button className="text-[10px] font-black text-gray-700 hover:text-orange-600 transition-colors uppercase tracking-widest px-2 whitespace-nowrap">
+                  <button className="text-[10px] font-black text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 transition-colors uppercase tracking-widest px-2 whitespace-nowrap">
                     {formatDate(selectedDate)}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 rounded-2xl border-0 shadow-2xl" align="center">
+                <PopoverContent className="w-auto p-0 rounded-2xl border-0 shadow-2xl dark:bg-gray-950" align="center">
                   <CalendarComponent
                     mode="single"
                     selected={selectedDate}
@@ -649,7 +649,7 @@ export default function AppointmentsPage() {
                     toYear={2030}
                     initialFocus
                     locale={es}
-                    className=""
+                    className="dark:bg-gray-950"
                   />
                 </PopoverContent>
               </Popover>
@@ -658,9 +658,9 @@ export default function AppointmentsPage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleNextDay}
-                className="h-7 w-7 p-0 rounded-lg hover:bg-white hover:shadow-sm"
+                className="h-7 w-7 p-0 rounded-lg hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm"
               >
-                <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
+                <ChevronRight className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
               </Button>
             </div>
           </div>
@@ -670,7 +670,7 @@ export default function AppointmentsPage() {
             variant="outline"
             size="sm"
             onClick={handleToday}
-            className="h-8 w-8 p-0 rounded-xl border-gray-100 shadow-sm bg-white text-gray-400 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-100 transition-all active:scale-95"
+            className="h-8 w-8 p-0 rounded-xl border-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-100 dark:hover:border-orange-900/30 transition-all active:scale-95"
           >
             Hoy
           </Button>
@@ -680,15 +680,15 @@ export default function AppointmentsPage() {
         <div className="flex items-center justify-between lg:justify-end gap-2 lg:gap-3 w-full lg:w-auto overflow-x-auto no-scrollbar py-0.5">
           <div className="flex items-center gap-2">
             {/* View Toggles - High Polish */}
-            <div className="flex bg-gray-100/80 rounded-xl p-0.5 shadow-inner">
+            <div className="flex bg-gray-100/80 dark:bg-gray-800/80 rounded-xl p-0.5 shadow-inner border border-transparent dark:border-gray-700/50">
               {['day', 'week', 'month'].map((v) => (
                 <button
                   key={v}
                   onClick={() => setViewType(v as any)}
                   className={`px-3 py-1.5 lg:px-4 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
                     viewType === v
-                      ? 'bg-white text-orange-600 shadow-sm scale-[1.02]' 
-                      : 'text-gray-400 hover:text-gray-600'
+                      ? 'bg-white dark:bg-gray-700 text-orange-600 dark:text-orange-400 shadow-sm scale-[1.02]' 
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                   }`}
                 >
                   {v === 'day' ? 'Día' : v === 'week' ? 'Sem' : 'Mes'}
@@ -701,10 +701,10 @@ export default function AppointmentsPage() {
               value={selectedEmployees.length === employees.length ? 'all' : selectedEmployees[0]}
               onValueChange={handleEmployeeFilter}
             >
-              <SelectTrigger className="h-8 w-[100px] lg:w-[140px] rounded-xl border-gray-100 shadow-sm bg-white text-[9px] font-black text-gray-600 uppercase tracking-widest px-2.5">
+              <SelectTrigger className="h-8 w-[100px] lg:w-[140px] rounded-xl border-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest px-2.5 focus:ring-orange-500/20">
                 <SelectValue placeholder="EQUIPO" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border-0 shadow-2xl">
+              <SelectContent className="rounded-xl border-0 shadow-2xl dark:bg-gray-950 dark:border dark:border-gray-800">
                 <SelectItem value="all" className="text-[9px] font-black py-2 uppercase tracking-widest">Todo el equipo</SelectItem>
                 {employees.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id} className="text-[9px] font-bold py-2 uppercase">
@@ -721,7 +721,7 @@ export default function AppointmentsPage() {
               variant="outline"
               size="sm"
               onClick={() => setShowSettingsModal(true)}
-              className="h-8 w-8 p-0 rounded-xl border-gray-100 shadow-sm bg-white text-gray-400 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-100 transition-all active:scale-95"
+              className="h-8 w-8 p-0 rounded-xl border-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-100 dark:hover:border-orange-900/30 transition-all active:scale-95"
             >
               <Settings className="w-3.5 h-3.5" />
             </Button>
@@ -731,7 +731,7 @@ export default function AppointmentsPage() {
               size="sm"
               onClick={fetchAppointments}
               disabled={refreshing}
-              className="h-8 w-8 p-0 rounded-xl border-gray-100 shadow-sm bg-white text-gray-400 hover:text-orange-600 hover:bg-orange-50 hover:border-orange-100 transition-all active:scale-95"
+              className="h-8 w-8 p-0 rounded-xl border-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:border-orange-100 dark:hover:border-orange-900/30 transition-all active:scale-95"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             </Button>

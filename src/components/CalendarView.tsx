@@ -518,9 +518,9 @@ export default function CalendarView({
           >
             <div className="w-max min-w-full min-h-full flex flex-col">
               {/* Header de días de la semana - Sticky Top */}
-              <div className="flex border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50 px-0 shadow-sm min-w-full">
+              <div className="flex border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 px-0 shadow-sm min-w-full">
                 {/* Columna de horas (placeholder sticky total) */}
-                <div className="w-16 flex-shrink-0 border-r border-gray-100 sticky left-0 z-[60] bg-white" />
+                <div className="w-16 flex-shrink-0 border-r border-gray-100 dark:border-gray-800 sticky left-0 z-[60] bg-white dark:bg-slate-950" />
 
                 {/* Columnas de días */}
                 {weekDates.map((date) => {
@@ -532,22 +532,22 @@ export default function CalendarView({
                   return (
                     <div
                       key={date.toISOString()}
-                      className={`flex-1 min-w-[140px] p-3 border-r border-gray-100 last:border-r-0 relative transition-colors ${
-                        matchesToday ? 'bg-orange-50/30' : ''
+                      className={`flex-1 min-w-[140px] p-3 border-r border-gray-100 dark:border-gray-800 last:border-r-0 relative transition-colors ${
+                        matchesToday ? 'bg-orange-50/30 dark:bg-orange-950/10' : ''
                       }`}
                     >
                       <div className="text-center relative py-1">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">
+                        <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-1">
                           {date.toLocaleDateString('es-ES', { weekday: 'short' })}
                         </p>
                         <div className="flex items-center justify-center gap-2">
                           <span className={`text-xl font-black ${
-                            matchesToday ? 'text-orange-600' : 'text-gray-900'
+                            matchesToday ? 'text-orange-600 dark:text-orange-500' : 'text-gray-900 dark:text-gray-100'
                           }`}>
                             {date.getDate()}
                           </span>
                           {dayAppointments.length > 0 && (
-                            <span className="text-[9px] font-black bg-white text-gray-600 border border-gray-100 px-1.5 py-0.5 rounded-lg shadow-sm">
+                            <span className="text-[9px] font-black bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700 px-1.5 py-0.5 rounded-lg shadow-sm">
                               {dayAppointments.length}
                             </span>
                           )}
@@ -564,14 +564,14 @@ export default function CalendarView({
               {/* Grid del calendario semanal - Unified */}
               <div className="flex flex-1 min-w-full relative">
                 {/* Columna de horas - Sticky Left */}
-                <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-40">
+                <div className="w-16 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-slate-950 sticky left-0 z-40">
                   {HOURS.map((hour) => (
                     <div
                       key={hour}
-                      className="relative border-b border-gray-100"
+                      className="relative border-b border-gray-100 dark:border-gray-800/50"
                       style={{ height: `${HOUR_HEIGHT}px` }}
                     >
-                      <span className="absolute -top-2 right-2 text-xs text-gray-500">
+                      <span className="absolute -top-2 right-2 text-xs text-gray-500 dark:text-gray-400">
                         {hour.toString().padStart(2, '0')}:00
                       </span>
                     </div>
@@ -590,9 +590,9 @@ export default function CalendarView({
                   return (
                     <div
                       key={dateStr}
-                      className={`flex-1 min-w-[140px] border-r border-gray-200 last:border-r-0 relative ${
-                        isToday ? 'bg-orange-50/30' : 'bg-white'
-                      } ${isDropTarget ? 'bg-blue-50/50' : ''} cursor-pointer hover:bg-gray-50/50 transition-colors`}
+                      className={`flex-1 min-w-[140px] border-r border-gray-200 dark:border-gray-800 last:border-r-0 relative ${
+                        isToday ? 'bg-orange-50/30 dark:bg-orange-950/10' : 'bg-white dark:bg-gray-900'
+                      } ${isDropTarget ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''} cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors`}
                       style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}
                       onDragOver={(e) => handleDragOver(e, employees[0]?.id, dateStr)}
                       onDragLeave={handleDragLeave}
@@ -614,7 +614,7 @@ export default function CalendarView({
                       {HOURS.map((hour) => (
                         <div
                           key={hour}
-                          className="absolute w-full border-b border-gray-100"
+                          className="absolute w-full border-b border-gray-100 dark:border-gray-800/50"
                           style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
                         />
                       ))}
@@ -760,14 +760,14 @@ export default function CalendarView({
                 {/* Grid del calendario - Desktop */}
                 <div className="flex min-h-full min-w-full relative">
                   {/* Columna de horas - Sticky Left */}
-                  <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-gray-50 sticky left-0 z-40">
+                  <div className="w-16 flex-shrink-0 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-slate-950 sticky left-0 z-40">
                     {HOURS.map((hour) => (
                       <div
                         key={hour}
-                        className="relative border-b border-gray-100"
+                        className="relative border-b border-gray-100 dark:border-gray-800/50"
                         style={{ height: `${HOUR_HEIGHT}px` }}
                       >
-                        <span className="absolute -top-2 right-2 text-xs text-gray-500 font-bold">
+                        <span className="absolute -top-2 right-2 text-xs text-gray-500 dark:text-gray-400 font-bold">
                           {hour.toString().padStart(2, '0')}:00
                         </span>
                       </div>
@@ -786,8 +786,8 @@ export default function CalendarView({
                     return (
                       <div
                         key={employee.id}
-                        className={`flex-1 min-w-[220px] border-r border-gray-200 last:border-r-0 relative bg-white cursor-pointer hover:bg-gray-50/50 transition-colors ${
-                          isDropTarget ? 'bg-blue-50/50' : ''
+                        className={`flex-1 min-w-[220px] border-r border-gray-200 dark:border-gray-800 last:border-r-0 relative bg-white dark:bg-gray-900 cursor-pointer hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors ${
+                          isDropTarget ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
                         }`}
                         style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}
                         onDragOver={(e) => handleDragOver(e, employee.id)}
@@ -802,7 +802,7 @@ export default function CalendarView({
                         {HOURS.map((hour) => (
                           <div
                             key={hour}
-                            className="absolute w-full border-b border-gray-100"
+                            className="absolute w-full border-b border-gray-100 dark:border-gray-800/50"
                             style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
                           />
                         ))}

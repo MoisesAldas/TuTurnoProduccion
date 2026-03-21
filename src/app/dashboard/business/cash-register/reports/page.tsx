@@ -147,7 +147,7 @@ export default function CashRegisterReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950/50 p-4 lg:p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-4 lg:p-6 text-gray-900 dark:text-gray-100">
       <div className="w-full space-y-6">
         {/* Premium Header - Integrated */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">

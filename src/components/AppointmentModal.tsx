@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dialog'
 import ReceiptViewer from './ReceiptViewer'
 import { useAppointmentStarted } from '@/hooks/useAppointmentStarted'
-import { AppointmentActionTooltip } from './AppointmentActionTooltip'
 import {
   Tooltip,
   TooltipContent,
@@ -105,37 +104,30 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
   const supabase = createClient()
   const { toast } = useToast()
 
-  // An appointment is deletable by the business only if it was NOT created by a registered client
   const isDeletable = appointment.client_id === null
 
-  // Verificar si la cita ya ha comenzado
   const canTakeAction = useAppointmentStarted(
     appointment.appointment_date,
     appointment.start_time
   )
 
-  // Check if appointment needs payment (confirmed, in_progress, or completed without payment)
   useEffect(() => {
     const checkPaymentStatus = async () => {
-      // Only check for confirmed, in_progress, or completed appointments
       if (['confirmed', 'in_progress', 'completed'].includes(appointment.status)) {
         setCheckingPayment(true)
         try {
-          // Get invoice for this appointment
-          const { data: invoice, error: invoiceError } = await supabase
+          const { data: invoice } = await supabase
             .from('invoices')
             .select('id, status')
             .eq('appointment_id', appointment.id)
             .maybeSingle()
 
-          // If no invoice exists yet, or invoice is pending, can register payment
           if (!invoice || (invoice && invoice.status === 'pending')) {
             setHasPendingPayment(true)
           } else {
             setHasPendingPayment(false)
           }
 
-          // If invoice exists, check for payment receipt
           if (invoice) {
             const { data: paymentData } = await supabase
               .from('payments')
@@ -145,27 +137,18 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
               .limit(1)
               .maybeSingle()
 
-            console.log('🧾 Payment Receipt Debug:', {
-              hasPaymentData: !!paymentData,
-              receipt_url: paymentData?.receipt_url,
-              transfer_reference: paymentData?.transfer_reference,
-              payment_method: paymentData?.payment_method
-            })
-
             if (paymentData && paymentData.receipt_url) {
               setPaymentReceipt({
                 url: paymentData.receipt_url,
                 reference: paymentData.transfer_reference || ''
               })
-              console.log('✅ Receipt found! Button should appear.')
             } else {
               setPaymentReceipt(null)
-              console.log('❌ No receipt_url found. Button will NOT appear.')
             }
           }
         } catch (error) {
           console.error('Error checking payment status:', error)
-          setHasPendingPayment(true) // Show button by default on error
+          setHasPendingPayment(true)
         } finally {
           setCheckingPayment(false)
         }
@@ -180,78 +163,26 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
 
   const getStatusConfig = (status: string) => {
     const configs = {
-      pending: {
-        label: 'Pendiente',
-        className: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-        dotColor: 'bg-yellow-500'
-      },
-      confirmed: {
-        label: 'Confirmada',
-        className: 'bg-green-50 text-green-700 border-green-200',
-        dotColor: 'bg-green-500'
-      },
-      in_progress: {
-        label: 'En Progreso',
-        className: 'bg-blue-50 text-blue-700 border-blue-200',
-        dotColor: 'bg-blue-500'
-      },
-      completed: {
-        label: 'Completada',
-        className: 'bg-gray-50 text-gray-700 border-gray-200',
-        dotColor: 'bg-gray-500'
-      },
-      cancelled: {
-        label: 'Cancelada',
-        className: 'bg-red-50 text-red-700 border-red-200',
-        dotColor: 'bg-red-500'
-      },
-      no_show: {
-        label: 'No Asistió',
-        className: 'bg-orange-50 text-orange-700 border-orange-200',
-        dotColor: 'bg-orange-500'
-      }
+      pending: { label: 'Pendiente', className: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800', dotColor: 'bg-yellow-500' },
+      confirmed: { label: 'Confirmada', className: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800', dotColor: 'bg-green-500' },
+      in_progress: { label: 'En Progreso', className: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800', dotColor: 'bg-blue-500' },
+      completed: { label: 'Completada', className: 'bg-gray-50 dark:bg-gray-800/20 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700', dotColor: 'bg-gray-500' },
+      cancelled: { label: 'Cancelada', className: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800', dotColor: 'bg-red-500' },
+      no_show: { label: 'No Asistió', className: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800', dotColor: 'bg-orange-500' }
     }
-
     return configs[status as keyof typeof configs] || configs.pending
   }
 
   const handleUpdateStatus = async (newStatus: string) => {
     try {
       setUpdating(true)
-
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: newStatus })
-        .eq('id', appointment.id)
-
+      const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', appointment.id)
       if (error) throw error
-
-      // Send no-show email if status is 'no_show'
-      if (newStatus === 'no_show') {
-        try {
-          await fetch('/api/send-no-show-notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ appointmentId: appointment.id })
-          })
-        } catch (emailError) {
-          console.warn('⚠️ Failed to send no-show email:', emailError)
-          // Don't block the operation if email fails
-        }
-      }
-
-      toast({
-        title: 'Estado actualizado',
-        description: 'El estado de la cita ha sido actualizado correctamente.',
-      })
+      toast({ title: 'Estado actualizado', description: 'El estado de la cita ha sido actualizado correctamente.' })
       onUpdate()
     } catch (error) {
       console.error('Error updating status:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Error al actualizar',
-        description: 'No se pudo actualizar el estado de la cita.',
-      })
+      toast({ variant: 'destructive', title: 'Error al actualizar', description: 'No se pudo actualizar el estado.' })
     } finally {
       setUpdating(false)
     }
@@ -260,643 +191,317 @@ export default function AppointmentModal({ appointment, onClose, onUpdate, onEdi
   const handleDelete = async () => {
     try {
       setDeleting(true)
-
-      // Delete appointment_services first (child records)
-      const { error: servicesError } = await supabase
-        .from('appointment_services')
-        .delete()
-        .eq('appointment_id', appointment.id)
-
-      if (servicesError) throw servicesError
-
-      // Now delete the appointment itself
-      const { error: appointmentError } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', appointment.id)
-
-      if (appointmentError) throw appointmentError
-
-      toast({
-        title: 'Cita eliminada',
-        description: 'La cita ha sido eliminada correctamente.',
-      })
+      await supabase.from('appointment_services').delete().eq('appointment_id', appointment.id)
+      await supabase.from('appointments').delete().eq('id', appointment.id)
+      toast({ title: 'Cita eliminada', description: 'La cita ha sido eliminada correctamente.' })
       onUpdate()
       onClose()
     } catch (error) {
       console.error('Error deleting appointment:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Error al eliminar',
-        description: 'No se pudo eliminar la cita.',
-      })
+      toast({ variant: 'destructive', title: 'Error al eliminar', description: 'No se pudo eliminar la cita.' })
     } finally {
       setDeleting(false)
-      setShowDeleteConfirm(false)
     }
   }
 
   const handleCancel = async () => {
     try {
       setUpdating(true)
-
-      // Get business owner ID
       const ownerId = await getBusinessOwnerId(appointment.business_id)
-      if (!ownerId) {
-        throw new Error('No se pudo obtener el ID del propietario del negocio')
-      }
-
-      // Use modular cancellation adapter
+      if (!ownerId) throw new Error('No owner ID')
       await handleBusinessCancellation({
-        appointmentId: appointment.id,
-        businessOwnerId: ownerId,
-        cancelReason: 'Cancelada por el negocio',
-        onSuccess: () => {
-          toast({
-            title: 'Cita cancelada',
-            description: 'La cita ha sido cancelada correctamente.',
-          })
-          onUpdate()
-        },
-        onError: (error) => {
-          toast({
-            variant: 'destructive',
-            title: 'Error al cancelar',
-            description: error.message || 'No se pudo cancelar la cita.',
-          })
-        }
+        appointmentId: appointment.id, businessOwnerId: ownerId, cancelReason: 'Cancelada por el negocio',
+        onSuccess: () => { toast({ title: 'Cita cancelada' }); onUpdate(); },
+        onError: (err) => { toast({ variant: 'destructive', title: 'Error', description: err.message }); }
       })
-    } catch (error) {
-      console.error('Error canceling appointment:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Error al cancelar',
-        description: 'No se pudo cancelar la cita.',
-      })
-    } finally {
-      setUpdating(false)
-    }
+    } catch (error) { console.error(error); } finally { setUpdating(false); }
   }
 
   const handleReactivate = async () => {
     try {
       setUpdating(true)
-
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status: 'confirmed' })
-        .eq('id', appointment.id)
-
-      if (error) throw error
-
-      toast({
-        title: 'Cita reactivada',
-        description: 'La cita ha sido reactivada y confirmada.',
-      })
-      onUpdate()
-    } catch (error) {
-      console.error('Error reactivating appointment:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Error al reactivar',
-        description: 'No se pudo reactivar la cita.',
-      })
-    } finally {
-      setUpdating(false)
-    }
+      await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', appointment.id)
+      toast({ title: 'Cita reactivada' }); onUpdate();
+    } catch (error) { console.error(error); } finally { setUpdating(false); }
   }
 
   const handleCheckoutSuccess = async () => {
-    // CheckoutModal now handles marking appointment as completed and creating invoice
-    // Just close modals and refresh
     setShowCheckout(false)
     onClose()
     onUpdate()
   }
 
-  const handleOpenCheckout = () => {
-    setShowCheckout(true)
-  }
-
-  const handleCloseCheckout = () => {
-    setShowCheckout(false)
-  }
-
-  const formatDate = (date: string) => {
-    return formatSpanishDate(date, {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    })
-  }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price)
-  }
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
-  }
-
+  const formatPrice = (price: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD' }).format(price)
+  const getInitials = (firstName: string, lastName: string) => `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase()
   const statusConfig = getStatusConfig(appointment.status)
 
-  // Debug: Log avatar URL
-  useEffect(() => {
-    console.log('🖼️ Avatar Debug:', {
-      hasUsers: !!appointment.users,
-      avatar_url: appointment.users?.avatar_url,
-      firstName: appointment.users?.first_name,
-      lastName: appointment.users?.last_name,
-    })
-  }, [appointment])
+  // Extraer lista única de empleados implicados
+  const involvedEmployees = Array.from(new Set([
+    appointment.employee_id,
+    ...(appointment.appointment_services?.map(as => as.employee_id).filter(Boolean) || [])
+  ])).map(empId => {
+    const as = appointment.appointment_services?.find(s => s.employee_id === empId);
+    if (empId === appointment.employee_id && appointment.employees) {
+      return { id: empId, name: `${appointment.employees.first_name} ${appointment.employees.last_name}`, avatar: null };
+    }
+    if (as?.employees) {
+      return { id: empId, name: `${as.employees.first_name} ${as.employees.last_name}`, avatar: as.employees.avatar_url };
+    }
+    return { id: empId, name: 'Profesional', avatar: null };
+  });
 
-  // If checkout is open, render it instead
   if (showCheckout) {
     return (
       <CheckoutModal
         appointmentId={appointment.id}
         totalAmount={appointment.total_price}
-        services={
-          appointment.appointment_services?.map((service) => ({
-            name: service.services?.name || 'Servicio',
-            price: service.price
-          })) || []
-        }
-        onClose={handleCloseCheckout}
+        services={appointment.appointment_services?.map((s) => ({ name: s.services?.name || 'Servicio', price: s.price })) || []}
+        onClose={() => setShowCheckout(false)}
         onSuccess={handleCheckoutSuccess}
       />
     )
   }
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl p-0 border-none bg-transparent shadow-none" showCloseButton={false}>
-        <div
-          className="bg-white rounded-2xl shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header con color sólido Premium - Ultra Compacto */}
-          <div className="relative overflow-hidden pt-4 pb-3 sm:pt-6 sm:pb-4 px-5 sm:px-8 bg-primary shadow-lg sm:shadow-xl rounded-t-2xl">
-            {/* Patrón de fondo sutil */}
-          
-
-            {/* Botón Cerrar Premium - Ultra Ajustado */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="absolute top-2 right-2 h-7 w-7 rounded-lg bg-black/10 hover:bg-black/20 text-white border-none transition-all duration-300 z-10"
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-
-            <div className="relative flex items-center gap-3 sm:gap-5">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg border border-white/20 flex-shrink-0">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                  <span className="text-[8px] sm:text-[9px] font-black text-white/80 uppercase tracking-[0.2em]">
-                    Cita #{appointment.id.substring(0, 8)}
-                  </span>
+    <TooltipProvider>
+      <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="max-w-3xl p-0 border-none bg-transparent shadow-none" showCloseButton={false}>
+          <div className="bg-white dark:bg-gray-900 rounded-[2rem] shadow-2xl w-full max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            
+            {/* Header Premium */}
+            <div className="relative overflow-hidden pt-6 pb-5 px-6 sm:px-10 bg-primary shadow-lg rounded-t-[2rem]">
+              <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4 h-8 w-8 rounded-xl bg-black/10 hover:bg-black/20 text-white border-none transition-all z-10">
+                <X className="w-4 h-4" />
+              </Button>
+              <div className="relative flex items-center gap-4 sm:gap-6">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center shadow-lg border border-white/20 flex-shrink-0">
+                  <Calendar className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                 </div>
-                
-                <h2 className="text-lg sm:text-2xl font-black text-white leading-none tracking-tight mb-2">
-                  Información Cita
-                </h2>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[9px] font-black text-white/80 uppercase tracking-[0.2em]">Cita #{appointment.id.substring(0, 8)}</span>
+                  <h2 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight mb-2">Detalle de la Cita</h2>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Badge className={`${statusConfig.className} border shadow-sm px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white dark:bg-gray-800`}>
+                      <span className={`inline-block w-2 h-2 rounded-full mr-2 ${statusConfig.dotColor} shadow-[0_0_8px_currentColor]`} />
+                      {statusConfig.label}
+                    </Badge>
+                    <p className="text-white text-[11px] font-bold flex items-center gap-1.5 opacity-90">
+                      <Clock className="w-3.5 h-3.5" />
+                      {formatSpanishDate(appointment.appointment_date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <Badge className={`${statusConfig.className} border shadow-lg px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest bg-white text-gray-900 border-white`}>
-                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${statusConfig.dotColor} shadow-[0_0_8px_currentColor]`} />
-                    {statusConfig.label}
-                  </Badge>
-                  <p className="text-white text-[10px] sm:text-xs font-bold flex items-center gap-1">
-                    <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    {formatDate(appointment.appointment_date)}
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 scrollbar-thin dark:scrollbar-thumb-gray-800">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Card Cliente */}
+                <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" />
+                      <h3 className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Cliente</h3>
+                    </div>
+                    {appointment.business_client_id && <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-800 text-[9px] font-black uppercase">Del Negocio</Badge>}
+                    {(appointment.walk_in_client_name || appointment.walk_in_client_phone) && <Badge variant="outline" className="bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-100 dark:border-orange-900/50 text-[9px] font-black uppercase">Walk-in</Badge>}
+                  </div>
+                  <div className="flex items-center gap-5">
+                    <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-white dark:border-gray-700 shadow-xl rounded-[1.5rem]">
+                      {appointment.users?.avatar_url && <AvatarImage src={appointment.users.avatar_url} className="object-cover" />}
+                      <AvatarFallback className="bg-primary text-white text-xl font-black rounded-[1.5rem]">
+                        {appointment.users ? getInitials(appointment.users.first_name, appointment.users.last_name) : appointment.business_clients ? getInitials(appointment.business_clients.first_name, appointment.business_clients.last_name || 'C') : '👤'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-gray-900 dark:text-white text-xl truncate tracking-tight">
+                        {appointment.users ? `${appointment.users.first_name} ${appointment.users.last_name}` : appointment.business_clients ? `${appointment.business_clients.first_name} ${appointment.business_clients.last_name || ''}`.trim() : appointment.walk_in_client_name || 'Cliente sin registro'}
+                      </p>
+                      <div className="flex flex-wrap gap-4 mt-3">
+                        {(appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone) && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-bold bg-white dark:bg-gray-900 px-3 py-1 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                            <Phone className="w-3.5 h-3.5 text-primary" />
+                            {appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone}
+                          </div>
+                        )}
+                        {(appointment.users?.email || appointment.business_clients?.email) && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 font-bold bg-white dark:bg-gray-900 px-3 py-1 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm truncate">
+                            <Mail className="w-3.5 h-3.5 text-primary" />
+                            <span className="truncate">{appointment.users?.email || appointment.business_clients?.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Horario - Ajustado para evitar desbordamiento */}
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <h3 className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Horario</h3>
+                  </div>
+                  <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+                    <p className="text-gray-900 dark:text-white text-2xl sm:text-3xl font-black tracking-tighter tabular-nums leading-none">
+                      {appointment.start_time.substring(0, 5)}
+                    </p>
+                    <span className="text-gray-400 font-bold mb-0.5 text-xs sm:text-sm uppercase tracking-widest">a</span>
+                    <p className="text-gray-900 dark:text-white text-2xl sm:text-3xl font-black tracking-tighter tabular-nums leading-none">
+                      {appointment.end_time.substring(0, 5)}
+                    </p>
+                  </div>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mt-4 bg-primary/10 inline-block px-2 py-0.5 rounded-lg">
+                    {appointment.appointment_services?.[0]?.services?.duration_minutes || 0} MINUTOS
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Cliente */}
-              <div className="md:col-span-2 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-2 mb-4">
-                  <User className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-gray-900">Cliente</h3>
-                  {appointment.business_client_id && (
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
-                      Cliente del Negocio
-                    </span>
-                  )}
-                  {(appointment.walk_in_client_name || appointment.walk_in_client_phone) && (
-                    <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full">
-                      Sin cita previa
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-16 h-16 border-2 border-orange-500">
-                    {appointment.users?.avatar_url && (
-                      <AvatarImage
-                        src={appointment.users.avatar_url}
-                        alt={`${appointment.users.first_name} ${appointment.users.last_name}`}
-                        className="object-cover"
-                      />
-                    )}
-                    <AvatarFallback className="bg-orange-600 hover:bg-orange-700 text-white text-lg">
-                      {appointment.users
-                        ? getInitials(appointment.users.first_name, appointment.users.last_name)
-                        : appointment.business_clients
-                        ? getInitials(appointment.business_clients.first_name, appointment.business_clients.last_name || 'C')
-                        : appointment.walk_in_client_name
-                        ? getInitials(
-                            appointment.walk_in_client_name.split(' ')[0] || 'C',
-                            appointment.walk_in_client_name.split(' ')[1] || 'W'
-                          )
-                        : '👤'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-lg truncate">
-                      {appointment.users
-                        ? `${appointment.users.first_name} ${appointment.users.last_name}`
-                        : appointment.business_clients
-                        ? `${appointment.business_clients.first_name} ${appointment.business_clients.last_name || ''}`.trim()
-                        : appointment.walk_in_client_name || 'Cliente Sin cita previa'}
-                    </p>
-                    <div className="space-y-1 mt-2">
-                      {(appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone) && (
-                        <p className="text-sm text-gray-600 flex items-center gap-2">
-                          <Phone className="w-3.5 h-3.5" />
-                          {appointment.users?.phone || appointment.business_clients?.phone || appointment.walk_in_client_phone}
-                        </p>
-                      )}
-                      {(appointment.users?.email || appointment.business_clients?.email) && (
-                        <p className="text-sm text-gray-600 flex items-center gap-2 truncate">
-                          <Mail className="w-3.5 h-3.5 flex-shrink-0" />
-                          <span className="truncate">{appointment.users?.email || appointment.business_clients?.email}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Empleados involucrados */}
-              <div className="md:col-span-2 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-4 h-4 text-orange-600" />
-                  <h3 className="font-semibold text-gray-900">Profesionales Involucrados</h3>
-                </div>
-                <div className="flex flex-wrap gap-4">
-                  {Array.from(new Set([
-                    appointment.employee_id,
-                    ...(appointment.appointment_services?.map(as => as.employee_id).filter(Boolean) || [])
-                  ])).map((empId, idx) => {
-                    const as = appointment.appointment_services?.find(s => s.employee_id === empId);
-                    const empName = empId === appointment.employee_id 
-                      ? `${appointment.employees?.first_name} ${appointment.employees?.last_name}`
-                      : as?.employees 
-                        ? `${as.employees.first_name} ${as.employees.last_name}`
-                        : 'Profesional';
-
-                    return (
-                      <div key={empId || idx} className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg border border-gray-100 shadow-sm">
-                        <Avatar className="w-8 h-8">
-                          <AvatarFallback className="bg-orange-100 text-orange-600 text-xs font-bold">
-                            {empName.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <p className="text-gray-700 font-medium text-sm">{empName}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Horario */}
-              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-2 mb-3">
-                  <Clock className="w-4 h-4 text-orange-600" />
-                  <h3 className="font-semibold text-gray-900">Horario</h3>
-                </div>
-                <p className="text-gray-900 text-lg font-semibold">
-                  {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {appointment.appointment_services?.[0]?.services?.duration_minutes || 0} minutos
-                </p>
-              </div>
-
-              {/* Servicios */}
-              <div className="md:col-span-2 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-4 h-4 text-orange-600" />
-                  <h3 className="font-semibold text-gray-900">Servicios</h3>
-                </div>
-                <div className="space-y-3">
-                  {appointment.appointment_services?.map((service, index) => (
-                    <div key={index} className="flex justify-between items-center pb-3 border-b border-gray-200 last:border-0 last:pb-0">
-                      <div className="flex items-center gap-2 flex-1">
-                        <div className="w-2 h-2 rounded-full bg-orange-500" />
-                        <div className="flex flex-col">
-                          <span className="text-gray-700 font-medium">{service.services?.name}</span>
-                          {service.employees && (
-                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">
-                              Por: {service.employees.first_name} {service.employees.last_name}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <span className="font-semibold text-gray-900">{formatPrice(service.price)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Total */}
-              <div className="md:col-span-2 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-5 border-2 border-orange-200">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-orange-600" />
-                    <span className="text-lg font-semibold text-gray-900">Total</span>
-                  </div>
-                  <span className="text-3xl font-bold bg-orange-600 hover:bg-orange-700 bg-clip-text text-transparent">
-                    {formatPrice(appointment.total_price)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Notas */}
-              {(appointment.notes || appointment.client_notes) && (
-                <div className="md:col-span-2 bg-gray-50 rounded-xl p-5 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertCircle className="w-4 h-4 text-orange-600" />
-                    <h3 className="font-semibold text-gray-900">Notas</h3>
+                {/* Card Profesionales - Nombres Visibles */}
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users className="w-4 h-4 text-primary" />
+                    <h3 className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Equipo</h3>
                   </div>
                   <div className="space-y-3">
-                    {appointment.client_notes && (
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Notas del cliente:</p>
-                        <p className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-gray-200">{appointment.client_notes}</p>
+                    {involvedEmployees.map((emp, idx) => (
+                      <div key={emp.id || idx} className="flex items-center gap-3 bg-white dark:bg-gray-900 p-2 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <Avatar className="w-10 h-10 border-2 border-white dark:border-gray-800 shadow-sm rounded-xl">
+                          {emp.avatar && <AvatarImage src={emp.avatar} className="object-cover" />}
+                          <AvatarFallback className="bg-orange-100 dark:bg-orange-950/30 text-primary text-[10px] font-black uppercase">
+                            {emp.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-black text-gray-900 dark:text-white truncate uppercase tracking-tight">{emp.name}</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Especialista</p>
+                        </div>
                       </div>
-                    )}
-                    {appointment.notes && (
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 mb-1">Notas internas:</p>
-                        <p className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-gray-200">{appointment.notes}</p>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Actions */}
-          <TooltipProvider>
-            <div className="border-t border-gray-200 p-4 sm:p-6 bg-gray-50 rounded-b-2xl">
+                {/* Card Servicios */}
+                <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-[2rem] border-2 border-gray-100 dark:border-gray-800 overflow-hidden">
+                  <div className="bg-gray-50 dark:bg-gray-800/50 px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <h3 className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Servicios Agendados</h3>
+                    </div>
+                    <Badge className="bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700 text-[10px] font-black uppercase px-3 py-1">
+                      {appointment.appointment_services?.length || 0} Items
+                    </Badge>
+                  </div>
+                  <div className="divide-y divide-gray-50 dark:divide-gray-800">
+                    {appointment.appointment_services?.map((service, index) => (
+                      <div key={index} className="px-6 py-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center font-black text-primary text-xs border border-orange-100 dark:border-orange-900/30">
+                            {index + 1}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-gray-900 dark:text-white font-black text-sm tracking-tight">{service.services?.name}</span>
+                            {service.employees && <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest mt-0.5">Por: {service.employees.first_name} {service.employees.last_name}</span>}
+                          </div>
+                        </div>
+                        <span className="font-black text-gray-900 dark:text-white text-lg tracking-tighter">{formatPrice(service.price)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="bg-gray-900 dark:bg-black p-6 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-primary" />
+                      <span className="text-white text-xs font-black uppercase tracking-[0.2em]">Total Final</span>
+                    </div>
+                    <span className="text-3xl font-black text-white tracking-tighter tabular-nums drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">{formatPrice(appointment.total_price)}</span>
+                  </div>
+                </div>
+
+                {/* Card Notas */}
+                {(appointment.notes || appointment.client_notes) && (
+                  <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-[2rem] p-6 border border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-5">
+                      <AlertCircle className="w-4 h-4 text-primary" />
+                      <h3 className="font-black text-sm text-gray-900 dark:text-white uppercase tracking-tight">Notas y Observaciones</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {appointment.client_notes && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-2">Del Cliente</p>
+                          <p className="text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 italic shadow-sm">"{appointment.client_notes}"</p>
+                        </div>
+                      )}
+                      {appointment.notes && (
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-2">Internas</p>
+                          <p className="text-xs text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 italic shadow-sm">"{appointment.notes}"</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="border-t border-gray-100 dark:border-gray-800 p-6 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-xl">
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* Menú desplegable con acciones secundarias */}
                 {appointment.status !== 'cancelled' && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-10 w-10 flex-shrink-0 rounded-lg hover:bg-gray-100 transition-all hover:scale-105"
-                        disabled={updating}
-                      >
-                        <MoreVertical className="h-5 w-5 text-gray-600" />
+                      <Button variant="outline" className="h-12 px-4 rounded-xl border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all shadow-sm" disabled={updating}>
+                        <MoreVertical className="h-5 w-5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      className="w-48 z-[110] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
-                    >
-                      {/* Editar */}
+                    <DropdownMenuContent align="start" className="w-56 rounded-2xl border-gray-100 dark:border-gray-800 dark:bg-gray-900 shadow-2xl z-[150] p-2">
                       {onEdit && appointment.status !== 'completed' && (
-                        <>
-                          <DropdownMenuItem
-                            onClick={onEdit}
-                            className="cursor-pointer hover:bg-orange-50 focus:bg-orange-50 transition-colors"
-                          >
-                            <Edit className="w-4 h-4 mr-2 text-orange-600" />
-                            <span>Editar cita</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-
-                      {/* Confirmar */}
-                      {appointment.status === 'pending' && (
-                        <DropdownMenuItem
-                          onClick={() => handleUpdateStatus('confirmed')}
-                          className="cursor-pointer hover:bg-green-50 focus:bg-green-50 transition-colors"
-                        >
-                          <Check className="w-4 h-4 mr-2 text-green-600" />
-                          <span>Confirmar</span>
+                        <DropdownMenuItem onClick={onEdit} className="rounded-xl py-2.5 cursor-pointer font-bold focus:bg-primary/5 focus:text-primary transition-colors">
+                          <Edit className="w-4 h-4 mr-3 text-primary" /> Editar Datos
                         </DropdownMenuItem>
                       )}
-
-                      {/* En Progreso */}
-                      {appointment.status === 'confirmed' && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <DropdownMenuItem
-                                onClick={() => canTakeAction && handleUpdateStatus('in_progress')}
-                                disabled={!canTakeAction}
-                                className={`cursor-pointer transition-colors ${
-                                  canTakeAction
-                                    ? 'hover:bg-blue-50 focus:bg-blue-50'
-                                    : 'opacity-50 cursor-not-allowed'
-                                }`}
-                              >
-                                <Clock className="w-4 h-4 mr-2 text-blue-600" />
-                                <span>En Progreso</span>
-                              </DropdownMenuItem>
-                            </div>
-                          </TooltipTrigger>
-                          {!canTakeAction && (
-                            <TooltipContent side="right">
-                              <p className="text-xs">Esta acción estará disponible cuando comience la cita</p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      )}
-
-                      {/* No Asistió */}
-                      {(['confirmed', 'pending'].includes(appointment.status)) && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div>
-                                <DropdownMenuItem
-                                  onClick={() => canTakeAction && handleUpdateStatus('no_show')}
-                                  disabled={!canTakeAction}
-                                  className={`cursor-pointer transition-colors ${
-                                    canTakeAction
-                                      ? 'hover:bg-orange-50 focus:bg-orange-50'
-                                      : 'opacity-50 cursor-not-allowed'
-                                  }`}
-                                >
-                                  <AlertCircle className="w-4 h-4 mr-2 text-orange-600" />
-                                  <span>No Asistió</span>
-                                </DropdownMenuItem>
-                              </div>
-                            </TooltipTrigger>
-                            {!canTakeAction && (
-                              <TooltipContent side="right">
-                                <p className="text-xs">Esta acción estará disponible cuando comience la cita</p>
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        </>
-                      )}
+                      <DropdownMenuSeparator className="bg-gray-50 dark:bg-gray-800" />
+                      {appointment.status === 'pending' && <DropdownMenuItem onClick={() => handleUpdateStatus('confirmed')} className="rounded-xl py-2.5 cursor-pointer font-bold text-emerald-600 focus:bg-emerald-50 dark:focus:bg-emerald-950/30 transition-colors"><Check className="w-4 h-4 mr-3" /> Confirmar Ahora</DropdownMenuItem>}
+                      {appointment.status === 'confirmed' && <DropdownMenuItem onClick={() => handleUpdateStatus('in_progress')} disabled={!canTakeAction} className="rounded-xl py-2.5 cursor-pointer font-bold text-blue-600 focus:bg-blue-50 dark:focus:bg-blue-950/30 transition-colors"><Clock className="w-4 h-4 mr-3" /> Iniciar Servicio</DropdownMenuItem>}
+                      {['confirmed', 'pending'].includes(appointment.status) && <DropdownMenuItem onClick={() => handleUpdateStatus('no_show')} disabled={!canTakeAction} className="rounded-xl py-2.5 cursor-pointer font-bold text-orange-600 focus:bg-orange-50 dark:focus:bg-orange-950/30 transition-colors"><AlertCircle className="w-4 h-4 mr-3" /> Marcar Inasistencia</DropdownMenuItem>}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
 
-                {/* Botones principales - Premium Style */}
                 <div className="flex-1 flex flex-wrap gap-3">
-                  {/* Botón Ver Comprobante */}
-                  {paymentReceipt && (
-                    <Button
-                      onClick={() => setReceiptViewerOpen(true)}
-                      variant="outline"
-                      className="flex-1 min-w-[140px] h-11 rounded-xl border-orange-100 shadow-sm font-black text-[9px] uppercase tracking-widest text-orange-600 hover:bg-orange-50/50 hover:text-orange-700 hover:border-orange-200 transition-all active:scale-95"
-                    >
-                      <FileImage className="w-4 h-4 mr-2" />
-                      <span className="truncate">Comprobante</span>
-                    </Button>
-                  )}
-
-                  {/* Botón principal: Finalizar y Cobrar / Registrar Pago */}
+                  {paymentReceipt && <Button onClick={() => setReceiptViewerOpen(true)} variant="outline" className="flex-1 min-w-[140px] h-12 rounded-xl border-emerald-100 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"><FileImage className="w-4 h-4 mr-2" /> Comprobante</Button>}
                   {hasPendingPayment && !checkingPayment && ['confirmed', 'in_progress', 'completed'].includes(appointment.status) && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex-1 min-w-[210px] sm:min-w-[220px]">
-                          <Button
-                            onClick={handleOpenCheckout}
-                            disabled={updating || !canTakeAction}
-                            data-checkout-trigger
-                            className={`w-full h-11 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-lg transition-all duration-300 active:scale-95 ${
-                              canTakeAction && !updating
-                                ? 'bg-gray-900 hover:bg-black text-white'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed border-none shadow-none'
-                            }`}
-                          >
-                            <DollarSign className="w-4 h-4 mr-2" />
-                            <span>{appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</span>
-                          </Button>
-                        </div>
-                      </TooltipTrigger>
-                      {!canTakeAction && (
-                        <TooltipContent>
-                          <p className="text-xs">Esta acción estará disponible cuando comience la cita</p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
+                    <Button onClick={() => setShowCheckout(true)} disabled={updating || !canTakeAction} className={`flex-[2] min-w-[200px] h-12 rounded-xl font-black text-xs uppercase tracking-widest shadow-xl transition-all duration-300 active:scale-95 ${canTakeAction && !updating ? 'bg-gray-900 dark:bg-black hover:opacity-90 text-white shadow-gray-900/20' : 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed border-none shadow-none'}`}><DollarSign className="w-4 h-4 mr-2" /> {appointment.status === 'completed' ? 'Registrar Pago' : 'Finalizar y Cobrar'}</Button>
                   )}
-
-                  {/* Botón Reactivar cita - Solo visible para citas canceladas */}
-                  {appointment.status === 'cancelled' && (
-                    <Button
-                      onClick={handleReactivate}
-                      disabled={updating}
-                      className="flex-1 min-w-[160px] h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest shadow-lg transition-all active:scale-95"
-                    >
-                      <Check className="w-4 h-4 mr-2" />
-                      <span className="truncate">Reactivar Cita</span>
-                    </Button>
-                  )}
-
-                  {/* Botón Eliminar cita - solo para citas creadas por el negocio */}
+                  {appointment.status === 'cancelled' && <Button onClick={handleReactivate} disabled={updating} className="flex-1 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest shadow-xl transition-all active:scale-95"><Check className="w-4 h-4 mr-2" /> Reactivar Cita</Button>}
                   {isDeletable && (
                     <>
                       {showDeleteConfirm ? (
-                        <div className="flex-1 min-w-[240px] flex items-center gap-2 bg-red-50 border border-red-300 rounded-xl px-4 py-2 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-                          <span className="text-[9px] font-black text-red-800 uppercase tracking-widest flex-1 leading-tight">
-                            ¿Eliminar permanentemente?
-                          </span>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <Button
-                              size="sm"
-                              onClick={handleDelete}
-                              disabled={deleting}
-                              className="h-8 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95"
-                            >
-                              {deleting ? '...' : 'Sí'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setShowDeleteConfirm(false)}
-                              disabled={deleting}
-                              className="h-8 px-3 rounded-lg font-black text-[10px] uppercase tracking-widest text-gray-600 hover:bg-red-100/50 hover:text-red-700 transition-all active:scale-95"
-                            >
-                              No
-                            </Button>
-                          </div>
+                        <div className="flex-1 min-w-[220px] flex items-center gap-2 bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-900/50 rounded-xl px-4 py-1.5 shadow-sm animate-in fade-in zoom-in-95 duration-200">
+                          <span className="text-[10px] font-black text-red-800 dark:text-red-400 uppercase tracking-tight flex-1">¿Eliminar?</span>
+                          <div className="flex gap-1.5"><Button size="sm" onClick={handleDelete} disabled={deleting} className="h-8 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase">Sí</Button><Button size="sm" variant="ghost" onClick={() => setShowDeleteConfirm(false)} className="h-8 px-3 rounded-lg font-black text-[10px] uppercase dark:text-gray-400">No</Button></div>
                         </div>
                       ) : (
-                        <Button
-                          onClick={() => setShowDeleteConfirm(true)}
-                          variant="outline"
-                          className="h-11 w-11 rounded-xl border-red-50 text-red-500 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-all active:scale-95 flex-shrink-0"
-                          title="Eliminar cita"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <Button onClick={() => setShowDeleteConfirm(true)} variant="outline" className="h-12 w-12 rounded-xl border-red-100 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all flex-shrink-0"><Trash2 className="w-4 h-4" /></Button>
                       )}
                     </>
                   )}
-
-                  {/* Botón Cancelar cita */}
-                  {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
-                    <Button
-                      onClick={handleCancel}
-                      disabled={updating}
-                      className="flex-1 min-w-[110px] h-11 rounded-xl bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 shadow-sm"
-                    >
-                      <span>Cancelar</span>
-                    </Button>
-                  )}
-
-                  {/* Botón Cerrar */}
-                  <Button
-                    onClick={onClose}
-                    className="flex-1 min-w-[100px] h-11 rounded-xl bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 shadow-sm"
-                  >
-                    Cerrar
-                  </Button>
+                  {appointment.status !== 'cancelled' && appointment.status !== 'completed' && <Button onClick={handleCancel} disabled={updating} variant="outline" className="flex-1 min-w-[110px] h-12 rounded-xl text-red-600 border-red-100 dark:border-red-900/30 font-black text-[10px] uppercase tracking-widest hover:bg-red-50 dark:hover:bg-red-950 transition-all">Cancelar</Button>}
+                  <Button onClick={onClose} className="flex-1 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 font-black text-[10px] uppercase tracking-widest transition-all">Cerrar</Button>
                 </div>
               </div>
             </div>
-          </TooltipProvider>
+          </div>
 
-          {/* Receipt Viewer Modal */}
           {paymentReceipt && (
-            <ReceiptViewer
-              isOpen={receiptViewerOpen}
-              onClose={() => setReceiptViewerOpen(false)}
-              receiptUrl={paymentReceipt.url}
-              transferReference={paymentReceipt.reference}
-            />
+            <ReceiptViewer isOpen={receiptViewerOpen} onClose={() => setReceiptViewerOpen(false)} receiptUrl={paymentReceipt.url} transferReference={paymentReceipt.reference} />
           )}
-        </div>
-      </DialogContent>
+    
+   
+  
+  </DialogContent>
     </Dialog>
-  )
+    </TooltipProvider> 
+        
+        )
+
 }

@@ -20,12 +20,12 @@ interface AppointmentCardProps {
 
 const getStatusColor = (status: string) => {
   const colors = {
-    pending: 'bg-amber-50 border-amber-400 hover:bg-amber-100',
-    confirmed: 'bg-emerald-50 border-emerald-500 hover:bg-emerald-100',
-    in_progress: 'bg-blue-50 border-blue-500 hover:bg-blue-100',
-    completed: 'bg-slate-100 border-slate-400 hover:bg-slate-200',
-    cancelled: 'bg-rose-50 border-rose-400 hover:bg-rose-100',
-    no_show: 'bg-orange-50 border-orange-400 hover:bg-orange-100'
+    pending: 'bg-amber-50 dark:bg-amber-950/30 border-amber-400 dark:border-amber-500/50 hover:bg-amber-100 dark:hover:bg-amber-900/40',
+    confirmed: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 dark:border-emerald-500/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/40',
+    in_progress: 'bg-blue-50 dark:bg-blue-950/30 border-blue-500 dark:border-blue-500/50 hover:bg-blue-100 dark:hover:bg-blue-900/40',
+    completed: 'bg-slate-100 dark:bg-slate-800/30 border-slate-400 dark:border-slate-600/50 hover:bg-slate-200 dark:hover:bg-slate-700/40',
+    cancelled: 'bg-rose-50 dark:bg-rose-950/30 border-rose-400 dark:border-rose-500/50 hover:bg-rose-100 dark:hover:bg-rose-900/40',
+    no_show: 'bg-orange-50 dark:bg-orange-950/30 border-orange-400 dark:border-orange-500/50 hover:bg-orange-100 dark:hover:bg-orange-900/40'
   }
   return colors[status as keyof typeof colors] || colors.pending
 }
@@ -112,8 +112,8 @@ export default function AppointmentCard({
         {/* Header: Hora + Dot indicator + Precio (si es pequeña) */}
         <div className="flex items-center justify-between gap-1 flex-shrink-0">
           <div className="flex items-center gap-1 min-w-0 flex-1">
-            <Clock className="w-3 h-3 flex-shrink-0 text-gray-500/80" />
-            <span className="text-[10px] font-black text-gray-900/90 truncate tracking-tight">
+            <Clock className="w-3 h-3 flex-shrink-0 text-gray-500/80 dark:text-gray-400" />
+            <span className="text-[10px] font-black text-gray-900/90 dark:text-gray-100 truncate tracking-tight">
               {startTime}
             </span>
           </div>
@@ -121,13 +121,13 @@ export default function AppointmentCard({
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Precio en header solo si no es grande y no es muy pequeña */}
             {!isLarge && !isVerySmall && appointment.total_price && (
-              <span className="text-[9px] font-black text-emerald-700 bg-emerald-100/60 px-1 rounded-md shadow-sm">
+              <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-900/40 px-1 rounded-md shadow-sm">
                 ${appointment.total_price}
               </span>
             )}
             {!isVerySmall && isMultiEmployee && (
-              <div className="flex items-center gap-0.5 bg-blue-100/80 px-1 rounded-md border border-blue-200 shadow-sm" title="Múltiples profesionales">
-                <Users className="w-2.5 h-2.5 text-blue-600" />
+              <div className="flex items-center gap-0.5 bg-blue-100/80 dark:bg-blue-900/40 px-1 rounded-md border border-blue-200 dark:border-blue-800 shadow-sm" title="Múltiples profesionales">
+                <Users className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
               </div>
             )}
             {!isVerySmall && (
@@ -139,7 +139,7 @@ export default function AppointmentCard({
         {/* Cliente con Typography Premium */}
         {!isVerySmall && (
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className={`font-black text-gray-900 truncate flex-1 leading-tight ${isLarge ? 'text-[11px]' : 'text-[10px]'}`}>
+            <span className={`font-black text-gray-900 dark:text-white truncate flex-1 leading-tight ${isLarge ? 'text-[11px]' : 'text-[10px]'}`}>
               {clientName}
             </span>
             {isWalkIn && (
@@ -152,9 +152,9 @@ export default function AppointmentCard({
 
         {/* Servicio - Estilo Badge-like */}
         {((isMedium || isLarge) && !isSmall) && (
-          <div className="flex items-center gap-1 min-w-0 bg-white/30 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-white/20">
-            <ClipboardList className="w-2.5 h-2.5 flex-shrink-0 text-gray-500" />
-            <span className="text-[9px] font-bold text-gray-700 truncate uppercase tracking-tighter">
+          <div className="flex items-center gap-1 min-w-0 bg-white/30 dark:bg-black/20 backdrop-blur-sm px-1.5 py-0.5 rounded-lg border border-white/20 dark:border-white/10">
+            <ClipboardList className="w-2.5 h-2.5 flex-shrink-0 text-gray-500 dark:text-gray-400" />
+            <span className="text-[9px] font-bold text-gray-700 dark:text-gray-300 truncate uppercase tracking-tighter">
               {serviceDisplay}
             </span>
           </div>
@@ -162,24 +162,25 @@ export default function AppointmentCard({
 
         {/* Empleado & Precio - Bottom Section (Solo para Large) */}
         {isLarge && (
-          <div className="mt-auto flex items-center justify-between gap-2 border-t border-black/5 pt-1.5">
+          <div className="mt-auto flex items-center justify-between gap-2 border-t border-black/5 dark:border-white/5 pt-1.5">
             {employeeName ? (
               <div className="flex items-center gap-1 min-w-0">
-                <div className="w-4 h-4 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 border border-white/50">
-                   <UserCheck className="w-2.5 h-2.5 text-gray-600" />
+                <div className="w-4 h-4 bg-gray-200 dark:bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 border border-white/50 dark:border-gray-700">
+                   <UserCheck className="w-2.5 h-2.5 text-gray-600 dark:text-gray-400" />
                 </div>
-                <span className="text-[9px] font-bold text-gray-500 truncate">{employeeName}</span>
+                <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400 truncate">{employeeName}</span>
               </div>
             ) : <div />}
             
             {appointment.total_price && (
-              <span className="text-[10px] font-black text-emerald-700 bg-emerald-100/40 px-2 py-0.5 rounded-lg">
+              <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 bg-emerald-100/40 dark:bg-emerald-900/30 px-2 py-0.5 rounded-lg">
                 ${appointment.total_price}
               </span>
             )}
           </div>
         )}
       </div>
-    </div>
+      </div>
+    
   )
 }

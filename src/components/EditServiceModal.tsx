@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, DollarSign, Clock, AlertCircle, Trash2 } from 'lucide-react'
+import { Save, DollarSign, Clock, AlertCircle, Trash2, Loader2, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { serviceFormSchema, type ServiceFormData } from '@/lib/validation'
@@ -211,212 +211,191 @@ export default function EditServiceModal({
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-50">Editar Servicio</DialogTitle>
-          <DialogDescription className="text-sm">
-            Modifica la información de {service.name}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-none shadow-2xl bg-white dark:bg-gray-900 rounded-[2.5rem] overflow-hidden">
+        <div className="px-6 py-8 sm:px-8">
+          <DialogHeader className="mb-6">
+            <div className="flex flex-col gap-0.5 relative pl-5">
+              <div className="absolute left-0 w-1 h-6 bg-primary rounded-full mt-0.5" />
+              <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-primary">Editar Servicio</span>
+              <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white italic">
+                {service.name}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-sm font-medium text-gray-500 dark:text-gray-400 pl-5">
+              Modifica la información o el estado de venta del servicio
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 mt-4">
-          {/* Nombre del servicio */}
-          <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Nombre del Servicio <span className="text-orange-600">*</span>
-            </Label>
-            <Input
-              id="name"
-              {...register('name')}
-              placeholder="Ej: Corte de cabello, Manicura..."
-              className="h-10 focus:border-orange-500 focus:ring-orange-500"
-            />
-            {errors.name && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700 dark:text-red-400">{errors.name.message}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Descripción */}
-          <div className="space-y-1.5">
-            <Label htmlFor="description" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Descripción
-            </Label>
-            <Textarea
-              id="description"
-              {...register('description')}
-              placeholder="Describe brevemente el servicio (opcional)"
-              rows={2}
-              className="focus:border-orange-500 focus:ring-orange-500 text-sm"
-            />
-          </div>
-
-          {/* Precio y duración */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Precio */}
-            <div className="space-y-1.5">
-              <Label htmlFor="price" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Precio <span className="text-orange-600">*</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
+            {/* Nombre del servicio */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                Nombre del Servicio *
               </Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="99999.99"
-                  {...register('price')}
-                  className="pl-10 h-10 focus:border-orange-500 focus:ring-orange-500"
-                  placeholder="0.00"
-                />
-              </div>
-              {errors.price && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.price.message}</p>
-                </div>
-              )}
+              <Input
+                id="name"
+                {...register('name')}
+                placeholder="Ej: Corte de cabello, Manicura..."
+                className={`h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary ${errors.name ? 'border-red-500' : ''}`}
+              />
             </div>
 
-            {/* Duración */}
-            <div className="space-y-1.5">
-              <Label htmlFor="duration_minutes" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Duración <span className="text-orange-600">*</span>
+            {/* Descripción */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                Descripción
               </Label>
-              <Select
-                value={durationMinutesValue}
-                onValueChange={(value) => setValue('duration_minutes', value, { shouldValidate: true })}
+              <Textarea
+                id="description"
+                {...register('description')}
+                placeholder="Describe brevemente el servicio..."
+                rows={2}
+                className="rounded-2xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary text-sm min-h-[80px] resize-none"
+              />
+            </div>
+
+            {/* Precio y duración */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Precio */}
+              <div className="space-y-2">
+                <Label htmlFor="price" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                  Precio Sugerido *
+                </Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    {...register('price')}
+                    className={`pl-11 h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary ${errors.price ? 'border-red-500' : ''}`}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* Duración */}
+              <div className="space-y-2">
+                <Label htmlFor="duration_minutes" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                  Duración Estimada *
+                </Label>
+                <Select
+                  value={durationMinutesValue}
+                  onValueChange={(value) => setValue('duration_minutes', value, { shouldValidate: true })}
+                >
+                  <SelectTrigger className="h-12 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 rounded-xl focus:ring-primary font-bold text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-3 text-gray-400" />
+                      <SelectValue placeholder="Selecciona" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-900 shadow-2xl font-bold">
+                    {durationOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="text-xs hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Estado del servicio */}
+            <div className="p-5 bg-orange-50/30 dark:bg-orange-950/10 border-2 border-orange-100 dark:border-orange-900/30 rounded-[2rem] flex items-center justify-between group/status">
+              <div className="space-y-0.5">
+                <Label htmlFor="is_active" className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                  Estado de Venta
+                </Label>
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest italic">
+                  {isActive ? '✓ Disponible' : '⚠ Inactivo'}
+                </p>
+              </div>
+              <Switch
+                id="is_active"
+                checked={isActive}
+                onCheckedChange={(checked) => setValue('is_active', checked)}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+
+            {/* Service Info */}
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Actualizado el {new Date(service.updated_at).toLocaleDateString('es-ES')}
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={deleting || submitting}
+                className="w-full sm:w-auto h-12 rounded-xl text-red-600 dark:text-red-500 border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950 font-black uppercase tracking-widest text-[10px]"
               >
-                <SelectTrigger className="w-full h-10 focus:border-orange-500 focus:ring-orange-500">
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                    <SelectValue placeholder="Selecciona" />
+                <Trash2 className="w-4 h-4 mr-2" />
+                Eliminar
+              </Button>
+              <div className="flex-1" />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="w-full sm:w-auto h-12 rounded-xl text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                disabled={submitting || deleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="w-full sm:w-auto h-12 px-10 bg-primary hover:bg-orange-600 text-white rounded-xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50"
+                disabled={!isValid || submitting || deleting}
+              >
+                {submitting ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    <span className="text-[11px] font-black uppercase tracking-widest">Guardando...</span>
                   </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {durationOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.duration_minutes && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.duration_minutes.message}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Estado del servicio */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-            <div>
-              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-                Estado del Servicio
-              </Label>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                {isActive ? 'Disponible para reservas' : 'Oculto para clientes'}
-              </p>
-            </div>
-            <Switch
-              id="is_active"
-              checked={isActive}
-              onCheckedChange={(checked) => setValue('is_active', checked)}
-              className="self-start sm:self-auto"
-            />
-          </div>
-
-          {/* Service Info */}
-          <div className="border-t pt-3 border-gray-100 dark:border-gray-800">
-            <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-50 mb-1">Información del Servicio</h3>
-            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
-              <p>Creado: {new Date(service.created_at).toLocaleDateString('es-ES')}</p>
-              {service.updated_at !== service.created_at && (
-                <p>Última actualización: {new Date(service.updated_at).toLocaleDateString('es-ES')}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Botones */}
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(true)}
-              disabled={deleting || submitting}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 order-3 sm:order-1 dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50 dark:hover:border-red-700"
-            >
-              <Trash2 className="w-3.5 h-3.5 mr-2" />
-              Eliminar
-            </Button>
-            <div className="flex-1 hidden sm:block" />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="h-9 order-2"
-              disabled={submitting || deleting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="h-9    bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-3"
-              disabled={!isValid || submitting || deleting}
-            >
-              {submitting ? (
-                <>
-                  <div className="relative w-3.5 h-3.5 mr-2">
-                    <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
-                    <div className="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Save className="w-4 h-4 mr-2" />
+                    <span className="text-[11px] font-black uppercase tracking-widest">Guardar Cambios</span>
                   </div>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="w-3.5 h-3.5 mr-2" />
-                  Guardar Cambios
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
 
     <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-      <AlertDialogContent>
+      <AlertDialogContent className="dark:bg-gray-900 border-none rounded-[2rem]">
         <AlertDialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-500" />
             </div>
-            <AlertDialogTitle>
+            <AlertDialogTitle className="dark:text-white">
               ¿Estás seguro?
             </AlertDialogTitle>
           </div>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="dark:text-gray-400">
             Esta acción eliminará permanentemente este servicio. Esta acción no se puede deshacer.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="mt-4 gap-2">
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700 shadow-red-600/20"
+            className="bg-red-600 hover:bg-red-700 shadow-red-600/20 rounded-xl"
             disabled={deleting}
           >
             {deleting ? (
               <>
-                <div className="relative w-3.5 h-3.5 mr-2">
-                  <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
-                  <div className="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                </div>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Eliminando...
               </>
             ) : (

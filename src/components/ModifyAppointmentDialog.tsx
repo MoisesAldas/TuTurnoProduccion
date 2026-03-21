@@ -513,14 +513,14 @@ export default function ModifyAppointmentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col bg-white dark:bg-gray-900 border-none shadow-2xl rounded-[2rem] overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-2xl font-black tracking-tight text-gray-900 dark:text-white italic">
             {appointment.status === 'pending' && appointment.pending_reason === 'business_closed' 
               ? '🔄 Reprogramar Cita Requerida' 
               : 'Modificar Cita'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="font-medium text-gray-500 dark:text-gray-400">
             {appointment.status === 'pending' && appointment.pending_reason === 'business_closed'
               ? 'El negocio estará cerrado - Elige una nueva fecha'
               : `Paso ${currentStep} de 3`}
@@ -529,22 +529,22 @@ export default function ModifyAppointmentDialog({
 
         {/* Alert para business_closed */}
         {appointment.status === 'pending' && appointment.pending_reason === 'business_closed' && (
-          <Alert className="border-2 border-orange-400 bg-orange-50 mx-6">
-            <AlertCircle className="h-5 w-5 text-orange-600" />
-            <AlertDescription className="text-sm text-orange-900">
-              <p className="font-semibold">El negocio estará cerrado el día de tu cita original.</p>
-              <p className="mt-1">Por favor, selecciona una nueva fecha y hora disponible. Los servicios y profesional ya están pre-seleccionados.</p>
+          <Alert className="border-2 border-orange-400 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-950/20 mx-6 mt-4">
+            <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+            <AlertDescription className="text-sm text-orange-900 dark:text-orange-200">
+              <p className="font-bold">El negocio estará cerrado el día de tu cita original.</p>
+              <p className="mt-1 font-medium opacity-90">Por favor, selecciona una nueva fecha y hora disponible. Los servicios y profesional ya están pre-seleccionados.</p>
             </AlertDescription>
           </Alert>
         )}
 
         {/* Progress Indicator */}
-        <div className="flex gap-2 my-4">
+        <div className="flex gap-2 px-6 my-6">
           {[1, 2, 3].map((step) => (
             <div
               key={step}
-              className={`h-2 flex-1 rounded-full transition-all duration-300 ${
-                currentStep >= step ? 'bg-slate-900' : 'bg-slate-200'
+              className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+                currentStep >= step ? 'bg-primary shadow-[0_0_8px_rgba(249,115,22,0.3)]' : 'bg-gray-100 dark:bg-gray-800'
               }`}
             />
           ))}
@@ -565,15 +565,15 @@ export default function ModifyAppointmentDialog({
               {/* Step 1: Services */}
               {currentStep === 1 && (
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">Selecciona servicios</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                  <div className="px-6">
+                    <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Selecciona servicios</h3>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
                       Puedes agregar nuevos servicios o quitar los existentes. Debe haber al menos un servicio seleccionado.
                     </p>
                   </div>
 
                   {/* Available Services */}
-                  <div className="space-y-2">
+                  <div className="space-y-3 px-6 pb-6">
                     {availableServices.map((service) => {
                       const isOriginal = appointment.appointment_services.some(as => as.service.id === service.id)
                       const isSelected = selectedServices.some(s => s.id === service.id)
@@ -583,49 +583,49 @@ export default function ModifyAppointmentDialog({
                       return (
                         <div
                           key={service.id}
-                          className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
+                          className={`group cursor-pointer border-2 rounded-2xl p-4 transition-all duration-300 ${
                             isSelected
-                              ? 'border-slate-900 bg-slate-50'
+                              ? 'border-primary bg-orange-50/30 dark:bg-orange-950/10 shadow-lg shadow-orange-500/5'
                               : willBeRemoved
-                              ? 'border-red-300 bg-red-50'
-                              : 'border-slate-200 hover:border-slate-400'
+                              ? 'border-red-300 dark:border-red-900/50 bg-red-50 dark:bg-red-950/10'
+                              : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-700'
                           }`}
                           onClick={() => handleServiceToggle(service)}
                         >
                           <div className="flex items-start gap-4">
                             <div className="pt-1">
-                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
-                                isSelected ? 'bg-slate-900 border-slate-900' : 'border-slate-300'
+                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                isSelected ? 'bg-primary border-primary rotate-0' : 'border-gray-200 dark:border-gray-700 rotate-90'
                               }`}>
-                                {isSelected && <CheckCircle className="w-5 h-5 text-white" />}
+                                {isSelected && <CheckCircle className="w-4 h-4 text-white" />}
                               </div>
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-bold text-gray-900">{service.name}</h4>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <h4 className="font-black text-gray-900 dark:text-white tracking-tight">{service.name}</h4>
                                 {isOriginal && isSelected && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
                                     Original
                                   </span>
                                 )}
                                 {isNewlyAdded && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                                      Nuevo
                                   </span>
                                 )}
                                 {willBeRemoved && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
                                     ❌ Se quitará
                                   </span>
                                 )}
                               </div>
-                              {service.description && <p className="text-sm text-gray-600 mt-1">{service.description}</p>}
-                              <div className="flex items-center gap-4 mt-2">
-                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                  <Clock className="w-4 h-4" />
+                              {service.description && <p className="text-xs font-medium text-gray-500 dark:text-gray-400 line-clamp-1">{service.description}</p>}
+                              <div className="flex items-center gap-4 mt-3">
+                                <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                                  <Clock className="w-3.5 h-3.5" />
                                   <span>{service.duration_minutes} min</span>
                                 </div>
-                                <div className="font-bold text-slate-900">{formatPrice(service.price)}</div>
+                                <div className="font-black text-gray-900 dark:text-white text-sm decoration-primary/30 underline underline-offset-4">{formatPrice(service.price)}</div>
                               </div>
                             </div>
                           </div>
@@ -639,31 +639,42 @@ export default function ModifyAppointmentDialog({
               {/* Step 2: Employee */}
               {currentStep === 2 && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-gray-900">Selecciona profesional</h3>
-                  <div className="space-y-2">
+                  <div className="px-6">
+                    <h3 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">Selecciona profesional</h3>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Elige quién realizará el servicio</p>
+                  </div>
+                  
+                  <div className="space-y-3 px-6 pb-6">
                     {availableEmployees.map((employee) => (
                       <div
                         key={employee.id}
-                        className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
+                        className={`group cursor-pointer border-2 rounded-[2rem] p-4 transition-all duration-300 hover:shadow-lg ${
                           selectedEmployee === employee.id
-                            ? 'border-slate-900 bg-slate-50'
-                            : 'border-slate-200 hover:border-slate-400'
+                            ? 'border-primary bg-orange-50/30 dark:bg-orange-950/10 shadow-orange-500/5'
+                            : 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 hover:border-gray-300 dark:hover:border-gray-700'
                         }`}
                         onClick={() => setSelectedEmployee(employee.id)}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center">
-                            {employee.avatar_url ? (
-                              <img src={employee.avatar_url} alt={employee.first_name} className="w-12 h-12 rounded-full object-cover" />
-                            ) : (
-                              <User className="w-6 h-6 text-slate-700" />
-                            )}
+                          <div className="relative">
+                            <Avatar className="w-14 h-14 border-2 border-white dark:border-gray-700 shadow-xl transition-transform group-hover:scale-110">
+                              <AvatarImage src={employee.avatar_url} />
+                              <AvatarFallback className="bg-primary text-white font-black text-xs">
+                                {employee.first_name.charAt(0)}{employee.last_name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full shadow-sm" />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-bold text-gray-900">{employee.first_name} {employee.last_name}</h4>
-                            {employee.position && <p className="text-sm text-slate-600">{employee.position}</p>}
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[9px] font-black text-orange-600 dark:text-orange-500 uppercase tracking-[0.2em] block mb-0.5">Profesional</span>
+                            <h4 className="font-black text-gray-900 dark:text-white tracking-tight">{employee.first_name} {employee.last_name}</h4>
+                            {employee.position && <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{employee.position}</p>}
                           </div>
-                          {selectedEmployee === employee.id && <CheckCircle className="w-6 h-6 text-slate-900" />}
+                          {selectedEmployee === employee.id && (
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                              <CheckCircle className="w-6 h-6 text-primary" />
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -673,140 +684,143 @@ export default function ModifyAppointmentDialog({
 
               {/* Step 3: Date & Time */}
               {currentStep === 3 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Selecciona fecha y hora</h3>
-
-                  {/* Calendar - First (Top) */}
-                  <div className="border-2 border-slate-200 rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Fecha</h4>
-                    <div className="flex justify-center">
-                      <CalendarComponent
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        defaultMonth={selectedDate || new Date()}
-                        locale={{
-                          localize: {
-                            month: (n: number) => ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][n],
-                            day: (n: number) => ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][n],
-                          },
-                          formatLong: {
-                            date: () => 'dd/MM/yyyy',
-                          },
-                        } as any}
-                        disabled={(date) => {
-                          const today = new Date()
-                          const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-                          const checkingDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-                          return checkingDateOnly < todayDateOnly
-                        }}
-                        fromYear={new Date().getFullYear()}
-                        toYear={new Date().getFullYear() + 1}
-                        className="rounded-md"
-                        captionLayout="dropdown"
-                      />
+                <div className="space-y-6 px-6 pb-6">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Calendar - Left */}
+                    <div className="flex-1 bg-white dark:bg-gray-800/50 border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] p-6 shadow-sm">
+                      <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5" />
+                        Fecha de la Cita
+                      </h4>
+                      <div className="flex justify-center">
+                        <CalendarComponent
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          defaultMonth={selectedDate || new Date()}
+                          locale={es}
+                          disabled={(date) => {
+                            const today = new Date()
+                            const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                            const checkingDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                            return checkingDateOnly < todayDateOnly
+                          }}
+                          fromYear={new Date().getFullYear()}
+                          toYear={new Date().getFullYear() + 1}
+                          className="rounded-md border-none dark:bg-transparent"
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Special Hours Alert */}
-                  {specialHourForDate && selectedDate && (
-                    <div className={`p-4 rounded-lg border-2 ${
-                      specialHourForDate.is_closed
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-blue-50 border-blue-200'
-                    }`}>
-                      <div className="flex items-start gap-3">
-                        <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                          specialHourForDate.is_closed
-                            ? 'bg-red-100'
-                            : 'bg-blue-100'
-                        }`}>
-                          <span className="text-sm">⚠️</span>
+                    {/* Time Slots - Right */}
+                    <div className="flex-1 bg-white dark:bg-gray-800/50 border-2 border-gray-100 dark:border-gray-800 rounded-[2rem] p-6 shadow-sm flex flex-col">
+                      <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5" />
+                        Horarios Disponibles
+                      </h4>
+                      
+                      {!selectedDate ? (
+                        <div className="flex-1 flex flex-col items-center justify-center py-12 text-center opacity-40">
+                          <div className="w-16 h-16 rounded-3xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+                            <Clock className="w-8 h-8 text-gray-400" />
+                          </div>
+                          <p className="text-xs font-black uppercase tracking-widest text-gray-500">Selecciona una fecha</p>
                         </div>
-                        <div className="flex-1">
-                          <p className={`font-semibold text-sm ${
-                            specialHourForDate.is_closed
-                              ? 'text-red-900'
-                              : 'text-blue-900'
-                          }`}>
-                            {specialHourForDate.is_closed ? 'Negocio cerrado' : 'Horario especial'}
-                          </p>
-                          <p className={`text-sm mt-1 ${
-                            specialHourForDate.is_closed
-                              ? 'text-red-700'
-                              : 'text-blue-700'
-                          }`}>
-                            {specialHourForDate.is_closed
-                              ? `El negocio estará cerrado este día (${specialHourForDate.reason || 'Día especial'}). Por favor selecciona otra fecha.`
-                              : `El negocio tendrá horario especial: ${specialHourForDate.open_time?.slice(0, 5)} - ${specialHourForDate.close_time?.slice(0, 5)} (${specialHourForDate.reason || 'Horario especial'})`
+                      ) : !specialHourForDate?.is_closed && availableSlots.length > 0 ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto pr-2 scrollbar-thin dark:scrollbar-thumb-gray-700 max-h-[300px]">
+                          {availableSlots.map((slot) => (
+                            <Button
+                              key={slot.time}
+                              variant={selectedTime === slot.time ? "default" : "outline"}
+                              onClick={() => setSelectedTime(slot.time)}
+                              className={`
+                                h-11 rounded-xl text-xs font-black tracking-tight transition-all duration-300
+                                ${selectedTime === slot.time 
+                                  ? 'bg-primary text-white border-primary shadow-lg shadow-orange-500/20 scale-105' 
+                                  : 'border-gray-100 dark:border-gray-700 hover:border-primary dark:hover:border-primary hover:text-primary dark:hover:text-primary bg-gray-50/50 dark:bg-gray-900/50'
+                                }
+                              `}
+                            >
+                              {slot.time}
+                            </Button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
+                          <div className="w-16 h-16 rounded-3xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
+                            <AlertCircle className="w-8 h-8 text-red-500" />
+                          </div>
+                          <p className="text-xs font-black uppercase tracking-widest text-red-500">
+                            {specialHourForDate?.is_closed 
+                              ? 'Negocio cerrado'
+                              : 'Sin disponibilidad'
                             }
                           </p>
                         </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Special Hours Alert - Adaptive Bottom */}
+                  {specialHourForDate && selectedDate && !specialHourForDate.is_closed && (
+                    <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 flex items-start gap-4 animate-in slide-in-from-bottom-2 duration-500">
+                      <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm flex-shrink-0">
+                        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-blue-950 dark:text-blue-200 uppercase tracking-widest">Atención Especial</p>
+                        <p className="text-xs font-medium text-blue-800/80 dark:text-blue-300/80 leading-relaxed mt-0.5">
+                          Este día el negocio tiene un horario modificado: {specialHourForDate.open_time?.slice(0, 5)} - {specialHourForDate.close_time?.slice(0, 5)} por {specialHourForDate.reason || 'Día especial'}.
+                        </p>
                       </div>
                     </div>
                   )}
-
-                  {/* Time Slots - Second (Bottom) */}
-                  <div className="border-2 border-slate-200 rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                      {selectedDate ? `Horarios disponibles` : 'Primero selecciona una fecha'}
-                    </h4>
-                    {!selectedDate ? (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="text-center text-gray-400">
-                          <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">Selecciona una fecha primero</p>
-                        </div>
-                      </div>
-                    ) : !specialHourForDate?.is_closed && availableSlots.length > 0 ? (
-                      <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
-                        {availableSlots.map((slot) => (
-                          <Button
-                            key={slot.time}
-                            variant={selectedTime === slot.time ? "default" : "outline"}
-                            onClick={() => setSelectedTime(slot.time)}
-                            className={selectedTime === slot.time ? 'bg-slate-900 hover:bg-slate-800' : 'border-2 hover:border-slate-900'}
-                          >
-                            {slot.time}
-                          </Button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="text-center text-gray-400">
-                          <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">
-                            {specialHourForDate?.is_closed 
-                              ? 'El negocio está cerrado este día'
-                              : 'No hay horarios disponibles'
-                            }
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        <DialogFooter className="mt-4 pt-4 border-t">
-          <Button variant="outline" onClick={handleBack} disabled={currentStep === 1 || saving}>
-            Atrás
-          </Button>
-          <Button onClick={handleNext} disabled={saving} className="bg-slate-900 hover:bg-slate-800">
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Guardando...
-              </>
-            ) : currentStep === 3 ? (
-              'Guardar Cambios'
-            ) : (
-              'Continuar'
-            )}
-          </Button>
+        <DialogFooter className="p-6 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-md">
+          <div className="flex items-center justify-between w-full gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={handleBack} 
+              disabled={currentStep === 1 || saving}
+              className="rounded-xl h-12 px-6 text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"
+            >
+              Atrás
+            </Button>
+            
+            <Button 
+              onClick={handleNext} 
+              disabled={saving} 
+              className={`
+                rounded-xl h-12 px-10 text-[11px] font-black uppercase tracking-widest transition-all duration-300 shadow-xl active:scale-95
+                ${currentStep === 3 
+                  ? 'bg-primary text-white hover:bg-orange-600 shadow-orange-500/20' 
+                  : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-black dark:hover:bg-gray-100 shadow-gray-900/20 dark:shadow-white/5'
+                }
+              `}
+            >
+              {saving ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                  <span>Guardando</span>
+                </div>
+              ) : currentStep === 3 ? (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Confirmar Cambios
+                </>
+              ) : (
+                <>
+                  Continuar
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

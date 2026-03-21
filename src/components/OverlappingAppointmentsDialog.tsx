@@ -51,74 +51,76 @@ export default function OverlappingAppointmentsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] p-0 gap-0 rounded-2xl overflow-hidden">
-        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <Calendar className="w-5 h-5 text-orange-600" />
+      <DialogContent className="max-w-2xl max-h-[80vh] p-0 gap-0 rounded-3xl overflow-hidden border-none shadow-2xl bg-white dark:bg-gray-900">
+        <DialogHeader className="px-6 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-slate-800 dark:to-gray-900">
+          <DialogTitle className="flex items-center gap-3 text-xl font-black tracking-tight text-gray-900 dark:text-white">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
             <span>{appointments.length} Citas Superpuestas</span>
           </DialogTitle>
-          <p className="text-sm text-gray-600 mt-1">
-            Haz clic en una cita para ver más detalles
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1 pl-13">
+            Hay conflictos de horario detectados. Selecciona una cita para gestionarla.
           </p>
         </DialogHeader>
 
-        <div className="overflow-y-auto max-h-[60vh] px-6 py-4 rounded-b-2xl">
-          <div className="space-y-3">
+        <div className="overflow-y-auto max-h-[60vh] px-6 py-6 scrollbar-thin dark:scrollbar-thumb-gray-800">
+          <div className="space-y-4">
             {appointments.map((appointment, index) => {
               const serviceName = appointment.appointment_services?.[0]?.services?.name || 'Servicio'
-              const employee = employees.find(e => e.id === appointment.employees?.first_name)
-
+              
               return (
                 <div
                   key={appointment.id}
-                  className={`p-4 border-2 rounded-2xl cursor-pointer hover:shadow-md transition-all duration-200 ${
-                    index === 0 ? 'bg-orange-50/50 border-orange-200' : 'bg-white border-gray-200 hover:border-orange-300'
+                  className={`group p-5 border-2 rounded-[2rem] cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] ${
+                    index === 0 
+                      ? 'bg-orange-50/30 dark:bg-orange-950/10 border-orange-200 dark:border-orange-900/50 shadow-orange-500/5' 
+                      : 'bg-white dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 hover:border-orange-300 dark:hover:border-orange-900/50 shadow-sm'
                   }`}
                   onClick={() => handleAppointmentClick(appointment)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     {/* Left side - Client info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`inline-block w-3 h-3 rounded-full ${getStatusColor(appointment.status)}`} />
-                        <h4 className="font-semibold text-gray-900 truncate flex items-center gap-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-3 h-3 rounded-full shadow-[0_0_8px_currentColor] ${getStatusColor(appointment.status)}`} />
+                        <h4 className="font-black text-gray-900 dark:text-white truncate flex items-center gap-2 text-lg tracking-tight">
                           {getClientName(appointment)}
                           {!appointment.client_id && !appointment.business_client_id && (
-                            <UserCircle className="w-4 h-4 text-orange-600" />
+                            <span className="text-[10px] font-black bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-lg uppercase tracking-widest">Walk-in</span>
                           )}
                         </h4>
                       </div>
 
-                      <div className="space-y-1">
-                        <p className="text-sm text-gray-600 flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {serviceName}
-                        </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <div className="w-7 h-7 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                            <Calendar className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-xs font-bold uppercase tracking-tight truncate">{serviceName}</span>
+                        </div>
 
-                        {appointment.employees && (
-                          <p className="text-sm text-gray-500 flex items-center gap-2">
-                            <UserCheck className="w-3.5 h-3.5" />
-                            {appointment.employees.first_name} {appointment.employees.last_name}
-                          </p>
-                        )}
-
-                        <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5" />
-                          {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
-                        </p>
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <div className="w-7 h-7 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                            <Clock className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-xs font-black tracking-tight">
+                            {appointment.start_time.substring(0, 5)} - {appointment.end_time.substring(0, 5)}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Right side - Price */}
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="flex items-center gap-1 text-emerald-600 font-semibold text-lg">
+                    <div className="flex flex-col items-end justify-between self-stretch py-1">
+                      <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-black text-xl tracking-tighter">
                         <CircleDollarSign className="w-5 h-5" />
                         {appointment.total_price}
                       </div>
                       {index === 0 && (
-                        <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-medium">
-                          Primera
-                        </span>
+                        <Badge className="bg-orange-600 hover:bg-orange-600 text-white border-none shadow-lg shadow-orange-500/20 text-[9px] font-black uppercase tracking-widest px-3">
+                          Siguiente
+                        </Badge>
                       )}
                     </div>
                   </div>

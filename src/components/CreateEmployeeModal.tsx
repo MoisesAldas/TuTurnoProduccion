@@ -233,86 +233,73 @@ export default function CreateEmployeeModal({
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl p-0 gap-0">
-        <div className="max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent hover:scrollbar-thumb-orange-300 px-4 sm:px-6 py-4 sm:py-6">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-50">Nuevo Empleado</DialogTitle>
-            <DialogDescription className="text-sm">
-              Agrega un nuevo empleado a tu equipo
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl p-0 gap-0 border-none shadow-2xl bg-white dark:bg-gray-900 rounded-[2.5rem] overflow-hidden">
+        <div className="max-h-[85vh] sm:max-h-[90vh] overflow-y-auto scrollbar-thin dark:scrollbar-thumb-gray-800 scrollbar-thumb-orange-200 scrollbar-track-transparent px-4 sm:px-8 py-6 sm:py-8">
+          <DialogHeader className="mb-6">
+            <div className="flex flex-col gap-0.5 relative pl-5">
+              <div className="absolute left-0 w-1 h-6 bg-primary rounded-full mt-0.5" />
+              <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-primary">Equipo</span>
+              <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white italic">
+                Nuevo Empleado
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-sm font-medium text-gray-500 dark:text-gray-400 pl-5">
+              Completa los datos para integrar a un nuevo profesional
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 mt-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
           {/* Avatar Upload */}
-          <div className="flex flex-col items-center space-y-3 p-4 sm:p-6 border-2 border-dashed border-orange-200 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-900/20 rounded-lg">
+          <div className="flex flex-col items-center space-y-4 p-6 sm:p-8 border-2 border-dashed border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 rounded-[2rem] transition-all hover:border-primary/30 group">
             <div className="relative">
               {avatarPreview ? (
-                <div className="relative group">
+                <div className="relative group/avatar">
                   <img
                     src={avatarPreview}
                     alt="Preview"
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg ring-2 ring-orange-200 dark:ring-orange-800"
+                    className="w-24 h-24 sm:w-28 sm:h-24 rounded-[2rem] object-cover border-4 border-white dark:border-gray-800 shadow-2xl transition-transform group-hover/avatar:scale-105"
                   />
                   <button
                     type="button"
                     onClick={removeAvatar}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-all shadow-lg hover:scale-110"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-xl p-2 hover:bg-red-600 transition-all shadow-lg hover:scale-110 active:scale-90"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-4 h-4 stroke-[3px]" />
                   </button>
                 </div>
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 rounded-full flex items-center justify-center ring-2 ring-orange-200 dark:ring-orange-800">
-                  <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-orange-500 dark:text-orange-400" />
+                <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white dark:bg-gray-800 rounded-[2.5rem] flex items-center justify-center shadow-inner border border-gray-100 dark:border-gray-700 transition-all group-hover:border-primary/20">
+                  <Camera className="w-10 h-10 text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors" />
                 </div>
               )}
             </div>
 
             <div className="text-center space-y-1">
-              <Label className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-200 block">
-                Foto de Perfil
+              <Label className="text-xs font-black uppercase tracking-widest text-gray-900 dark:text-white">
+                Fotografía Profesional
               </Label>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
-                JPG, PNG o GIF (máximo 5MB)
+              <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 italic">
+                Recomendado: Fondo neutro y buena iluminación
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingAvatar}
-                className="flex items-center justify-center gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400 transition-all w-full sm:w-auto dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/50 dark:hover:text-orange-300 dark:hover:border-orange-600"
+                className="h-10 rounded-xl px-6 text-[10px] font-black uppercase tracking-widest border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary hover:text-primary dark:hover:text-primary transition-all active:scale-95"
               >
                 {uploadingAvatar ? (
-                  <>
-                    <div className="relative w-3.5 h-3.5">
-                      <div className="absolute inset-0 border-2 border-orange-300 rounded-full"></div>
-                      <div className="absolute inset-0 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                    <span className="hidden sm:inline">Procesando...</span>
-                    <span className="sm:hidden">Procesando...</span>
-                  </>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>{avatarPreview ? 'Cambiar Foto' : 'Subir Foto'}</span>
+                    <Upload className="w-3.5 h-3.5 mr-2" />
+                    {avatarPreview ? 'Cambiar Imagen' : 'Seleccionar Archivo'}
                   </>
                 )}
               </Button>
-
-              {avatarPreview && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={removeAvatar}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-all w-full sm:w-auto dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-900/50"
-                >
-                  <X className="w-3.5 h-3.5 mr-1 sm:mr-2" />
-                  Quitar
-                </Button>
-              )}
             </div>
 
             <input
@@ -324,226 +311,129 @@ export default function CreateEmployeeModal({
             />
           </div>
 
-          {/* Nombre y Apellido */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="first_name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Nombre <span className="text-orange-600">*</span>
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-                <Input
-                  id="first_name"
-                  {...register('first_name')}
-                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
-                    touchedFields.first_name && !errors.first_name ? 'border-green-500' : ''
-                  } ${
-                    errors.first_name ? 'border-red-500' : ''
-                  }`}
-                  placeholder="Ej: Juan"
-                />
-                {touchedFields.first_name && !errors.first_name && (
-                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                )}
-              </div>
-              {errors.first_name && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.first_name.message}</p>
+          {/* Form Fields */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="first_name" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Nombre *</Label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="first_name"
+                    {...register('first_name')}
+                    className={`pl-11 h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary ${errors.first_name ? 'border-red-500' : ''}`}
+                    placeholder="Ej: Juan"
+                  />
                 </div>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="last_name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Apellido <span className="text-orange-600">*</span>
-              </Label>
-              <div className="relative">
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last_name" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Apellido *</Label>
                 <Input
                   id="last_name"
                   {...register('last_name')}
-                  className={`h-10 focus:border-orange-500 focus:ring-orange-500 ${
-                    touchedFields.last_name && !errors.last_name ? 'border-green-500' : ''
-                  } ${
-                    errors.last_name ? 'border-red-500' : ''
-                  }`}
+                  className={`h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary ${errors.last_name ? 'border-red-500' : ''}`}
                   placeholder="Ej: Pérez"
                 />
-                {touchedFields.last_name && !errors.last_name && (
-                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                )}
               </div>
-              {errors.last_name && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.last_name.message}</p>
-                </div>
-              )}
             </div>
-          </div>
 
-          {/* Email y Teléfono */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Email <span className="text-orange-600">*</span>
-              </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Email *</Label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    {...register('email')}
+                    className="pl-11 h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary"
+                    placeholder="juan@ejemplo.com"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Teléfono *</Label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    {...register('phone')}
+                    className="pl-11 h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary"
+                    placeholder="0999123456"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="position" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Posición / Cargo *</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  id="email"
-                  type="email"
-                  {...register('email')}
-                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
-                    touchedFields.email && !errors.email ? 'border-green-500' : ''
-                  } ${
-                    errors.email ? 'border-red-500' : ''
-                  }`}
-                  placeholder="juan@ejemplo.com"
+                  id="position"
+                  {...register('position')}
+                  className="pl-11 h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary"
+                  placeholder="Ej: Estilista, Barbero, Masajista..."
                 />
-                {touchedFields.email && !errors.email && (
-                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                )}
               </div>
-              {errors.email && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.email.message}</p>
-                </div>
-              )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Teléfono <span className="text-orange-600">*</span>
-              </Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  maxLength={10}
-                  {...register('phone')}
-                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
-                    touchedFields.phone && !errors.phone ? 'border-green-500' : ''
-                  } ${
-                    errors.phone ? 'border-red-500' : ''
-                  }`}
-                  placeholder="0999123456"
-                  onInput={(e) => {
-                    const target = e.target as HTMLInputElement
-                    target.value = target.value.replace(/[^0-9]/g, '').slice(0, 10)
-                  }}
-                />
-                {touchedFields.phone && !errors.phone && (
-                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                )}
-              </div>
-              {errors.phone && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.phone.message}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Posición */}
-          <div className="space-y-1.5">
-            <Label htmlFor="position" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Posición / Cargo <span className="text-orange-600">*</span>
-            </Label>
-            <div className="relative">
-              <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-              <Input
-                id="position"
-                {...register('position')}
-                className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
-                  touchedFields.position && !errors.position ? 'border-green-500' : ''
-                } ${
-                  errors.position ? 'border-red-500' : ''
-                }`}
-                placeholder="Ej: Estilista, Barbero, Masajista..."
+            <div className="space-y-2">
+              <Label htmlFor="bio" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">Breve Biografía</Label>
+              <Textarea
+                id="bio"
+                {...register('bio')}
+                className="rounded-2xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary min-h-[100px] resize-none"
+                placeholder="Describe la experiencia o especialidades del profesional..."
               />
-              {touchedFields.position && !errors.position && (
-                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-              )}
             </div>
-            {errors.position && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700 dark:text-red-400">{errors.position.message}</p>
-              </div>
-            )}
-          </div>
 
-          {/* Biografía */}
-          <div className="space-y-1.5">
-            <Label htmlFor="bio" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Biografía / Descripción
-            </Label>
-            <Textarea
-              id="bio"
-              {...register('bio')}
-              placeholder="Descripción breve del empleado, experiencia, especialidades..."
-              rows={2}
-              className="focus:border-orange-500 focus:ring-orange-500 text-sm"
-            />
-            {errors.bio && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700 dark:text-red-400">{errors.bio.message}</p>
+            {/* Estado del empleado */}
+            <div className="p-5 bg-orange-50/30 dark:bg-orange-950/10 border-2 border-orange-100 dark:border-orange-900/30 rounded-[2rem] flex items-center justify-between group/status">
+              <div className="space-y-0.5">
+                <Label htmlFor="is_active" className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                  Estado Operativo
+                </Label>
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest italic">
+                  {isActive ? '✓ Disponible para citas' : '⚠ Temporalmente inactivo'}
+                </p>
               </div>
-            )}
-          </div>
-
-          {/* Estado del empleado */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-            <div>
-              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-                Estado del Empleado
-              </Label>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                {isActive ? 'Disponible para asignar citas' : 'No aparecerá en opciones de reserva'}
-              </p>
+              <Switch
+                id="is_active"
+                checked={isActive}
+                onCheckedChange={(checked) => setValue('is_active', checked)}
+                className="data-[state=checked]:bg-primary"
+              />
             </div>
-            <Switch
-              id="is_active"
-              checked={isActive}
-              onCheckedChange={(checked) => setValue('is_active', checked)}
-              className="self-start sm:self-auto"
-            />
           </div>
 
-          {/* Botones */}
-          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+          {/* Footer Actions */}
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="flex-1 h-9"
+              className="flex-1 h-12 rounded-xl text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
               disabled={submitting}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="flex-1 h-9 bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-[2] h-12 bg-primary hover:bg-orange-600 text-white rounded-xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50"
               disabled={!isValid || submitting || uploadingAvatar}
             >
               {submitting ? (
-                <>
-                  <div className="relative w-3.5 h-3.5 mr-2">
-                    <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
-                    <div className="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  Creando...
-                </>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-[11px] font-black uppercase tracking-widest">Creando...</span>
+                </div>
               ) : (
-                <>
-                  <Save className="w-3.5 h-3.5 mr-2" />
-                  Crear Empleado
-                </>
+                <div className="flex items-center gap-2">
+                  <Save className="w-4 h-4" />
+                  <span className="text-[11px] font-black uppercase tracking-widest">Registrar Empleado</span>
+                </div>
               )}
             </Button>
           </div>

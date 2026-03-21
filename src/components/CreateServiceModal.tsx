@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Save, DollarSign, Clock, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Save, DollarSign, Clock, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabaseClient'
 import { useToast } from '@/hooks/use-toast'
 import { serviceFormSchema, type ServiceFormData } from '@/lib/validation'
@@ -145,175 +145,149 @@ export default function CreateServiceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-50">Nuevo Servicio</DialogTitle>
-          <DialogDescription className="text-sm">
-            Crea un nuevo servicio para tu negocio
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4 mt-4">
-          {/* Nombre del servicio */}
-          <div className="space-y-1.5">
-            <Label htmlFor="name" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Nombre del Servicio <span className="text-orange-600">*</span>
-            </Label>
-            <div className="relative">
-              <Input
-                id="name"
-                {...register('name')}
-                placeholder="Ej: Corte de cabello, Manicura..."
-                className={`h-10 focus:border-orange-500 focus:ring-orange-500 ${
-                  touchedFields.name && !errors.name ? 'border-green-500' : ''
-                } ${
-                  errors.name ? 'border-red-500' : ''
-                }`}
-              />
-              {touchedFields.name && !errors.name && (
-                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-              )}
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-none shadow-2xl bg-white dark:bg-gray-900 rounded-[2.5rem] overflow-hidden">
+        <div className="px-6 py-8 sm:px-8">
+          <DialogHeader className="mb-6">
+            <div className="flex flex-col gap-0.5 relative pl-5">
+              <div className="absolute left-0 w-1 h-6 bg-primary rounded-full mt-0.5" />
+              <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-primary">Servicios</span>
+              <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white italic">
+                Nuevo Servicio
+              </DialogTitle>
             </div>
-            {errors.name && (
-              <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-red-700 dark:text-red-400">{errors.name.message}</p>
-              </div>
-            )}
-          </div>
+            <DialogDescription className="text-sm font-medium text-gray-500 dark:text-gray-400 pl-5">
+              Define un nuevo servicio para ofrecer a tus clientes
+            </DialogDescription>
+          </DialogHeader>
 
-          {/* Descripción */}
-          <div className="space-y-1.5">
-            <Label htmlFor="description" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Descripción
-            </Label>
-            <Textarea
-              id="description"
-              {...register('description')}
-              placeholder="Describe brevemente el servicio (opcional)"
-              rows={2}
-              className="focus:border-orange-500 focus:ring-orange-500 text-sm"
-            />
-          </div>
-
-          {/* Precio y duración */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Precio */}
-            <div className="space-y-1.5">
-              <Label htmlFor="price" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Precio <span className="text-orange-600">*</span>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
+            {/* Nombre del servicio */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                Nombre del Servicio *
               </Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+              <div className="relative group">
                 <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="99999.99"
-                  {...register('price')}
-                  className={`pl-10 h-10 focus:border-orange-500 focus:ring-orange-500 ${
-                    touchedFields.price && !errors.price ? 'border-green-500' : ''
-                  } ${
-                    errors.price ? 'border-red-500' : ''
-                  }`}
-                  placeholder="0.00"
+                  id="name"
+                  {...register('name')}
+                  placeholder="Ej: Corte de cabello, Manicura..."
+                  className={`h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary ${errors.name ? 'border-red-500' : ''}`}
                 />
-                {touchedFields.price && !errors.price && (
-                  <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                {touchedFields.name && !errors.name && (
+                  <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
                 )}
               </div>
-              {errors.price && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.price.message}</p>
-                </div>
-              )}
             </div>
 
-            {/* Duración */}
-            <div className="space-y-1.5">
-              <Label htmlFor="duration_minutes" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Duración <span className="text-orange-600">*</span>
+            {/* Descripción */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                Descripción
               </Label>
-              <Select
-                value={durationMinutesValue}
-                onValueChange={(value) => setValue('duration_minutes', value, { shouldValidate: true })}
+              <Textarea
+                id="description"
+                {...register('description')}
+                placeholder="Describe brevemente el servicio..."
+                rows={2}
+                className="rounded-2xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary text-sm min-h-[100px] resize-none"
+              />
+            </div>
+
+            {/* Precio y duración */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Precio */}
+              <div className="space-y-2">
+                <Label htmlFor="price" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                  Precio Sugerido *
+                </Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    {...register('price')}
+                    className={`pl-11 h-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 font-bold focus-visible:ring-primary ${errors.price ? 'border-red-500' : ''}`}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* Duración */}
+              <div className="space-y-2">
+                <Label htmlFor="duration_minutes" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 pl-4">
+                  Duración Estimada *
+                </Label>
+                <Select
+                  value={durationMinutesValue}
+                  onValueChange={(value) => setValue('duration_minutes', value, { shouldValidate: true })}
+                >
+                  <SelectTrigger className="h-12 border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800/50 rounded-xl focus:ring-primary font-bold">
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-3 text-gray-400" />
+                      <SelectValue placeholder="Selecciona" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-900 shadow-2xl font-bold">
+                    {durationOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="text-xs hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Estado del servicio */}
+            <div className="p-5 bg-orange-50/30 dark:bg-orange-950/10 border-2 border-orange-100 dark:border-orange-900/30 rounded-[2rem] flex items-center justify-between group/status">
+              <div className="space-y-0.5">
+                <Label htmlFor="is_active" className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                  Estado de Venta
+                </Label>
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest italic">
+                  {isActive ? '✓ Disponible para reservas' : '⚠ Oculto temporalmente'}
+                </p>
+              </div>
+              <Switch
+                id="is_active"
+                checked={isActive}
+                onCheckedChange={(checked) => setValue('is_active', checked)}
+                className="data-[state=checked]:bg-primary"
+              />
+            </div>
+
+            {/* Botones */}
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="flex-1 h-12 rounded-xl text-[11px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+                disabled={submitting}
               >
-                <SelectTrigger className="w-full h-10 focus:border-orange-500 focus:ring-orange-500">
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                    <SelectValue placeholder="Selecciona" />
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="flex-[2] h-12 bg-primary hover:bg-orange-600 text-white rounded-xl shadow-xl shadow-orange-500/20 transition-all active:scale-95 disabled:opacity-50"
+                disabled={!isValid || submitting}
+              >
+                {submitting ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-[11px] font-black uppercase tracking-widest">Creando...</span>
                   </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {durationOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.duration_minutes && (
-                <div className="flex items-start gap-1.5 p-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                  <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 dark:text-red-400">{errors.duration_minutes.message}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Estado del servicio */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 p-3 bg-orange-50/50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-            <div>
-              <Label htmlFor="is_active" className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-                Estado del Servicio
-              </Label>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                {isActive ? 'Disponible para reservas' : 'Oculto para clientes'}
-              </p>
-            </div>
-            <Switch
-              id="is_active"
-              checked={isActive}
-              onCheckedChange={(checked) => setValue('is_active', checked)}
-              className="self-start sm:self-auto"
-            />
-          </div>
-
-          {/* Botones */}
-          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1 h-9"
-              disabled={submitting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1 h-9 bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!isValid || submitting}
-            >
-              {submitting ? (
-                <>
-                  <div className="relative w-3.5 h-3.5 mr-2">
-                    <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
-                    <div className="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Save className="w-4 h-4" />
+                    <span className="text-[11px] font-black uppercase tracking-widest">Crear Servicio</span>
                   </div>
-                  Creando...
-                </>
-              ) : (
-                <>
-                  <Save className="w-3.5 h-3.5 mr-2" />
-                  Crear Servicio
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   )

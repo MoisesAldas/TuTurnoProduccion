@@ -34,8 +34,8 @@ export function ServiceStep({
                 key={service.id}
                 className={`flex flex-col rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
                   isSelected 
-                    ? 'border-primary bg-primary/5 shadow-md' 
-                    : 'border-gray-100 hover:border-gray-200 bg-white hover:bg-gray-50/50'
+                    ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-md' 
+                    : 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
                 }`}
               >
                 <button
@@ -44,44 +44,44 @@ export function ServiceStep({
                   className="w-full text-left p-4 flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-gray-700'}`}>
                       {isSelected ? <Check className="w-5 h-5 stroke-[3px]" /> : <Briefcase className="w-5 h-5" />}
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-900 tracking-tight">{service.name}</h4>
+                      <h4 className="font-bold text-gray-900 dark:text-white tracking-tight">{service.name}</h4>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
                           <Clock className="w-3 h-3" /> {service.duration_minutes}m
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary">
+                        <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary dark:text-orange-400">
                           <DollarSign className="w-3 h-3" /> {service.price}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-primary rotate-0 scale-110' : 'border-gray-200 rotate-90 scale-100'}`}>
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-primary rotate-0 scale-110' : 'border-gray-200 dark:border-gray-700 rotate-90 scale-100'}`}>
                     <Check className={`w-3.5 h-3.5 text-white transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0'}`} />
                   </div>
                 </button>
 
                 {isSelected && (
                   <div className="px-3 pb-3 pt-0 animate-in slide-in-from-top-2 duration-300">
-                    <div className="h-px bg-primary/10 mb-2" />
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-2 rounded-xl border border-primary/10 shadow-sm">
+                    <div className="h-px bg-primary/10 dark:bg-primary/20 mb-2" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl border border-primary/10 dark:border-primary/20 shadow-sm">
                       <div className="flex items-center gap-2">
                         <UserIcon className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Profesional Asignado</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">Profesional Asignado</span>
                       </div>
                       <Select 
                         value={serviceAssignments[service.id] || ''} 
                         onValueChange={(val) => assignEmployeeToService(service.id, val)}
                       >
-                        <SelectTrigger className="h-8 w-full sm:w-48 text-xs font-bold border-none bg-gray-50 focus:ring-1 focus:ring-primary/20 rounded-lg">
+                        <SelectTrigger className="h-8 w-full sm:w-48 text-xs font-bold border-none bg-gray-50 dark:bg-gray-900 focus:ring-1 focus:ring-primary/20 rounded-lg">
                           <SelectValue placeholder="Elegir profesional" />
                         </SelectTrigger>
-                        <SelectContent className="z-[300] rounded-xl border-gray-100 shadow-xl font-bold">
+                        <SelectContent className="z-[300] rounded-xl border-gray-100 dark:border-gray-800 dark:bg-gray-950 shadow-xl font-bold">
                           {employees.map((emp) => (
-                            <SelectItem key={emp.id} value={emp.id} className="text-xs hover:bg-primary/5 focus:bg-primary/5 rounded-lg cursor-pointer">
+                            <SelectItem key={emp.id} value={emp.id} className="text-xs hover:bg-primary/5 dark:hover:bg-primary/10 focus:bg-primary/5 dark:focus:bg-primary/10 rounded-lg cursor-pointer">
                               {emp.first_name} {emp.last_name}
                             </SelectItem>
                           ))}

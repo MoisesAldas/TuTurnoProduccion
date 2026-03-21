@@ -35,6 +35,8 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Toaster } from '@/components/ui/toaster'
 import { createClient } from '@/lib/supabaseClient'
+import { BusinessThemeProvider } from '@/components/BusinessThemeProvider'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 type NavItem = {
   name: string
@@ -63,6 +65,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [businessName, setBusinessName] = useState<string>('')
   const [businessLogo, setBusinessLogo] = useState<string>('')
+  const [visualSettings, setVisualSettings] = useState<any>(null)
   const supabase = createClient()
 
   // Mantener el sidebar expandido cuando está pinned
@@ -100,13 +103,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
     const { data, error } = await supabase
       .from('businesses')
-      .select('name, logo_url')
+      .select('name, logo_url, visual_settings')
       .eq('owner_id', authState.user.id)
       .single()
 
     if (data) {
       setBusinessName(data.name)
       setBusinessLogo(data.logo_url || '')
+      setVisualSettings(data.visual_settings)
     }
   }
 
@@ -133,244 +137,219 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden overflow-x-hidden bg-gray-50 w-full max-w-full">
-      <Suspense fallback={null}>
-        <NavigationProgress />
-      </Suspense>
-      {/* Mobile Menu Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
+    <TooltipProvider>
+      <BusinessThemeProvider settings={visualSettings}>
+        <div className="flex h-screen overflow-hidden overflow-x-hidden bg-gray-50 w-full max-w-full">
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
+        {/* Mobile Menu Backdrop */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
 
-      {/* Sidebar */}
-      <aside
-        onMouseEnter={() => !isPinned && setCollapsed(false)}
-        onMouseLeave={() => !isPinned && setCollapsed(true)}
-        className={`
-        ${collapsed ? 'lg:w-20' : 'lg:w-64'}
-        absolute lg:relative inset-y-0 left-0 z-50
-        w-64 lg:w-auto
-        bg-slate-950 text-white
-        transition-all duration-500 ease-in-out
-        flex flex-col border-r border-white/5 shadow-2xl
-        ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        group
-        `}
-      >
-        {/* Desktop Pin/Unpin Button - Top Right Corner */}
-        <button
-          type="button"
-          onClick={() => setIsPinned(!isPinned)}
-          className={`hidden lg:block absolute top-1 right-1 z-10 p-1 hover:bg-gray-700 rounded-md transition-all duration-300 ${
-            collapsed && !isPinned ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-          title={isPinned ? 'Desfijar sidebar' : 'Fijar sidebar'}
+        {/* Sidebar */}
+        <aside
+          onMouseEnter={() => !isPinned && setCollapsed(false)}
+          onMouseLeave={() => !isPinned && setCollapsed(true)}
+          className={`
+          ${collapsed ? 'lg:w-20' : 'lg:w-64'}
+          absolute lg:relative inset-y-0 left-0 z-50
+          w-64 lg:w-auto
+          bg-slate-950 text-white
+          transition-all duration-500 ease-in-out
+          flex flex-col border-r border-white/5 shadow-2xl
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          group
+          `}
         >
-          {isPinned ? (
-            <PinOff className="w-3.5 h-3.5 text-orange-400" />
-          ) : (
-            <Pin className="w-3.5 h-3.5 text-gray-400 hover:text-orange-400 transition-colors" />
-          )}
-        </button>
-
-        {/* Logo Section */}
-        <div className="h-16 flex items-center justify-center px-4 border-b border-white/5 relative">
-          {/* Logo - Centered, always visible with smooth animations */}
-          <Link
-            href="/dashboard/business"
-            className="flex items-center justify-center transition-all duration-500"
-          >
-            {/* Mobile logo - always white */}
-            <Logo color="white" size="sm" className="lg:hidden" />
-
-            {/* Desktop expanded logo - Full text with orange gradient */}
-            <div className={`hidden lg:flex items-center justify-center transition-all duration-500 ${collapsed ? 'opacity-0 scale-75 w-0' : 'opacity-100 scale-100 w-auto'}`}>
-                      <Logo color="white" size="lg" />
-            </div>
-
-            {/* Desktop collapsed logo - Icon "T" */}
-            <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
-              <div className="w-10 h-10 rounded-xl  bg-orange-600 hover:bg-orange-700 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-orange-500/50 hover:scale-110 transition-transform duration-300">
-                T
-              </div>
-            </div>
-          </Link>
-
-          {/* Mobile Close Button */}
+          {/* Desktop Pin/Unpin Button - Top Right Corner */}
           <button
             type="button"
-            onClick={() => setMobileMenuOpen(false)}
-            className="lg:hidden p-1.5 hover:bg-slate-900 rounded-lg transition-colors absolute right-4"
+            onClick={() => setIsPinned(!isPinned)}
+            className={`hidden lg:block absolute top-1 right-1 z-10 p-1 hover:bg-gray-700 rounded-md transition-all duration-300 ${
+              collapsed && !isPinned ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+            title={isPinned ? 'Desfijar sidebar' : 'Fijar sidebar'}
           >
-            <X className="w-5 h-5" />
+            {isPinned ? (
+              <PinOff className="w-3.5 h-3.5 text-primary" />
+            ) : (
+              <Pin className="w-3.5 h-3.5 text-gray-400 hover:text-primary transition-colors" />
+            )}
           </button>
-        </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-          {navigation.map((item) => {
-            // Lógica mejorada para determinar si está activo
-            let isActive = false
-
-            if (item.href === '/dashboard/business') {
-              // Inicio: solo activo si es exactamente /dashboard/business
-              isActive = pathname === '/dashboard/business'
-            } else if (item.href === '/dashboard/business/settings') {
-              // Configuración: activo para settings y todas sus subrutas
-              isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-            } else {
-              // Para las demás rutas, usar lógica normal (exacta o subrutas)
-              isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
-            }
-
-            const Icon = item.icon
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                prefetch={true}
-                onClick={(e) => {
-                  handleLinkClick(e)
-                  setMobileMenuOpen(false)
-                }}
-                className={`
-                  flex items-center px-3 py-2.5 rounded-xl text-sm font-medium
-                  transition-all duration-500 ease-in-out
-                  ${isActive
-                    ? ' bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-500/30 scale-[1.02] border border-white/5'
-                    : 'text-gray-400 hover:bg-slate-900 hover:text-white hover:shadow-md hover:scale-[1.02]'
-                  }
-                `}
-              >
-                <Icon
-                  className={`
-                    flex-shrink-0
-                    ${collapsed ? 'lg:mx-auto mr-3' : 'mr-3'}
-                    w-5 h-5
-                    transition-all duration-500 ease-in-out
-                    ${isActive
-                      ? 'text-white scale-110'
-                      : 'text-gray-400 group-hover:text-white group-hover:scale-110'
-                    }
-                  `}
-                />
-                {/* Always show text on mobile, hide on desktop when collapsed */}
-                <span
-                  className={`
-                    transition-all duration-500 ease-in-out whitespace-nowrap overflow-hidden
-                    ${collapsed ? 'lg:opacity-0 lg:w-0' : 'lg:opacity-100 lg:w-auto'}
-                    ${isActive ? 'font-semibold' : ''}
-                  `}
-                >
-                  {item.name}
-                </span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* User Section */}
-        <div className="p-3 border-t border-white/5">
-          {/* Expanded view - Show on mobile always, show on desktop when not collapsed */}
-          <div className={`space-y-2 transition-all duration-500 ${collapsed ? 'lg:hidden' : ''}`}>
-            <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-slate-900 transition-all duration-300 cursor-pointer group">
-              <Avatar className="w-9 h-9 border-2 border-orange-500 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                {authState.user?.avatar_url ? (
-                  <AvatarImage src={authState.user.avatar_url} />
-                ) : businessLogo ? (
-                  <AvatarImage src={businessLogo} className="object-cover" />
-                ) : null}
-                <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
-                  {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <p className="text-sm font-medium text-white truncate">
-                  {authState.user?.first_name} {authState.user?.last_name}
-                </p>
-                <p className="text-xs text-gray-400 truncate">{businessName || 'Mi Negocio'}</p>
-              </div>
-            </div>
-            <Button
-              onClick={handleSignOut}
-              variant="ghost"
-              className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md"
+          {/* Logo Section */}
+          <div className="h-16 flex items-center justify-center px-4 border-b border-white/5 relative">
+            {/* Logo - Centered, always visible with smooth animations */}
+            <Link
+              href="/dashboard/business"
+              className="flex items-center justify-center transition-all duration-500"
             >
-              <LogOut className="w-4 h-4 mr-3" />
-              Cerrar sesión
-            </Button>
-          </div>
+              {/* Mobile logo - always white */}
+              <Logo color="white" size="sm" className="lg:hidden" />
 
-          {/* Collapsed view - Only show on desktop when collapsed */}
-          <div className={`transition-all duration-500 ${collapsed ? 'lg:block' : 'lg:hidden'} hidden`}>
-            <div className="flex flex-col items-center space-y-3">
-              <Avatar className="w-10 h-10 border-2 border-orange-500 shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
-                {authState.user?.avatar_url ? (
-                  <AvatarImage src={authState.user.avatar_url} />
-                ) : businessLogo ? (
-                  <AvatarImage src={businessLogo} className="object-cover" />
-                ) : null}
-                <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-xs">
-                  {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                onClick={handleSignOut}
-                className="w-10 h-10 flex items-center justify-center hover:bg-slate-900 rounded-xl transition-all duration-300 hover:shadow-md group"
-                title="Cerrar sesión"
-              >
-                <LogOut className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors duration-300" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
+              {/* Desktop expanded logo - Full text with orange gradient */}
+              <div className={`hidden lg:flex items-center justify-center transition-all duration-500 ${collapsed ? 'opacity-0 scale-75 w-0' : 'opacity-100 scale-100 w-auto'}`}>
+                        <Logo color="white" size="lg" />
+              </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
-        {/* Mobile Header - Always visible on mobile */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm lg:hidden z-30">
-          <div className="flex items-center space-x-4">
+              {/* Desktop collapsed logo - Icon "T" */}
+              <div className={`hidden lg:flex absolute transition-all duration-500 ${collapsed ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}>
+                <div className="w-10 h-10 rounded-xl bg-primary hover:opacity-90 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/50 hover:scale-110 transition-transform duration-300">
+                  T
+                </div>
+              </div>
+            </Link>
+
+            {/* Mobile Close Button */}
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Abrir menú de navegación"
+              onClick={() => setMobileMenuOpen(false)}
+              className="lg:hidden p-1.5 hover:bg-slate-900 rounded-lg transition-colors absolute right-4"
             >
-              <Menu className="w-6 h-6 text-gray-600" />
+              <X className="w-5 h-5" />
             </button>
-            <Logo color="black" size="sm" />
           </div>
 
-          <div className="flex items-center space-x-4">
-            {/* Notifications - Solo renderizar cuando hay userId */}
-            {authState.user?.id && <NotificationBell userId={authState.user.id} />}
+          {/* Navigation */}
+          <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+            {navigation.map((item) => {
+              // Lógica mejorada para determinar si está activo
+              let isActive = false
 
-            {/* User Avatar */}
-            <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
-              {authState.user?.avatar_url ? (
-                <AvatarImage src={authState.user.avatar_url} />
-              ) : businessLogo ? (
-                <AvatarImage src={businessLogo} className="object-cover" />
-              ) : null}
-              <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
-                {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
-              </AvatarFallback>
-            </Avatar>
+              if (item.href === '/dashboard/business') {
+                // Inicio: solo activo si es exactamente /dashboard/business
+                isActive = pathname === '/dashboard/business'
+              } else if (item.href === '/dashboard/business/settings') {
+                // Configuración: activo para settings y todas sus subrutas
+                isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+              } else {
+                // Para las demás rutas, usar lógica normal (exacta o subrutas)
+                isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+              }
+
+              const Icon = item.icon
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  prefetch={true}
+                  onClick={(e) => {
+                    handleLinkClick(e)
+                    setMobileMenuOpen(false)
+                  }}
+                  className={`
+                    flex items-center px-3 py-2.5 rounded-xl text-sm font-medium
+                    transition-all duration-500 ease-in-out
+                    ${isActive
+                      ? ' bg-primary hover:opacity-90 text-white shadow-lg shadow-primary/30 scale-[1.02] border border-white/5'
+                      : 'text-gray-400 hover:bg-slate-900 hover:text-white hover:shadow-md hover:scale-[1.02]'
+                    }
+                  `}
+                >
+                  <Icon
+                    className={`
+                      flex-shrink-0
+                      ${collapsed ? 'lg:mx-auto mr-3' : 'mr-3'}
+                      w-5 h-5
+                      transition-all duration-500 ease-in-out
+                      ${isActive
+                        ? 'text-white scale-110'
+                        : 'text-gray-400 group-hover:text-white group-hover:scale-110'
+                      }
+                    `}
+                  />
+                  {/* Always show text on mobile, hide on desktop when collapsed */}
+                  <span
+                    className={`
+                      transition-all duration-500 ease-in-out whitespace-nowrap overflow-hidden
+                      ${collapsed ? 'lg:opacity-0 lg:w-0' : 'lg:opacity-100 lg:w-auto'}
+                      ${isActive ? 'font-semibold' : ''}
+                    `}
+                  >
+                    {item.name}
+                  </span>
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* User Section */}
+          <div className="p-3 border-t border-white/5">
+            {/* Expanded view - Show on mobile always, show on desktop when not collapsed */}
+            <div className={`space-y-2 transition-all duration-500 ${collapsed ? 'lg:hidden' : ''}`}>
+              <div className="flex items-center space-x-3 px-3 py-2.5 rounded-xl hover:bg-slate-900 transition-all duration-300 cursor-pointer group">
+                <Avatar className="w-9 h-9 border-2 border-primary shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  {authState.user?.avatar_url ? (
+                    <AvatarImage src={authState.user.avatar_url} />
+                  ) : businessLogo ? (
+                    <AvatarImage src={businessLogo} className="object-cover" />
+                  ) : null}
+                  <AvatarFallback className=" bg-primary text-white text-sm">
+                    {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <p className="text-sm font-medium text-white truncate">
+                    {authState.user?.first_name} {authState.user?.last_name}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">{businessName || 'Mi Negocio'}</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleSignOut}
+                variant="ghost"
+                className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-xl transition-all duration-300 hover:shadow-md"
+              >
+                <LogOut className="w-4 h-4 mr-3" />
+                Cerrar sesión
+              </Button>
+            </div>
+
+            {/* Collapsed view - Only show on desktop when collapsed */}
+            <div className={`transition-all duration-500 ${collapsed ? 'lg:block' : 'lg:hidden'} hidden`}>
+              <div className="flex flex-col items-center space-y-3">
+                <Avatar className="w-10 h-10 border-2 border-primary shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
+                  {authState.user?.avatar_url ? (
+                    <AvatarImage src={authState.user.avatar_url} />
+                  ) : businessLogo ? (
+                    <AvatarImage src={businessLogo} className="object-cover" />
+                  ) : null}
+                  <AvatarFallback className=" bg-primary text-white text-xs">
+                    {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={handleSignOut}
+                  className="w-10 h-10 flex items-center justify-center hover:bg-slate-900 rounded-xl transition-all duration-300 hover:shadow-md group"
+                  title="Cerrar sesión"
+                >
+                  <LogOut className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors duration-300" />
+                </button>
+              </div>
+            </div>
           </div>
-        </header>
+        </aside>
 
-        {/* Desktop Top Header - Only for non-home pages */}
-        {pathname !== '/dashboard/business' && (
-          <header className="hidden lg:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-30">
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          {/* Mobile Header - Always visible on mobile */}
+          <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm lg:hidden z-30">
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-black tracking-tight text-gray-900">
-                {businessName || 'Mi Negocio'}
-              </h1>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Abrir menú de navegación"
+              >
+                <Menu className="w-6 h-6 text-gray-600" />
+              </button>
+              <Logo color="black" size="sm" />
             </div>
 
             <div className="flex items-center space-x-4">
@@ -378,27 +357,56 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               {authState.user?.id && <NotificationBell userId={authState.user.id} />}
 
               {/* User Avatar */}
-              <Avatar className="w-9 h-9 border-2 border-orange-500 cursor-pointer">
+              <Avatar className="w-9 h-9 border-2 border-primary cursor-pointer">
                 {authState.user?.avatar_url ? (
                   <AvatarImage src={authState.user.avatar_url} />
                 ) : businessLogo ? (
                   <AvatarImage src={businessLogo} className="object-cover" />
                 ) : null}
-                <AvatarFallback className=" bg-orange-600 hover:bg-orange-700 text-white text-sm">
+                <AvatarFallback className=" bg-primary text-white text-sm">
                   {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
                 </AvatarFallback>
               </Avatar>
             </div>
           </header>
-        )}
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-gray-50">
-          {children}
-        </main>
+          {/* Desktop Top Header - Only for non-home pages */}
+          {pathname !== '/dashboard/business' && (
+            <header className="hidden lg:flex h-16 bg-white border-b border-gray-200 items-center justify-between px-6 shadow-sm z-30">
+              <div className="flex items-center space-x-4">
+                <h1 className="text-xl font-black tracking-tight text-gray-900">
+                  {businessName || 'Mi Negocio'}
+                </h1>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                {/* Notifications - Solo renderizar cuando hay userId */}
+                {authState.user?.id && <NotificationBell userId={authState.user.id} />}
+
+                {/* User Avatar */}
+                <Avatar className="w-9 h-9 border-2 border-primary cursor-pointer">
+                  {authState.user?.avatar_url ? (
+                    <AvatarImage src={authState.user.avatar_url} />
+                  ) : businessLogo ? (
+                    <AvatarImage src={businessLogo} className="object-cover" />
+                  ) : null}
+                  <AvatarFallback className=" bg-primary text-white text-sm">
+                    {authState.user ? getInitials(`${authState.user.first_name} ${authState.user.last_name}`) : 'UN'}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            </header>
+          )}
+
+          {/* Page Content */}
+          <main className="flex-1 overflow-auto bg-gray-50">
+            {children}
+          </main>
+        </div>
+        <Toaster />
       </div>
-      <Toaster />
-    </div>
+    </BusinessThemeProvider>
+    </TooltipProvider>
   )
 }
 

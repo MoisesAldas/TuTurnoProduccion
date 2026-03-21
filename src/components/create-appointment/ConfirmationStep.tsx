@@ -141,7 +141,7 @@ export function ConfirmationStep({
       {/* Inputs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="client-notes" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+          <Label htmlFor="client-notes" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
             <FileText className="w-4 h-4 text-primary" />
             Notas del Cliente
           </Label>
@@ -150,11 +150,11 @@ export function ConfirmationStep({
             value={clientNotes}
             onChange={(e) => setClientNotes(e.target.value)}
             placeholder="Requerimientos especiales..."
-            className="rounded-2xl border-gray-100 bg-white min-h-[80px] text-xs font-bold focus-visible:ring-primary shadow-sm"
+            className="rounded-2xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 min-h-[80px] text-xs font-bold focus-visible:ring-primary shadow-sm dark:text-white dark:placeholder:text-gray-600"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="notes" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+          <Label htmlFor="notes" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">
             <FileText className="w-4 h-4 text-blue-500" />
             Notas Internas
           </Label>
@@ -163,7 +163,7 @@ export function ConfirmationStep({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Visibles solo para el negocio..."
-            className="rounded-2xl border-gray-100 bg-white min-h-[80px] text-xs font-bold focus-visible:ring-blue-500 shadow-sm"
+            className="rounded-2xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 min-h-[80px] text-xs font-bold focus-visible:ring-blue-500 shadow-sm dark:text-white dark:placeholder:text-gray-600"
           />
         </div>
       </div>

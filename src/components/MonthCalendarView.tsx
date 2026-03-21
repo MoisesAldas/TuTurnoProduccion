@@ -130,13 +130,13 @@ export default function MonthCalendarView({
     <div className="h-full flex flex-col bg-transparent">
       {/* Calendario Grid - Premium & Responsive */}
       <div className="flex-1 overflow-auto p-4 lg:p-6">
-        <div className="max-w-[100%] mx-auto bg-white rounded-3xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] border border-gray-100/50 overflow-hidden">
+        <div className="max-w-[100%] mx-auto bg-white dark:bg-gray-900 rounded-3xl shadow-[0_4px_20px_-5px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-gray-100/50 dark:border-gray-800 overflow-hidden">
           {/* Días de la semana - Estilo Premium */}
-          <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+          <div className="grid grid-cols-7 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
             {weekDays.map(day => (
               <div
                 key={day}
-                className="py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]"
+                className="py-4 text-center text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]"
               >
                 {day}
               </div>
@@ -144,7 +144,7 @@ export default function MonthCalendarView({
           </div>
 
           {/* Grid de días */}
-          <div className="grid grid-cols-7 gap-px bg-gray-100">
+          <div className="grid grid-cols-7 gap-px bg-gray-100 dark:bg-gray-800">
             {monthDays.map((day, idx) => {
               const dateStr = toDateString(day)
               const dayData = appointmentsByDay.get(dateStr)
@@ -157,9 +157,9 @@ export default function MonthCalendarView({
                   key={day.toISOString()}
                   onClick={() => onDateSelect(day)}
                   className={`
-                    min-h-[100px] sm:min-h-[140px] bg-white p-2.5 cursor-pointer transition-all hover:bg-orange-50/30 relative group
-                    ${!isCurrentMonth ? 'bg-gray-50/50 text-gray-300' : ''}
-                    ${isSelected ? 'bg-orange-50/50' : ''}
+                    min-h-[100px] sm:min-h-[140px] bg-white dark:bg-gray-900 p-2.5 cursor-pointer transition-all hover:bg-orange-50/30 dark:hover:bg-orange-950/10 relative group
+                    ${!isCurrentMonth ? 'bg-gray-50/50 dark:bg-gray-950/50 text-gray-300 dark:text-gray-700' : ''}
+                    ${isSelected ? 'bg-orange-50/50 dark:bg-orange-900/20' : ''}
                   `}
                 >
                   {/* Número del día con Estilo Premium */}
@@ -167,9 +167,9 @@ export default function MonthCalendarView({
                     <span
                       className={`
                         text-xs font-black flex items-center justify-center w-7 h-7 rounded-xl transition-all
-                        ${isTodayDate ? 'bg-orange-600 text-white shadow-lg shadow-orange-200' : ''}
-                        ${isSelected && !isTodayDate ? 'bg-gray-900 text-white' : ''}
-                        ${!isTodayDate && !isSelected ? 'text-gray-900' : ''}
+                        ${isTodayDate ? 'bg-orange-600 text-white shadow-lg shadow-orange-200 dark:shadow-orange-900/40' : ''}
+                        ${isSelected && !isTodayDate ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : ''}
+                        ${!isTodayDate && !isSelected ? 'text-gray-900 dark:text-gray-100' : ''}
                         ${!isCurrentMonth ? 'opacity-40' : ''}
                       `}
                     >
@@ -179,8 +179,8 @@ export default function MonthCalendarView({
                     {/* Contador de citas Compacto */}
                     {dayData && dayData.count > 0 && (
                       <div className="flex -space-x-1">
-                         {dayData.hasConfirmed && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 border border-white" />}
-                         {dayData.hasPending && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 border border-white" />}
+                         {dayData.hasConfirmed && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 border border-white dark:border-gray-900" />}
+                         {dayData.hasPending && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 border border-white dark:border-gray-900" />}
                       </div>
                     )}
                   </div>
@@ -200,10 +200,10 @@ export default function MonthCalendarView({
                             }}
                             className={`
                               group/apt text-[9px] px-2 py-1 rounded-lg border-l-2 truncate transition-all flex items-center gap-1
-                              ${apt.status === 'confirmed' ? 'bg-emerald-50 border-emerald-400 text-emerald-800' :
-                                apt.status === 'pending' ? 'bg-amber-50 border-amber-400 text-amber-800' :
-                                apt.status === 'cancelled' ? 'bg-red-50 border-red-400 text-red-800' :
-                                'bg-gray-50 border-gray-300 text-gray-600'}
+                              ${apt.status === 'confirmed' ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400 text-emerald-800 dark:text-emerald-400' :
+                                apt.status === 'pending' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-400 text-amber-800 dark:text-amber-400' :
+                                apt.status === 'cancelled' ? 'bg-red-50 dark:bg-red-900/20 border-red-400 text-red-800 dark:text-red-400' :
+                                'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400'}
                               hover:translate-x-0.5
                             `}
                           >
@@ -221,7 +221,7 @@ export default function MonthCalendarView({
                         ))}
 
                         {dayData.count > 3 && (
-                          <div className="text-[9px] font-black text-gray-400 px-2 uppercase tracking-tighter">
+                          <div className="text-[9px] font-black text-gray-400 dark:text-gray-500 px-2 uppercase tracking-tighter">
                             + {dayData.count - 3} más
                           </div>
                         )}

@@ -58,71 +58,73 @@ export function CancelAppointmentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md rounded-[2rem] border-0 shadow-2xl p-6">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md rounded-[2rem] border-0 shadow-2xl p-0 overflow-hidden bg-white dark:bg-gray-900">
+        <DialogHeader className="p-6 pb-0">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+            <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-500" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-black tracking-tight text-gray-900">Cancelar Cita</DialogTitle>
-              <DialogDescription className="text-sm font-medium text-gray-400">
+              <DialogTitle className="text-xl font-black tracking-tight text-gray-900 dark:text-white">Cancelar Cita</DialogTitle>
+              <DialogDescription className="text-sm font-medium text-gray-400 dark:text-gray-500">
                 Esta acción no se puede deshacer
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {appointmentDetails && (
-          <div className="bg-gray-50 rounded-2xl p-4 space-y-2 border border-gray-100">
-            {appointmentDetails.businessName && (
-              <p className="text-sm">
-                <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider block mb-0.5">Negocio</span>
-                <span className="text-gray-900 font-semibold">{appointmentDetails.businessName}</span>
-              </p>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              {appointmentDetails.date && (
+        <div className="p-6 space-y-6">
+          {appointmentDetails && (
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 space-y-2 border border-gray-100 dark:border-gray-700">
+              {appointmentDetails.businessName && (
                 <p className="text-sm">
-                  <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider block mb-0.5">Fecha</span>
-                  <span className="text-gray-900 font-semibold">{appointmentDetails.date}</span>
+                  <span className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px] tracking-wider block mb-0.5">Negocio</span>
+                  <span className="text-gray-900 dark:text-gray-100 font-semibold">{appointmentDetails.businessName}</span>
                 </p>
               )}
-              {appointmentDetails.time && (
-                <p className="text-sm">
-                  <span className="font-bold text-gray-500 uppercase text-[10px] tracking-wider block mb-0.5">Hora</span>
-                  <span className="text-gray-900 font-semibold">{appointmentDetails.time}</span>
-                </p>
-              )}
+              <div className="grid grid-cols-2 gap-4">
+                {appointmentDetails.date && (
+                  <p className="text-sm">
+                    <span className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px] tracking-wider block mb-0.5">Fecha</span>
+                    <span className="text-gray-900 dark:text-gray-100 font-semibold">{appointmentDetails.date}</span>
+                  </p>
+                )}
+                {appointmentDetails.time && (
+                  <p className="text-sm">
+                    <span className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px] tracking-wider block mb-0.5">Hora</span>
+                    <span className="text-gray-900 dark:text-gray-100 font-semibold">{appointmentDetails.time}</span>
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="space-y-3">
-          <Label htmlFor="cancel-reason" className="text-xs font-black uppercase tracking-widest text-gray-500">
-            Motivo de cancelación <span className="text-gray-400 capitalize font-medium">(opcional)</span>
-          </Label>
-          <Textarea
-            id="cancel-reason"
-            placeholder="Ej: Surgió un imprevisto, cambio de planes, etc."
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
-            disabled={isSubmitting || isLoading}
-            rows={3}
-            className="resize-none rounded-xl border-gray-200 focus:border-slate-900 focus:ring-slate-900/10 transition-all font-medium text-sm"
-          />
-          <p className="text-[10px] font-medium text-gray-400 italic">
-            * Proporcionar un motivo ayuda a mejorar el servicio
-          </p>
+          <div className="space-y-3">
+            <Label htmlFor="cancel-reason" className="text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+              Motivo de cancelación <span className="text-gray-400 dark:text-gray-600 capitalize font-medium">(opcional)</span>
+            </Label>
+            <Textarea
+              id="cancel-reason"
+              placeholder="Ej: Surgió un imprevisto, cambio de planes, etc."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              disabled={isSubmitting || isLoading}
+              rows={3}
+              className="resize-none rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-slate-900 dark:focus:border-white focus:ring-slate-900/10 transition-all font-medium text-sm dark:text-white dark:placeholder:text-gray-600"
+            />
+            <p className="text-[10px] font-medium text-gray-400 dark:text-gray-500 italic">
+              * Proporcionar un motivo ayuda a mejorar el servicio
+            </p>
+          </div>
         </div>
 
-        <DialogFooter className="mt-4 gap-2">
+        <DialogFooter className="p-6 pt-0 flex flex-col sm:flex-row gap-2">
           <Button
             type="button"
             variant="ghost"
             onClick={handleClose}
             disabled={isSubmitting || isLoading}
-            className="rounded-xl px-6 text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-all"
+            className="rounded-xl px-6 text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
           >
             Volver
           </Button>
@@ -142,6 +144,9 @@ export function CancelAppointmentDialog({
             )}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
       </DialogContent>
     </Dialog>
   )

@@ -64,7 +64,6 @@ export default function EmployeeServicesModal({
 
       if (data) {
         setServices(data)
-        // Inicializar servicios seleccionados
         const assigned = new Set(data.filter(s => s.is_assigned).map(s => s.id))
         setSelectedServiceIds(assigned)
       }
@@ -119,7 +118,6 @@ export default function EmployeeServicesModal({
         return
       }
 
-      // Mensaje de éxito con detalles
       let message = 'Servicios actualizados correctamente'
       if (result.added > 0 || result.removed > 0) {
         const parts = []
@@ -161,7 +159,6 @@ export default function EmployeeServicesModal({
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
   }
 
-  // Filtrar servicios por búsqueda
   const filteredServices = services.filter(service =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     service.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -173,64 +170,62 @@ export default function EmployeeServicesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-3xl h-[90vh] sm:h-[85vh] p-0 gap-0 flex flex-col">
-        {/* Header - Fixed */}
-        <div className="flex-shrink-0 px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-800">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl h-[90vh] sm:h-[85vh] p-0 gap-0 flex flex-col border-none shadow-2xl bg-white dark:bg-gray-900 rounded-[2.5rem] overflow-hidden">
+        <div className="flex-shrink-0 px-6 py-6 sm:px-8 sm:py-8 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-50 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              Servicios de {employeeName}
-            </DialogTitle>
-            <DialogDescription className="text-sm mt-1">
-              Selecciona los servicios que puede realizar este empleado
+            <div className="flex flex-col gap-0.5 relative pl-5">
+              <div className="absolute left-0 w-1 h-6 bg-primary rounded-full mt-0.5" />
+              <span className="text-[9px] uppercase tracking-[0.2em] font-extrabold text-primary italic">Asignación de Especialidades</span>
+              <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white italic">
+                {employeeName}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-sm font-medium text-gray-500 dark:text-gray-400 pl-5 mt-1">
+              Marca los servicios que este profesional está capacitado para realizar
             </DialogDescription>
           </DialogHeader>
 
-          {/* Stats Badge */}
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/50 dark:text-orange-400 dark:border-orange-800 text-xs">
-              {selectedCount} de {totalActiveServices} seleccionados
+          <div className="flex flex-wrap items-center gap-2 mt-5 pl-5">
+            <Badge className="bg-orange-50 dark:bg-orange-950/30 text-primary border border-orange-100 dark:border-orange-900/50 text-[10px] font-black uppercase tracking-widest px-3 py-1 shadow-sm">
+              {selectedCount} de {totalActiveServices} servicios activos
             </Badge>
             {hasChanges && (
-              <Badge variant="outline" className="border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-400 text-xs">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                Sin guardar
+              <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 animate-pulse">
+                <AlertCircle className="w-3 h-3 mr-1.5" />
+                Cambios pendientes
               </Badge>
             )}
           </div>
         </div>
 
-        {/* Search and Actions - Fixed */}
-        <div className="flex-shrink-0 px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-          <div className="flex flex-col sm:flex-row gap-2">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+        <div className="flex-shrink-0 px-6 py-4 sm:px-8 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
               <Input
                 type="text"
                 placeholder="Buscar servicios..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-9 text-sm"
+                className="pl-11 h-11 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 font-bold focus-visible:ring-primary shadow-sm"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
                 >
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
-            {/* Quick Actions */}
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleSelectAll}
-                className="text-xs h-9 flex-1 sm:flex-none"
+                className="text-[10px] font-black uppercase tracking-widest h-11 px-4 rounded-xl border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
                 disabled={loading}
               >
                 Todos
@@ -240,7 +235,7 @@ export default function EmployeeServicesModal({
                 variant="outline"
                 size="sm"
                 onClick={handleDeselectAll}
-                className="text-xs h-9 flex-1 sm:flex-none"
+                className="text-[10px] font-black uppercase tracking-widest h-11 px-4 rounded-xl border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
                 disabled={loading}
               >
                 Limpiar
@@ -249,31 +244,23 @@ export default function EmployeeServicesModal({
           </div>
         </div>
 
-        {/* Services List - Scrollable */}
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden bg-white dark:bg-gray-900">
           <ScrollArea className="h-full">
-            <div className="px-4 sm:px-6 py-4">
+            <div className="px-6 py-6 sm:px-8">
               {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-orange-600 dark:text-orange-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Cargando servicios...</p>
-                  </div>
+                <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                  <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Consultando Servicios...</p>
                 </div>
               ) : filteredServices.length === 0 ? (
-                <div className="text-center py-12">
-                  <Briefcase className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-50 mb-1">
-                    {searchQuery ? 'No se encontraron servicios' : 'No hay servicios disponibles'}
-                  </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {searchQuery
-                      ? `No hay servicios que coincidan con "${searchQuery}"`
-                      : 'Crea servicios primero para poder asignarlos'}
+                <div className="text-center py-20 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[2.5rem] bg-gray-50/50 dark:bg-gray-800/30">
+                  <Briefcase className="w-12 h-12 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                  <p className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest italic">
+                    Sin coincidencias
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-4">
                   {filteredServices.map((service) => {
                     const isSelected = selectedServiceIds.has(service.id)
                     const isActive = service.is_active
@@ -282,49 +269,49 @@ export default function EmployeeServicesModal({
                       <div
                         key={service.id}
                         className={`
-                          flex items-start gap-3 p-3 rounded-lg border transition-all cursor-pointer
+                          flex items-start gap-4 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer group/item
                           ${isSelected
-                            ? 'bg-orange-50 border-orange-300 dark:bg-orange-900/20 dark:border-orange-700'
-                            : 'bg-white border-gray-200 hover:border-orange-200 dark:bg-gray-800 dark:border-gray-700 dark:hover:border-orange-800'
+                            ? 'bg-orange-50/30 dark:bg-orange-950/10 border-primary shadow-lg shadow-orange-500/5'
+                            : 'bg-white dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 hover:border-orange-200 dark:hover:border-primary/30'
                           }
-                          ${!isActive ? 'opacity-50' : ''}
+                          ${!isActive ? 'opacity-50 grayscale' : ''}
                         `}
                         onClick={() => isActive && handleToggleService(service.id)}
                       >
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => isActive && handleToggleService(service.id)}
-                          disabled={!isActive}
-                          className="mt-0.5"
-                        />
+                        <div className="pt-0.5">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => isActive && handleToggleService(service.id)}
+                            disabled={!isActive}
+                            className="h-5 w-5 rounded-lg border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                        </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-50 truncate">
+                              <h4 className="font-black text-sm text-gray-900 dark:text-white truncate tracking-tight">
                                 {service.name}
                               </h4>
                               {service.description && (
-                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 mt-0.5">
+                                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5 italic">
                                   {service.description}
                                 </p>
                               )}
                             </div>
                             {!isActive && (
-                              <Badge variant="secondary" className="text-xs flex-shrink-0">
+                              <Badge variant="outline" className="text-[8px] font-black uppercase tracking-tighter bg-gray-100 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700">
                                 Inactivo
                               </Badge>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
-                              <span className="font-semibold text-orange-600 dark:text-orange-400">
-                                {formatPrice(service.price)}
-                              </span>
+                          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest">
+                            <div className="flex items-center gap-1.5 text-primary">
+                              <DollarSign className="w-3.5 h-3.5" />
+                              <span>{formatPrice(service.price)}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
                               <Clock className="w-3.5 h-3.5" />
                               <span>{formatDuration(service.duration_minutes)}</span>
                             </div>
@@ -339,36 +326,42 @@ export default function EmployeeServicesModal({
           </ScrollArea>
         </div>
 
-        {/* Footer - Fixed */}
-        <div className="flex-shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
-          <div className="flex flex-col-reverse sm:flex-row gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1 sm:flex-none h-9 sm:h-10"
-              disabled={submitting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              className="flex-1 sm:flex-none h-9 sm:h-10 bg-orange-600 hover:bg-orange-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50"
-              disabled={submitting || loading || !hasChanges}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar
-                </>
-              )}
-            </Button>
+        <div className="flex-shrink-0 px-6 py-5 sm:px-8 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/50 backdrop-blur-md">
+          <div className="flex items-center justify-between gap-4">
+            <div className="hidden sm:block">
+               <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest italic">
+                 Cambios guardados al confirmar
+               </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="h-12 px-6 rounded-xl text-[11px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                disabled={submitting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                className="h-12 sm:px-10 bg-primary hover:bg-orange-600 text-white rounded-xl shadow-xl shadow-orange-500/20 font-black text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                disabled={submitting || loading || !hasChanges}
+              >
+                {submitting ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Guardando</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Save className="w-4 h-4" />
+                    <span>Confirmar Servicios</span>
+                  </div>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

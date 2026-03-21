@@ -47,9 +47,9 @@ export function ClientStep({
         
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { id: 'walk_in', label: 'Sin Registro', subLabel: 'Cita ocasional', icon: UserCircle, color: 'text-orange-500', bg: 'bg-orange-50', border: 'border-orange-200' },
-            { id: 'registered', label: 'Registrado', subLabel: 'Cuenta TuTurno', icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-            { id: 'business_client', label: 'Mis Clientes', subLabel: 'Base de datos', icon: Building2, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200' }
+            { id: 'walk_in', label: 'Sin Registro', subLabel: 'Cita ocasional', icon: UserCircle, color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-950/20', border: 'border-orange-200 dark:border-orange-900/50' },
+            { id: 'registered', label: 'Registrado', subLabel: 'Cuenta TuTurno', icon: UserCheck, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/20', border: 'border-emerald-200 dark:border-emerald-900/50' },
+            { id: 'business_client', label: 'Mis Clientes', subLabel: 'Base de datos', icon: Building2, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/20', border: 'border-blue-200 dark:border-blue-900/50' }
           ].map((type) => (
             <button
               key={type.id}
@@ -58,16 +58,16 @@ export function ClientStep({
               className={`relative flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-300 group ${
                 clientType === type.id 
                   ? `border-primary ${type.bg} shadow-lg scale-[1.02]` 
-                  : 'border-gray-100 hover:border-gray-200 bg-white hover:scale-[1.01]'
+                  : 'border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700 bg-white dark:bg-gray-900 hover:scale-[1.01]'
               }`}
             >
-              <div className={`p-2 rounded-xl mb-2 transition-colors ${clientType === type.id ? 'bg-white shadow-sm' : 'bg-gray-50 group-hover:bg-gray-100'}`}>
+              <div className={`p-2 rounded-xl mb-2 transition-colors ${clientType === type.id ? 'bg-white dark:bg-gray-800 shadow-sm' : 'bg-gray-50 dark:bg-gray-800/50 group-hover:bg-gray-100 dark:group-hover:bg-gray-800'}`}>
                 <type.icon className={`w-6 h-6 ${type.color}`} />
               </div>
-              <span className="font-bold text-gray-900 text-sm tracking-tight">{type.label}</span>
-              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter mt-1">{type.subLabel}</span>
+              <span className="font-bold text-gray-900 dark:text-white text-sm tracking-tight">{type.label}</span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-tighter mt-1">{type.subLabel}</span>
               {clientType === type.id && (
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center border-4 border-white shadow-md">
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center border-4 border-white dark:border-gray-900 shadow-md">
                   <Check className="w-3 h-3 text-white stroke-[3px]" />
                 </div>
               )}
@@ -77,35 +77,35 @@ export function ClientStep({
       </div>
 
       {clientType === 'walk_in' && (
-        <div className="space-y-3 bg-orange-50/50 border border-orange-100 rounded-2xl p-4 relative overflow-hidden group">
+        <div className="space-y-3 bg-orange-50/50 dark:bg-orange-950/10 border border-orange-100 dark:border-orange-900/30 rounded-2xl p-4 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <UserCircle className="w-24 h-24 text-orange-600" />
           </div>
           <div className="space-y-3 relative z-10">
             <div className="space-y-1">
-              <Label htmlFor="walk-in-name" className="text-xs font-bold text-gray-600 uppercase">Nombre Completo *</Label>
+              <Label htmlFor="walk-in-name" className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Nombre Completo *</Label>
               <Input
                 id="walk-in-name"
                 placeholder="Juan Pérez"
                 value={walkInName}
                 onChange={(e) => setWalkInName(e.target.value)}
-                className="h-12 rounded-xl border-orange-100 bg-white focus-visible:ring-orange-500"
+                className="h-12 rounded-xl border-orange-100 dark:border-orange-900/30 bg-white dark:bg-gray-800 focus-visible:ring-orange-500"
               />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="walk-in-phone" className="text-xs font-bold text-gray-600 uppercase">Teléfono (WhatsApp)</Label>
-                <span className="text-[9px] font-black text-emerald-600 uppercase tracking-tighter">Para recordatorios</span>
+                <Label htmlFor="walk-in-phone" className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Teléfono (WhatsApp)</Label>
+                <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter">Para recordatorios</span>
               </div>
               <Input
                 id="walk-in-phone"
                 placeholder="0999123456"
                 value={walkInPhone}
                 onChange={(e) => setWalkInPhone(e.target.value)}
-                className="h-12 rounded-xl border-orange-100 bg-white focus-visible:ring-orange-500"
+                className="h-12 rounded-xl border-orange-100 dark:border-orange-900/30 bg-white dark:bg-gray-800 focus-visible:ring-orange-500"
               />
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-white/50 rounded-lg text-[10px] text-orange-700 font-medium border border-orange-100/50">
+            <div className="flex items-center gap-2 px-3 py-2 bg-white/50 dark:bg-gray-800/50 rounded-lg text-[10px] text-orange-700 dark:text-orange-400 font-medium border border-orange-100/50 dark:border-orange-900/20">
               <Info className="w-3.5 h-3.5" />
               <span>Los datos se guardarán específicamente para esta reserva.</span>
             </div>
@@ -115,7 +115,7 @@ export function ClientStep({
 
       {clientType === 'registered' && (
         <div className="space-y-3 relative">
-          <Label className="text-xs font-bold text-gray-600 uppercase">Buscar Cliente en TuTurno *</Label>
+          <Label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">Buscar Cliente en TuTurno *</Label>
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input
@@ -131,10 +131,10 @@ export function ClientStep({
               }}
               onFocus={() => setShowRegisteredDropdown(true)}
               onBlur={() => setTimeout(() => setShowRegisteredDropdown(false), 200)}
-              className="h-12 pl-12 rounded-xl border-gray-100 focus-visible:ring-primary shadow-sm"
+              className="h-12 pl-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 focus-visible:ring-primary shadow-sm"
             />
             {showRegisteredDropdown && !selectedClientId && (
-              <div className="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 scrollbar-hide">
+              <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 scrollbar-hide">
                 {filteredClients.length > 0 ? (
                   filteredClients.map((c) => (
                     <button
@@ -144,13 +144,13 @@ export function ClientStep({
                         setSelectedClientId(c.id)
                         setSearchTerm('')
                       }}
-                      className="w-full text-left p-4 hover:bg-gray-50 flex items-center justify-between transition-colors border-b last:border-b-0 border-gray-50"
+                      className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between transition-colors border-b last:border-b-0 border-gray-50 dark:border-gray-800"
                     >
                       <div>
-                        <p className="font-bold text-gray-900">{c.first_name} {c.last_name}</p>
-                        <p className="text-xs text-gray-400 font-medium tracking-tight mt-0.5">{c.email}</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{c.first_name} {c.last_name}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium tracking-tight mt-0.5">{c.email}</p>
                       </div>
-                      <div className="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center border border-orange-100">
+                      <div className="h-8 w-8 rounded-lg bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center border border-orange-100 dark:border-orange-900/30">
                         <UserCheck className="w-4 h-4 text-orange-500" />
                       </div>
                     </button>
@@ -171,7 +171,7 @@ export function ClientStep({
 
       {clientType === 'business_client' && (
         <div className="space-y-3 relative">
-          <Label className="text-xs font-bold text-gray-600 uppercase tracking-widest">Buscar en Mis Clientes *</Label>
+          <Label className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-widest">Buscar en Mis Clientes *</Label>
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-primary transition-colors" />
             <Input
@@ -189,10 +189,10 @@ export function ClientStep({
               }}
               onFocus={() => setShowBusinessClientDropdown(true)}
               onBlur={() => setTimeout(() => setShowBusinessClientDropdown(false), 200)}
-              className="h-12 pl-12 rounded-xl border-gray-100 focus-visible:ring-primary shadow-sm"
+              className="h-12 pl-12 rounded-xl border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800 focus-visible:ring-primary shadow-sm"
             />
             {showBusinessClientDropdown && !selectedBusinessClientId && (
-              <div className="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 scrollbar-hide">
+              <div className="absolute z-20 w-full mt-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 scrollbar-hide">
                 {businessClients.length > 0 ? (
                   businessClients.map((c) => (
                     <button
@@ -202,13 +202,13 @@ export function ClientStep({
                         setSelectedBusinessClientId(c.id)
                         setSearchTerm('')
                       }}
-                      className="w-full text-left p-4 hover:bg-gray-50 flex items-center justify-between transition-colors border-b last:border-b-0 border-gray-50"
+                      className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between transition-colors border-b last:border-b-0 border-gray-50 dark:border-gray-800"
                     >
                       <div>
-                        <p className="font-bold text-gray-900">{c.first_name} {c.last_name}</p>
-                        <p className="text-xs text-gray-400 font-medium tracking-tight mt-0.5">{c.phone}</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{c.first_name} {c.last_name}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 font-medium tracking-tight mt-0.5">{c.phone}</p>
                       </div>
-                      <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
+                      <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center border border-blue-100 dark:border-blue-900/30">
                         <Building2 className="w-4 h-4 text-blue-500" />
                       </div>
                     </button>
